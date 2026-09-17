@@ -1,0 +1,83 @@
+version: "2"
+run:
+  timeout: 5m
+  tests: true
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - gosec
+    - depguard
+    - errorlint
+    - forbidigo
+    - revive
+  settings:
+    forbidigo:
+      forbid:
+        - pattern: '^panic$'
+          msg: "panic вне main и тестов запрещён (инвариант 9)"
+      analyze-types: true
+    depguard:
+      rules:
+        domain-purity:
+          list-mode: lax
+          files:
+            - "**/internal/kernel/**"
+            - "**/internal/portfoliograph/*.go"
+            - "**/internal/signals/*.go"
+            - "**/internal/prioritization/*.go"
+            - "**/internal/roadmap/*.go"
+            - "**/internal/delivery/*.go"
+            - "**/internal/ports/**"
+          deny:
+            - pkg: "github.com/go-chi/chi"
+              desc: "домен не зависит от chi (инвариант 2)"
+            - pkg: "github.com/jackc/pgx"
+              desc: "домен не зависит от pgx (инвариант 2)"
+            - pkg: "net/http"
+              desc: "домен не зависит от HTTP (инвариант 2)"
+            - pkg: "database/sql"
+              desc: "домен не зависит от SQL (инвариант 2)"
+        no-unsafe:
+          list-mode: lax
+          files:
+            - "$all"
+          deny:
+            - pkg: "unsafe"
+              desc: "unsafe запрещён (инвариант 9)"
+        external-research-isolation:
+          list-mode: lax
+          files:
+            - "**/cmd/external-research/**"
+          deny:
+            - pkg: "github.com/jackc/pgx"
+              desc: "External Research не имеет доступа к БД (инвариант 12)"
+            - pkg: "github.com/onixus/metis/internal/portfoliograph"
+              desc: "External Research не имеет доступа к внутренним данным (инвариант 12)"
+            - pkg: "github.com/onixus/metis/internal/signals"
+              desc: "External Research не имеет доступа к внутренним данным (инвариант 12)"
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+        - name: package-comments
+          disabled: true
+        - name: unused-parameter
+          disabled: true
+  exclusions:
+    paths:
+      - ".*\\.gen\\.go$"
+      - "internal/.*/internal/db/.*"
+    rules:
+      - path: '_test\.go'
+        linters: [forbidigo, gosec]
+      - path: 'cmd/.*/main\.go'
+        linters: [forbidigo]
+formatters:
+  enable:
+    - gofmt
+    - goimports

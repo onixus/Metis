@@ -1,0 +1,11 @@
+/bin/
+/dist/
+*.test
+*.out
+coverage.*
+.env
+.env.*
+web/node_modules/
+web/dist/
+sbom.*.json
+.DS_Store

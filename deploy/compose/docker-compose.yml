@@ -1,0 +1,60 @@
+# Стенд Метиды. Учётные данные стенда помечены metis-dev-only и не используются вне стенда.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: metis
+      POSTGRES_PASSWORD: metis-dev-only
+      POSTGRES_DB: metis
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U metis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm", "--http-port=8080"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: metis-dev-only
+    ports: ["8080:8080"]
+    volumes:
+      - ./keycloak/realm-metis.json:/opt/keycloak/data/import/realm-metis.json:ro
+  jira-mock:
+    image: wiremock/wiremock:3.9.1
+    command: ["--global-response-templating", "--port", "8090"]
+    ports: ["8090:8090"]
+    volumes:
+      - ./jira-mock:/home/wiremock:ro
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/Dockerfile
+      target: api
+    environment:
+      METIS_HTTP_ADDR: ":8081"
+      METIS_DATABASE_URL: postgres://metis:metis-dev-only@postgres:5432/metis?sslmode=disable
+      METIS_OIDC_ISSUER: http://keycloak:8080/realms/metis
+      METIS_OIDC_CLIENT_ID: metis-web
+      METIS_JIRA_BASE_URL: http://jira-mock:8090
+      METIS_OTEL_EXPORTER: stdout
+    ports: ["8081:8081"]
+    depends_on:
+      postgres: { condition: service_healthy }
+  worker:
+    build:
+      context: ../..
+      dockerfile: deploy/Dockerfile
+      target: worker
+    environment:
+      METIS_DATABASE_URL: postgres://metis:metis-dev-only@postgres:5432/metis?sslmode=disable
+      METIS_JIRA_BASE_URL: http://jira-mock:8090
+      METIS_OTEL_EXPORTER: stdout
+    depends_on:
+      postgres: { condition: service_healthy }
+volumes:
+  pgdata:

@@ -1,0 +1,42 @@
+{
+  "realm": "metis",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "metis-web",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:5173/*", "http://localhost:8081/*"],
+      "webOrigins": ["+"],
+      "protocolMappers": [
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": { "claim.name": "roles", "jsonType.label": "String", "multivalued": "true", "id.token.claim": "true", "access.token.claim": "true" }
+        },
+        {
+          "name": "products",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": { "user.attribute": "products", "claim.name": "products", "jsonType.label": "String", "multivalued": "true", "id.token.claim": "true", "access.token.claim": "true" }
+        }
+      ]
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "cpo" }, { "name": "pm" }, { "name": "dev_lead" }, { "name": "marketing" },
+      { "name": "finance" }, { "name": "compliance" }, { "name": "presale" }, { "name": "admin" }
+    ]
+  },
+  "users": [
+    { "username": "cpo", "enabled": true, "credentials": [{ "type": "password", "value": "metis-dev-only" }], "realmRoles": ["cpo"] },
+    { "username": "pm-vm", "enabled": true, "credentials": [{ "type": "password", "value": "metis-dev-only" }], "realmRoles": ["pm"], "attributes": { "products": ["vm"] } },
+    { "username": "pm-edr", "enabled": true, "credentials": [{ "type": "password", "value": "metis-dev-only" }], "realmRoles": ["pm"], "attributes": { "products": ["edr"] } },
+    { "username": "pm-soar", "enabled": true, "credentials": [{ "type": "password", "value": "metis-dev-only" }], "realmRoles": ["pm"], "attributes": { "products": ["soar"] } },
+    { "username": "presale", "enabled": true, "credentials": [{ "type": "password", "value": "metis-dev-only" }], "realmRoles": ["presale"] },
+    { "username": "admin-metis", "enabled": true, "credentials": [{ "type": "password", "value": "metis-dev-only" }], "realmRoles": ["admin"] }
+  ]
+}

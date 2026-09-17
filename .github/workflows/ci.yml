@@ -1,0 +1,75 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+env:
+  CGO_ENABLED: "0"
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: metis
+          POSTGRES_PASSWORD: metis-dev-only
+          POSTGRES_DB: metis_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U metis" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+      - name: go vet
+        run: go vet ./...
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with: { version: latest }
+      - name: unit tests
+        run: go test -race -count=1 -coverprofile=coverage.out ./...
+      - name: integration tests
+        env:
+          METIS_TEST_DATABASE_URL: postgres://metis:metis-dev-only@localhost:5432/metis_test?sslmode=disable
+        run: go test -race -count=1 -tags integration ./...
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+      - name: go-licenses
+        run: |
+          go install github.com/google/go-licenses/v2@latest
+          go-licenses check --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,Zlib,MPL-2.0 ./...
+      - name: SBOM CycloneDX
+        run: |
+          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
+          cyclonedx-gomod app -json -licenses -output sbom.api.json -main cmd/api .
+      - uses: actions/upload-artifact@v4
+        with: { name: sbom, path: sbom.api.json }
+      - name: build
+        run: go build -trimpath ./...
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  web:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - name: npm licenses
+        run: npx license-checker-rseidelsohn --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;Zlib;MPL-2.0;CC0-1.0;Unlicense;Python-2.0;BlueOak-1.0.0" --excludePrivatePackages

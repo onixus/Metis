@@ -37,12 +37,23 @@ services:
       target: api
     environment:
       METIS_HTTP_ADDR: ":8081"
+      METIS_STORAGE: postgres
       METIS_DATABASE_URL: postgres://metis:metis-dev-only@postgres:5432/metis?sslmode=disable
+      METIS_MIGRATE: "true"
+      METIS_SEED: "true"
+      # Стенд: hmac-токены (см. docs/questions.md №09); для Keycloak переключите на oidc.
+      METIS_AUTH_MODE: ${METIS_AUTH_MODE:-hmac}
+      METIS_HMAC_SECRET: ${METIS_HMAC_SECRET:-metis-dev-only-secret-0123456789abcdef}
       METIS_OIDC_ISSUER: http://keycloak:8080/realms/metis
       METIS_OIDC_CLIENT_ID: metis-web
       METIS_JIRA_BASE_URL: http://jira-mock:8090
+      METIS_JIRA_TOKEN: metis-dev-only
+      METIS_WEBHOOK_TOKEN: metis-dev-only-webhook
+      METIS_CRM_DIR: /fixtures/crm
       METIS_OTEL_EXPORTER: stdout
     ports: ["8081:8081"]
+    volumes:
+      - ../../fixtures/crm:/fixtures/crm:ro
     depends_on:
       postgres: { condition: service_healthy }
   worker:

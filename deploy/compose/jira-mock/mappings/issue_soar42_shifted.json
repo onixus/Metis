@@ -1,0 +1,15 @@
+{
+  "scenarioName": "epic-shift",
+  "requiredScenarioState": "Shifted",
+  "request": {
+    "method": "GET",
+    "urlPath": "/rest/api/2/issue/SOAR-42"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "issue_soar42_shifted.json"
+  }
+}

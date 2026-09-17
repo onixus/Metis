@@ -188,7 +188,7 @@ func (s Scope) Allows(action Action, product kernel.ID) bool {
 	case ActionReadPrivate:
 		return s.Product(product) >= AccessPrivate
 	case ActionWriteGraph, ActionWritePriority, ActionWriteRoadmap:
-		if s.HasRole(RoleAdmin) || s.HasRole(RoleCPO) {
+		if s.HasRole(RoleAdmin) || s.HasRole(RoleCPO) || s.HasRole(RoleService) {
 			return true
 		}
 		return s.HasRole(RolePM) && s.Product(product) >= AccessPrivate

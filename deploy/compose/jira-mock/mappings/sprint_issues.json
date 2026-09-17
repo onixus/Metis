@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/rest/agile/1.0/sprint/(101|102)/issue"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "sprint_issues_{{request.path.[4]}}.json",
+    "transformers": [
+      "response-template"
+    ]
+  }
+}

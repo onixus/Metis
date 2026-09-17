@@ -26,7 +26,7 @@ linters:
         domain-purity:
           list-mode: lax
           files:
-            - "**/internal/kernel/**"
+            - "**/internal/kernel/*.go"
             - "**/internal/portfoliograph/*.go"
             - "**/internal/signals/*.go"
             - "**/internal/prioritization/*.go"

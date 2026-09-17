@@ -1,0 +1,5 @@
+id,name,segment,arr,currency
+acc-001,ООО «Северный ветер»,enterprise,24000000.00,RUB
+acc-002,АО «Ромашка-Финанс»,finance,8500000.50,RUB
+acc-003,"=SUM(A1:A9)",smb,1200000,RUB
+acc-004,+Плюс Технологии,smb,0,RUB

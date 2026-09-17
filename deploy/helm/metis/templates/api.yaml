@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "metis.name" . }}-api
+  labels: {{- include "metis.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }   # обновление без простоя (NF-O05)
+  selector:
+    matchLabels: { app.kubernetes.io/component: api, app.kubernetes.io/instance: {{ .Release.Name }} }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        {{- include "metis.labels" . | nindent 8 }}
+    spec:
+      securityContext: { runAsNonRoot: true, runAsUser: 65532, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: api
+          image: "{{ .Values.image.registry }}/api:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+          ports: [{ name: http, containerPort: {{ .Values.api.port }} }]
+          env:
+            {{- include "metis.env" . | nindent 12 }}
+            - name: METIS_HTTP_ADDR
+              value: ":{{ .Values.api.port }}"
+            - name: METIS_AUTH_MODE
+              value: {{ .Values.config.authMode | quote }}
+            - name: METIS_OIDC_ISSUER
+              value: {{ .Values.config.oidcIssuer | quote }}
+            - name: METIS_OIDC_CLIENT_ID
+              value: {{ .Values.config.oidcClientId | quote }}
+            - name: METIS_CRM_DIR
+              value: {{ .Values.config.crmDir | quote }}
+            - name: METIS_WEBHOOK_TOKEN
+              valueFrom: { secretKeyRef: { name: {{ .Values.secrets.existingSecret }}, key: webhookToken, optional: true } }
+          readinessProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 10 }
+          resources: {{- toYaml .Values.api.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "metis.name" . }}-api
+  labels: {{- include "metis.labels" . | nindent 4 }}
+spec:
+  selector: { app.kubernetes.io/component: api, app.kubernetes.io/instance: {{ .Release.Name }} }
+  ports: [{ name: http, port: 80, targetPort: http }]

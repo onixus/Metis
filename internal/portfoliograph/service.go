@@ -16,6 +16,11 @@ type CommitmentChecker interface {
 	AffectedCommitments(ctx context.Context, affected []AffectedFeature, contracts []kernel.ID) ([]kernel.ID, error)
 }
 
+// Auditor — порт журнала аудита (AD-04): изменения дат фиксируются в домене, откуда бы они ни пришли.
+type Auditor interface {
+	DateChanged(ctx context.Context, actor string, featureID, productID kernel.ID, oldDate, newDate kernel.Date, reason string, affected int) error
+}
+
 // Service — публичный интерфейс модуля. Граф держится в памяти и синхронизируется с хранилищем.
 type Service struct {
 	mu          sync.RWMutex
@@ -24,6 +29,7 @@ type Service struct {
 	pub         kernel.Publisher
 	clock       kernel.Clock
 	commitments CommitmentChecker
+	auditor     Auditor
 	rollup      map[kernel.ID]FeatureValue
 	dirty       bool // rollup устарел; пересчитывается лениво при чтении или явно (NF-P04)
 	loaded      bool
@@ -37,6 +43,12 @@ func NewService(store Store, pub kernel.Publisher, clock kernel.Clock) *Service 
 // WithCommitments подключает порт обязательств.
 func (s *Service) WithCommitments(c CommitmentChecker) *Service {
 	s.commitments = c
+	return s
+}
+
+// WithAuditor подключает журнал аудита.
+func (s *Service) WithAuditor(a Auditor) *Service {
+	s.auditor = a
 	return s
 }
 
@@ -1045,6 +1057,11 @@ func (s *Service) ShiftFeatureDate(ctx context.Context, sc authz.Scope, id kerne
 	}{res, reason}
 	if err := s.emit(ctx, EventDateShifted, id, f.ProductID, sc.Subject(), payload); err != nil {
 		return ShiftResult{}, err
+	}
+	if s.auditor != nil {
+		if err := s.auditor.DateChanged(ctx, sc.Subject(), id, f.ProductID, res.OldDate, res.NewDate, reason, len(res.Affected)); err != nil {
+			return ShiftResult{}, fmt.Errorf("audit: %w", err)
+		}
 	}
 	return res, nil
 }

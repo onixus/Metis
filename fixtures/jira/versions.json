@@ -1,0 +1,14 @@
+[
+  {
+    "id": "20001",
+    "name": "SOAR 2.4",
+    "released": false,
+    "releaseDate": "2026-12-15"
+  },
+  {
+    "id": "20000",
+    "name": "SOAR 2.3",
+    "released": true,
+    "releaseDate": "2026-06-30"
+  }
+]

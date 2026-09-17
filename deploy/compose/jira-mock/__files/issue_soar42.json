@@ -1,0 +1,29 @@
+{
+  "id": "10042",
+  "key": "SOAR-42",
+  "fields": {
+    "summary": "Коннектор EDR v2",
+    "description": "Синтетический эпик: коннектор к EDR по контракту EDR ↔ SOAR.",
+    "status": {
+      "name": "In Progress",
+      "statusCategory": {
+        "key": "indeterminate"
+      }
+    },
+    "priority": {
+      "id": "3",
+      "name": "Medium"
+    },
+    "duedate": "2026-12-01",
+    "fixVersions": [
+      {
+        "id": "20001",
+        "name": "SOAR 2.4"
+      }
+    ],
+    "labels": [
+      "metis-feature-0192f3a0-0000-7000-8000-000000000042"
+    ],
+    "created": "2026-08-01T09:00:00.000+0300"
+  }
+}

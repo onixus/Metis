@@ -82,3 +82,15 @@ func TestNFS02_FinanceLevelDefaultsToNone(t *testing.T) {
 		t.Fatal("финансовый уровень выдаётся явно")
 	}
 }
+
+func TestAD02_ServiceRoleWritesOnBehalfOfConnectors(t *testing.T) {
+	s := authz.New(authz.Params{Subject: "service:worker", Roles: []authz.Role{authz.RoleService}, AllProducts: authz.AccessPrivate})
+	for _, a := range []authz.Action{authz.ActionWriteGraph, authz.ActionWriteRoadmap, authz.ActionWriteSignals} {
+		if !s.Allows(a, edr) {
+			t.Errorf("сервисная роль должна иметь %s", a)
+		}
+	}
+	if s.Allows(authz.ActionManageAccess, edr) || s.Allows(authz.ActionReadAudit, edr) {
+		t.Fatal("сервисная роль не администрирует")
+	}
+}

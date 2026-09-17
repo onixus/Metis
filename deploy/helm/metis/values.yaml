@@ -1,0 +1,34 @@
+# Значения по умолчанию. Секреты (URL БД с паролем, токен Jira) передаются через существующий Secret (NF-S04).
+image:
+  registry: registry.local/metis   # офлайн-реестр образов (NF-O02)
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+api:
+  replicas: 2
+  port: 8081
+  resources:
+    requests: { cpu: 200m, memory: 256Mi }
+    limits: { cpu: "1", memory: 1Gi }
+worker:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+config:
+  authMode: oidc
+  oidcIssuer: https://idp.example.internal/realms/metis
+  oidcClientId: metis-web
+  jiraBaseURL: ""      # пусто — адаптер Jira выключен (NF-L03)
+  crmDir: /data/crm
+  otelExporter: otlp
+  logLevel: info
+  migrateOnStart: true
+secrets:
+  existingSecret: metis-secrets   # ключи: databaseUrl, jiraToken, webhookToken
+ingress:
+  enabled: false
+  className: nginx
+  host: metis.example.internal
+  tls: true
+serviceMonitor:
+  enabled: false

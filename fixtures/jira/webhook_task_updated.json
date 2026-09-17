@@ -1,0 +1,25 @@
+{
+  "timestamp": 1766400001000,
+  "webhookEvent": "jira:issue_updated",
+  "issue": {
+    "id": "10103",
+    "key": "SOAR-103",
+    "fields": {
+      "issuetype": {
+        "id": "10001",
+        "name": "Task"
+      },
+      "summary": "Изоляция хоста"
+    }
+  },
+  "changelog": {
+    "id": "50002",
+    "items": [
+      {
+        "field": "status",
+        "fromString": "To Do",
+        "toString": "In Progress"
+      }
+    ]
+  }
+}

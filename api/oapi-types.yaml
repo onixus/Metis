@@ -1,0 +1,6 @@
+# Клиентские типы для тестов e2e (Go-клиент).
+package: client
+output: tests/e2e/client/client.gen.go
+generate:
+  client: true
+  models: true

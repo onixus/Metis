@@ -1,0 +1,55 @@
+{
+  "startAt": 0,
+  "maxResults": 100,
+  "total": 2,
+  "issues": [
+    {
+      "id": "10101",
+      "key": "SOAR-101",
+      "fields": {
+        "summary": "Схема событий EDR",
+        "status": {
+          "name": "Done",
+          "statusCategory": {
+            "key": "done"
+          }
+        },
+        "created": "2026-08-02T10:00:00.000+0300",
+        "closedSprints": [
+          {
+            "id": 101,
+            "name": "SOAR Sprint 7",
+            "state": "closed"
+          }
+        ],
+        "sprint": null
+      }
+    },
+    {
+      "id": "10102",
+      "key": "SOAR-102",
+      "fields": {
+        "summary": "Клиент REST EDR",
+        "status": {
+          "name": "Done",
+          "statusCategory": {
+            "key": "done"
+          }
+        },
+        "created": "2026-08-02T10:05:00.000+0300",
+        "closedSprints": [
+          {
+            "id": 101,
+            "name": "SOAR Sprint 7",
+            "state": "closed"
+          }
+        ],
+        "sprint": {
+          "id": 102,
+          "name": "SOAR Sprint 8",
+          "state": "active"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "maxResults": 50,
+  "startAt": 0,
+  "isLast": true,
+  "values": [
+    {
+      "id": 101,
+      "state": "closed",
+      "name": "SOAR Sprint 7",
+      "goal": "Схема и клиент EDR",
+      "startDate": "2026-08-03T09:00:00.000+03:00",
+      "endDate": "2026-08-17T18:00:00.000+03:00",
+      "originBoardId": 7
+    },
+    {
+      "id": 102,
+      "state": "active",
+      "name": "SOAR Sprint 8",
+      "goal": "Изоляция хоста и завершение клиента",
+      "startDate": "2026-08-18T09:00:00.000+03:00",
+      "endDate": "2026-09-01T18:00:00.000+03:00",
+      "originBoardId": 7
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: db/kernel/migrations
+    queries: db/kernel/queries
+    gen:
+      go:
+        package: db
+        out: internal/kernel/outbox/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: &overrides
+          - db_type: "uuid"
+            go_type: "github.com/google/uuid.UUID"
+          - db_type: "uuid"
+            nullable: true
+            go_type: "github.com/google/uuid.NullUUID"
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+  - engine: postgresql
+    schema: db/audit/migrations
+    queries: db/audit/queries
+    gen:
+      go:
+        package: db
+        out: internal/audit/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides
+  - engine: postgresql
+    schema: db/portfoliograph/migrations
+    queries: db/portfoliograph/queries
+    gen:
+      go:
+        package: db
+        out: internal/portfoliograph/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides

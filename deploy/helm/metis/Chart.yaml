@@ -1,0 +1,6 @@
+apiVersion: v2
+name: metis
+description: Метида — платформа управления продуктовым портфелем
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,19 @@
+{
+  "priority": 4,
+  "request": {
+    "method": "GET",
+    "urlPath": "/rest/api/2/search",
+    "queryParameters": {
+      "jql": {
+        "contains": "Epic Link"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "epic_issues.json"
+  }
+}

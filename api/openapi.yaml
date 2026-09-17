@@ -1,0 +1,1323 @@
+openapi: 3.0.3
+info:
+  title: Метида — API платформы управления продуктовым портфелем
+  version: 0.1.0
+  description: |
+    Источник правды для серверных интерфейсов и клиента (NF-M04).
+    Авторизация: Bearer-токен OIDC. Все ответы об ошибках — application/problem+json.
+    Аудитория roadmap и уровень доступа к продукту берутся из области доступа субъекта, а не из параметров.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: system
+  - name: portfolio
+  - name: features
+  - name: links
+  - name: contracts
+  - name: signals
+  - name: prioritization
+  - name: roadmap
+  - name: delivery
+  - name: admin
+paths:
+  /me:
+    get:
+      tags: [system]
+      operationId: getMe
+      summary: Область доступа текущего субъекта
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  /products:
+    get:
+      tags: [portfolio]
+      operationId: listProducts
+      summary: Продукты, видимые субъекту
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Product" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [portfolio]
+      operationId: createProduct
+      summary: Создать продукт (PG-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [portfolio]
+      operationId: getProduct
+      summary: Продукт
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [portfolio]
+      operationId: updateProduct
+      summary: Изменить продукт
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/strategic:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [portfolio]
+      operationId: getStrategicSlice
+      summary: Стратегический срез продукта (PG-10)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StrategicSlice" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/capabilities:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    post:
+      tags: [features]
+      operationId: createCapability
+      summary: Создать возможность (PG-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Capability" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/features:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [features]
+      operationId: listFeatures
+      summary: Фичи продукта (приватный контур)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Feature" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [features]
+      operationId: createFeature
+      summary: Создать фичу (PG-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeatureInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Feature" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/feature-values:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [features]
+      operationId: listFeatureValues
+      summary: Rollup производного спроса по продукту (PG-07)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/FeatureValue" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    get:
+      tags: [features]
+      operationId: getFeature
+      summary: Фича
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Feature" }
+        default: { $ref: "#/components/responses/Problem" }
+    patch:
+      tags: [features]
+      operationId: updateFeature
+      summary: Изменить фичу (дата — через shift-date)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeatureInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Feature" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}/requirements:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    post:
+      tags: [features]
+      operationId: createRequirement
+      summary: Добавить требование (PG-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Requirement" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}/shift-date:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    post:
+      tags: [features]
+      operationId: shiftFeatureDate
+      summary: Изменить плановую дату с причиной и распространить сдвиг (PG-08, RM-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planned_date, reason]
+              properties:
+                planned_date: { type: string, format: date }
+                reason: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShiftResult" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}/value:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    get:
+      tags: [features]
+      operationId: getFeatureValue
+      summary: Rollup одной фичи (PG-07)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeatureValue" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  /links:
+    get:
+      tags: [links]
+      operationId: listLinks
+      summary: Связи, видимые субъекту (PG-03, PG-09)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Link" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [links]
+      operationId: createLink
+      summary: Создать связь; при цикле — 409 с путём (PG-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LinkInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Link" }
+        "409":
+          description: Цикл в графе зависимостей фич
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/CycleProblem" }
+        default: { $ref: "#/components/responses/Problem" }
+  /links/{linkId}:
+    parameters:
+      - name: linkId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [links]
+      operationId: deleteLink
+      summary: Удалить связь
+      responses:
+        "204": { description: Удалено }
+        default: { $ref: "#/components/responses/Problem" }
+  /hubs:
+    get:
+      tags: [links]
+      operationId: listHubs
+      summary: Роль хаба по входящей связности (PG-06)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/HubInfo" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  /contracts:
+    get:
+      tags: [contracts]
+      operationId: listContracts
+      summary: Интеграционные контракты (PG-04)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Contract" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [contracts]
+      operationId: createContract
+      summary: Создать контракт
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContractInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Contract" }
+        "409":
+          description: Цикл в графе зависимостей фич
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/CycleProblem" }
+        default: { $ref: "#/components/responses/Problem" }
+  /contracts/{contractId}:
+    parameters:
+      - name: contractId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [contracts]
+      operationId: getContract
+      summary: Контракт со сроком готовности
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Contract" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [contracts]
+      operationId: updateContract
+      summary: Изменить контракт
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContractInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Contract" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  /admin/settings/graph:
+    get:
+      tags: [admin]
+      operationId: getGraphSettings
+      summary: Коэффициенты критичности (PG-07)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GraphSettings" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [admin]
+      operationId: updateGraphSettings
+      summary: Изменить коэффициенты
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GraphSettings" }
+      responses:
+        "204": { description: OK }
+        default: { $ref: "#/components/responses/Problem" }
+  /admin/audit/verify:
+    post:
+      tags: [admin]
+      operationId: verifyAudit
+      summary: Проверка целостности журнала аудита (NF-S05)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditVerifyResult" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  /products/{productId}/signals:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [signals]
+      operationId: listSignals
+      summary: Сигналы продукта (приватный контур)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: array
+            items: { type: string, enum: [new, in_review, linked, rejected, merged] }
+        - name: feature_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Signal" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [signals]
+      operationId: ingestSignal
+      summary: Принять сигнал вручную (SG-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SignalInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Signal" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/signals/triage:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [signals]
+      operationId: triageQueue
+      summary: Очередь разбора по сроку (SG-03)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Signal" }
+        default: { $ref: "#/components/responses/Problem" }
+  /signals/import/crm:
+    post:
+      tags: [signals]
+      operationId: importSignalsFromCRM
+      summary: Импорт сигналов из порта CRM (SG-01)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportResult" }
+        default: { $ref: "#/components/responses/Problem" }
+  /signals/{signalId}:
+    parameters:
+      - $ref: "#/components/parameters/signalId"
+    get:
+      tags: [signals]
+      operationId: getSignal
+      summary: Сигнал
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Signal" }
+        default: { $ref: "#/components/responses/Problem" }
+  /signals/{signalId}/triage:
+    parameters:
+      - $ref: "#/components/parameters/signalId"
+    post:
+      tags: [signals]
+      operationId: triageSignal
+      summary: Изменить статус и срок разбора (SG-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [new, in_review, rejected] }
+                due_date: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Signal" }
+        default: { $ref: "#/components/responses/Problem" }
+  /signals/{signalId}/link:
+    parameters:
+      - $ref: "#/components/parameters/signalId"
+    post:
+      tags: [signals]
+      operationId: linkSignal
+      summary: Привязать к фиче или контракту с сохранением денежного веса (SG-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feature_id: { type: string, format: uuid }
+                contract_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Signal" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  /scoring-models:
+    get:
+      tags: [prioritization]
+      operationId: listScoringModels
+      summary: Модели оценки (PR-01)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ScoringModel" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [prioritization]
+      operationId: createScoringModel
+      summary: Создать модель оценки
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScoringModelInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScoringModel" }
+        default: { $ref: "#/components/responses/Problem" }
+  /scoring-models/{modelId}:
+    parameters:
+      - $ref: "#/components/parameters/modelId"
+    put:
+      tags: [prioritization]
+      operationId: updateScoringModel
+      summary: Изменить модель
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScoringModelInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScoringModel" }
+        default: { $ref: "#/components/responses/Problem" }
+  /scoring-models/{modelId}/features/{featureId}/inputs:
+    parameters:
+      - $ref: "#/components/parameters/modelId"
+      - $ref: "#/components/parameters/featureId"
+    put:
+      tags: [prioritization]
+      operationId: setFeatureScoreInputs
+      summary: Задать входные переменные фичи
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [values]
+              properties:
+                values:
+                  type: object
+                  additionalProperties: { type: string, description: Десятичное число строкой }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScoreResult" }
+        default: { $ref: "#/components/responses/Problem" }
+  /scoring-models/{modelId}/products/{productId}/ranking:
+    parameters:
+      - $ref: "#/components/parameters/modelId"
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [prioritization]
+      operationId: getRanking
+      summary: Ранжирование фич продукта по модели (PR-01…PR-03)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ScoreResult" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  /products/{productId}/roadmap/items:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [roadmap]
+      operationId: listRoadmapItems
+      summary: Элементы roadmap (внутренняя аудитория)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RoadmapItem" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [roadmap]
+      operationId: createRoadmapItem
+      summary: Создать элемент roadmap
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoadmapItemInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoadmapItem" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/roadmap/timeline:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [roadmap]
+      operationId: getRoadmapTimeline
+      summary: Timeline (RM-01); срез по аудитории субъекта (RM-02)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoadmapTimeline" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/roadmap/now-next-later:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [roadmap]
+      operationId: getRoadmapNowNextLater
+      summary: Now/Next/Later (RM-01)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoadmapNowNextLater" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/roadmap/by-release:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [roadmap]
+      operationId: getRoadmapByRelease
+      summary: По релизам (RM-01)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoadmapByRelease" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/releases:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [roadmap]
+      operationId: listReleases
+      summary: Релизы продукта
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Release" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [roadmap]
+      operationId: createRelease
+      summary: Создать релиз
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReleaseInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Release" }
+        default: { $ref: "#/components/responses/Problem" }
+  /roadmap/items/{itemId}:
+    parameters:
+      - $ref: "#/components/parameters/itemId"
+    patch:
+      tags: [roadmap]
+      operationId: updateRoadmapItem
+      summary: Изменить элемент (даты — через change-dates)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoadmapItemInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoadmapItem" }
+        default: { $ref: "#/components/responses/Problem" }
+  /roadmap/items/{itemId}/change-dates:
+    parameters:
+      - $ref: "#/components/parameters/itemId"
+    post:
+      tags: [roadmap]
+      operationId: changeRoadmapItemDates
+      summary: Изменить даты с обязательной причиной (RM-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                start_date: { type: string, format: date }
+                end_date: { type: string, format: date }
+                reason: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoadmapItem" }
+        default: { $ref: "#/components/responses/Problem" }
+  /roadmap/items/{itemId}/history:
+    parameters:
+      - $ref: "#/components/parameters/itemId"
+    get:
+      tags: [roadmap]
+      operationId: getRoadmapItemHistory
+      summary: История изменений дат (RM-03)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DateChange" }
+        default: { $ref: "#/components/responses/Problem" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    productId:
+      name: productId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    featureId:
+      name: featureId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    signalId:
+      name: signalId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    modelId:
+      name: modelId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    itemId:
+      name: itemId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Problem:
+      description: Ошибка
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        field: { type: string }
+    CycleProblem:
+      allOf:
+        - $ref: "#/components/schemas/Problem"
+        - type: object
+          required: [cycle]
+          properties:
+            cycle:
+              type: array
+              items: { type: string, format: uuid }
+              description: Путь цикла f1 → f2 → … → f1
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount: { type: integer, format: int64, description: Минорные единицы }
+        currency: { type: string }
+    Me:
+      type: object
+      required: [subject, roles, audience, all_products, products]
+      properties:
+        subject: { type: string }
+        roles:
+          type: array
+          items: { type: string }
+        audience: { type: string, enum: [internal, sales_safe] }
+        all_products: { type: string, enum: [none, strategic, private] }
+        products:
+          type: object
+          additionalProperties: { type: string, enum: [none, strategic, private] }
+    ProductInput:
+      type: object
+      required: [key, name, type]
+      properties:
+        key: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [security, infrastructure, platform, other] }
+        owner: { type: string }
+        lifecycle: { type: string, enum: [idea, active, sunset, retired] }
+        ssdlc_certified: { type: boolean }
+        hub_manual: { type: boolean }
+    Product:
+      allOf:
+        - $ref: "#/components/schemas/ProductInput"
+        - type: object
+          required: [id, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    Capability:
+      type: object
+      required: [id, product_id, name]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        name: { type: string }
+    FeatureInput:
+      type: object
+      properties:
+        capability_id: { type: string, format: uuid }
+        name: { type: string }
+        status: { type: string, enum: [idea, discovery, planned, in_progress, done, rejected] }
+        planned_date: { type: string, format: date }
+        external_key: { type: string }
+    Feature:
+      type: object
+      required: [id, product_id, name, status, own_value, affected]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        capability_id: { type: string, format: uuid }
+        name: { type: string }
+        status: { type: string, enum: [idea, discovery, planned, in_progress, done, rejected] }
+        own_value: { $ref: "#/components/schemas/Money" }
+        planned_date: { type: string, format: date, nullable: true }
+        affected: { type: boolean }
+        affected_by: { type: string, format: uuid }
+        implied_date: { type: string, format: date, nullable: true }
+        external_key: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Requirement:
+      type: object
+      required: [id, product_id, feature_id, text]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        feature_id: { type: string, format: uuid }
+        text: { type: string }
+    FeatureValue:
+      type: object
+      required: [feature_id, product_id, own_value, derived_value, total_value, computed_at]
+      properties:
+        feature_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        own_value: { $ref: "#/components/schemas/Money" }
+        derived_value: { $ref: "#/components/schemas/Money" }
+        total_value: { $ref: "#/components/schemas/Money" }
+        computed_at: { type: string, format: date-time }
+    LinkInput:
+      type: object
+      required: [type, criticality]
+      properties:
+        type: { type: string, enum: [integration, shared_component, commercial, bundled] }
+        from_product_id: { type: string, format: uuid }
+        to_product_id: { type: string, format: uuid }
+        from_feature_id: { type: string, format: uuid }
+        to_feature_id: { type: string, format: uuid }
+        criticality: { type: string, enum: [blocks, accelerates, desirable] }
+        contract_id: { type: string, format: uuid }
+    Link:
+      allOf:
+        - $ref: "#/components/schemas/LinkInput"
+        - type: object
+          required: [id, from_product_id, to_product_id, created_at]
+          properties:
+            id: { type: string, format: uuid }
+            created_at: { type: string, format: date-time }
+    HubInfo:
+      type: object
+      required: [product_id, in_degree, manual, computed]
+      properties:
+        product_id: { type: string, format: uuid }
+        in_degree: { type: integer }
+        manual: { type: boolean }
+        computed: { type: boolean }
+    VersionPair:
+      type: object
+      required: [provider_version, consumer_version, compatible]
+      properties:
+        provider_version: { type: string }
+        consumer_version: { type: string }
+        compatible: { type: boolean }
+    ContractInput:
+      type: object
+      required: [name, provider_product_id, consumer_product_id, criticality]
+      properties:
+        name: { type: string }
+        provider_product_id: { type: string, format: uuid }
+        consumer_product_id: { type: string, format: uuid }
+        provider_feature_ids:
+          type: array
+          items: { type: string, format: uuid }
+        consumer_feature_ids:
+          type: array
+          items: { type: string, format: uuid }
+        interface_version: { type: string }
+        owner: { type: string }
+        status: { type: string, enum: [draft, active, deprecated] }
+        criticality: { type: string, enum: [blocks, accelerates, desirable] }
+        compatibility:
+          type: array
+          items: { $ref: "#/components/schemas/VersionPair" }
+    Contract:
+      allOf:
+        - $ref: "#/components/schemas/ContractInput"
+        - type: object
+          required: [id, signal_value, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            signal_value: { $ref: "#/components/schemas/Money" }
+            ready_date: { type: string, format: date, nullable: true }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    AffectedFeature:
+      type: object
+      required: [feature_id, product_id, via_feature, depth]
+      properties:
+        feature_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        planned_date: { type: string, format: date, nullable: true }
+        implied_date: { type: string, format: date, nullable: true }
+        via_feature: { type: string, format: uuid }
+        depth: { type: integer }
+    ShiftResult:
+      type: object
+      required: [source_feature, new_date, affected, contracts, commitments]
+      properties:
+        source_feature: { type: string, format: uuid }
+        old_date: { type: string, format: date, nullable: true }
+        new_date: { type: string, format: date }
+        affected:
+          type: array
+          items: { $ref: "#/components/schemas/AffectedFeature" }
+        contracts:
+          type: array
+          items: { type: string, format: uuid }
+        commitments:
+          type: array
+          items: { type: string, format: uuid }
+    StrategicFeature:
+      type: object
+      required: [id, name, status, total_value, affected]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        status: { type: string }
+        total_value: { $ref: "#/components/schemas/Money" }
+        planned_date: { type: string, format: date, nullable: true }
+        affected: { type: boolean }
+    StrategicSlice:
+      type: object
+      required: [product, features, contracts]
+      properties:
+        product: { $ref: "#/components/schemas/Product" }
+        features:
+          type: array
+          items: { $ref: "#/components/schemas/StrategicFeature" }
+        contracts:
+          type: array
+          items: { $ref: "#/components/schemas/Contract" }
+    GraphSettings:
+      type: object
+      required: [coefficients]
+      properties:
+        coefficients:
+          type: object
+          description: Коэффициенты критичности как десятичные строки
+          additionalProperties: { type: string }
+    AuditVerifyResult:
+      type: object
+      required: [checked, ok]
+      properties:
+        checked: { type: integer, format: int64 }
+        ok: { type: boolean }
+        broken_seq: { type: integer, format: int64 }
+        reason: { type: string }
+
+    SignalInput:
+      type: object
+      required: [source, text]
+      properties:
+        source: { type: string, enum: [crm, service_desk, manual, import] }
+        text: { type: string }
+        external_key: { type: string }
+        account_id: { type: string }
+        deal_id: { type: string }
+        version: { type: string }
+        segment: { type: string }
+        deal_amount: { $ref: "#/components/schemas/Money" }
+        account_arr: { $ref: "#/components/schemas/Money" }
+        blocks_deal: { type: boolean }
+    Signal:
+      type: object
+      required: [id, product_id, source, text, weight, account_arr, blocks_deal, status, created_by, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        source: { type: string, enum: [crm, service_desk, manual, import] }
+        text: { type: string }
+        external_key: { type: string }
+        account_id: { type: string }
+        deal_id: { type: string }
+        version: { type: string }
+        segment: { type: string }
+        weight: { $ref: "#/components/schemas/Money" }
+        account_arr: { $ref: "#/components/schemas/Money" }
+        blocks_deal: { type: boolean }
+        status: { type: string, enum: [new, in_review, linked, rejected, merged] }
+        due_date: { type: string, format: date, nullable: true }
+        feature_id: { type: string, format: uuid }
+        contract_id: { type: string, format: uuid }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ImportResult:
+      type: object
+      required: [imported, skipped]
+      properties:
+        imported: { type: integer }
+        skipped:
+          type: object
+          additionalProperties: { type: string }
+    ScoringModelInput:
+      type: object
+      required: [name, type]
+      properties:
+        product_id: { type: string, format: uuid, description: Пусто — портфельная модель }
+        name: { type: string }
+        type: { type: string, enum: [rice, wsjf, custom] }
+        formula: { type: string }
+        inputs:
+          type: array
+          items: { type: string }
+    ScoringModel:
+      type: object
+      required: [id, name, type, formula, inputs, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string, enum: [rice, wsjf, custom] }
+        formula: { type: string }
+        inputs:
+          type: array
+          items: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ScoreComponent:
+      type: object
+      required: [name, value, system]
+      properties:
+        name: { type: string }
+        value: { type: string }
+        system: { type: boolean }
+    ScoreResult:
+      type: object
+      required: [model_id, feature_id, product_id, score, components, explanation]
+      properties:
+        model_id: { type: string, format: uuid }
+        feature_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        score: { type: string, description: Десятичное число строкой }
+        components:
+          type: array
+          items: { $ref: "#/components/schemas/ScoreComponent" }
+        explanation: { type: string }
+    RoadmapItemInput:
+      type: object
+      properties:
+        feature_id: { type: string, format: uuid }
+        title: { type: string }
+        bucket: { type: string, enum: [now, next, later] }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        release_id: { type: string, format: uuid }
+        audience: { type: string, enum: [internal, sales_safe] }
+        status: { type: string, enum: [planned, in_progress, done, cancelled] }
+    RoadmapItem:
+      type: object
+      required: [id, product_id, title, bucket, audience, status, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        feature_id: { type: string, format: uuid }
+        title: { type: string }
+        bucket: { type: string, enum: [now, next, later] }
+        start_date: { type: string, format: date, nullable: true }
+        end_date: { type: string, format: date, nullable: true }
+        release_id: { type: string, format: uuid }
+        audience: { type: string, enum: [internal, sales_safe] }
+        status: { type: string, enum: [planned, in_progress, done, cancelled] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SalesSafeItem:
+      type: object
+      required: [id, product_id, title, bucket]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        title: { type: string }
+        bucket: { type: string, enum: [now, next, later] }
+        start_date: { type: string, format: date, nullable: true }
+        end_date: { type: string, format: date, nullable: true }
+        release_id: { type: string, format: uuid }
+    RoadmapGroup:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RoadmapItem" }
+        sales_safe:
+          type: array
+          items: { $ref: "#/components/schemas/SalesSafeItem" }
+    RoadmapTimeline:
+      type: object
+      required: [product_id, audience]
+      properties:
+        product_id: { type: string, format: uuid }
+        audience: { type: string, enum: [internal, sales_safe] }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RoadmapItem" }
+        sales_safe:
+          type: array
+          items: { $ref: "#/components/schemas/SalesSafeItem" }
+    RoadmapNowNextLater:
+      type: object
+      required: [product_id, audience, now, next, later]
+      properties:
+        product_id: { type: string, format: uuid }
+        audience: { type: string, enum: [internal, sales_safe] }
+        now: { $ref: "#/components/schemas/RoadmapGroup" }
+        next: { $ref: "#/components/schemas/RoadmapGroup" }
+        later: { $ref: "#/components/schemas/RoadmapGroup" }
+    ReleaseGroup:
+      type: object
+      required: [release]
+      properties:
+        release: { $ref: "#/components/schemas/Release" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RoadmapItem" }
+        sales_safe:
+          type: array
+          items: { $ref: "#/components/schemas/SalesSafeItem" }
+    RoadmapByRelease:
+      type: object
+      required: [product_id, audience, releases, unassigned]
+      properties:
+        product_id: { type: string, format: uuid }
+        audience: { type: string, enum: [internal, sales_safe] }
+        releases:
+          type: array
+          items: { $ref: "#/components/schemas/ReleaseGroup" }
+        unassigned: { $ref: "#/components/schemas/RoadmapGroup" }
+    ReleaseInput:
+      type: object
+      required: [name, version]
+      properties:
+        name: { type: string }
+        version: { type: string }
+        planned_date: { type: string, format: date }
+        status: { type: string, enum: [planned, released, eol] }
+    Release:
+      type: object
+      required: [id, product_id, name, version, status, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        name: { type: string }
+        version: { type: string }
+        planned_date: { type: string, format: date, nullable: true }
+        status: { type: string, enum: [planned, released, eol] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    DateChange:
+      type: object
+      required: [id, item_id, product_id, reason, actor, at]
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        old_start: { type: string, format: date, nullable: true }
+        old_end: { type: string, format: date, nullable: true }
+        new_start: { type: string, format: date, nullable: true }
+        new_end: { type: string, format: date, nullable: true }
+        reason: { type: string }
+        actor: { type: string }
+        at: { type: string, format: date-time }
+        event_id: { type: string, format: uuid }

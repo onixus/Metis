@@ -1,0 +1,48 @@
+{
+  "timestamp": 1766400000000,
+  "webhookEvent": "jira:issue_updated",
+  "issue_event_type_name": "issue_updated",
+  "user": {
+    "name": "svc-metis",
+    "displayName": "Сервисная учётка"
+  },
+  "issue": {
+    "id": "10042",
+    "key": "SOAR-42",
+    "fields": {
+      "issuetype": {
+        "id": "10000",
+        "name": "Epic"
+      },
+      "summary": "Коннектор EDR v2",
+      "duedate": "2026-12-22",
+      "status": {
+        "name": "In Progress",
+        "statusCategory": {
+          "key": "indeterminate"
+        }
+      }
+    }
+  },
+  "changelog": {
+    "id": "50001",
+    "items": [
+      {
+        "field": "duedate",
+        "fieldtype": "jira",
+        "from": "2026-12-01",
+        "fromString": "2026-12-01",
+        "to": "2026-12-22",
+        "toString": "2026-12-22"
+      },
+      {
+        "field": "Fix Version",
+        "fieldtype": "jira",
+        "from": null,
+        "fromString": null,
+        "to": "20002",
+        "toString": "SOAR 2.5"
+      }
+    ]
+  }
+}

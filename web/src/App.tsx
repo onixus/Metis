@@ -9,6 +9,11 @@ import { Loading } from './components/Status'
 import { ru } from './i18n/ru'
 import { AdminPage } from './pages/AdminPage'
 import { CallbackPage } from './pages/CallbackPage'
+import { CommitmentsPage } from './pages/CommitmentsPage'
+import { ComplianceDashboardPage, CompliancePage } from './pages/CompliancePage'
+import { DecisionsPage } from './pages/DecisionsPage'
+import { DiscoveryPage } from './pages/DiscoveryPage'
+import { TracePage } from './pages/TracePage'
 import { DeliveryPage } from './pages/DeliveryPage'
 import { HubPage } from './pages/HubPage'
 import { LoginPage } from './pages/LoginPage'
@@ -63,6 +68,13 @@ export default function App() {
                 <Route path="/products/:id/edit" element={<ProductBuilderPage />} />
                 <Route path="/products/:id" element={<ProductPage />} />
                 <Route path="/products/:id/roadmap" element={<RoadmapPage />} />
+                <Route path="/products/:id/discovery" element={<DiscoveryPage />} />
+                <Route path="/products/:id/commitments" element={<CommitmentsPage />} />
+                <Route path="/products/:id/compliance" element={<CompliancePage />} />
+                <Route path="/products/:id/decisions" element={<DecisionsPage />} />
+                <Route path="/decisions" element={<DecisionsPage />} />
+                <Route path="/compliance" element={<ComplianceDashboardPage />} />
+                <Route path="/trace/:kind/:id" element={<TracePage />} />
                 <Route path="/hub" element={<HubPage />} />
                 <Route path="/delivery" element={<DeliveryPage />} />
                 <Route path="/admin" element={<AdminPage />} />

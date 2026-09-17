@@ -3,7 +3,7 @@ import { ApiError } from '../api/client'
 import { useMe } from '../api/hooks'
 import { useAuth } from '../auth/useAuth'
 import { ru } from '../i18n/ru'
-import { isAdmin } from '../lib/roles'
+import { canSeeCompliance, isAdmin } from '../lib/roles'
 import { Badge } from './Status'
 
 export function Layout() {
@@ -27,6 +27,8 @@ export function Layout() {
           <NavLink to="/graph">{ru.nav.graph}</NavLink>
           <NavLink to="/hub">{ru.nav.hub}</NavLink>
           <NavLink to="/delivery">{ru.nav.delivery}</NavLink>
+          {me.data?.audience === 'internal' && <NavLink to="/decisions">{ru.nav2.decisions}</NavLink>}
+          {canSeeCompliance(me.data) && <NavLink to="/compliance">{ru.nav2.compliance}</NavLink>}
           {admin && <NavLink to="/admin">{ru.nav.admin}</NavLink>}
         </nav>
         <div className="me">

@@ -446,7 +446,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Привязать к фиче или контракту с сохранением денежного веса (SG-05) */
+        /** Привязать к фиче, контракту или гипотезе с сохранением денежного веса (SG-05, DS-01) */
         post: operations["linkSignal"];
         delete?: never;
         options?: never;
@@ -679,6 +679,1064 @@ export interface paths {
         get: operations["getRoadmapItemHistory"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/releases/{releaseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        /** Релиз с матрицей совместимости (RM-05); sales-safe аудитория без release notes и состава */
+        get: operations["getRelease"];
+        /** Изменить релиз, ветку и EOL (RM-04, RM-05) */
+        put: operations["updateRelease"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/releases/{releaseId}/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Задать состав релиза (RM-05) */
+        put: operations["setReleaseFeatures"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/releases/{releaseId}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Задать release notes (RM-05) */
+        put: operations["setReleaseNotes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/releases/{releaseId}/eol": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Задать дату окончания поддержки (RM-05) */
+        put: operations["setReleaseEOL"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/releases/{releaseId}/mark-ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Перевести релиз в ready_for_certification; 409, пока гейты SSDLC не закрыты (RM-05, CM-05) */
+        post: operations["markReleaseReady"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/releases/{releaseId}/readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        /** Готовность релиза к сертификации (CM-05) */
+        get: operations["getReleaseReadiness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scoring-models/{modelId}/products/{productId}/rank": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                modelId: components["parameters"]["modelId"];
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Ранжирование с отдельным списком регуляторно обязательных фич (PR-04) */
+        get: operations["getRankingResult"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/features/{featureId}/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        /** Флаги фичи (PR-04) */
+        get: operations["getFeatureFlags"];
+        /** Пометить фичу регуляторно обязательной (PR-04) */
+        put: operations["setFeatureFlags"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/features/{featureId}/cost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        /** Стоимость фичи с подтверждением изменений (PR-05) */
+        get: operations["getFeatureCost"];
+        /** Задать стоимость разработки (PR-05) */
+        put: operations["setFeatureDevCost"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/hypotheses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Гипотезы продукта (DS-01) */
+        get: operations["listHypotheses"];
+        put?: never;
+        /** Создать гипотезу (DS-01) */
+        post: operations["createHypothesis"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hypotheses/{hypothesisId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hypothesisId: components["parameters"]["hypothesisId"];
+            };
+            cookie?: never;
+        };
+        /** Гипотеза */
+        get: operations["getHypothesis"];
+        /** Изменить гипотезу (статус — через /status) */
+        put: operations["updateHypothesis"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hypotheses/{hypothesisId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hypothesisId: components["parameters"]["hypothesisId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Сменить статус гипотезы (DS-01, AD-03) */
+        post: operations["changeHypothesisStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Интервью продукта (DS-02) */
+        get: operations["listInterviews"];
+        put?: never;
+        /** Создать интервью (DS-02) */
+        post: operations["createInterview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/interviews/{interviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interviewId: components["parameters"]["interviewId"];
+            };
+            cookie?: never;
+        };
+        /** Интервью */
+        get: operations["getInterview"];
+        /** Изменить интервью */
+        put: operations["updateInterview"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Инсайты продукта (DS-02) */
+        get: operations["listInsights"];
+        put?: never;
+        /** Создать инсайт (DS-02) */
+        post: operations["createInsight"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/insights/{insightId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                insightId: components["parameters"]["insightId"];
+            };
+            cookie?: never;
+        };
+        /** Инсайт */
+        get: operations["getInsight"];
+        /** Изменить инсайт */
+        put: operations["updateInsight"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Evidence продукта (DS-03) */
+        get: operations["listEvidence"];
+        put?: never;
+        /** Добавить evidence (DS-03) */
+        post: operations["createEvidence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evidence/{evidenceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidenceId: components["parameters"]["evidenceId"];
+            };
+            cookie?: never;
+        };
+        /** Evidence */
+        get: operations["getEvidence"];
+        /** Изменить evidence (в т. ч. статус проверки) */
+        put: operations["updateEvidence"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trace/{kind}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "signal" | "insight" | "hypothesis" | "feature";
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Трассировка «сигнал → инсайт → гипотеза → фича → решение» (DS-04) */
+        get: operations["getTrace"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/signals/{signalId}/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                signalId: components["parameters"]["signalId"];
+            };
+            cookie?: never;
+        };
+        /** Похожие сигналы продукта (SG-04) */
+        get: operations["getSimilarSignals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/signals/{signalId}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                signalId: components["parameters"]["signalId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Слить дубликаты в сигнал (SG-04) */
+        post: operations["mergeSignals"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/custom-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Кастомные поля сущности (AD-03) */
+        get: operations["listCustomFields"];
+        put?: never;
+        /** Определить или обновить кастомное поле (AD-03) */
+        post: operations["defineCustomField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/custom-statuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Пользовательские статусы сущности (AD-03) */
+        get: operations["listCustomStatuses"];
+        put?: never;
+        /** Определить пользовательский статус (AD-03) */
+        post: operations["defineCustomStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/commitments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Обязательства продукта (CT-01, CT-02) */
+        get: operations["listCommitments"];
+        put?: never;
+        /** Создать обязательство (CT-01, CT-02) */
+        post: operations["createCommitment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/commitments/{commitmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commitmentId: components["parameters"]["commitmentId"];
+            };
+            cookie?: never;
+        };
+        /** Обязательство */
+        get: operations["getCommitment"];
+        /** Изменить активное обязательство */
+        put: operations["updateCommitment"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/commitments/{commitmentId}/fulfil": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commitmentId: components["parameters"]["commitmentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Отметить исполненным */
+        post: operations["fulfilCommitment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/commitments/{commitmentId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commitmentId: components["parameters"]["commitmentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Отменить */
+        post: operations["cancelCommitment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/commitments/ensure-renewals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Завести элементы roadmap на продление сертификатов (CT-04) */
+        post: operations["ensureRenewals"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/commitment-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Алерты по обязательствам (CT-03) */
+        get: operations["listCommitmentAlerts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/commitment-alerts/{alertId}/ack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alertId: components["parameters"]["alertId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Подтвердить алерт */
+        post: operations["acknowledgeCommitmentAlert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/commitments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Настройки обязательств (CT-04) */
+        get: operations["getCommitmentSettings"];
+        /** Изменить настройки обязательств */
+        put: operations["updateCommitmentSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/requirement-sets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Каталог наборов требований (CM-01) */
+        get: operations["listRequirementSets"];
+        put?: never;
+        /** Новая версия набора требований (CM-01) */
+        post: operations["createRequirementSet"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/requirement-sets/{setId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                setId: components["parameters"]["setId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Опубликовать или вывести из оборота набор (CM-01) */
+        post: operations["setRequirementSetStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/track-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Шаблоны треков (CM-02) */
+        get: operations["listTrackTemplates"];
+        put?: never;
+        /** Создать или изменить шаблон трека (CM-02) */
+        post: operations["saveTrackTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/tracks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Треки сертификации продукта (CM-03) */
+        get: operations["listTracks"];
+        put?: never;
+        /** Запустить трек сертификации версии (CM-03) */
+        post: operations["startTrack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tracks/{trackId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+            };
+            cookie?: never;
+        };
+        /** Трек */
+        get: operations["getTrack"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tracks/{trackId}/gates/{gateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Владелец, срок, затраты гейта (CM-03) */
+        patch: operations["updateGate"];
+        trace?: never;
+    };
+    "/tracks/{trackId}/gates/{gateId}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Закрыть пункт чек-листа доказательством (CM-03, CM-04) */
+        post: operations["checkGateItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tracks/{trackId}/gates/{gateId}/pass": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Пройти гейт; 409, если чек-лист или предшествующие гейты не закрыты (CM-03, CM-07) */
+        post: operations["passGate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tracks/{trackId}/gates/{gateId}/fail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Провалить гейт с причиной (CM-03) */
+        post: operations["failGate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tracks/{trackId}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+            };
+            cookie?: never;
+        };
+        /** Журнал доказательств трека (CM-04) */
+        get: operations["listTrackEvidence"];
+        put?: never;
+        /** Приложить доказательство со ссылкой и SHA-256 (CM-04) */
+        post: operations["appendTrackEvidence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evidence-items/{evidenceId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidenceId: components["parameters"]["evidenceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Принять или отклонить доказательство — новая запись журнала (CM-04) */
+        post: operations["setEvidenceItemStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/evidence/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Проверить целостность журнала доказательств (CM-04) */
+        post: operations["verifyEvidenceLog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/features/{featureId}/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        /** Действующий класс влияния фичи (CM-06) */
+        get: operations["getFeatureImpact"];
+        /** Задать класс влияния с обоснованием (CM-06) */
+        put: operations["setFeatureImpact"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/features/{featureId}/impact/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        /** История оценок класса влияния (CM-06) */
+        get: operations["getFeatureImpactHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/features/{featureId}/affected-baselines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        /** Затронутые сертифицированные конфигурации (CM-07) */
+        get: operations["getAffectedBaselines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/baselines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Сертифицированные конфигурации продукта (CM-07) */
+        get: operations["listBaselines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/compliance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Настройки compliance (PR-05, CM-07) */
+        get: operations["getComplianceSettings"];
+        /** Изменить настройки compliance */
+        put: operations["updateComplianceSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Решения продукта; без productId — портфельные (DA-01) */
+        get: operations["listDecisions"];
+        put?: never;
+        /** Зафиксировать решение (DA-01) */
+        post: operations["createDecision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions/for/{kind}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "hypothesis" | "feature" | "signal" | "commitment" | "release" | "track";
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Решения, связанные с сущностью (DS-04) */
+        get: operations["listDecisionsFor"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions/{decisionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        /** Решение */
+        get: operations["getDecision"];
+        /** Изменить предложенное решение */
+        put: operations["updateDecision"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions/{decisionId}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Принять */
+        post: operations["acceptDecision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions/{decisionId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Отклонить */
+        post: operations["rejectDecision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions/{decisionId}/supersede": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Заменить другим решением */
+        post: operations["supersedeDecision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions/{decisionId}/request-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Запросить страницу ADR в базе знаний через outbox (DA-01, ТЗ 4.3) */
+        post: operations["requestDecisionPage"];
         delete?: never;
         options?: never;
         head?: never;
@@ -950,6 +2008,13 @@ export interface components {
             feature_id?: string;
             /** Format: uuid */
             contract_id?: string;
+            /** Format: uuid */
+            hypothesis_id?: string;
+            /**
+             * Format: uuid
+             * @description Сигнал
+             */
+            merged_into?: string;
             created_by: string;
             /** Format: date-time */
             created_at: string;
@@ -1022,6 +2087,11 @@ export interface components {
             audience?: "internal" | "sales_safe";
             /** @enum {string} */
             status?: "planned" | "in_progress" | "done" | "cancelled";
+            /**
+             * @description Вид элемента (RM-04); по умолчанию feature
+             * @enum {string}
+             */
+            kind?: "feature" | "fix";
         };
         RoadmapItem: {
             /** Format: uuid */
@@ -1043,6 +2113,13 @@ export interface components {
             audience: "internal" | "sales_safe";
             /** @enum {string} */
             status: "planned" | "in_progress" | "done" | "cancelled";
+            /** @enum {string} */
+            kind: "feature" | "fix";
+            /**
+             * Format: uuid
+             * @description Обязательство
+             */
+            commitment_id?: string;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -1086,6 +2163,7 @@ export interface components {
         };
         ReleaseGroup: {
             release: components["schemas"]["Release"];
+            sales_safe_release?: components["schemas"]["SalesSafeRelease"];
             items?: components["schemas"]["RoadmapItem"][];
             sales_safe?: components["schemas"]["SalesSafeItem"][];
         };
@@ -1103,7 +2181,22 @@ export interface components {
             /** Format: date */
             planned_date?: string;
             /** @enum {string} */
-            status?: "planned" | "released" | "eol";
+            status?: "planned" | "ready_for_certification" | "released" | "eol";
+            /**
+             * @description Ветка версии (RM-04); пусто — evolving
+             * @enum {string}
+             */
+            branch?: "certified" | "evolving";
+            /**
+             * Format: uuid
+             * @description Релиз
+             */
+            base_release_id?: string;
+            /**
+             * Format: date
+             * @description Дата окончания поддержки (RM-05)
+             */
+            eol?: string;
         };
         Release: {
             /** Format: uuid */
@@ -1115,7 +2208,18 @@ export interface components {
             /** Format: date */
             planned_date?: string | null;
             /** @enum {string} */
-            status: "planned" | "released" | "eol";
+            status: "planned" | "ready_for_certification" | "released" | "eol";
+            /** @enum {string} */
+            branch: "certified" | "evolving";
+            /** Format: uuid */
+            base_release_id?: string;
+            /** @description Состав релиза (RM-05); внутренняя информация */
+            feature_ids?: string[];
+            /** @description Внутренняя информация; sales-safe аудитории не выдаётся */
+            release_notes?: string;
+            /** Format: date */
+            eol?: string | null;
+            compatibility_matrix?: components["schemas"]["CompatRow"][];
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -1143,6 +2247,514 @@ export interface components {
             /** Format: uuid */
             event_id?: string;
         };
+        CompatRow: {
+            /** Format: uuid */
+            contract_id: string;
+            contract_name: string;
+            /** Format: uuid */
+            provider_product_id: string;
+            /** Format: uuid */
+            consumer_product_id: string;
+            provider_version: string;
+            consumer_version: string;
+            compatible: boolean;
+        };
+        SalesSafeRelease: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            name: string;
+            version: string;
+            /** Format: date */
+            planned_date?: string | null;
+            /** @enum {string} */
+            status: "planned" | "ready_for_certification" | "released" | "eol";
+            /** @enum {string} */
+            branch: "certified" | "evolving";
+            /** Format: date */
+            eol?: string | null;
+            compatibility_matrix?: components["schemas"]["CompatRow"][];
+        };
+        Readiness: {
+            ready: boolean;
+            open_items: string[];
+        };
+        RankingResult: {
+            ranked: components["schemas"]["ScoreResult"][];
+            mandatory: components["schemas"]["ScoreResult"][];
+        };
+        FeatureFlagsInput: {
+            regulatory_mandatory: boolean;
+            reason?: string;
+        };
+        FeatureFlags: {
+            /** Format: uuid */
+            feature_id: string;
+            /** Format: uuid */
+            product_id: string;
+            regulatory_mandatory: boolean;
+            reason?: string;
+            set_by?: string;
+            /** Format: date-time */
+            set_at?: string;
+        };
+        FeatureCost: {
+            /** Format: uuid */
+            feature_id: string;
+            /** Format: uuid */
+            product_id: string;
+            dev_cost: components["schemas"]["Money"];
+            confirmation_cost: components["schemas"]["Money"];
+            total: components["schemas"]["Money"];
+        };
+        HypothesisInput: {
+            title: string;
+            statement: string;
+            assumptions?: string[];
+            confirmation_criterion: string;
+            /** Format: uuid */
+            feature_id?: string;
+            custom_fields?: {
+                [key: string]: unknown;
+            };
+        };
+        Hypothesis: components["schemas"]["HypothesisInput"] & {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            status: string;
+            resolution?: string;
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        InterviewInput: {
+            account_id?: string;
+            segment?: string;
+            /** Format: date */
+            date: string;
+            participants?: string[];
+            notes?: string;
+            hypothesis_ids?: string[];
+        };
+        Interview: components["schemas"]["InterviewInput"] & {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        InsightInput: {
+            text: string;
+            /** Format: uuid */
+            interview_id?: string;
+            hypothesis_ids?: string[];
+            signal_ids?: string[];
+            /** @enum {string} */
+            confidence: "low" | "medium" | "high";
+        };
+        Insight: components["schemas"]["InsightInput"] & {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        EvidenceInput: {
+            /** @description manual | interview | external_research | иное */
+            source: string;
+            source_ref?: string;
+            /** Format: date */
+            date: string;
+            /** @enum {string} */
+            trust: "low" | "medium" | "high";
+            /** @enum {string} */
+            verification?: "unverified" | "verified" | "rejected";
+            /** @description hex */
+            sha256?: string;
+            /** Format: uuid */
+            hypothesis_id?: string;
+            /** Format: uuid */
+            insight_id?: string;
+            /** Format: uuid */
+            feature_id?: string;
+        };
+        Evidence: components["schemas"]["EvidenceInput"] & {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        TraceRef: {
+            /** @enum {string} */
+            kind: "signal" | "insight" | "hypothesis" | "feature" | "decision";
+            /** Format: uuid */
+            id: string;
+        };
+        TraceNode: components["schemas"]["TraceRef"] & {
+            /** Format: uuid */
+            product_id?: string;
+            title: string;
+        };
+        TraceEdge: {
+            from: components["schemas"]["TraceRef"];
+            to: components["schemas"]["TraceRef"];
+        };
+        TraceGraph: {
+            root: components["schemas"]["TraceRef"];
+            nodes: components["schemas"]["TraceNode"][];
+            edges: components["schemas"]["TraceEdge"][];
+        };
+        SimilarSignal: {
+            signal: components["schemas"]["Signal"];
+            /**
+             * Format: double
+             * @description Косинусная близость 0…1
+             */
+            score: number;
+        };
+        CustomFieldDefInput: {
+            /** @enum {string} */
+            entity: "feature" | "signal" | "hypothesis";
+            key: string;
+            label: string;
+            /** @enum {string} */
+            type: "string" | "number" | "date" | "enum";
+            options?: string[];
+            required?: boolean;
+        };
+        CustomFieldDef: components["schemas"]["CustomFieldDefInput"] & {
+            /** Format: uuid */
+            id: string;
+        };
+        CustomStatusDef: {
+            /** @enum {string} */
+            entity: "feature" | "signal" | "hypothesis";
+            key: string;
+            label: string;
+            /** @description Встроенная категория статуса сущности */
+            category: string;
+        };
+        CommitmentInput: {
+            /** @enum {string} */
+            kind: "customer" | "regulatory";
+            /** @enum {string} */
+            subtype?: "certificate_expiry" | "support_end" | "vuln_fix_deadline";
+            counterparty: string;
+            subject: string;
+            /** Format: date */
+            due_date: string;
+            basis: string;
+            owner: string;
+            /** Format: uuid */
+            feature_id?: string;
+            /** Format: uuid */
+            release_id?: string;
+        };
+        Commitment: components["schemas"]["CommitmentInput"] & {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            /** @enum {string} */
+            status: "active" | "fulfilled" | "breached" | "cancelled";
+            /** Format: uuid */
+            renewal_item_id?: string;
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        CommitmentAlert: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            commitment_id: string;
+            /** Format: uuid */
+            product_id: string;
+            /** @enum {string} */
+            kind: "roadmap_shift";
+            message: string;
+            /** Format: uuid */
+            event_id: string;
+            /** Format: date */
+            new_date?: string | null;
+            /** Format: date */
+            due_date?: string | null;
+            /** Format: date-time */
+            raised_at: string;
+            acknowledged: boolean;
+            acknowledged_by?: string;
+            /** Format: date-time */
+            acknowledged_at?: string;
+        };
+        CommitmentSettings: {
+            /** @description Месяцев до истечения сертификата для элемента продления (CT-04) */
+            lead_months: number;
+        };
+        RequirementItem: {
+            key: string;
+            text: string;
+        };
+        RequirementSetInput: {
+            /** @description Синтетический код набора */
+            code: string;
+            /** @enum {string} */
+            product_type: "security" | "infrastructure" | "platform" | "other";
+            items: components["schemas"]["RequirementItem"][];
+        };
+        RequirementSet: components["schemas"]["RequirementSetInput"] & {
+            /** Format: uuid */
+            id: string;
+            version: number;
+            /** @enum {string} */
+            status: "draft" | "published" | "retired";
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        GateTemplate: {
+            key: string;
+            name: string;
+            /** @enum {string} */
+            kind: "ssdlc" | "registry" | "fstec" | "support";
+            order: number;
+            parallel_group?: string;
+            requirement_set_code?: string;
+            checklist: string[];
+        };
+        TrackTemplateInput: {
+            /**
+             * Format: uuid
+             * @description Пусто — создание
+             */
+            id?: string;
+            /** @enum {string} */
+            product_type: "security" | "infrastructure" | "platform" | "other";
+            name: string;
+            gates: components["schemas"]["GateTemplate"][];
+        };
+        TrackTemplate: components["schemas"]["TrackTemplateInput"] & {
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        TrackInput: {
+            /** Format: uuid */
+            release_id: string;
+            version: string;
+            /**
+             * Format: uuid
+             * @description Пусто — первый шаблон типа продукта
+             */
+            template_id?: string;
+        };
+        ChecklistItem: {
+            key: string;
+            text: string;
+            done: boolean;
+            /** Format: uuid */
+            evidence_id?: string;
+        };
+        Gate: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            name: string;
+            /** @enum {string} */
+            kind: "ssdlc" | "registry" | "fstec" | "support";
+            order: number;
+            parallel_group?: string;
+            requirement_set_code?: string;
+            owner?: string;
+            /** Format: date */
+            due_date?: string | null;
+            cost: components["schemas"]["Money"];
+            checklist: components["schemas"]["ChecklistItem"][];
+            /** @enum {string} */
+            status: "pending" | "in_progress" | "passed" | "failed";
+            /** Format: date-time */
+            passed_at?: string;
+        };
+        GateUpdate: {
+            owner?: string;
+            /** Format: date */
+            due_date?: string;
+            cost?: components["schemas"]["Money"];
+        };
+        Track: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            /** Format: uuid */
+            release_id: string;
+            version: string;
+            /** Format: uuid */
+            template_id: string;
+            /** @enum {string} */
+            status: "active" | "certified" | "failed";
+            gates: components["schemas"]["Gate"][];
+            /** Format: uuid */
+            baseline_id?: string;
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        EvidenceItemInput: {
+            /** Format: uuid */
+            gate_id: string;
+            url: string;
+            /** @description hex */
+            sha256: string;
+            comment?: string;
+        };
+        EvidenceItem: {
+            /** Format: int64 */
+            seq: number;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            /** Format: uuid */
+            track_id: string;
+            /** Format: uuid */
+            gate_id: string;
+            url: string;
+            sha256: string;
+            /** @enum {string} */
+            status: "submitted" | "accepted" | "rejected";
+            comment?: string;
+            /** Format: int64 */
+            supersedes?: number;
+            actor: string;
+            /** Format: date-time */
+            at: string;
+        };
+        ImpactInput: {
+            /** @enum {string} */
+            class: "none" | "analysis_required" | "security_functions";
+            justification: string;
+        };
+        ImpactAssessment: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            feature_id: string;
+            /** Format: uuid */
+            product_id: string;
+            /** @enum {string} */
+            class: "none" | "analysis_required" | "security_functions";
+            justification: string;
+            author: string;
+            /** Format: date-time */
+            at: string;
+        };
+        CertifiedBaseline: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            /** Format: uuid */
+            track_id?: string;
+            version: string;
+            /** Format: uuid */
+            requirement_set_id?: string;
+            certificate_no: string;
+            /** Format: date */
+            certified_at: string;
+            /** Format: date */
+            eol: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        AffectedBaseline: {
+            baseline: components["schemas"]["CertifiedBaseline"];
+            /** @description Продукты от продукта фичи до продукта baseline */
+            path: string[];
+            /** @enum {string} */
+            procedure: "simplified_confirmation" | "full_procedure";
+        };
+        ComplianceSettings: {
+            cost_by_class: {
+                [key: string]: components["schemas"]["Money"];
+            };
+            /** @description Доля 0…1 десятичной строкой */
+            certified_process_discount: string;
+            baseline_lifetime_years: number;
+        };
+        DecisionOption: {
+            key: string;
+            title: string;
+            description?: string;
+        };
+        DecisionLink: {
+            /** @enum {string} */
+            kind: "hypothesis" | "feature" | "signal" | "commitment" | "release" | "track";
+            /** Format: uuid */
+            id: string;
+        };
+        DecisionInput: {
+            /**
+             * Format: uuid
+             * @description Пусто — портфельное решение
+             */
+            product_id?: string;
+            title: string;
+            context: string;
+            snapshot?: {
+                [key: string]: unknown;
+            };
+            options?: components["schemas"]["DecisionOption"][];
+            chosen_key?: string;
+            rationale?: string;
+            expected_effect?: string;
+            /** Format: date */
+            review_date?: string;
+            links?: components["schemas"]["DecisionLink"][];
+        };
+        Decision: components["schemas"]["DecisionInput"] & {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "proposed" | "accepted" | "superseded" | "rejected";
+            /** Format: uuid */
+            superseded_by?: string;
+            page_id?: string;
+            author: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        DecisionRef: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+        };
     };
     responses: {
         /** @description Ошибка */
@@ -1161,6 +2773,18 @@ export interface components {
         signalId: string;
         modelId: string;
         itemId: string;
+        releaseId: string;
+        hypothesisId: string;
+        interviewId: string;
+        insightId: string;
+        evidenceId: string;
+        commitmentId: string;
+        alertId: string;
+        setId: string;
+        trackId: string;
+        gateId: string;
+        decisionId: string;
+        entity: "feature" | "signal" | "hypothesis";
     };
     requestBodies: never;
     headers: never;
@@ -2008,6 +3632,11 @@ export interface operations {
                     feature_id?: string;
                     /** Format: uuid */
                     contract_id?: string;
+                    /**
+                     * Format: uuid
+                     * @description Гипотеза discovery (DS-01)
+                     */
+                    hypothesis_id?: string;
                 };
             };
         };
@@ -2401,6 +4030,2012 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DateChange"][];
                 };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setReleaseFeatures: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    feature_ids: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setReleaseNotes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    release_notes: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setReleaseEOL: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: date */
+                    eol: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    markReleaseReady: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getReleaseReadiness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                releaseId: components["parameters"]["releaseId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Readiness"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getRankingResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                modelId: components["parameters"]["modelId"];
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RankingResult"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getFeatureFlags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureFlags"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setFeatureFlags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeatureFlagsInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureFlags"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getFeatureCost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureCost"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setFeatureDevCost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    dev_cost: components["schemas"]["Money"];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureCost"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listHypotheses: {
+        parameters: {
+            query?: {
+                status?: string[];
+                featureId?: string;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hypothesis"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createHypothesis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HypothesisInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hypothesis"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getHypothesis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hypothesisId: components["parameters"]["hypothesisId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hypothesis"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateHypothesis: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hypothesisId: components["parameters"]["hypothesisId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HypothesisInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hypothesis"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    changeHypothesisStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hypothesisId: components["parameters"]["hypothesisId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Встроенный или пользовательский статус */
+                    status: string;
+                    resolution?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hypothesis"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listInterviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createInterview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getInterview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interviewId: components["parameters"]["interviewId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateInterview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interviewId: components["parameters"]["interviewId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Interview"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listInsights: {
+        parameters: {
+            query?: {
+                interviewId?: string;
+                hypothesisId?: string;
+                signalId?: string;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Insight"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createInsight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InsightInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Insight"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getInsight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                insightId: components["parameters"]["insightId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Insight"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateInsight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                insightId: components["parameters"]["insightId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InsightInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Insight"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listEvidence: {
+        parameters: {
+            query?: {
+                hypothesisId?: string;
+                insightId?: string;
+                featureId?: string;
+                verification?: "unverified" | "verified" | "rejected";
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Evidence"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Evidence"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidenceId: components["parameters"]["evidenceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Evidence"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidenceId: components["parameters"]["evidenceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Evidence"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getTrace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "signal" | "insight" | "hypothesis" | "feature";
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceGraph"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getSimilarSignals: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                signalId: components["parameters"]["signalId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimilarSignal"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    mergeSignals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                signalId: components["parameters"]["signalId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    duplicate_ids: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Слито */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCustomFields: {
+        parameters: {
+            query: {
+                entity: components["parameters"]["entity"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomFieldDef"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    defineCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomFieldDefInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomFieldDef"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCustomStatuses: {
+        parameters: {
+            query: {
+                entity: components["parameters"]["entity"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomStatusDef"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    defineCustomStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomStatusDef"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomStatusDef"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCommitments: {
+        parameters: {
+            query?: {
+                kind?: "customer" | "regulatory";
+                status?: ("active" | "fulfilled" | "breached" | "cancelled")[];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createCommitment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitmentInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getCommitment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commitmentId: components["parameters"]["commitmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateCommitment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commitmentId: components["parameters"]["commitmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitmentInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    fulfilCommitment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commitmentId: components["parameters"]["commitmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    cancelCommitment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commitmentId: components["parameters"]["commitmentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    ensureRenewals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * Format: date
+                     * @description Дата отсчёта; пусто — сегодня
+                     */
+                    now?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Обязательства, для которых элемент создан этим вызовом */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCommitmentAlerts: {
+        parameters: {
+            query?: {
+                open?: boolean;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentAlert"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    acknowledgeCommitmentAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alertId: components["parameters"]["alertId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentAlert"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getCommitmentSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentSettings"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateCommitmentSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitmentSettings"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentSettings"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listRequirementSets: {
+        parameters: {
+            query?: {
+                code?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementSet"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createRequirementSet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequirementSetInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementSet"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setRequirementSetStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                setId: components["parameters"]["setId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    status: "draft" | "published" | "retired";
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementSet"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listTrackTemplates: {
+        parameters: {
+            query?: {
+                productType?: "security" | "infrastructure" | "platform" | "other";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackTemplate"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveTrackTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrackTemplateInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackTemplate"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listTracks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Track"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    startTrack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrackInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Track"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getTrack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Track"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateGate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Track"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    checkGateItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    key: string;
+                    /** Format: uuid */
+                    evidence_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Track"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    passGate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Track"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    failGate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Track"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listTrackEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceItem"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    appendTrackEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceItemInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceItem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setEvidenceItemStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidenceId: components["parameters"]["evidenceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    status: "submitted" | "accepted" | "rejected";
+                    comment?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceItem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    verifyEvidenceLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditVerifyResult"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getFeatureImpact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImpactAssessment"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setFeatureImpact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImpactInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImpactAssessment"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getFeatureImpactHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImpactAssessment"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getAffectedBaselines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AffectedBaseline"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listBaselines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertifiedBaseline"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getComplianceSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceSettings"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateComplianceSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplianceSettings"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceSettings"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listDecisions: {
+        parameters: {
+            query?: {
+                productId?: string;
+                status?: "proposed" | "accepted" | "superseded" | "rejected";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listDecisionsFor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "hypothesis" | "feature" | "signal" | "commitment" | "release" | "track";
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionRef"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    acceptDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    rejectDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    supersedeDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    by: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    requestDecisionPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** @description Пусто — пространство из настроек сервера */
+                    space_key?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Запрос поставлен в outbox */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             default: components["responses"]["Problem"];
         };

@@ -41,6 +41,8 @@ type RoadmapItem struct {
 	CommitmentID uuid.NullUUID
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	LaunchTier   string
+	LaunchDate   pgtype.Date
 }
 
 type RoadmapProcessedEvent struct {

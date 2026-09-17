@@ -14,6 +14,8 @@ type Service struct {
 	store Store
 	pub   kernel.Publisher
 	clock kernel.Clock
+	// metrics — источник фактических значений показателей для ревизии решения (DA-06).
+	metrics MetricSource
 }
 
 // NewService создаёт сервис.
@@ -21,7 +23,7 @@ func NewService(store Store, pub kernel.Publisher, clock kernel.Clock) *Service 
 	return &Service{store: store, pub: pub, clock: clock}
 }
 
-// Input — данные решения при создании и обновлении (DA-01).
+// Input — данные решения при создании и обновлении (DA-01, DA-06).
 type Input struct {
 	ProductID      kernel.ID // NilID — портфельное решение
 	Title          string
@@ -31,8 +33,10 @@ type Input struct {
 	ChosenKey      string
 	Rationale      string
 	ExpectedEffect string
-	ReviewDate     kernel.Date
-	Links          []Link
+	// Effect — измеримая часть эффекта: показатель экономики, целевое значение, период (DA-06).
+	Effect     MeasurableEffect
+	ReviewDate kernel.Date
+	Links      []Link
 }
 
 func (in Input) validate() error {
@@ -114,6 +118,8 @@ func apply(rec *DecisionRecord, in Input) {
 	rec.ChosenKey = in.ChosenKey
 	rec.Rationale = strings.TrimSpace(in.Rationale)
 	rec.ExpectedEffect = strings.TrimSpace(in.ExpectedEffect)
+	rec.Effect = MeasurableEffect{MetricKey: strings.TrimSpace(in.Effect.MetricKey),
+		Value: in.Effect.Value, Period: strings.TrimSpace(in.Effect.Period)}
 	rec.ReviewDate = in.ReviewDate
 	rec.Links = append([]Link(nil), in.Links...)
 }

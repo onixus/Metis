@@ -31,6 +31,7 @@ func (s *Store) SaveItem(ctx context.Context, it roadmap.RoadmapItem) error {
 		ID: it.ID, ProductID: it.ProductID, FeatureID: pgdb.NullID(it.FeatureID), Title: it.Title, Bucket: string(it.Bucket),
 		StartDate: pgdb.ToDate(it.StartDate), EndDate: pgdb.ToDate(it.EndDate), ReleaseID: pgdb.NullID(it.ReleaseID),
 		Audience: string(it.Audience), Status: string(it.Status), Kind: string(it.Kind), CommitmentID: pgdb.NullID(it.CommitmentID),
+		LaunchTier: string(it.LaunchTier), LaunchDate: pgdb.ToDate(it.LaunchDate),
 		CreatedAt: it.CreatedAt.UTC(), UpdatedAt: it.UpdatedAt.UTC(),
 	})
 	if err != nil {
@@ -88,7 +89,8 @@ func itemFromRow(r db.RoadmapItem) roadmap.RoadmapItem {
 		ID: r.ID, ProductID: r.ProductID, FeatureID: r.FeatureID.UUID, Title: r.Title, Bucket: roadmap.Bucket(r.Bucket),
 		StartDate: pgdb.FromDate(r.StartDate), EndDate: pgdb.FromDate(r.EndDate), ReleaseID: r.ReleaseID.UUID,
 		Audience: authz.Audience(r.Audience), Status: roadmap.ItemStatus(r.Status), Kind: roadmap.ItemKind(r.Kind),
-		CommitmentID: r.CommitmentID.UUID, CreatedAt: r.CreatedAt.UTC(), UpdatedAt: r.UpdatedAt.UTC(),
+		CommitmentID: r.CommitmentID.UUID, LaunchTier: roadmap.LaunchTier(r.LaunchTier), LaunchDate: pgdb.FromDate(r.LaunchDate),
+		CreatedAt: r.CreatedAt.UTC(), UpdatedAt: r.UpdatedAt.UTC(),
 	}
 }
 

@@ -25,7 +25,7 @@ func (q *Queries) EventProcessed(ctx context.Context, eventID uuid.UUID) (bool, 
 }
 
 const getItem = `-- name: GetItem :one
-SELECT id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at FROM roadmap.items WHERE id = $1
+SELECT id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at, launch_tier, launch_date FROM roadmap.items WHERE id = $1
 `
 
 func (q *Queries) GetItem(ctx context.Context, id uuid.UUID) (RoadmapItem, error) {
@@ -46,12 +46,14 @@ func (q *Queries) GetItem(ctx context.Context, id uuid.UUID) (RoadmapItem, error
 		&i.CommitmentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LaunchTier,
+		&i.LaunchDate,
 	)
 	return i, err
 }
 
 const getItemByCommitment = `-- name: GetItemByCommitment :one
-SELECT id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at FROM roadmap.items WHERE commitment_id = $1 ORDER BY created_at, id LIMIT 1
+SELECT id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at, launch_tier, launch_date FROM roadmap.items WHERE commitment_id = $1 ORDER BY created_at, id LIMIT 1
 `
 
 func (q *Queries) GetItemByCommitment(ctx context.Context, commitmentID uuid.NullUUID) (RoadmapItem, error) {
@@ -72,6 +74,8 @@ func (q *Queries) GetItemByCommitment(ctx context.Context, commitmentID uuid.Nul
 		&i.CommitmentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LaunchTier,
+		&i.LaunchDate,
 	)
 	return i, err
 }
@@ -175,7 +179,7 @@ func (q *Queries) ListDateHistory(ctx context.Context, itemID uuid.UUID) ([]Road
 }
 
 const listItemsByFeature = `-- name: ListItemsByFeature :many
-SELECT id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at FROM roadmap.items WHERE feature_id = $1 ORDER BY created_at, id
+SELECT id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at, launch_tier, launch_date FROM roadmap.items WHERE feature_id = $1 ORDER BY created_at, id
 `
 
 func (q *Queries) ListItemsByFeature(ctx context.Context, featureID uuid.NullUUID) ([]RoadmapItem, error) {
@@ -202,6 +206,8 @@ func (q *Queries) ListItemsByFeature(ctx context.Context, featureID uuid.NullUUI
 			&i.CommitmentID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LaunchTier,
+			&i.LaunchDate,
 		); err != nil {
 			return nil, err
 		}
@@ -214,7 +220,7 @@ func (q *Queries) ListItemsByFeature(ctx context.Context, featureID uuid.NullUUI
 }
 
 const listItemsByProduct = `-- name: ListItemsByProduct :many
-SELECT id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at FROM roadmap.items WHERE product_id = $1 ORDER BY created_at, id
+SELECT id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at, launch_tier, launch_date FROM roadmap.items WHERE product_id = $1 ORDER BY created_at, id
 `
 
 func (q *Queries) ListItemsByProduct(ctx context.Context, productID uuid.UUID) ([]RoadmapItem, error) {
@@ -241,6 +247,8 @@ func (q *Queries) ListItemsByProduct(ctx context.Context, productID uuid.UUID) (
 			&i.CommitmentID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LaunchTier,
+			&i.LaunchDate,
 		); err != nil {
 			return nil, err
 		}
@@ -300,12 +308,12 @@ func (q *Queries) MarkEventProcessed(ctx context.Context, eventID uuid.UUID) err
 }
 
 const upsertItem = `-- name: UpsertItem :exec
-INSERT INTO roadmap.items (id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+INSERT INTO roadmap.items (id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at, launch_tier, launch_date)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, feature_id = EXCLUDED.feature_id, title = EXCLUDED.title,
   bucket = EXCLUDED.bucket, start_date = EXCLUDED.start_date, end_date = EXCLUDED.end_date, release_id = EXCLUDED.release_id,
   audience = EXCLUDED.audience, status = EXCLUDED.status, kind = EXCLUDED.kind, commitment_id = EXCLUDED.commitment_id,
-  updated_at = EXCLUDED.updated_at
+  updated_at = EXCLUDED.updated_at, launch_tier = EXCLUDED.launch_tier, launch_date = EXCLUDED.launch_date
 `
 
 type UpsertItemParams struct {
@@ -323,6 +331,8 @@ type UpsertItemParams struct {
 	CommitmentID uuid.NullUUID
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	LaunchTier   string
+	LaunchDate   pgtype.Date
 }
 
 func (q *Queries) UpsertItem(ctx context.Context, arg UpsertItemParams) error {
@@ -341,6 +351,8 @@ func (q *Queries) UpsertItem(ctx context.Context, arg UpsertItemParams) error {
 		arg.CommitmentID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.LaunchTier,
+		arg.LaunchDate,
 	)
 	return err
 }

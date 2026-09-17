@@ -44,13 +44,14 @@ func (m *memPub) ofType(typ string) []kernel.Event {
 
 // fakeTracker — трекер в памяти; фиксирует записи, чтобы проверить, что они идут только из обработчика.
 type fakeTracker struct {
-	mu      sync.Mutex
-	epics   map[string]ports.Epic
-	issues  map[string][]ports.Issue
-	sprints map[string][]ports.Sprint
-	down    bool
-	created []string
-	nextKey int
+	mu       sync.Mutex
+	epics    map[string]ports.Epic
+	issues   map[string][]ports.Issue
+	sprints  map[string][]ports.Sprint
+	down     bool
+	created  []string
+	nextKey  int
+	worklogs []ports.Worklog
 }
 
 func newTracker() *fakeTracker {
@@ -109,8 +110,24 @@ func (f *fakeTracker) Sprints(_ context.Context, board string) ([]ports.Sprint, 
 }
 
 func (f *fakeTracker) Versions(context.Context, string) ([]ports.Version, error) { return nil, nil }
-func (f *fakeTracker) Worklogs(context.Context, []string, time.Time) ([]ports.Worklog, error) {
-	return nil, nil
+func (f *fakeTracker) Worklogs(_ context.Context, keys []string, since time.Time) ([]ports.Worklog, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.fail(); err != nil {
+		return nil, err
+	}
+	want := map[string]bool{}
+	for _, k := range keys {
+		want[k] = true
+	}
+	out := make([]ports.Worklog, 0, len(f.worklogs))
+	for _, w := range f.worklogs {
+		if !want[w.IssueKey] || (!since.IsZero() && w.Started.Before(since)) {
+			continue
+		}
+		out = append(out, w)
+	}
+	return out, nil
 }
 
 func (f *fakeTracker) CreateEpic(_ context.Context, project, summary, _, featureRef string) (string, error) {

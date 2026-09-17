@@ -301,16 +301,27 @@ func (s *Server) GetRanking(ctx context.Context, req gen.GetRankingRequestObject
 // ---- roadmap ----
 
 func toItem(it roadmap.RoadmapItem) gen.RoadmapItem {
-	return gen.RoadmapItem{
+	out := gen.RoadmapItem{
 		Id: it.ID, ProductId: it.ProductID, FeatureId: idPtr(it.FeatureID), Title: it.Title, Bucket: gen.RoadmapItemBucket(it.Bucket),
 		StartDate: datePtr(it.StartDate), EndDate: datePtr(it.EndDate), ReleaseId: idPtr(it.ReleaseID),
 		Audience: gen.RoadmapItemAudience(it.Audience), Status: gen.RoadmapItemStatus(it.Status), Kind: gen.RoadmapItemKind(it.Kind),
-		CommitmentId: idPtr(it.CommitmentID), CreatedAt: it.CreatedAt, UpdatedAt: it.UpdatedAt,
+		CommitmentId: idPtr(it.CommitmentID), LaunchDate: datePtr(it.LaunchDate), CreatedAt: it.CreatedAt, UpdatedAt: it.UpdatedAt,
 	}
+	if it.LaunchTier != roadmap.LaunchNone {
+		tier := gen.RoadmapItemLaunchTier(it.LaunchTier)
+		out.LaunchTier = &tier
+	}
+	return out
 }
 
 func toSafe(it roadmap.SalesSafeItem) gen.SalesSafeItem {
-	return gen.SalesSafeItem{Id: it.ID, ProductId: it.ProductID, Title: it.Title, Bucket: gen.SalesSafeItemBucket(it.Bucket), StartDate: datePtr(it.StartDate), EndDate: datePtr(it.EndDate), ReleaseId: idPtr(it.ReleaseID)}
+	out := gen.SalesSafeItem{Id: it.ID, ProductId: it.ProductID, Title: it.Title, Bucket: gen.SalesSafeItemBucket(it.Bucket),
+		StartDate: datePtr(it.StartDate), EndDate: datePtr(it.EndDate), ReleaseId: idPtr(it.ReleaseID), LaunchDate: datePtr(it.LaunchDate)}
+	if it.LaunchTier != roadmap.LaunchNone {
+		tier := gen.SalesSafeItemLaunchTier(it.LaunchTier)
+		out.LaunchTier = &tier
+	}
+	return out
 }
 
 func toItems(in []roadmap.RoadmapItem) *[]gen.RoadmapItem {
@@ -394,6 +405,10 @@ func toItemInput(in gen.RoadmapItemInput) roadmap.ItemInput {
 	if in.Kind != nil {
 		out.Kind = roadmap.ItemKind(*in.Kind)
 	}
+	if in.LaunchTier != nil {
+		out.LaunchTier = roadmap.LaunchTier(*in.LaunchTier)
+	}
+	out.LaunchDate = dateOf(in.LaunchDate)
 	return out
 }
 

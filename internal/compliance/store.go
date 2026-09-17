@@ -50,6 +50,9 @@ type Store interface {
 	Baseline(ctx context.Context, id kernel.ID) (CertifiedBaseline, error)
 	// Baselines возвращает baseline продукта (NilID — все) в порядке сохранения.
 	Baselines(ctx context.Context, productID kernel.ID) ([]CertifiedBaseline, error)
+	// BaselinesWithComponent возвращает baseline, в составе которых есть компонент с таким
+	// ключом; версия компонента проверяется вызывающим (CM-08).
+	BaselinesWithComponent(ctx context.Context, componentKey string) ([]CertifiedBaseline, error)
 }
 
 // MemStore — хранилище в памяти для тестов и стендов без БД.
@@ -264,6 +267,19 @@ func (m *MemStore) Baselines(_ context.Context, productID kernel.ID) ([]Certifie
 	out := make([]CertifiedBaseline, 0, len(m.baselines))
 	for _, b := range m.baselines {
 		if productID == kernel.NilID || b.ProductID == productID {
+			out = append(out, b)
+		}
+	}
+	return out, nil
+}
+
+// BaselinesWithComponent возвращает baseline, содержащие компонент с таким ключом (CM-08).
+func (m *MemStore) BaselinesWithComponent(_ context.Context, componentKey string) ([]CertifiedBaseline, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]CertifiedBaseline, 0)
+	for _, b := range m.baselines {
+		if b.HasComponent(Component{Key: componentKey}) {
 			out = append(out, b)
 		}
 	}

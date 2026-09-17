@@ -128,8 +128,54 @@ type RoadmapItem struct {
 	Kind ItemKind `json:"kind"`
 	// CommitmentID — обязательство, породившее элемент (CT-04); NilID для обычных элементов.
 	CommitmentID kernel.ID `json:"commitment_id,omitempty"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	// LaunchTier и LaunchDate — уровень и дата запуска для маркетинга (RM-06).
+	LaunchTier LaunchTier  `json:"launch_tier,omitempty"`
+	LaunchDate kernel.Date `json:"launch_date"`
+	CreatedAt  time.Time   `json:"created_at"`
+	UpdatedAt  time.Time   `json:"updated_at"`
+}
+
+// LaunchTier — уровень запуска (RM-06): объём поддержки запуска маркетингом.
+type LaunchTier string
+
+// Уровни запуска.
+const (
+	LaunchNone LaunchTier = ""
+	// LaunchTier1 — полноценный запуск: пресс-релиз, кампания, обучение продаж.
+	LaunchTier1 LaunchTier = "tier1"
+	// LaunchTier2 — анонс в блоге и release notes.
+	LaunchTier2 LaunchTier = "tier2"
+	// LaunchTier3 — только release notes.
+	LaunchTier3 LaunchTier = "tier3"
+)
+
+// ValidLaunchTier сообщает, известен ли уровень запуска.
+func ValidLaunchTier(t LaunchTier) bool {
+	switch t {
+	case LaunchNone, LaunchTier1, LaunchTier2, LaunchTier3:
+		return true
+	}
+	return false
+}
+
+// LaunchEntry — запись календаря запусков (RM-06).
+type LaunchEntry struct {
+	ItemID     kernel.ID      `json:"item_id"`
+	ProductID  kernel.ID      `json:"product_id"`
+	Title      string         `json:"title"`
+	Tier       LaunchTier     `json:"tier"`
+	LaunchDate kernel.Date    `json:"launch_date"`
+	ReleaseID  kernel.ID      `json:"release_id,omitempty"`
+	Audience   authz.Audience `json:"audience"`
+}
+
+// LaunchCalendar — календарь запусков продукта за период (RM-06).
+// Аудитория берётся из Scope: sales-safe видит только свой срез (RM-02).
+type LaunchCalendar struct {
+	From     kernel.Date    `json:"from"`
+	To       kernel.Date    `json:"to"`
+	Audience authz.Audience `json:"audience"`
+	Entries  []LaunchEntry  `json:"entries"`
 }
 
 // Release — релиз продукта (RM-04, RM-05).
@@ -206,11 +252,15 @@ type SalesSafeItem struct {
 	StartDate kernel.Date `json:"start_date"`
 	EndDate   kernel.Date `json:"end_date"`
 	ReleaseID kernel.ID   `json:"release_id,omitempty"`
+	// LaunchTier и LaunchDate — публичная часть плана запуска (RM-06).
+	LaunchTier LaunchTier  `json:"launch_tier,omitempty"`
+	LaunchDate kernel.Date `json:"launch_date"`
 }
 
 func toSalesSafe(it RoadmapItem) SalesSafeItem {
 	return SalesSafeItem{ID: it.ID, ProductID: it.ProductID, Title: it.Title, Bucket: it.Bucket,
-		StartDate: it.StartDate, EndDate: it.EndDate, ReleaseID: it.ReleaseID}
+		StartDate: it.StartDate, EndDate: it.EndDate, ReleaseID: it.ReleaseID,
+		LaunchTier: it.LaunchTier, LaunchDate: it.LaunchDate}
 }
 
 // Timeline — представление RM-01: элементы с датами, отсортированные по началу, затем по концу.

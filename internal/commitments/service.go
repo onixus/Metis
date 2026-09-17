@@ -417,3 +417,30 @@ func (s *Service) EnsureRenewals(ctx context.Context, sc authz.Scope, now kernel
 	}
 	return created, nil
 }
+
+// StartVulnerabilityDeadline заводит регуляторное обязательство со сроком устранения уязвимости
+// (CT-02) по сообщению модуля compliance (CM-08). Повторный запрос с тем же основанием
+// возвращает уже заведённое обязательство: сообщение об уязвимости может прийти не один раз.
+func (s *Service) StartVulnerabilityDeadline(ctx context.Context, sc authz.Scope, productID kernel.ID, subject, basis string, due kernel.Date) (Commitment, error) {
+	if strings.TrimSpace(basis) == "" {
+		return Commitment{}, kernel.Invalid("basis", "основание обязательно для автосоздания")
+	}
+	existing, err := s.store.List(ctx, Filter{ProductID: productID, Kind: KindRegulatory,
+		Subtype: SubtypeVulnFixDeadline, Statuses: []Status{StatusActive}})
+	if err != nil {
+		return Commitment{}, fmt.Errorf("commitments list: %w", err)
+	}
+	for _, c := range existing {
+		if c.Basis == basis {
+			return c, nil
+		}
+	}
+	return s.Create(ctx, sc, productID, Input{
+		Kind: KindRegulatory, Subtype: SubtypeVulnFixDeadline, Counterparty: "регулятор",
+		Subject: subject, Basis: basis, Owner: vulnerabilityOwner, DueDate: due,
+	})
+}
+
+// vulnerabilityOwner — владелец автосозданных сроков устранения: роль compliance
+// (TODO(question-38): конкретный владелец назначается настройкой, когда появится справочник ролей).
+const vulnerabilityOwner = "compliance"

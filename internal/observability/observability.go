@@ -45,7 +45,9 @@ func Tracing(ctx context.Context, service, version, exporter string) (func(conte
 	if err != nil {
 		return nil, fmt.Errorf("экспортер трассировок: %w", err)
 	}
-	res, err := resource.Merge(resource.Default(), resource.NewWithAttributes(semconv.SchemaURL,
+	// Схема не указывается намеренно: у resource.Default() своя версия semconv, и Merge
+	// отклоняет разные Schema URL.
+	res, err := resource.Merge(resource.Default(), resource.NewSchemaless(
 		semconv.ServiceName(service), semconv.ServiceVersion(version)))
 	if err != nil {
 		return nil, fmt.Errorf("ресурс трассировок: %w", err)

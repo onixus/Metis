@@ -28,6 +28,12 @@ services:
     image: wiremock/wiremock:3.9.1
     command: ["--global-response-templating", "--port", "8090"]
     ports: ["8090:8090"]
+    healthcheck:
+      # Встроенная проверка образа смотрит на порт 8080; мок слушает 8090.
+      test: ["CMD-SHELL", "curl -sf http://localhost:8090/__admin/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     volumes:
       - ./jira-mock:/home/wiremock:ro
   api:
@@ -63,6 +69,7 @@ services:
       target: worker
     environment:
       METIS_DATABASE_URL: postgres://metis:metis-dev-only@postgres:5432/metis?sslmode=disable
+      METIS_MIGRATE: "true"   # миграции идемпотентны и под advisory lock; воркер не зависит от api
       METIS_JIRA_BASE_URL: http://jira-mock:8090
       METIS_OTEL_EXPORTER: stdout
     depends_on:

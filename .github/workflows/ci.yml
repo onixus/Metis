@@ -32,10 +32,13 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with: { version: latest }
+      # -race требует cgo; бинарники поставки по-прежнему собираются с CGO_ENABLED=0.
       - name: unit tests
+        env: { CGO_ENABLED: "1" }
         run: go test -race -count=1 -coverprofile=coverage.out ./...
       - name: integration tests
         env:
+          CGO_ENABLED: "1"
           METIS_TEST_DATABASE_URL: postgres://metis:metis-dev-only@localhost:5432/metis_test?sslmode=disable
         run: go test -race -count=1 -tags integration ./...
       - name: govulncheck
@@ -71,5 +74,6 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+      # Проверяются поставляемые зависимости (NF-L02); dev-инструменты в дистрибутив не входят.
       - name: npm licenses
-        run: npx license-checker-rseidelsohn --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;Zlib;MPL-2.0;CC0-1.0;Unlicense;Python-2.0;BlueOak-1.0.0" --excludePrivatePackages
+        run: npx license-checker-rseidelsohn --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;Zlib;MPL-2.0;CC0-1.0;Unlicense;Python-2.0;BlueOak-1.0.0" --excludePrivatePackages

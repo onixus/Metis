@@ -26,11 +26,12 @@ generate:
 	oapi-codegen -config api/oapi-types.yaml api/openapi.yaml
 	sqlc generate
 
+# -race требует cgo; сборка бинарников остаётся без cgo (инвариант 9).
 test:
-	go test -race -count=1 -coverprofile=coverage.out ./...
+	CGO_ENABLED=1 go test -race -count=1 -coverprofile=coverage.out ./...
 
 test-integration:
-	go test -race -count=1 -tags integration ./...
+	CGO_ENABLED=1 go test -race -count=1 -tags integration ./...
 
 build:
 	go build -trimpath -ldflags="-s -w" -o bin/api ./cmd/api

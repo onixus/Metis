@@ -7,7 +7,10 @@ import {
   MarkerType,
   Position,
   ReactFlow,
+  ReactFlowProvider,
   useEdgesState,
+  useNodesInitialized,
+  useReactFlow,
   useNodesState,
   type Connection,
   type Edge,
@@ -16,6 +19,7 @@ import {
   type OnBeforeDelete,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import dagre from '@dagrejs/dagre'
 import {
   useCreateLink,
   useDeleteLink,
@@ -113,15 +117,37 @@ const ProductNodeView = memo(function ProductNodeView({ id, data }: NodeProps<Pr
 
 const nodeTypes = { product: ProductNodeView }
 
-/** Круговая раскладка для первого показа; дальше позиции живут в состоянии React Flow. */
-function layout(products: Product[]): Map<string, { x: number; y: number }> {
-  const n = Math.max(products.length, 1)
-  const r = Math.max(200, n * 50)
+const NODE_W = 200
+const NODE_HEAD_H = 40
+const FEATURE_ROW_H = 24
+const LIST_MAX_H = 220
+
+/** Иерархическая раскладка dagre (ADR-0003): рёбра потребитель → поставщик, хабы внизу.
+ * Размер узла учитывает раскрытый список фич. */
+function layout(
+  products: Product[],
+  links: { from_product_id?: string; to_product_id?: string }[],
+  sizeOf: (id: string) => { width: number; height: number },
+): Map<string, { x: number; y: number }> {
+  const g = new dagre.graphlib.Graph()
+  g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 110, marginx: 20, marginy: 20 })
+  g.setDefaultEdgeLabel(() => ({}))
+  for (const p of products) g.setNode(p.id, sizeOf(p.id))
+  const seen = new Set<string>()
+  for (const l of links) {
+    const key = `${l.from_product_id}>${l.to_product_id}`
+    if (!l.from_product_id || !l.to_product_id || l.from_product_id === l.to_product_id || seen.has(key)) continue
+    seen.add(key)
+    g.setEdge(l.from_product_id, l.to_product_id)
+  }
+  dagre.layout(g)
   const pos = new Map<string, { x: number; y: number }>()
-  products.forEach((p, i) => {
-    const a = (2 * Math.PI * i) / n - Math.PI / 2
-    pos.set(p.id, { x: Math.round(r * Math.cos(a)) + r, y: Math.round(r * Math.sin(a)) + r })
-  })
+  for (const p of products) {
+    const n = g.node(p.id)
+    const { width, height } = sizeOf(p.id)
+    // dagre отдаёт центр узла, React Flow ждёт левый верхний угол.
+    pos.set(p.id, { x: Math.round(n.x - width / 2), y: Math.round(n.y - height / 2) })
+  }
   return pos
 }
 
@@ -133,6 +159,16 @@ interface PendingLink {
 }
 
 export function GraphPage() {
+  return (
+    <ReactFlowProvider>
+      <GraphInner />
+    </ReactFlowProvider>
+  )
+}
+
+function GraphInner() {
+  const rf = useReactFlow()
+  const nodesReady = useNodesInitialized()
   const products = useProducts()
   const links = useLinks()
   const hubs = useHubs()
@@ -198,15 +234,42 @@ export function GraphPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState<ProductNode>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const positions = useRef(new Map<string, { x: number; y: number }>())
+  const [layoutVersion, setLayoutVersion] = useState(0)
 
-  // Узлы: позиции сохраняются между перерисовками, данные обновляются.
+  // Ключ структуры: состав узлов, рёбер и раскрытых списков. При его смене раскладка пересчитывается,
+  // а перетаскивание пользователем сохраняется только между такими сменами.
+  const structureKey = useMemo(() => {
+    const ids = visible.products.map((p) => p.id).sort().join(',')
+    const es = visible.links.map((l) => `${l.from_product_id}>${l.to_product_id}`).sort().join(',')
+    const ex = expandedIds.map((id) => `${id}:${featureQueries[expandedIds.indexOf(id)]?.data?.length ?? -1}`).sort().join(',')
+    return `${ids}|${es}|${ex}|${layoutVersion}`
+  }, [visible.products, visible.links, expandedIds, featureQueries, layoutVersion])
+  const lastKey = useRef('')
+
+  // После смены раскладки подгоняем вид под все узлы.
   useEffect(() => {
-    const fresh = layout(visible.products)
+    if (!nodesReady) return
+    const t = window.setTimeout(() => void rf.fitView({ padding: 0.15, duration: 300 }), 120)
+    return () => window.clearTimeout(t)
+  }, [structureKey, nodesReady, rf])
+
+  // Узлы: данные обновляются всегда, позиции — по раскладке при смене структуры.
+  useEffect(() => {
+    const sizeOf = (id: string) => {
+      const idx = expandedIds.indexOf(id)
+      const n = idx >= 0 ? (featureQueries[idx]?.data?.length ?? 0) : 0
+      const list = idx >= 0 ? Math.min(LIST_MAX_H, Math.max(n, 1) * FEATURE_ROW_H + 8) : 0
+      return { width: NODE_W, height: NODE_HEAD_H + list }
+    }
+    if (lastKey.current !== structureKey) {
+      lastKey.current = structureKey
+      positions.current = layout(visible.products, visible.links, sizeOf)
+    }
     setNodes(
       visible.products.map((p) => {
         const idx = expandedIds.indexOf(p.id)
         const q = idx >= 0 ? featureQueries[idx] : undefined
-        const pos = positions.current.get(p.id) ?? fresh.get(p.id) ?? { x: 0, y: 0 }
+        const pos = positions.current.get(p.id) ?? { x: 0, y: 0 }
         positions.current.set(p.id, pos)
         const hub = hubIds.has(p.id)
         return {
@@ -221,7 +284,7 @@ export function GraphPage() {
         }
       }),
     )
-  }, [visible.products, expanded, expandedIds, featureQueries, hubIds, toggle, open, setNodes])
+  }, [visible.products, visible.links, expanded, expandedIds, featureQueries, hubIds, toggle, open, setNodes, structureKey])
 
   // Рёбра: связь фич рисуется между хендлами фич, если оба узла раскрыты, иначе между продуктами.
   useEffect(() => {
@@ -366,6 +429,9 @@ export function GraphPage() {
         >
           {ru.app.reset}
         </button>
+        <button type="button" className="btn btn-sm" onClick={() => setLayoutVersion((v) => v + 1)}>
+          {ru.graph.relayout}
+        </button>
       </div>
       <p className="muted">{ru.graph.hint}</p>
       {hubs.isError && <ErrorBox error={hubs.error} />}
@@ -381,6 +447,8 @@ export function GraphPage() {
           onBeforeDelete={onBeforeDelete}
           deleteKeyCode={['Delete', 'Backspace']}
           fitView
+          fitViewOptions={{ padding: 0.15 }}
+          minZoom={0.1}
           nodesDraggable
           nodesConnectable
           elementsSelectable

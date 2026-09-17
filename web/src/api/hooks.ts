@@ -1,5 +1,6 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap } from './client'
+import type { components } from './schema'
 import type { AccessLevel, Feature, Me } from './types'
 
 export const keys = {
@@ -190,4 +191,73 @@ export function useItemHistory(itemId: string, enabled: boolean) {
 
 export function useVerifyAudit() {
   return useMutation({ mutationFn: async () => unwrap(await api.POST('/admin/audit/verify')) })
+}
+
+export type LinkInput = components['schemas']['LinkInput']
+
+/** Создание связи из графа: продуктовой или между фичами. При цикле сервер отвечает 409 с путём. */
+export function useCreateLink() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: LinkInput) => unwrap(await api.POST('/links', { body: input })),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.links })
+      void qc.invalidateQueries({ queryKey: keys.hubs })
+      void qc.invalidateQueries({ queryKey: ['products'] })
+    },
+  })
+}
+
+export function useDeleteLink() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (linkId: string) =>
+      unwrap(await api.DELETE('/links/{linkId}', { params: { path: { linkId } } })),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.links })
+      void qc.invalidateQueries({ queryKey: keys.hubs })
+      void qc.invalidateQueries({ queryKey: ['products'] })
+    },
+  })
+}
+
+/** Компактная фича для раскрытого узла графа: из бэклога, а без приватного доступа — из стратегического среза. */
+export interface GraphFeature {
+  id: string
+  name: string
+  status: string
+  planned_date?: string | null
+  affected: boolean
+  privateAccess: boolean
+}
+
+export interface ExpandedFeatures {
+  data: GraphFeature[] | undefined
+  isPending: boolean
+}
+
+/** Стабильная функция combine: результат мемоизируется TanStack, пока данные запросов не меняются. */
+const combineExpanded = (results: { data: GraphFeature[] | undefined; isPending: boolean }[]): ExpandedFeatures[] =>
+  results.map((r) => ({ data: r.data, isPending: r.isPending }))
+
+export function useExpandedFeatures(ids: string[]) {
+  return useQueries({
+    combine: combineExpanded,
+    queries: ids.map((id) => ({
+      queryKey: ['products', id, 'graph-features'] as const,
+      queryFn: async (): Promise<GraphFeature[]> => {
+        const res = await api.GET('/products/{productId}/features', { params: { path: { productId: id } } })
+        if (res.response.status !== 403) {
+          return unwrap(res).map((f) => ({
+            id: f.id, name: f.name, status: f.status, planned_date: f.planned_date, affected: f.affected, privateAccess: true,
+          }))
+        }
+        const slice = unwrap(await api.GET('/products/{productId}/strategic', { params: { path: { productId: id } } }))
+        return slice.features.map((f) => ({
+          id: f.id, name: f.name, status: f.status, planned_date: f.planned_date, affected: f.affected, privateAccess: false,
+        }))
+      },
+      retry: (count: number, err: unknown) => !(err instanceof ApiError && err.status === 403) && count < 2,
+    })),
+  })
 }

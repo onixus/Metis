@@ -126,3 +126,27 @@ ul { margin: 0; padding-left: 18px; }
 
 .login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .login-card { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Интерактивный граф */
+.react-flow__node.node { padding: 0; min-width: 160px; }
+.node-head { display: flex; align-items: center; gap: 6px; padding: 8px 10px; }
+.node-title { flex: 1; cursor: pointer; }
+.node-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 6px; font-size: 11px; line-height: 1; padding: 3px 6px; cursor: pointer; color: var(--muted); }
+.node-btn:hover { color: var(--text); }
+.node-list { border-top: 1px solid var(--border); margin: 0; padding: 4px 0; list-style: none; max-height: 220px; overflow-y: auto; }
+.node-feature { position: relative; display: flex; align-items: center; gap: 6px; padding: 4px 14px; font-size: 12px; font-weight: 400; }
+.node-feature .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: none; }
+.node-feature.affected .dot { background: #d9534f; }
+.node-feature .fdate { color: var(--muted); margin-left: auto; font-size: 11px; }
+.node-feature .react-flow__handle { width: 8px; height: 8px; background: #2f6fed; }
+.node-feature .react-flow__handle-left { left: 3px; }
+.node-feature .react-flow__handle-right { right: 3px; }
+.node-note { padding: 4px 12px; font-size: 11px; color: var(--muted); }
+.react-flow__handle.handle-product { width: 10px; height: 10px; background: var(--muted); }
+.react-flow__edge.selected .react-flow__edge-path { stroke-width: 4px !important; filter: drop-shadow(0 0 2px rgba(0,0,0,.4)); }
+.graph-dialog { position: absolute; top: 12px; right: 12px; z-index: 5; width: 320px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.12); }
+.graph-dialog h3 { margin: 0 0 8px; font-size: 14px; }
+.graph-dialog .row { display: flex; gap: 8px; margin-top: 10px; }
+.graph-canvas { position: relative; }
+.toast { position: absolute; bottom: 12px; left: 12px; z-index: 5; background: #e8f5ee; border: 1px solid #b7e0c8; color: #14532d; padding: 6px 10px; border-radius: 8px; font-size: 13px; }
+.toast.error { background: #fdecec; border-color: #f5b5b5; color: #7f1d1d; }

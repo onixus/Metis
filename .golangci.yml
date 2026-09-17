@@ -32,6 +32,10 @@ linters:
             - "**/internal/prioritization/*.go"
             - "**/internal/roadmap/*.go"
             - "**/internal/delivery/*.go"
+            - "**/internal/discovery/*.go"
+            - "**/internal/commitments/*.go"
+            - "**/internal/compliance/*.go"
+            - "**/internal/decisions/*.go"
             - "**/internal/ports/**"
           deny:
             - pkg: "github.com/go-chi/chi"

@@ -1,0 +1,8 @@
+{
+  "request": {
+    "method": "PUT",
+    "urlPathPattern": "/rest/api/content/[0-9]+/property/[A-Za-z0-9_.-]+",
+    "bodyPatterns": [ { "matchesJsonPath": "$.version.number" } ]
+  },
+  "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "property_metis_decision_id.json" }
+}

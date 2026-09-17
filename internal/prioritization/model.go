@@ -1,5 +1,6 @@
-// Package prioritization — модели оценки фич (PR-01), денежные метрики (PR-02)
-// и учёт производного спроса хаба (PR-03). Домен не зависит от HTTP и БД.
+// Package prioritization — модели оценки фич (PR-01), денежные метрики (PR-02),
+// учёт производного спроса хаба (PR-03), регуляторно обязательные фичи (PR-04)
+// и стоимость фичи с учётом подтверждения изменений (PR-05). Домен не зависит от HTTP и БД.
 package prioritization
 
 import (
@@ -34,7 +35,7 @@ var (
 	InputsWSJF = []string{"user_business_value", "time_criticality", "risk_reduction", "job_size"}
 )
 
-// Системные переменные, доступные в любой формуле (PR-02, PR-03). Деньги — в основных единицах валюты
+// Системные переменные, доступные в любой формуле (PR-02, PR-03, PR-05). Деньги — в основных единицах валюты
 // (Amount/100) как decimal.
 const (
 	VarARR          = "arr"
@@ -42,10 +43,15 @@ const (
 	VarOwnValue     = "own_value"
 	VarDerivedValue = "derived_value"
 	VarTotalValue   = "total_value"
+	// PR-05: стоимость фичи = разработка + подтверждение изменений.
+	VarCost             = "cost"
+	VarDevCost          = "dev_cost"
+	VarConfirmationCost = "confirmation_cost"
 )
 
 // SystemVariables — перечень системных переменных.
-var SystemVariables = []string{VarARR, VarBlockedDeals, VarOwnValue, VarDerivedValue, VarTotalValue}
+var SystemVariables = []string{VarARR, VarBlockedDeals, VarOwnValue, VarDerivedValue, VarTotalValue,
+	VarCost, VarDevCost, VarConfirmationCost}
 
 // ScoringModel — модель оценки. ProductID == NilID означает портфельную модель для всех продуктов.
 type ScoringModel struct {
@@ -95,6 +101,38 @@ type ScoreResult struct {
 	Explanation string          `json:"explanation"`
 }
 
+// FeatureFlags — флаги фичи (PR-04): регуляторно обязательная фича выводится из общего ранжирования.
+type FeatureFlags struct {
+	FeatureID           kernel.ID `json:"feature_id"`
+	ProductID           kernel.ID `json:"product_id"`
+	RegulatoryMandatory bool      `json:"regulatory_mandatory"`
+	Reason              string    `json:"reason,omitempty"`
+	SetBy               string    `json:"set_by"`
+	SetAt               time.Time `json:"set_at"`
+}
+
+// RankingResult — результат ранжирования (PR-04): общий список и отдельно регуляторно обязательные фичи.
+type RankingResult struct {
+	Ranked    []ScoreResult `json:"ranked"`
+	Mandatory []ScoreResult `json:"mandatory"`
+}
+
+// FeatureCost — стоимость фичи (PR-05): разработка (задаёт PM) плюс подтверждение изменений по классу влияния
+// (порт ImpactCost, модуль compliance).
+type FeatureCost struct {
+	FeatureID        kernel.ID    `json:"feature_id"`
+	ProductID        kernel.ID    `json:"product_id"`
+	DevCost          kernel.Money `json:"dev_cost"`
+	ConfirmationCost kernel.Money `json:"confirmation_cost"`
+	Total            kernel.Money `json:"total"`
+}
+
+// ImpactCost — порт стоимости подтверждения изменений по классу влияния (PR-05, CM-06); реализует compliance.
+// ErrNotFound означает отсутствие класса — стоимость подтверждения 0.
+type ImpactCost interface {
+	ConfirmationCost(ctx context.Context, sc authz.Scope, featureID kernel.ID) (kernel.Money, error)
+}
+
 // MoneyMetrics — порт денежных метрик фичи (PR-02); реализует модуль signals.
 type MoneyMetrics interface {
 	ARRByFeature(ctx context.Context, sc authz.Scope, featureID kernel.ID) (kernel.Money, error)
@@ -110,4 +148,6 @@ type DerivedDemand interface {
 const (
 	EventModelSaved = "prioritization.model.saved"
 	EventInputsSet  = "prioritization.inputs.set"
+	EventFlagsSet   = "prioritization.flags.set"
+	EventDevCostSet = "prioritization.dev_cost.set"
 )

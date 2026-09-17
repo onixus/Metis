@@ -17,6 +17,12 @@ type Store interface {
 	SaveInputs(ctx context.Context, in FeatureScoreInput) error
 	Inputs(ctx context.Context, modelID, featureID kernel.ID) (FeatureScoreInput, error)
 	InputsByProduct(ctx context.Context, modelID, productID kernel.ID) ([]FeatureScoreInput, error)
+	// Флаги фичи (PR-04): Flags возвращает ErrNotFound, если флаги не задавались.
+	SaveFlags(ctx context.Context, f FeatureFlags) error
+	Flags(ctx context.Context, featureID kernel.ID) (FeatureFlags, error)
+	// Стоимость разработки (PR-05): DevCost возвращает ErrNotFound, если не задана.
+	SaveDevCost(ctx context.Context, productID, featureID kernel.ID, cost kernel.Money) error
+	DevCost(ctx context.Context, featureID kernel.ID) (kernel.Money, error)
 }
 
 type inputKey struct{ model, feature kernel.ID }
@@ -27,11 +33,52 @@ type MemStore struct {
 	models map[kernel.ID]ScoringModel
 	order  []kernel.ID
 	inputs map[inputKey]FeatureScoreInput
+	flags  map[kernel.ID]FeatureFlags
+	costs  map[kernel.ID]kernel.Money
 }
 
 // NewMemStore создаёт пустое хранилище.
 func NewMemStore() *MemStore {
-	return &MemStore{models: map[kernel.ID]ScoringModel{}, inputs: map[inputKey]FeatureScoreInput{}}
+	return &MemStore{models: map[kernel.ID]ScoringModel{}, inputs: map[inputKey]FeatureScoreInput{},
+		flags: map[kernel.ID]FeatureFlags{}, costs: map[kernel.ID]kernel.Money{}}
+}
+
+// SaveFlags сохраняет флаги фичи.
+func (m *MemStore) SaveFlags(_ context.Context, f FeatureFlags) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.flags[f.FeatureID] = f
+	return nil
+}
+
+// Flags возвращает флаги фичи.
+func (m *MemStore) Flags(_ context.Context, featureID kernel.ID) (FeatureFlags, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	f, ok := m.flags[featureID]
+	if !ok {
+		return FeatureFlags{}, kernel.NotFound("feature flags", featureID)
+	}
+	return f, nil
+}
+
+// SaveDevCost сохраняет стоимость разработки фичи.
+func (m *MemStore) SaveDevCost(_ context.Context, _, featureID kernel.ID, cost kernel.Money) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.costs[featureID] = cost
+	return nil
+}
+
+// DevCost возвращает стоимость разработки фичи.
+func (m *MemStore) DevCost(_ context.Context, featureID kernel.ID) (kernel.Money, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	c, ok := m.costs[featureID]
+	if !ok {
+		return kernel.Money{}, kernel.NotFound("dev cost", featureID)
+	}
+	return c, nil
 }
 
 // SaveModel сохраняет модель.

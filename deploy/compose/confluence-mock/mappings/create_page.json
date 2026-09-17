@@ -1,0 +1,8 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/rest/api/content",
+    "bodyPatterns": [ { "matchesJsonPath": "$.body.storage.value" } ]
+  },
+  "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "create_page.json" }
+}

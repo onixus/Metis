@@ -1,0 +1,8 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/rest/api/content/search",
+    "queryParameters": { "cql": { "contains": "label = \"adr\"" } }
+  },
+  "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "search_adr.json" }
+}

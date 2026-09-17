@@ -94,3 +94,43 @@ func TestAD02_ServiceRoleWritesOnBehalfOfConnectors(t *testing.T) {
 		t.Fatal("сервисная роль не администрирует")
 	}
 }
+
+// Этап 2: политики записи discovery, обязательств, compliance и решений (AD-02).
+func TestAD02_Stage2WriteActionsByRole(t *testing.T) {
+	pmVM := authz.New(authz.Params{Subject: "pm-vm", Roles: []authz.Role{authz.RolePM},
+		Products: map[kernel.ID]authz.Access{vm: authz.AccessPrivate}, Audience: authz.AudienceInternal})
+	compliance := authz.New(authz.Params{Subject: "rbpo", Roles: []authz.Role{authz.RoleCompliance},
+		AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal})
+	marketing := authz.New(authz.Params{Subject: "mkt", Roles: []authz.Role{authz.RoleMarketing},
+		AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal})
+	presale := authz.New(authz.Params{Subject: "presale", Roles: []authz.Role{authz.RolePresale},
+		AllProducts: authz.AccessStrategic})
+
+	cases := []struct {
+		name   string
+		s      authz.Scope
+		action authz.Action
+		prod   kernel.ID
+		want   bool
+	}{
+		{"PM пишет discovery своего продукта", pmVM, authz.ActionWriteDiscovery, vm, true},
+		{"PM не пишет discovery чужого продукта", pmVM, authz.ActionWriteDiscovery, edr, false},
+		{"маркетинг пишет discovery", marketing, authz.ActionWriteDiscovery, edr, true},
+		{"PM пишет обязательства своего продукта", pmVM, authz.ActionWriteCommitments, vm, true},
+		{"PM не пишет обязательства чужого", pmVM, authz.ActionWriteCommitments, edr, false},
+		{"compliance пишет обязательства", compliance, authz.ActionWriteCommitments, edr, true},
+		{"compliance пишет треки", compliance, authz.ActionWriteCompliance, edr, true},
+		{"PM не пишет треки", pmVM, authz.ActionWriteCompliance, vm, false},
+		{"PM пишет решения своего продукта", pmVM, authz.ActionWriteDecisions, vm, true},
+		{"маркетинг не пишет решения", marketing, authz.ActionWriteDecisions, edr, false},
+		{"presale ничего не пишет", presale, authz.ActionWriteCompliance, edr, false},
+		{"presale ничего не пишет (решения)", presale, authz.ActionWriteDecisions, edr, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := c.s.Allows(c.action, c.prod); got != c.want {
+				t.Fatalf("Allows(%s) = %v, ожидалось %v", c.action, got, c.want)
+			}
+		})
+	}
+}

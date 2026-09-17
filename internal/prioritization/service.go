@@ -20,6 +20,7 @@ type Service struct {
 	clock   kernel.Clock
 	money   MoneyMetrics  // может быть nil: денежные переменные равны 0
 	derived DerivedDemand // может быть nil: переменные спроса равны 0
+	impact  ImpactCost    // может быть nil: confirmation_cost равна 0
 }
 
 // NewService создаёт сервис.
@@ -36,6 +37,12 @@ func (s *Service) WithMoneyMetrics(m MoneyMetrics) *Service {
 // WithDerivedDemand подключает порт производного спроса (PR-03).
 func (s *Service) WithDerivedDemand(d DerivedDemand) *Service {
 	s.derived = d
+	return s
+}
+
+// WithImpactCost подключает порт стоимости подтверждения изменений (PR-05).
+func (s *Service) WithImpactCost(c ImpactCost) *Service {
+	s.impact = c
 	return s
 }
 
@@ -250,6 +257,13 @@ func (s *Service) systemVars(ctx context.Context, sc authz.Scope, featureID kern
 		vars[VarDerivedValue] = moneyToMajor(fv.DerivedValue)
 		vars[VarTotalValue] = moneyToMajor(fv.TotalValue)
 	}
+	cost, err := s.cost(ctx, sc, kernel.NilID, featureID)
+	if err != nil {
+		return nil, err
+	}
+	vars[VarDevCost] = moneyToMajor(cost.DevCost)
+	vars[VarConfirmationCost] = moneyToMajor(cost.ConfirmationCost)
+	vars[VarCost] = moneyToMajor(cost.Total)
 	return vars, nil
 }
 
@@ -316,35 +330,171 @@ func (s *Service) Score(ctx context.Context, sc authz.Scope, modelID, featureID 
 }
 
 // Ranking возвращает фичи продукта, отсортированные по убыванию скора (стабильно по идентификатору фичи).
+// Регуляторно обязательные фичи (PR-04) исключены; полный результат даёт Rank.
 func (s *Service) Ranking(ctx context.Context, sc authz.Scope, modelID, productID kernel.ID) ([]ScoreResult, error) {
-	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
+	res, err := s.Rank(ctx, sc, modelID, productID)
+	if err != nil {
 		return nil, err
+	}
+	return res.Ranked, nil
+}
+
+// Rank ранжирует фичи продукта: общий список по убыванию скора и отдельно регуляторно обязательные (PR-04),
+// тоже по убыванию скора.
+func (s *Service) Rank(ctx context.Context, sc authz.Scope, modelID, productID kernel.ID) (RankingResult, error) {
+	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
+		return RankingResult{}, err
 	}
 	m, err := s.modelFor(ctx, modelID, productID)
 	if err != nil {
-		return nil, err
+		return RankingResult{}, err
 	}
 	f, err := ParseFormula(m.Formula)
 	if err != nil {
-		return nil, err
+		return RankingResult{}, err
 	}
 	inputs, err := s.store.InputsByProduct(ctx, modelID, productID)
 	if err != nil {
-		return nil, fmt.Errorf("load inputs: %w", err)
+		return RankingResult{}, fmt.Errorf("load inputs: %w", err)
 	}
-	out := make([]ScoreResult, 0, len(inputs))
+	res := RankingResult{Ranked: make([]ScoreResult, 0, len(inputs)), Mandatory: []ScoreResult{}}
 	for _, in := range inputs {
 		r, err := s.score(ctx, sc, m, f, in)
 		if err != nil {
-			return nil, err
+			return RankingResult{}, err
 		}
-		out = append(out, r)
+		mandatory, err := s.isMandatory(ctx, in.FeatureID)
+		if err != nil {
+			return RankingResult{}, err
+		}
+		if mandatory {
+			res.Mandatory = append(res.Mandatory, r)
+		} else {
+			res.Ranked = append(res.Ranked, r)
+		}
 	}
+	sortScores(res.Ranked)
+	sortScores(res.Mandatory)
+	return res, nil
+}
+
+func sortScores(out []ScoreResult) {
 	sort.SliceStable(out, func(i, j int) bool {
 		if c := out[i].Score.Cmp(out[j].Score); c != 0 {
 			return c > 0
 		}
 		return out[i].FeatureID.String() < out[j].FeatureID.String()
 	})
-	return out, nil
+}
+
+// ---- Регуляторно обязательные фичи (PR-04) ----
+
+func (s *Service) isMandatory(ctx context.Context, featureID kernel.ID) (bool, error) {
+	fl, err := s.store.Flags(ctx, featureID)
+	if err != nil {
+		if kernel.IsNotFound(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("load flags: %w", err)
+	}
+	return fl.RegulatoryMandatory, nil
+}
+
+// SetRegulatoryMandatory ставит или снимает флаг «регуляторно обязательно». Требует ActionWritePriority.
+// При установке флага причина обязательна.
+func (s *Service) SetRegulatoryMandatory(ctx context.Context, sc authz.Scope, productID, featureID kernel.ID, on bool, reason string) (FeatureFlags, error) {
+	if err := sc.Require(authz.ActionWritePriority, productID); err != nil {
+		return FeatureFlags{}, err
+	}
+	if featureID == kernel.NilID {
+		return FeatureFlags{}, kernel.Invalid("feature_id", "идентификатор фичи обязателен")
+	}
+	if on && strings.TrimSpace(reason) == "" {
+		return FeatureFlags{}, kernel.Invalid("reason", "основание регуляторной обязательности обязательно")
+	}
+	if existing, err := s.store.Flags(ctx, featureID); err == nil && existing.ProductID != productID {
+		return FeatureFlags{}, fmt.Errorf("%w: фича %s принадлежит другому продукту", kernel.ErrValidation, featureID)
+	} else if err != nil && !kernel.IsNotFound(err) {
+		return FeatureFlags{}, fmt.Errorf("load flags: %w", err)
+	}
+	fl := FeatureFlags{FeatureID: featureID, ProductID: productID, RegulatoryMandatory: on, Reason: reason,
+		SetBy: sc.Subject(), SetAt: s.clock.Now()}
+	if err := s.store.SaveFlags(ctx, fl); err != nil {
+		return FeatureFlags{}, fmt.Errorf("save flags: %w", err)
+	}
+	return fl, s.emit(ctx, EventFlagsSet, featureID, productID, sc.Subject(), fl)
+}
+
+// Flags возвращает флаги фичи; если не задавались — нулевые флаги без ошибки.
+func (s *Service) Flags(ctx context.Context, sc authz.Scope, productID, featureID kernel.ID) (FeatureFlags, error) {
+	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
+		return FeatureFlags{}, err
+	}
+	fl, err := s.store.Flags(ctx, featureID)
+	if err != nil {
+		if kernel.IsNotFound(err) {
+			return FeatureFlags{FeatureID: featureID, ProductID: productID}, nil
+		}
+		return FeatureFlags{}, fmt.Errorf("load flags: %w", err)
+	}
+	if fl.ProductID != productID {
+		return FeatureFlags{}, kernel.NotFound("feature flags", featureID)
+	}
+	return fl, nil
+}
+
+// ---- Стоимость фичи (PR-05) ----
+
+// SetDevCost задаёт стоимость разработки фичи (задаёт PM). Требует ActionWritePriority.
+func (s *Service) SetDevCost(ctx context.Context, sc authz.Scope, productID, featureID kernel.ID, cost kernel.Money) (FeatureCost, error) {
+	if err := sc.Require(authz.ActionWritePriority, productID); err != nil {
+		return FeatureCost{}, err
+	}
+	if featureID == kernel.NilID {
+		return FeatureCost{}, kernel.Invalid("feature_id", "идентификатор фичи обязателен")
+	}
+	if cost.Amount < 0 {
+		return FeatureCost{}, kernel.Invalid("dev_cost", "стоимость не может быть отрицательной")
+	}
+	if cost.Amount != 0 && cost.Currency == "" {
+		return FeatureCost{}, kernel.Invalid("dev_cost", "код валюты обязателен")
+	}
+	if err := s.store.SaveDevCost(ctx, productID, featureID, cost); err != nil {
+		return FeatureCost{}, fmt.Errorf("save dev cost: %w", err)
+	}
+	fc, err := s.cost(ctx, sc, productID, featureID)
+	if err != nil {
+		return FeatureCost{}, err
+	}
+	return fc, s.emit(ctx, EventDevCostSet, featureID, productID, sc.Subject(), fc)
+}
+
+// Cost возвращает стоимость фичи: разработка + подтверждение изменений по классу влияния (PR-05).
+// Без порта ImpactCost стоимость подтверждения равна 0. Требует ActionReadStrategic по продукту.
+func (s *Service) Cost(ctx context.Context, sc authz.Scope, productID, featureID kernel.ID) (FeatureCost, error) {
+	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
+		return FeatureCost{}, err
+	}
+	return s.cost(ctx, sc, productID, featureID)
+}
+
+// cost собирает стоимость без проверки прав (вызывающий уже проверил доступ к продукту фичи).
+func (s *Service) cost(ctx context.Context, sc authz.Scope, productID, featureID kernel.ID) (FeatureCost, error) {
+	fc := FeatureCost{FeatureID: featureID, ProductID: productID}
+	dev, err := s.store.DevCost(ctx, featureID)
+	if err != nil && !kernel.IsNotFound(err) {
+		return FeatureCost{}, fmt.Errorf("load dev cost: %w", err)
+	}
+	fc.DevCost = dev
+	if s.impact != nil {
+		conf, err := s.impact.ConfirmationCost(ctx, sc, featureID)
+		if err != nil && !kernel.IsNotFound(err) {
+			return FeatureCost{}, fmt.Errorf("confirmation cost: %w", err)
+		}
+		fc.ConfirmationCost = conf
+	}
+	if fc.Total, err = fc.DevCost.Add(fc.ConfirmationCost); err != nil {
+		return FeatureCost{}, fmt.Errorf("стоимость фичи %s: %w", featureID, err)
+	}
+	return fc, nil
 }

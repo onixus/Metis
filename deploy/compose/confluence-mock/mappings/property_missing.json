@@ -1,0 +1,5 @@
+{
+  "priority": 5,
+  "request": { "method": "GET", "urlPathPattern": "/rest/api/content/[0-9]+/property/[A-Za-z0-9_.-]+" },
+  "response": { "status": 404 }
+}

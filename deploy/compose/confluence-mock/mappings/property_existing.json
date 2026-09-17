@@ -1,0 +1,5 @@
+{
+  "priority": 4,
+  "request": { "method": "GET", "urlPath": "/rest/api/content/1001/property/metis_decision_id" },
+  "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "property_metis_decision_id.json" }
+}

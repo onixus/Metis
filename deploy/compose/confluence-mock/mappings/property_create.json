@@ -1,0 +1,8 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/rest/api/content/[0-9]+/property",
+    "bodyPatterns": [ { "matchesJsonPath": "$.key" } ]
+  },
+  "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "property_created.json" }
+}

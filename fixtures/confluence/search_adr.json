@@ -1,0 +1,28 @@
+{
+  "results": [
+    {
+      "id": "1001",
+      "type": "page",
+      "title": "ADR-0001 Коннектор EDR v2",
+      "space": { "key": "METIS" },
+      "version": { "number": 3, "when": "2026-09-10T12:30:00.000+03:00" },
+      "body": { "storage": { "value": "<p>Контекст решения 1</p>", "representation": "storage" } },
+      "metadata": { "labels": { "results": [ { "name": "metis" }, { "name": "adr" } ] } },
+      "_links": { "webui": "/pages/viewpage.action?pageId=1001" }
+    },
+    {
+      "id": "1002",
+      "type": "page",
+      "title": "ADR-0002 Изоляция хоста",
+      "space": { "key": "METIS" },
+      "version": { "number": 1, "when": "2026-09-12T08:00:00.000Z" },
+      "body": { "storage": { "value": "<p>Контекст решения 2</p>", "representation": "storage" } },
+      "metadata": { "labels": { "results": [ { "name": "metis" }, { "name": "adr" } ] } },
+      "_links": { "webui": "/pages/viewpage.action?pageId=1002" }
+    }
+  ],
+  "start": 0,
+  "limit": 50,
+  "size": 2,
+  "cqlQuery": "type = page AND space = \"METIS\" AND label = \"adr\" ORDER BY created ASC"
+}

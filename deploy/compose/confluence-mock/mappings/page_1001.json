@@ -1,0 +1,4 @@
+{
+  "request": { "method": "GET", "urlPath": "/rest/api/content/1001" },
+  "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "page_1001.json" }
+}

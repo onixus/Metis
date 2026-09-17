@@ -131,15 +131,15 @@ func TestPR01_WSJFModelRanksFeatures(t *testing.T) {
 func TestPR01_CustomFormulaWithMinMaxAndUnaryMinus(t *testing.T) {
 	svc, _ := newSvc(t)
 	m, err := svc.CreateModel(ctx, cpo(), pr.ModelInput{ProductID: edr, Name: "own", Type: pr.ModelCustom,
-		Formula: "max(value, 1) * (1 - -risk) / min(cost, 10)"})
+		Formula: "max(value, 1) * (1 - -risk) / min(size, 10)"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(m.Inputs, ",") != "value,risk,cost" {
+	if strings.Join(m.Inputs, ",") != "value,risk,size" {
 		t.Fatalf("входы выведены из формулы: %v", m.Inputs)
 	}
 	f := kernel.NewID()
-	if _, err := svc.SetFeatureInputs(ctx, cpo(), m.ID, edr, f, vals("value", "0.5", "risk", "0.5", "cost", "20")); err != nil {
+	if _, err := svc.SetFeatureInputs(ctx, cpo(), m.ID, edr, f, vals("value", "0.5", "risk", "0.5", "size", "20")); err != nil {
 		t.Fatal(err)
 	}
 	r, err := svc.Score(ctx, cpo(), m.ID, f)

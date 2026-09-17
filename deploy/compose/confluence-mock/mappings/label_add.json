@@ -1,0 +1,4 @@
+{
+  "request": { "method": "POST", "urlPathPattern": "/rest/api/content/[0-9]+/label" },
+  "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "labels_added.json" }
+}

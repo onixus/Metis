@@ -261,3 +261,30 @@ export function useExpandedFeatures(ids: string[]) {
     })),
   })
 }
+
+export type ProductInput = components['schemas']['ProductInput']
+export type FeatureInput = components['schemas']['FeatureInput']
+
+/** Конструктор продукта (PG-01): создание продукта, затем стартовые фичи и связи. */
+export function useCreateProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: ProductInput) => unwrap(await api.POST('/products', { body: input })),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.products })
+      void qc.invalidateQueries({ queryKey: keys.hubs })
+    },
+  })
+}
+
+export function useCreateFeature() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { productId: string; body: FeatureInput }) =>
+      unwrap(await api.POST('/products/{productId}/features', { params: { path: { productId: input.productId } }, body: input.body })),
+    onSuccess: (_f, input) => {
+      void qc.invalidateQueries({ queryKey: keys.features(input.productId) })
+      void qc.invalidateQueries({ queryKey: ['products', input.productId, 'graph-features'] })
+    },
+  })
+}

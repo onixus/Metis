@@ -12,6 +12,7 @@ import { CallbackPage } from './pages/CallbackPage'
 import { DeliveryPage } from './pages/DeliveryPage'
 import { HubPage } from './pages/HubPage'
 import { LoginPage } from './pages/LoginPage'
+import { ProductBuilderPage } from './pages/ProductBuilderPage'
 import { ProductPage } from './pages/ProductPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { RoadmapPage } from './pages/RoadmapPage'
@@ -58,6 +59,7 @@ export default function App() {
                     </Suspense>
                   }
                 />
+                <Route path="/products/new" element={<ProductBuilderPage />} />
                 <Route path="/products/:id" element={<ProductPage />} />
                 <Route path="/products/:id/roadmap" element={<RoadmapPage />} />
                 <Route path="/hub" element={<HubPage />} />

@@ -10,6 +10,7 @@ export function ProductsPage() {
   const hubs = useHubs()
   const me = useMe()
 
+  const canCreate = (me.data?.roles ?? []).some((r) => r === 'cpo' || r === 'admin')
   const hubById = useMemo(() => new Map((hubs.data ?? []).map((h) => [h.product_id, h])), [hubs.data])
 
   if (products.isPending) return <Loading />
@@ -21,6 +22,11 @@ export function ProductsPage() {
       <div className="page-head">
         <h1>{ru.products.title}</h1>
         <span className="muted">{ru.products.count(list.length)}</span>
+        {canCreate && (
+          <Link className="btn btn-primary btn-sm" to="/products/new">
+            {ru.products.create}
+          </Link>
+        )}
       </div>
       {hubs.isError && <ErrorBox error={hubs.error} />}
       {list.length === 0 ? (

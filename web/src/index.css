@@ -150,3 +150,15 @@ ul { margin: 0; padding-left: 18px; }
 .graph-canvas { position: relative; }
 .toast { position: absolute; bottom: 12px; left: 12px; z-index: 5; background: #e8f5ee; border: 1px solid #b7e0c8; color: #14532d; padding: 6px 10px; border-radius: 8px; font-size: 13px; }
 .toast.error { background: #fdecec; border-color: #f5b5b5; color: #7f1d1d; }
+
+/* Конструктор продукта */
+.builder .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.builder .row { display: flex; gap: 8px; align-items: center; }
+.builder .row.wrap { flex-wrap: wrap; }
+.builder .grow { flex: 1; min-width: 200px; }
+.builder input, .builder select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+.builder h2 { font-size: 15px; margin: 0; }
+.alert { border: 1px solid #b7e0c8; background: #e8f5ee; color: #14532d; border-radius: 8px; padding: 8px 12px; }
+.alert.error { border-color: #f5b5b5; background: #fdecec; color: #7f1d1d; }
+.alert ul { margin: 4px 0 0; padding-left: 18px; }
+.page-head .btn { margin-left: auto; }

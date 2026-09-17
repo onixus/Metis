@@ -53,7 +53,8 @@ export interface paths {
         /** Изменить продукт */
         put: operations["updateProduct"];
         post?: never;
-        delete?: never;
+        /** Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409) */
+        delete: operations["deleteProduct"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1279,6 +1280,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Product"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Удалено */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Продукт участвует в контрактах */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
             default: components["responses"]["Problem"];

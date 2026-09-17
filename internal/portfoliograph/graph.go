@@ -94,6 +94,33 @@ func (g *Graph) removeLink(id kernel.ID) {
 	}
 }
 
+// removeProduct удаляет продукт и всё, что ему принадлежит, из графа в памяти.
+func (g *Graph) removeProduct(id kernel.ID) {
+	for lid, l := range g.links {
+		if l.FromProductID == id || l.ToProductID == id {
+			g.removeLink(lid)
+		}
+	}
+	for fid, f := range g.features {
+		if f.ProductID == id {
+			delete(g.features, fid)
+			delete(g.out, fid)
+			delete(g.in, fid)
+		}
+	}
+	for cid, c := range g.capabilities {
+		if c.ProductID == id {
+			delete(g.capabilities, cid)
+		}
+	}
+	for rid, r := range g.requirements {
+		if r.ProductID == id {
+			delete(g.requirements, rid)
+		}
+	}
+	delete(g.products, id)
+}
+
 func removeID(s []kernel.ID, id kernel.ID) []kernel.ID {
 	for i, v := range s {
 		if v == id {

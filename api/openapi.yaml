@@ -95,6 +95,18 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Product" }
         default: { $ref: "#/components/responses/Problem" }
+    delete:
+      tags: [portfolio]
+      operationId: deleteProduct
+      summary: Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409)
+      responses:
+        "204": { description: Удалено }
+        "409":
+          description: Продукт участвует в контрактах
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        default: { $ref: "#/components/responses/Problem" }
   /products/{productId}/strategic:
     parameters:
       - $ref: "#/components/parameters/productId"

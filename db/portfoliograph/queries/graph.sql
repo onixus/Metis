@@ -86,3 +86,21 @@ ON CONFLICT (feature_id) DO UPDATE SET
 
 -- name: ListFeatureValues :many
 SELECT * FROM portfoliograph.feature_values ORDER BY feature_id;
+
+-- name: DeleteFeatureValuesByProduct :exec
+DELETE FROM portfoliograph.feature_values WHERE product_id = $1;
+
+-- name: DeleteLinksByProduct :exec
+DELETE FROM portfoliograph.links WHERE from_product_id = $1 OR to_product_id = $1;
+
+-- name: DeleteRequirementsByProduct :exec
+DELETE FROM portfoliograph.requirements WHERE product_id = $1;
+
+-- name: DeleteFeaturesByProduct :exec
+DELETE FROM portfoliograph.features WHERE product_id = $1;
+
+-- name: DeleteCapabilitiesByProduct :exec
+DELETE FROM portfoliograph.capabilities WHERE product_id = $1;
+
+-- name: DeleteProduct :execrows
+DELETE FROM portfoliograph.products WHERE id = $1;

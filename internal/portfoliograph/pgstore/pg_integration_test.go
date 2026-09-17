@@ -166,3 +166,43 @@ func TestPG_PGStoreRoundTrip(t *testing.T) {
 		t.Fatalf("настройки по умолчанию: %+v err=%v", snap.Settings, err)
 	}
 }
+
+func TestPG01_PGStoreDeleteProductCascades(t *testing.T) {
+	db := openTestDB(t)
+	ctx := context.Background()
+	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
+	store := pgstore.NewStore(db, kernel.FixedClock{T: now})
+	vm := portfoliograph.Product{ID: kernel.NewID(), Key: "vm", Name: "VM", Type: portfoliograph.ProductTypeSecurity, Lifecycle: portfoliograph.LifecycleActive, CreatedAt: now, UpdatedAt: now}
+	edr := portfoliograph.Product{ID: kernel.NewID(), Key: "edr", Name: "EDR", Type: portfoliograph.ProductTypeSecurity, Lifecycle: portfoliograph.LifecycleActive, CreatedAt: now, UpdatedAt: now}
+	capVM := portfoliograph.Capability{ID: kernel.NewID(), ProductID: vm.ID, Name: "Сканирование"}
+	fVM := portfoliograph.Feature{ID: kernel.NewID(), ProductID: vm.ID, CapabilityID: capVM.ID, Name: "Экспорт", Status: portfoliograph.FeaturePlanned, CreatedAt: now, UpdatedAt: now}
+	fEDR := portfoliograph.Feature{ID: kernel.NewID(), ProductID: edr.ID, Name: "API", Status: portfoliograph.FeaturePlanned, CreatedAt: now, UpdatedAt: now}
+	req := portfoliograph.Requirement{ID: kernel.NewID(), ProductID: vm.ID, FeatureID: fVM.ID, Text: "CSV"}
+	link := portfoliograph.Link{ID: kernel.NewID(), Type: portfoliograph.LinkIntegration, FromProductID: vm.ID, ToProductID: edr.ID, FromFeatureID: fVM.ID, ToFeatureID: fEDR.ID, Criticality: portfoliograph.CritBlocks, CreatedAt: now}
+	for _, f := range []func() error{
+		func() error { return store.SaveProduct(ctx, vm) }, func() error { return store.SaveProduct(ctx, edr) },
+		func() error { return store.SaveCapability(ctx, capVM) }, func() error { return store.SaveFeature(ctx, fVM) },
+		func() error { return store.SaveFeature(ctx, fEDR) }, func() error { return store.SaveRequirement(ctx, req) },
+		func() error { return store.SaveLink(ctx, link) },
+		func() error {
+			return store.SaveRollup(ctx, []portfoliograph.FeatureValue{{FeatureID: fVM.ID, ProductID: vm.ID, ComputedAt: now}, {FeatureID: fEDR.ID, ProductID: edr.ID, ComputedAt: now}})
+		},
+	} {
+		if err := f(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := store.DeleteProduct(ctx, vm.ID); err != nil {
+		t.Fatal(err)
+	}
+	snap, err := store.Load(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snap.Products) != 1 || snap.Products[0].ID != edr.ID || len(snap.Features) != 1 || len(snap.Links) != 0 || len(snap.Capabilities) != 0 || len(snap.Requirements) != 0 {
+		t.Fatalf("каскад не сработал: %+v", snap)
+	}
+	if err := store.DeleteProduct(ctx, vm.ID); err == nil {
+		t.Fatal("повторное удаление должно давать ErrNotFound")
+	}
+}

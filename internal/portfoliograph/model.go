@@ -260,6 +260,7 @@ type StrategicFeature struct {
 // Названия доменных событий.
 const (
 	EventProductCreated  = "portfoliograph.product.created"
+	EventProductDeleted  = "portfoliograph.product.deleted"
 	EventFeatureCreated  = "portfoliograph.feature.created"
 	EventLinkCreated     = "portfoliograph.link.created"
 	EventLinkDeleted     = "portfoliograph.link.deleted"

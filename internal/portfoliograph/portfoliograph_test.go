@@ -525,3 +525,62 @@ func TestService_LoadRestoresGraphFromStore(t *testing.T) {
 		t.Fatalf("цикл после перезагрузки: %v", err)
 	}
 }
+
+func TestPG01_DeleteProductCascadesAndBlocksOnContracts(t *testing.T) {
+	f := newFixture(t)
+	a := f.feature(f.edr, "A", d(2026, 10, 1))
+	b := f.feature(f.soar, "B", d(2026, 10, 1))
+	if _, err := f.dep(a, b, pg.CritBlocks); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.svc.CreateLink(f.ctx, f.cpo, pg.LinkInput{Type: pg.LinkSharedComponent, FromProductID: f.vm, ToProductID: f.edr, Criticality: pg.CritDesirable}); err != nil {
+		t.Fatal(err)
+	}
+	// PM не удаляет продукты.
+	pm := pmScope("pm-edr", map[kernel.ID]authz.Access{f.edr: authz.AccessPrivate})
+	if err := f.svc.DeleteProduct(f.ctx, pm, f.edr); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("PM: %v", err)
+	}
+	// Продукт с контрактом не удаляется.
+	c, err := f.svc.SaveContract(f.ctx, f.cpo, kernel.NilID, pg.ContractInput{Name: "EDR ↔ SOAR", ProviderProductID: f.soar, ConsumerProductID: f.edr, Criticality: pg.CritBlocks})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.DeleteProduct(f.ctx, f.cpo, f.edr); !errors.Is(err, kernel.ErrConflict) {
+		t.Fatalf("с контрактом: %v", err)
+	}
+	_ = c
+	// Deception без контрактов удаляется; EDR остаётся с фичами и связями, кроме тех, что вели к Deception.
+	if err := f.svc.DeleteProduct(f.ctx, f.cpo, f.deception); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.svc.Product(f.ctx, f.cpo, f.deception); !errors.Is(err, kernel.ErrNotFound) {
+		t.Fatalf("Deception должен исчезнуть: %v", err)
+	}
+	// Удаление VM убирает связь VM → EDR, но не фичи EDR.
+	if err := f.svc.DeleteProduct(f.ctx, f.cpo, f.vm); err != nil {
+		t.Fatal(err)
+	}
+	links, _ := f.svc.Links(f.ctx, f.cpo)
+	for _, l := range links {
+		if l.FromProductID == f.vm || l.ToProductID == f.vm {
+			t.Fatalf("связь удалённого продукта осталась: %+v", l)
+		}
+	}
+	fs, _ := f.svc.Features(f.ctx, f.cpo, f.edr)
+	if len(fs) != 1 || fs[0].ID != a {
+		t.Fatalf("фичи EDR: %+v", fs)
+	}
+	if _, err := f.svc.FeatureValue(f.ctx, f.cpo, b); err != nil {
+		t.Fatalf("rollup после удаления: %v", err)
+	}
+	// Хранилище согласовано с памятью: перезагрузка даёт тот же граф.
+	svc2 := pg.NewService(f.store, nil, kernel.SystemClock{})
+	if err := svc2.Load(f.ctx); err != nil {
+		t.Fatal(err)
+	}
+	ps, _ := svc2.Products(f.ctx, f.cpo)
+	if len(ps) != 2 {
+		t.Fatalf("после перезагрузки продуктов %d", len(ps))
+	}
+}

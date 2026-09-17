@@ -18,14 +18,25 @@ type Result struct {
 	Contracts map[string]kernel.ID // по имени
 }
 
+// ensureProduct возвращает существующий продукт по ключу или создаёт новый.
+// Второй результат — true, если продукт создан сейчас: только тогда для него заводятся фичи.
+func ensureProduct(ctx context.Context, svc *pg.Service, sc authz.Scope, in pg.ProductInput) (kernel.ID, bool, error) {
+	if id, err := svc.ProductIDByKey(ctx, in.Key); err == nil {
+		return id, false, nil
+	}
+	p, err := svc.CreateProduct(ctx, sc, in)
+	if err != nil {
+		return kernel.NilID, false, fmt.Errorf("seed product %s: %w", in.Key, err)
+	}
+	return p.ID, true, nil
+}
+
 // Security загружает портфель ИБ: Deception, VM, EDR, SOAR (хаб) и три контракта.
-// Идемпотентно: если продукт с ключом уже есть, seed пропускается.
+// Идемпотентно по каждому продукту: существующие продукты переиспользуются, фичи и контракты
+// заводятся только для созданных сейчас продуктов.
 func Security(ctx context.Context, svc *pg.Service, sc authz.Scope) (Result, error) {
 	res := Result{Products: map[string]kernel.ID{}, Features: map[string]kernel.ID{}, Contracts: map[string]kernel.ID{}}
-	if id, err := svc.ProductIDByKey(ctx, "soar"); err == nil {
-		res.Products["soar"] = id
-		return res, nil
-	}
+	created := map[string]bool{}
 	products := []pg.ProductInput{
 		{Key: "deception", Name: "Deception", Type: pg.ProductTypeSecurity, Owner: "pm-deception", Lifecycle: pg.LifecycleActive},
 		{Key: "vm", Name: "VM", Type: pg.ProductTypeSecurity, Owner: "pm-vm", Lifecycle: pg.LifecycleActive, SSDLCCertified: true},
@@ -33,11 +44,11 @@ func Security(ctx context.Context, svc *pg.Service, sc authz.Scope) (Result, err
 		{Key: "soar", Name: "SOAR", Type: pg.ProductTypeSecurity, Owner: "pm-soar", Lifecycle: pg.LifecycleActive, HubManual: true},
 	}
 	for _, in := range products {
-		p, err := svc.CreateProduct(ctx, sc, in)
+		id, isNew, err := ensureProduct(ctx, svc, sc, in)
 		if err != nil {
-			return res, fmt.Errorf("seed product %s: %w", in.Key, err)
+			return res, err
 		}
-		res.Products[in.Key] = p.ID
+		res.Products[in.Key], created[in.Key] = id, isNew
 	}
 	d := func(y int, m time.Month, day int) kernel.Date { return kernel.DateOf(y, m, day) }
 	features := []struct {
@@ -55,6 +66,9 @@ func Security(ctx context.Context, svc *pg.Service, sc authz.Scope) (Result, err
 		{"deception", "События ловушек в SIEM", d(2027, 1, 15), pg.FeaturePlanned},
 	}
 	for _, f := range features {
+		if !created[f.product] {
+			continue
+		}
 		ft, err := svc.CreateFeature(ctx, sc, res.Products[f.product], pg.FeatureInput{Name: f.name, Status: f.status, PlannedDate: f.date})
 		if err != nil {
 			return res, fmt.Errorf("seed feature %s: %w", f.name, err)
@@ -71,6 +85,9 @@ func Security(ctx context.Context, svc *pg.Service, sc authz.Scope) (Result, err
 		{"Deception ↔ SOAR", "soar", "deception", "Коннектор Deception", "События ловушек в SIEM", pg.CritDesirable},
 	}
 	for _, c := range contracts {
+		if !created[c.provider] || !created[c.consumer] {
+			continue
+		}
 		ic, err := svc.SaveContract(ctx, sc, kernel.NilID, pg.ContractInput{
 			Name: c.name, ProviderProductID: res.Products[c.provider], ConsumerProductID: res.Products[c.consumer],
 			ProviderFeatureIDs: []kernel.ID{res.Features[c.pf]}, ConsumerFeatureIDs: []kernel.ID{res.Features[c.cf]},
@@ -88,10 +105,7 @@ func Security(ctx context.Context, svc *pg.Service, sc authz.Scope) (Result, err
 // Infrastructure загружает инфраструктурный портфель: Desktop, Server, LDAP, Backup, Виртуализация → Платформа управления (хаб).
 func Infrastructure(ctx context.Context, svc *pg.Service, sc authz.Scope) (Result, error) {
 	res := Result{Products: map[string]kernel.ID{}, Features: map[string]kernel.ID{}, Contracts: map[string]kernel.ID{}}
-	if id, err := svc.ProductIDByKey(ctx, "mgmt"); err == nil {
-		res.Products["mgmt"] = id
-		return res, nil
-	}
+	created := map[string]bool{}
 	products := []pg.ProductInput{
 		{Key: "mgmt", Name: "Платформа управления ПО и конфигурациями", Type: pg.ProductTypePlatform, Owner: "pm-mgmt", HubManual: true},
 		{Key: "desktop", Name: "Desktop", Type: pg.ProductTypeInfrastructure, Owner: "pm-desktop"},
@@ -102,11 +116,14 @@ func Infrastructure(ctx context.Context, svc *pg.Service, sc authz.Scope) (Resul
 	}
 	for _, in := range products {
 		in.Lifecycle = pg.LifecycleActive
-		p, err := svc.CreateProduct(ctx, sc, in)
+		id, isNew, err := ensureProduct(ctx, svc, sc, in)
 		if err != nil {
-			return res, fmt.Errorf("seed product %s: %w", in.Key, err)
+			return res, err
 		}
-		res.Products[in.Key] = p.ID
+		res.Products[in.Key], created[in.Key] = id, isNew
+	}
+	if !created["mgmt"] {
+		return res, nil
 	}
 	agent, err := svc.CreateFeature(ctx, sc, res.Products["mgmt"], pg.FeatureInput{Name: "Агент управления v4", Status: pg.FeaturePlanned, PlannedDate: kernel.DateOf(2026, 12, 15)})
 	if err != nil {
@@ -114,6 +131,9 @@ func Infrastructure(ctx context.Context, svc *pg.Service, sc authz.Scope) (Resul
 	}
 	res.Features["Агент управления v4"] = agent.ID
 	for _, key := range []string{"desktop", "server", "ldap", "backup", "virt"} {
+		if !created[key] {
+			continue
+		}
 		f, err := svc.CreateFeature(ctx, sc, res.Products[key], pg.FeatureInput{Name: "Поддержка агента v4", Status: pg.FeaturePlanned, PlannedDate: kernel.DateOf(2027, 1, 31)})
 		if err != nil {
 			return res, err

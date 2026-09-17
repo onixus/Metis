@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useCreateFeature, useCreateLink, useCreateProduct, useMe, useProducts, type ProductInput } from '../api/hooks'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useCreateFeature, useCreateLink, useCreateProduct, useMe, useProduct, useProducts, useUpdateProduct, type ProductInput } from '../api/hooks'
 import { errorMessage } from '../api/client'
 import type { Criticality, Lifecycle, LinkType, Product } from '../api/types'
 import { ErrorBox, Loading } from '../components/Status'
@@ -31,31 +31,42 @@ let seq = 0
 const nextId = () => `d${++seq}`
 
 export function ProductBuilderPage() {
+  const { id: editId = '' } = useParams()
+  const editing = editId !== ''
   const me = useMe()
   const products = useProducts()
+  const existing = useProduct(editId, editing)
+
+  const canCreate = (me.data?.roles ?? []).some((r) => r === 'cpo' || r === 'admin')
+  if (me.isPending || products.isPending || (editing && existing.isPending)) return <Loading />
+  if (products.isError) return <ErrorBox error={products.error} onRetry={() => void products.refetch()} />
+  if (editing && existing.isError) return <ErrorBox error={existing.error} onRetry={() => void existing.refetch()} />
+  if (!canCreate) return <p className="muted">{ru.builder.forbidden}</p>
+  // key перезапускает форму при смене продукта, поэтому состояние инициализируется из initial без эффектов.
+  return <BuilderForm key={editId || 'new'} editId={editId} initial={editing ? existing.data : undefined} products={products.data} />
+}
+
+function BuilderForm({ editId, initial, products }: { editId: string; initial: Product | undefined; products: Product[] }) {
+  const editing = editId !== ''
   const createProduct = useCreateProduct()
+  const updateProduct = useUpdateProduct()
   const createFeature = useCreateFeature()
   const createLink = useCreateLink()
   const navigate = useNavigate()
 
-  const [kind, setKind] = useState<Kind>('product')
-  const [key, setKey] = useState('')
-  const [name, setName] = useState('')
-  const [type, setType] = useState<ProductType>('security')
-  const [owner, setOwner] = useState('')
-  const [lifecycle, setLifecycle] = useState<Lifecycle>('active')
-  const [ssdlc, setSsdlc] = useState(false)
-  const [hub, setHub] = useState(false)
+  const [kind, setKind] = useState<Kind>(initial?.type === 'platform' && initial.hub_manual ? 'platform' : 'product')
+  const [key, setKey] = useState(initial?.key ?? '')
+  const [name, setName] = useState(initial?.name ?? '')
+  const [type, setType] = useState<ProductType>(initial?.type ?? 'security')
+  const [owner, setOwner] = useState(initial?.owner ?? '')
+  const [lifecycle, setLifecycle] = useState<Lifecycle>(initial?.lifecycle ?? 'active')
+  const [ssdlc, setSsdlc] = useState(initial?.ssdlc_certified ?? false)
+  const [hub, setHub] = useState(initial?.hub_manual ?? false)
   const [features, setFeatures] = useState<Record<string, FeatureDraft>>({})
   const [links, setLinks] = useState<Record<string, LinkDraft>>({})
   const [errors, setErrors] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   const [created, setCreated] = useState<Product | null>(null)
-
-  const canCreate = useMemo(() => {
-    const roles = me.data?.roles ?? []
-    return roles.includes('cpo') || roles.includes('admin')
-  }, [me.data])
 
   const effectiveType: ProductType = kind === 'platform' ? 'platform' : type
   const effectiveHub = kind === 'platform' ? true : hub
@@ -73,10 +84,22 @@ export function ProductBuilderPage() {
     if (v.length) return
     setBusy(true)
     const failures: string[] = []
+    const body: ProductInput = {
+      key, name: name.trim(), type: effectiveType, owner: owner.trim() || undefined, lifecycle, ssdlc_certified: ssdlc, hub_manual: effectiveHub,
+    }
+    if (editing) {
+      try {
+        const p = await updateProduct.mutateAsync({ id: editId, body })
+        setCreated(p)
+      } catch (err) {
+        setErrors([errorMessage(err)])
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
     try {
-      const p = await createProduct.mutateAsync({
-        key, name: name.trim(), type: effectiveType, owner: owner.trim() || undefined, lifecycle, ssdlc_certified: ssdlc, hub_manual: effectiveHub,
-      })
+      const p = await createProduct.mutateAsync(body)
       for (const f of Object.values(features)) {
         if (!f.name.trim()) continue
         try {
@@ -105,16 +128,13 @@ export function ProductBuilderPage() {
     }
   }
 
-  if (me.isPending || products.isPending) return <Loading />
-  if (products.isError) return <ErrorBox error={products.error} onRetry={() => void products.refetch()} />
-  if (!canCreate) return <p className="muted">{ru.builder.forbidden}</p>
 
   if (created) {
     return (
       <section className="stack">
-        <h1>{ru.builder.title}</h1>
+        <h1>{editing ? ru.builder.editTitle : ru.builder.title}</h1>
         <div className="card stack">
-          <p>{ru.builder.done(created.name)}</p>
+          <p>{editing ? ru.builder.saved(created.name) : ru.builder.done(created.name)}</p>
           {errors.length > 0 && (
             <div className="alert">
               <p>{ru.builder.partial(errors.length)}</p>
@@ -141,14 +161,14 @@ export function ProductBuilderPage() {
     )
   }
 
-  const peers = [...products.data].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  const peers = [...products].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
 
   return (
     <section className="stack builder">
       <div className="page-head">
-        <h1>{ru.builder.title}</h1>
+        <h1>{editing ? ru.builder.editTitle : ru.builder.title}</h1>
       </div>
-      <p className="muted">{ru.builder.subtitle}</p>
+      <p className="muted">{editing ? ru.builder.editHint : ru.builder.subtitle}</p>
       <form
         className="stack"
         onSubmit={(e) => {
@@ -214,6 +234,7 @@ export function ProductBuilderPage() {
           </div>
         </div>
 
+        {!editing && (
         <div className="card stack">
           <h2>{ru.builder.section.features}</h2>
           {Object.entries(features).map(([id, f]) => (
@@ -244,7 +265,9 @@ export function ProductBuilderPage() {
             </button>
           </div>
         </div>
+        )}
 
+        {!editing && (
         <div className="card stack">
           <h2>{ru.builder.section.links}</h2>
           {Object.entries(links).map(([id, l]) => (
@@ -303,6 +326,7 @@ export function ProductBuilderPage() {
             </button>
           </div>
         </div>
+        )}
 
         {errors.length > 0 && (
           <div className="alert error">
@@ -315,9 +339,9 @@ export function ProductBuilderPage() {
         )}
         <div className="row">
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? ru.builder.creating : ru.builder.submit}
+            {busy ? ru.builder.creating : editing ? ru.builder.save : ru.builder.submit}
           </button>
-          <Link className="btn" to="/">
+          <Link className="btn" to={editing ? `/products/${editId}` : '/'}>
             {ru.app.cancel}
           </Link>
         </div>

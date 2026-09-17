@@ -1,8 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import {
   accessLevel,
+  useDeleteProduct,
   useFeatureValues,
   useFeatures,
   useLinkSignal,
@@ -31,6 +32,10 @@ export function ProductPage() {
   const level = accessLevel(me.data, id)
   const isPrivate = level === 'private'
   const strategic = useStrategic(id)
+  const del = useDeleteProduct()
+  const navigate = useNavigate()
+  const [deleteError, setDeleteError] = useState('')
+  const canManage = (me.data?.roles ?? []).some((r) => r === 'cpo' || r === 'admin')
 
   if (me.isPending || strategic.isPending) return <Loading />
   if (strategic.isError) return <ErrorBox error={strategic.error} onRetry={() => void strategic.refetch()} />
@@ -46,10 +51,35 @@ export function ProductPage() {
             {pick(ru.product.lifecycles, product.lifecycle)} · {ru.me.access[level]}
           </div>
         </div>
-        <Link className="btn" to={`/products/${id}/roadmap`}>
-          {ru.product.roadmap}
-        </Link>
+        <div className="row">
+          <Link className="btn" to={`/products/${id}/roadmap`}>
+            {ru.product.roadmap}
+          </Link>
+          {canManage && (
+            <>
+              <Link className="btn" to={`/products/${id}/edit`}>
+                {ru.product.edit}
+              </Link>
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={del.isPending}
+                onClick={() => {
+                  if (!window.confirm(ru.product.deleteConfirm(product.name))) return
+                  setDeleteError('')
+                  del.mutate(id, {
+                    onSuccess: () => navigate('/'),
+                    onError: (err) => setDeleteError(errorMessage(err)),
+                  })
+                }}
+              >
+                {ru.product.delete}
+              </button>
+            </>
+          )}
+        </div>
       </div>
+      {deleteError && <div className="alert error">{deleteError}</div>}
 
       <div className="card stack">
         <h2>{ru.productPage.strategic}</h2>

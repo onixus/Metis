@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -237,6 +238,42 @@ func (s *Service) UpdateProduct(ctx context.Context, sc authz.Scope, id kernel.I
 	}
 	s.g.putProduct(upd)
 	return upd, nil
+}
+
+// DeleteProduct удаляет продукт с его возможностями, фичами, требованиями и связями (PG-01).
+// Продукт, участвующий в контрактах, не удаляется: сначала контракты нужно снять (ErrConflict).
+// Требуется право создания в портфеле (CPO или admin) и приватный доступ к продукту.
+func (s *Service) DeleteProduct(ctx context.Context, sc authz.Scope, id kernel.ID) error {
+	if err := sc.Require(authz.ActionWriteGraph, kernel.NilID); err != nil {
+		return err
+	}
+	if err := sc.Require(authz.ActionReadPrivate, id); err != nil {
+		return err
+	}
+	if err := s.ensureLoaded(ctx); err != nil {
+		return err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.g.products[id]; !ok {
+		return kernel.NotFound("product", id)
+	}
+	var names []string
+	for _, c := range s.g.contracts {
+		if c.ProviderProductID == id || c.ConsumerProductID == id {
+			names = append(names, c.Name)
+		}
+	}
+	if len(names) > 0 {
+		sort.Strings(names)
+		return fmt.Errorf("%w: продукт участвует в контрактах: %s", kernel.ErrConflict, strings.Join(names, ", "))
+	}
+	if err := s.store.DeleteProduct(ctx, id); err != nil {
+		return fmt.Errorf("delete product: %w", err)
+	}
+	s.g.removeProduct(id)
+	s.dirty = true
+	return s.emit(ctx, EventProductDeleted, id, id, sc.Subject(), map[string]any{"product_id": id})
 }
 
 // Products возвращает продукты, видимые субъекту (хотя бы стратегически).

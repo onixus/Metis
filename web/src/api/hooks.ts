@@ -31,9 +31,10 @@ export function useProducts() {
   return useQuery({ queryKey: keys.products, queryFn: async () => unwrap(await api.GET('/products')) })
 }
 
-export function useProduct(id: string) {
+export function useProduct(id: string, enabled = true) {
   return useQuery({
     queryKey: keys.product(id),
+    enabled,
     queryFn: async () => unwrap(await api.GET('/products/{productId}', { params: { path: { productId: id } } })),
   })
 }
@@ -285,6 +286,32 @@ export function useCreateFeature() {
     onSuccess: (_f, input) => {
       void qc.invalidateQueries({ queryKey: keys.features(input.productId) })
       void qc.invalidateQueries({ queryKey: ['products', input.productId, 'graph-features'] })
+    },
+  })
+}
+
+export function useUpdateProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { id: string; body: ProductInput }) =>
+      unwrap(await api.PUT('/products/{productId}', { params: { path: { productId: input.id } }, body: input.body })),
+    onSuccess: (_p, input) => {
+      void qc.invalidateQueries({ queryKey: keys.products })
+      void qc.invalidateQueries({ queryKey: keys.product(input.id) })
+      void qc.invalidateQueries({ queryKey: keys.strategic(input.id) })
+      void qc.invalidateQueries({ queryKey: keys.hubs })
+    },
+  })
+}
+
+export function useDeleteProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => unwrap(await api.DELETE('/products/{productId}', { params: { path: { productId: id } } })),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['products'] })
+      void qc.invalidateQueries({ queryKey: keys.links })
+      void qc.invalidateQueries({ queryKey: keys.hubs })
     },
   })
 }

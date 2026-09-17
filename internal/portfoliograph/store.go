@@ -23,6 +23,8 @@ type Snapshot struct {
 type Store interface {
 	Load(ctx context.Context) (Snapshot, error)
 	SaveProduct(ctx context.Context, p Product) error
+	// DeleteProduct удаляет продукт вместе с его возможностями, фичами, требованиями и связями.
+	DeleteProduct(ctx context.Context, id kernel.ID) error
 	SaveCapability(ctx context.Context, c Capability) error
 	SaveFeature(ctx context.Context, f Feature) error
 	SaveRequirement(ctx context.Context, r Requirement) error
@@ -73,6 +75,33 @@ func (m *MemStore) SaveProduct(_ context.Context, p Product) error {
 	defer m.mu.Unlock()
 	m.snap.Products = upsert(m.snap.Products, p, func(a, b Product) bool { return a.ID == b.ID })
 	return nil
+}
+
+// DeleteProduct удаляет продукт и всё, что ему принадлежит.
+func (m *MemStore) DeleteProduct(_ context.Context, id kernel.ID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	found := false
+	m.snap.Products = filter(m.snap.Products, func(p Product) bool { found = found || p.ID == id; return p.ID != id })
+	if !found {
+		return kernel.NotFound("product", id)
+	}
+	m.snap.Capabilities = filter(m.snap.Capabilities, func(c Capability) bool { return c.ProductID != id })
+	m.snap.Features = filter(m.snap.Features, func(f Feature) bool { return f.ProductID != id })
+	m.snap.Requirements = filter(m.snap.Requirements, func(r Requirement) bool { return r.ProductID != id })
+	m.snap.Links = filter(m.snap.Links, func(l Link) bool { return l.FromProductID != id && l.ToProductID != id })
+	m.roll = filter(m.roll, func(v FeatureValue) bool { return v.ProductID != id })
+	return nil
+}
+
+func filter[T any](s []T, keep func(T) bool) []T {
+	out := s[:0:0]
+	for _, v := range s {
+		if keep(v) {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // SaveCapability сохраняет возможность.

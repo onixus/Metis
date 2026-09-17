@@ -227,6 +227,20 @@ func (s *Server) UpdateProduct(ctx context.Context, req gen.UpdateProductRequest
 	return gen.UpdateProduct200JSONResponse(toProduct(p)), nil
 }
 
+// DeleteProduct — удаление продукта с каскадом; 409 при наличии контрактов.
+func (s *Server) DeleteProduct(ctx context.Context, req gen.DeleteProductRequestObject) (gen.DeleteProductResponseObject, error) {
+	if err := s.d.Portfolio.DeleteProduct(ctx, scope(ctx), req.ProductId); err != nil {
+		if status, body := problemFor(err); status == 409 {
+			if p, ok := body.(gen.Problem); ok {
+				return gen.DeleteProduct409ApplicationProblemPlusJSONResponse(p), nil
+			}
+		}
+		return nil, err
+	}
+	s.auditGraph(ctx, "product", req.ProductId, req.ProductId, "delete")
+	return gen.DeleteProduct204Response{}, nil
+}
+
 // GetStrategicSlice — PG-10.
 func (s *Server) GetStrategicSlice(ctx context.Context, req gen.GetStrategicSliceRequestObject) (gen.GetStrategicSliceResponseObject, error) {
 	sl, err := s.d.Portfolio.StrategicSlice(ctx, scope(ctx), req.ProductId)

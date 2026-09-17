@@ -60,6 +60,7 @@ export default function App() {
                   }
                 />
                 <Route path="/products/new" element={<ProductBuilderPage />} />
+                <Route path="/products/:id/edit" element={<ProductBuilderPage />} />
                 <Route path="/products/:id" element={<ProductPage />} />
                 <Route path="/products/:id/roadmap" element={<RoadmapPage />} />
                 <Route path="/hub" element={<HubPage />} />

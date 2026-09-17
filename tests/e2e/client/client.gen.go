@@ -1721,6 +1721,11 @@ type ClientInterface interface {
 	// Corresponds with POST /products (the `CreateProduct` operationId).
 	CreateProduct(ctx context.Context, body CreateProductJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DeleteProduct Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409)
+	//
+	// Corresponds with DELETE /products/{productId} (the `DeleteProduct` operationId).
+	DeleteProduct(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetProduct Продукт
 	//
 	// Corresponds with GET /products/{productId} (the `GetProduct` operationId).
@@ -2411,6 +2416,21 @@ func (c *Client) CreateProductWithBody(ctx context.Context, contentType string, 
 // Corresponds with POST /products (the `CreateProduct` operationId).
 func (c *Client) CreateProduct(ctx context.Context, body CreateProductJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateProductRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteProduct Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409)
+//
+// Corresponds with DELETE /products/{productId} (the `DeleteProduct` operationId).
+func (c *Client) DeleteProduct(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteProductRequest(c.Server, productId)
 	if err != nil {
 		return nil, err
 	}
@@ -3772,6 +3792,40 @@ func NewCreateProductRequestWithBody(server string, contentType string, body io.
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteProductRequest constructs an http.Request for the DeleteProduct method
+func NewDeleteProductRequest(server string, productId ProductId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -5196,6 +5250,13 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /products (the `CreateProduct` operationId).
 	CreateProductWithResponse(ctx context.Context, body CreateProductJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateProductResponse, error)
 
+	// DeleteProductWithResponse Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /products/{productId} (the `DeleteProduct` operationId).
+	DeleteProductWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*DeleteProductResponse, error)
+
 	// GetProductWithResponse Продукт
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -6397,6 +6458,54 @@ func (r CreateProductResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r CreateProductResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteProductResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Problem
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteProductResponse) GetApplicationproblemJSON409() *Problem {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r DeleteProductResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteProductResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteProductResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteProductResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteProductResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -8146,6 +8255,19 @@ func (c *ClientWithResponses) CreateProductWithResponse(ctx context.Context, bod
 	return ParseCreateProductResponse(rsp)
 }
 
+// DeleteProductWithResponse Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /products/{productId} (the `DeleteProduct` operationId).
+func (c *ClientWithResponses) DeleteProductWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*DeleteProductResponse, error) {
+	rsp, err := c.DeleteProduct(ctx, productId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteProductResponse(rsp)
+}
+
 // GetProductWithResponse Продукт
 //
 // Returns a wrapper object for the known response body format(s).
@@ -9312,6 +9434,42 @@ func ParseCreateProductResponse(rsp *http.Response) (*CreateProductResponse, err
 			return nil, err
 		}
 		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteProductResponse parses an HTTP response from a DeleteProductWithResponse call
+func ParseDeleteProductResponse(rsp *http.Response) (*DeleteProductResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteProductResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Problem

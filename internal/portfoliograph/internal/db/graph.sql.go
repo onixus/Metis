@@ -13,6 +13,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteCapabilitiesByProduct = `-- name: DeleteCapabilitiesByProduct :exec
+DELETE FROM portfoliograph.capabilities WHERE product_id = $1
+`
+
+func (q *Queries) DeleteCapabilitiesByProduct(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteCapabilitiesByProduct, productID)
+	return err
+}
+
+const deleteFeatureValuesByProduct = `-- name: DeleteFeatureValuesByProduct :exec
+DELETE FROM portfoliograph.feature_values WHERE product_id = $1
+`
+
+func (q *Queries) DeleteFeatureValuesByProduct(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteFeatureValuesByProduct, productID)
+	return err
+}
+
+const deleteFeaturesByProduct = `-- name: DeleteFeaturesByProduct :exec
+DELETE FROM portfoliograph.features WHERE product_id = $1
+`
+
+func (q *Queries) DeleteFeaturesByProduct(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteFeaturesByProduct, productID)
+	return err
+}
+
 const deleteLink = `-- name: DeleteLink :execrows
 DELETE FROM portfoliograph.links WHERE id = $1
 `
@@ -23,6 +50,36 @@ func (q *Queries) DeleteLink(ctx context.Context, id uuid.UUID) (int64, error) {
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const deleteLinksByProduct = `-- name: DeleteLinksByProduct :exec
+DELETE FROM portfoliograph.links WHERE from_product_id = $1 OR to_product_id = $1
+`
+
+func (q *Queries) DeleteLinksByProduct(ctx context.Context, fromProductID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteLinksByProduct, fromProductID)
+	return err
+}
+
+const deleteProduct = `-- name: DeleteProduct :execrows
+DELETE FROM portfoliograph.products WHERE id = $1
+`
+
+func (q *Queries) DeleteProduct(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteProduct, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteRequirementsByProduct = `-- name: DeleteRequirementsByProduct :exec
+DELETE FROM portfoliograph.requirements WHERE product_id = $1
+`
+
+func (q *Queries) DeleteRequirementsByProduct(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteRequirementsByProduct, productID)
+	return err
 }
 
 const getSettings = `-- name: GetSettings :one

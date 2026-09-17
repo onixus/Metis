@@ -138,6 +138,30 @@ func (s *PG) SaveProduct(ctx context.Context, p portfoliograph.Product) error {
 	return wrap("product", p.ID, err)
 }
 
+// DeleteProduct удаляет продукт и всё, что ему принадлежит, одной транзакцией.
+func (s *PG) DeleteProduct(ctx context.Context, id kernel.ID) error {
+	return s.db.Transact(ctx, func(ctx context.Context) error {
+		q := s.q(ctx)
+		steps := []func(context.Context, kernel.ID) error{
+			q.DeleteFeatureValuesByProduct, q.DeleteLinksByProduct, q.DeleteRequirementsByProduct,
+			q.DeleteFeaturesByProduct, q.DeleteCapabilitiesByProduct,
+		}
+		for _, step := range steps {
+			if err := step(ctx, id); err != nil {
+				return wrap("product", id, err)
+			}
+		}
+		n, err := q.DeleteProduct(ctx, id)
+		if err != nil {
+			return wrap("product", id, err)
+		}
+		if n == 0 {
+			return kernel.NotFound("product", id)
+		}
+		return nil
+	})
+}
+
 // SaveCapability сохраняет возможность.
 func (s *PG) SaveCapability(ctx context.Context, c portfoliograph.Capability) error {
 	return wrap("capability", c.ID, s.q(ctx).UpsertCapability(ctx, db.UpsertCapabilityParams{ID: c.ID, ProductID: c.ProductID, Name: c.Name}))

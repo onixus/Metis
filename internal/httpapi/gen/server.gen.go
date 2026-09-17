@@ -1538,6 +1538,9 @@ type ServerInterface interface {
 	// CreateProduct Создать продукт (PG-01)
 	// (POST /products)
 	CreateProduct(w http.ResponseWriter, r *http.Request)
+	// DeleteProduct Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409)
+	// (DELETE /products/{productId})
+	DeleteProduct(w http.ResponseWriter, r *http.Request, productId ProductId)
 	// GetProduct Продукт
 	// (GET /products/{productId})
 	GetProduct(w http.ResponseWriter, r *http.Request, productId ProductId)
@@ -1742,6 +1745,12 @@ func (_ Unimplemented) ListProducts(w http.ResponseWriter, r *http.Request) {
 // CreateProduct Создать продукт (PG-01)
 // (POST /products)
 func (_ Unimplemented) CreateProduct(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteProduct Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409)
+// (DELETE /products/{productId})
+func (_ Unimplemented) DeleteProduct(w http.ResponseWriter, r *http.Request, productId ProductId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2281,6 +2290,32 @@ func (siw *ServerInterfaceWrapper) CreateProduct(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateProduct(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteProduct operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteProduct(w, r, productId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3178,6 +3213,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/products", wrapper.CreateProduct)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/products/{productId}", wrapper.DeleteProduct)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/products/{productId}", wrapper.GetProduct)
 	})
 	r.Group(func(r chi.Router) {
@@ -4061,6 +4099,53 @@ type CreateProductdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response CreateProductdefaultApplicationProblemPlusJSONResponse) VisitCreateProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteProductRequestObject struct {
+	ProductId ProductId `json:"productId"`
+}
+
+type DeleteProductResponseObject interface {
+	VisitDeleteProductResponse(w http.ResponseWriter) error
+}
+
+type DeleteProduct204Response struct {
+}
+
+func (response DeleteProduct204Response) VisitDeleteProductResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteProduct409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteProduct409ApplicationProblemPlusJSONResponse) VisitDeleteProductResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteProductdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteProductdefaultApplicationProblemPlusJSONResponse) VisitDeleteProductResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -5275,6 +5360,9 @@ type StrictServerInterface interface {
 	// CreateProduct Создать продукт (PG-01)
 	// (POST /products)
 	CreateProduct(ctx context.Context, request CreateProductRequestObject) (CreateProductResponseObject, error)
+	// DeleteProduct Удалить продукт с его фичами и связями; продукт с контрактами не удаляется (409)
+	// (DELETE /products/{productId})
+	DeleteProduct(ctx context.Context, request DeleteProductRequestObject) (DeleteProductResponseObject, error)
 	// GetProduct Продукт
 	// (GET /products/{productId})
 	GetProduct(ctx context.Context, request GetProductRequestObject) (GetProductResponseObject, error)
@@ -5924,6 +6012,32 @@ func (sh *strictHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateProductResponseObject); ok {
 		if err := validResponse.VisitCreateProductResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteProduct operation middleware
+func (sh *strictHandler) DeleteProduct(w http.ResponseWriter, r *http.Request, productId ProductId) {
+	var request DeleteProductRequestObject
+
+	request.ProductId = productId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteProduct(ctx, request.(DeleteProductRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteProduct")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteProductResponseObject); ok {
+		if err := validResponse.VisitDeleteProductResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

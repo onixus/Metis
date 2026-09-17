@@ -300,9 +300,24 @@ func (s *Service) AcknowledgeAlert(ctx context.Context, sc authz.Scope, id kerne
 
 // raiseAlert создаёт алерт «сдвиг roadmap нарушает обязательство», если newDate позже срока
 // активного обязательства. Возвращает true, если алерт поднят.
+//
+// Дедупликация по паре «обязательство + событие»: одно событие поднимает по обязательству не
+// больше одного алерта. Отметка обработанного события ставится только в конце обработчика, поэтому
+// сбой в середине приводит к повтору доставки; без этой проверки повтор добавил бы второй алерт в
+// append-only список (CT-03). В PostgreSQL то же гарантирует частичный уникальный индекс
+// (commitment_id, event_id): гонка двух воркеров даёт kernel.ErrConflict, и событие повторяется.
 func (s *Service) raiseAlert(ctx context.Context, sc authz.Scope, c Commitment, newDate kernel.Date, eventID kernel.ID, reason string) (bool, error) {
 	if c.Status != StatusActive || newDate.IsZero() || !newDate.After(c.DueDate) {
 		return false, nil
+	}
+	if eventID != kernel.NilID {
+		switch _, err := s.store.AlertByEvent(ctx, c.ID, eventID); {
+		case err == nil:
+			return false, nil
+		case kernel.IsNotFound(err):
+		default:
+			return false, fmt.Errorf("alert by event: %w", err)
+		}
 	}
 	a := Alert{
 		ID: kernel.NewID(), CommitmentID: c.ID, ProductID: c.ProductID, Kind: AlertRoadmapShift,

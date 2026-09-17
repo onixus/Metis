@@ -178,7 +178,7 @@ function Hypotheses({ productId, canWrite }: { productId: string; canWrite: bool
         </div>
       )}
       {changing && (
-        <StatusForm productId={productId} hypothesis={changing} options={statusOptions} onDone={() => setChanging(null)} />
+        <StatusForm key={changing.id} productId={productId} hypothesis={changing} options={statusOptions} onDone={() => setChanging(null)} />
       )}
     </div>
   )

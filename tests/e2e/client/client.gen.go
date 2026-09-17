@@ -2706,26 +2706,28 @@ type ReleaseGroup struct {
 	SalesSafeRelease *SalesSafeRelease `json:"sales_safe_release,omitempty"`
 }
 
-// ReleaseInput defines model for ReleaseInput.
+// ReleaseInput Данные релиза. При создании необязательные поля берут значения по умолчанию (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют текущее значение релиза. Снять дату окончания поддержки можно только через PUT /releases/{releaseId}/eol с пустой датой.
 type ReleaseInput struct {
-	// BaseReleaseId Релиз
+	// BaseReleaseId Релиз, от которого ответвлена сертифицированная ветка; пусто при обновлении — не менять
 	BaseReleaseId *openapi_types.UUID `json:"base_release_id,omitempty"`
 
-	// Branch Ветка версии (RM-04); пусто — evolving
+	// Branch Ветка версии (RM-04); пусто: при создании evolving, при обновлении — текущая ветка
 	Branch *ReleaseInputBranch `json:"branch,omitempty"`
 
-	// Eol Дата окончания поддержки (RM-05)
+	// Eol Дата окончания поддержки (RM-05); пусто при обновлении — не менять
 	Eol         *openapi_types.Date `json:"eol,omitempty"`
 	Name        string              `json:"name"`
 	PlannedDate *openapi_types.Date `json:"planned_date,omitempty"`
-	Status      *ReleaseInputStatus `json:"status,omitempty"`
-	Version     string              `json:"version"`
+
+	// Status Пусто: при создании planned, при обновлении — текущий статус
+	Status  *ReleaseInputStatus `json:"status,omitempty"`
+	Version string              `json:"version"`
 }
 
-// ReleaseInputBranch Ветка версии (RM-04); пусто — evolving
+// ReleaseInputBranch Ветка версии (RM-04); пусто: при создании evolving, при обновлении — текущая ветка
 type ReleaseInputBranch string
 
-// ReleaseInputStatus defines model for ReleaseInput.Status.
+// ReleaseInputStatus Пусто: при создании planned, при обновлении — текущий статус
 type ReleaseInputStatus string
 
 // Requirement defines model for Requirement.

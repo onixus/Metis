@@ -4,6 +4,7 @@ package pgstore_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"reflect"
 	"testing"
@@ -157,5 +158,58 @@ func TestCT04_PGSettings(t *testing.T) {
 	}
 	if got, err := store.Settings(ctx); err != nil || got.LeadMonths != 24 {
 		t.Fatalf("Settings: %+v err=%v", got, err)
+	}
+}
+
+// TestCT03_PGAlertUniquePerEvent — частичный уникальный индекс (commitment_id, event_id):
+// второй алерт по той же паре отклоняется как kernel.ErrConflict, алерты без события не ограничены;
+// AlertByEvent находит записанный алерт (CT-03).
+func TestCT03_PGAlertUniquePerEvent(t *testing.T) {
+	db := openTestDB(t)
+	ctx := context.Background()
+	store := pgstore.New(db, nil)
+	product, commitment, event := kernel.NewID(), kernel.NewID(), kernel.NewID()
+	a := commitments.Alert{ID: kernel.NewID(), CommitmentID: commitment, ProductID: product, Kind: commitments.AlertRoadmapShift,
+		Message: "срыв срока", EventID: event, NewDate: kernel.DateOf(2026, 12, 15), DueDate: kernel.DateOf(2026, 12, 1), RaisedAt: now}
+	if err := store.AppendAlert(ctx, a); err != nil {
+		t.Fatal(err)
+	}
+	dup := a
+	dup.ID, dup.Message = kernel.NewID(), "повтор доставки события"
+	if err := store.AppendAlert(ctx, dup); !errors.Is(err, kernel.ErrConflict) {
+		t.Fatalf("дубль по паре обязательство+событие: ожидался ErrConflict, получено %v", err)
+	}
+	// Другое обязательство и другое событие — не дубли.
+	other := a
+	other.ID, other.CommitmentID = kernel.NewID(), kernel.NewID()
+	if err := store.AppendAlert(ctx, other); err != nil {
+		t.Fatalf("другое обязательство: %v", err)
+	}
+	otherEvent := a
+	otherEvent.ID, otherEvent.EventID = kernel.NewID(), kernel.NewID()
+	if err := store.AppendAlert(ctx, otherEvent); err != nil {
+		t.Fatalf("другое событие: %v", err)
+	}
+	// Алерты без события индексом не ограничены.
+	for i := 0; i < 2; i++ {
+		manual := commitments.Alert{ID: kernel.NewID(), CommitmentID: commitment, ProductID: product,
+			Kind: commitments.AlertRoadmapShift, Message: "вручную", RaisedAt: now}
+		if err := store.AppendAlert(ctx, manual); err != nil {
+			t.Fatalf("алерт без события #%d: %v", i, err)
+		}
+	}
+
+	got, err := store.AlertByEvent(ctx, commitment, event)
+	if err != nil || !reflect.DeepEqual(got, a) {
+		t.Fatalf("AlertByEvent:\n got %+v\nwant %+v\nerr=%v", got, a, err)
+	}
+	if _, err := store.AlertByEvent(ctx, commitment, kernel.NewID()); !kernel.IsNotFound(err) {
+		t.Fatalf("AlertByEvent неизвестного события: %v", err)
+	}
+	if _, err := store.AlertByEvent(ctx, kernel.NewID(), event); !kernel.IsNotFound(err) {
+		t.Fatalf("AlertByEvent чужого обязательства: %v", err)
+	}
+	if _, err := store.AlertByEvent(ctx, commitment, kernel.NilID); !kernel.IsNotFound(err) {
+		t.Fatalf("AlertByEvent без события: %v", err)
 	}
 }

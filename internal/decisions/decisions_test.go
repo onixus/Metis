@@ -3,6 +3,8 @@ package decisions_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -426,5 +428,83 @@ func TestDA01_PublishPageHandlerIdempotent(t *testing.T) {
 	// Обработчик без валидного Scope отказывает.
 	if err := decisions.NewPublishPageHandler(f.svc, kb, authz.Scope{}).Handle(f.ctx, ev); !errors.Is(err, kernel.ErrForbidden) {
 		t.Fatalf("нулевой scope обработчика: %v", err)
+	}
+}
+
+// decoratingKB — база знаний, которая создаёт страницу и падает на оформлении (метки, свойства),
+// возвращая созданную страницу вместе с ошибкой, как адаптер Confluence.
+type decoratingKB struct {
+	mu      sync.Mutex
+	created []ports.CreatePageInput
+	failing bool
+}
+
+func (f *decoratingKB) Page(context.Context, string) (ports.Page, error) {
+	return ports.Page{}, kernel.ErrNotFound
+}
+func (f *decoratingKB) Search(context.Context, string, string) ([]ports.Page, error) { return nil, nil }
+func (f *decoratingKB) SetProperties(context.Context, string, map[string]string) error {
+	return nil
+}
+func (f *decoratingKB) AddLabels(context.Context, string, []string) error { return nil }
+
+func (f *decoratingKB) CreatePage(_ context.Context, in ports.CreatePageInput) (ports.Page, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.created = append(f.created, in)
+	id := "300" + strconv.Itoa(len(f.created))
+	page := ports.Page{ID: id, Title: in.Title, SpaceKey: in.SpaceKey, URL: "https://kb.example.test/pages/" + id, Version: 1}
+	if f.failing {
+		// Страница создана, метки не добавлены: идентификатор возвращается вместе с ошибкой.
+		return page, fmt.Errorf("метки страницы %s: %w", id, kernel.ErrUnavailable)
+	}
+	page.Labels, page.Properties = in.Labels, in.Properties
+	return page, nil
+}
+
+// TestDA01_PublishPageDoesNotDuplicateOnDecorationFailure — если база знаний создала страницу и
+// упала на оформлении, PageID сохраняется до возврата ошибки: повторная доставка события идёт по
+// ветке «страница есть» и второй страницы ADR не создаёт (дефект 8, TODO(question-29)).
+func TestDA01_PublishPageDoesNotDuplicateOnDecorationFailure(t *testing.T) {
+	f := newFixture()
+	cpo := cpoScope()
+	rec, err := f.svc.Create(f.ctx, cpo, f.input(edr))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.RequestPage(f.ctx, cpo, rec.ID, "METIS"); err != nil {
+		t.Fatal(err)
+	}
+	ev, ok := f.pub.last(decisions.EventPageRequested)
+	if !ok {
+		t.Fatal("нет события page.requested")
+	}
+
+	kb := &decoratingKB{failing: true}
+	h := decisions.NewPublishPageHandler(f.svc, kb, serviceScope())
+	if err := h.Handle(f.ctx, ev); !errors.Is(err, kernel.ErrUnavailable) {
+		t.Fatalf("сбой оформления: ожидался ErrUnavailable, получено %v", err)
+	}
+	got, err := f.svc.Get(f.ctx, cpo, rec.ID)
+	if err != nil || got.PageID != "3001" {
+		t.Fatalf("PageID не сохранён после сбоя оформления: %q %v", got.PageID, err)
+	}
+
+	// Повтор события: страница уже есть, второй вызов CreatePage не делается.
+	if err := h.Handle(f.ctx, ev); err != nil {
+		t.Fatalf("повтор: %v", err)
+	}
+	kb.mu.Lock()
+	n := len(kb.created)
+	kb.mu.Unlock()
+	if n != 1 {
+		t.Fatalf("создано страниц: %d, ожидалась 1", n)
+	}
+	if got, err := f.svc.Get(f.ctx, cpo, rec.ID); err != nil || got.PageID != "3001" {
+		t.Fatalf("PageID после повтора: %q %v", got.PageID, err)
+	}
+	// Страница не оформлена — событие page.created не публиковалось.
+	if f.pub.count(decisions.EventPageCreated) != 0 {
+		t.Fatalf("событий page.created: %d", f.pub.count(decisions.EventPageCreated))
 	}
 }

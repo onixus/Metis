@@ -374,3 +374,69 @@ func TestCT04_RoadmapEnsureRenewalItemIdempotent(t *testing.T) {
 		t.Fatalf("чужой PM: %v", err)
 	}
 }
+
+// TestRM05_UpdateReleaseKeepsEOLWhenOmitted — частичное обновление релиза не стирает
+// необязательные поля: опущенные eol и base_release_id сохраняют текущее значение (как status
+// и branch). Снять EOL можно только через SetReleaseEOL.
+func TestRM05_UpdateReleaseKeepsEOLWhenOmitted(t *testing.T) {
+	f := newFixture(t)
+	base := f.release(f.edr, "3.0", d(2026, 10, 1))
+	cert, err := f.svc.CreateRelease(f.ctx, f.cpo, f.edr, roadmap.ReleaseInput{Name: "EDR 3.0 cert", Version: "3.0-cert",
+		PlannedDate: d(2026, 12, 1), Branch: roadmap.BranchCertified, BaseReleaseID: base.ID, EOL: d(2031, 12, 1)})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Тело только с обязательными полями: ветка, статус, EOL и базовый релиз не меняются.
+	got, err := f.svc.UpdateRelease(f.ctx, f.cpo, cert.ID, roadmap.ReleaseInput{Name: "EDR 3.0 сертифицированный", Version: "3.0-cert"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.EOL != d(2031, 12, 1) {
+		t.Fatalf("дата окончания поддержки стёрта: %+v", got.EOL)
+	}
+	if got.BaseReleaseID != base.ID {
+		t.Fatalf("ссылка на базовый релиз стёрта: %v", got.BaseReleaseID)
+	}
+	if got.Branch != roadmap.BranchCertified || got.Status != cert.Status || got.Name != "EDR 3.0 сертифицированный" {
+		t.Fatalf("неожиданный релиз после обновления: %+v", got)
+	}
+
+	// Непустое значение по-прежнему меняет поле.
+	got, err = f.svc.UpdateRelease(f.ctx, f.cpo, cert.ID, roadmap.ReleaseInput{Name: got.Name, Version: got.Version, EOL: d(2032, 6, 1)})
+	if err != nil || got.EOL != d(2032, 6, 1) {
+		t.Fatalf("новая дата EOL не применена: %+v %v", got.EOL, err)
+	}
+
+	// Снятие EOL — отдельной операцией.
+	got, err = f.svc.SetReleaseEOL(f.ctx, f.cpo, cert.ID, kernel.Date{})
+	if err != nil || !got.EOL.IsZero() {
+		t.Fatalf("SetReleaseEOL не снял дату: %+v %v", got.EOL, err)
+	}
+}
+
+// TestCM03_ReleaseProductRequiresStrategicAccess — порт для compliance: продукт релиза выдаётся
+// только при стратегическом доступе к этому продукту (CM-03).
+func TestCM03_ReleaseProductRequiresStrategicAccess(t *testing.T) {
+	f := newFixture(t)
+	rel := f.release(f.edr, "4.0", d(2027, 3, 1))
+
+	product, err := f.svc.ReleaseProduct(f.ctx, f.cpo, rel.ID)
+	if err != nil || product != f.edr {
+		t.Fatalf("продукт релиза: %v %v", product, err)
+	}
+	// Стратегического доступа достаточно.
+	if product, err := f.svc.ReleaseProduct(f.ctx, presaleScope(), rel.ID); err != nil || product != f.edr {
+		t.Fatalf("presale: %v %v", product, err)
+	}
+	// Нет доступа к продукту релиза — отказ.
+	if _, err := f.svc.ReleaseProduct(f.ctx, pmScope("pm-vm", f.vm), rel.ID); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("PM чужого продукта: ожидался ErrForbidden, получено %v", err)
+	}
+	if _, err := f.svc.ReleaseProduct(f.ctx, authz.Scope{}, rel.ID); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("нулевой Scope: ожидался ErrForbidden, получено %v", err)
+	}
+	if _, err := f.svc.ReleaseProduct(f.ctx, f.cpo, kernel.NewID()); !kernel.IsNotFound(err) {
+		t.Fatalf("отсутствующий релиз: ожидался NotFound, получено %v", err)
+	}
+}

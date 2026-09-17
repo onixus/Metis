@@ -74,6 +74,18 @@ func (h *PublishPageHandler) Handle(ctx context.Context, ev kernel.Event) error 
 			Properties: PageProperties(rec),
 		})
 		if err != nil {
+			// База знаний могла создать страницу и упасть на оформлении (метки, свойства).
+			// Идентификатор запоминается до возврата ошибки: событие останется неподтверждённым
+			// и повторится, но уже по ветке «страница есть» — вторая страница ADR не создаётся.
+			// TODO(question-29): между вызовом базы знаний и записью в БД процесс может упасть;
+			// полностью снимает риск только идемпотентный ключ на стороне базы знаний.
+			if page.ID != "" {
+				rec.PageID = page.ID
+				rec.UpdatedAt = h.svc.clock.Now()
+				if serr := h.svc.store.Save(ctx, rec); serr != nil {
+					return fmt.Errorf("create page: %w (страница %s не сохранена: %w)", err, page.ID, serr)
+				}
+			}
 			return fmt.Errorf("create page: %w", err)
 		}
 		rec.PageID = page.ID

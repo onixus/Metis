@@ -223,6 +223,8 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 	a.Compliance = compliance.NewService(complianceStore, evidenceStore, a.Portfolio, pub, complianceClock)
 	a.Prioritization = prioritization.NewService(priorityStore, pub, clock).WithMoneyMetrics(a.Signals).WithDerivedDemand(a.Portfolio).WithImpactCost(a.Compliance)
 	a.Roadmap = roadmap.NewService(roadmapStore, pub, clock).WithContracts(a.Portfolio).WithReadiness(readinessAdapter{a.Compliance})
+	// Порты roadmap подключаются после его создания: compliance проверяет принадлежность релиза продукту (CM-03).
+	a.Compliance = a.Compliance.WithReleases(a.Roadmap)
 	a.Commitments = commitments.NewService(commitmentsStore, pub, clock).WithRoadmapWriter(a.Roadmap).WithRoadmapReader(a.Roadmap)
 	a.Portfolio = a.Portfolio.WithCommitments(a.Commitments)
 	a.Decisions = decisions.NewService(decisionsStore, pub, clock)

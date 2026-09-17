@@ -243,6 +243,10 @@ func (c *Client) Search(ctx context.Context, spaceKey, label string) ([]ports.Pa
 }
 
 // CreatePage создаёт страницу, затем добавляет метки и свойства. Вызывается только из обработчика outbox.
+//
+// Если страница создана, а оформление (метки, свойства) не удалось, возвращается созданная страница
+// вместе с ошибкой: идентификатор не теряется, и вызывающий сохраняет его до повторной доставки
+// события — иначе повтор создал бы вторую страницу ADR того же решения.
 func (c *Client) CreatePage(ctx context.Context, in ports.CreatePageInput) (ports.Page, error) {
 	if err := validKey(in.SpaceKey); err != nil {
 		return ports.Page{}, err
@@ -273,17 +277,18 @@ func (c *Client) CreatePage(ctx context.Context, in ports.CreatePageInput) (port
 	if ct.ID == "" {
 		return ports.Page{}, fmt.Errorf("%w: confluence не вернула идентификатор страницы", kernel.ErrUnavailable)
 	}
+	created := c.toPage(ct)
 	if len(in.Labels) > 0 {
 		if err := c.AddLabels(ctx, ct.ID, in.Labels); err != nil {
-			return ports.Page{}, err
+			return created, fmt.Errorf("метки страницы %s: %w", created.ID, err)
 		}
 	}
 	if len(in.Properties) > 0 {
 		if err := c.SetProperties(ctx, ct.ID, in.Properties); err != nil {
-			return ports.Page{}, err
+			return created, fmt.Errorf("свойства страницы %s: %w", created.ID, err)
 		}
 	}
-	p := c.toPage(ct)
+	p := created
 	p.Labels = append(p.Labels, in.Labels...)
 	p.Properties = copyProps(in.Properties)
 	return p, nil

@@ -18,21 +18,32 @@ import (
 // GraphReader — нужная compliance часть публичного интерфейса portfoliograph (инвариант 1).
 // Реализуется *portfoliograph.Service.
 //
-// TODO(question-23): Feature требует приватного чтения продукта; роли compliance для CM-06/CM-07
-// нужен приватный доступ к продукту фичи.
+// Вопрос №23 закрыт итерацией 11: вместо чтения фичи целиком (приватный контур) compliance
+// берёт только продукт фичи методом FeatureProduct, доступным при стратегическом доступе.
 type GraphReader interface {
 	Links(ctx context.Context, sc authz.Scope) ([]portfoliograph.Link, error)
-	Feature(ctx context.Context, sc authz.Scope, id kernel.ID) (portfoliograph.Feature, error)
+	// FeatureProduct возвращает продукт фичи; требует стратегического доступа к этому продукту.
+	FeatureProduct(ctx context.Context, sc authz.Scope, id kernel.ID) (kernel.ID, error)
 	Product(ctx context.Context, sc authz.Scope, id kernel.ID) (portfoliograph.Product, error)
 }
 
 var _ GraphReader = (*portfoliograph.Service)(nil)
+
+// ReleaseReader — нужная compliance часть публичного интерфейса roadmap (инвариант 1).
+type ReleaseReader interface {
+	ReleaseProduct(ctx context.Context, sc authz.Scope, releaseID kernel.ID) (kernel.ID, error)
+}
+
+// writeAttempts — число попыток записи, номер которой вычисляется чтением (версия набора
+// требований, номер записи журнала доказательств): при конкурентной записи номер пересчитывается.
+const writeAttempts = 5
 
 // Service — публичный интерфейс модуля compliance.
 type Service struct {
 	store    Store
 	evidence EvidenceStore
 	graph    GraphReader
+	releases ReleaseReader
 	pub      kernel.Publisher
 	clock    kernel.Clock
 
@@ -43,6 +54,13 @@ type Service struct {
 // NewService создаёт сервис с настройками по умолчанию.
 func NewService(store Store, evidence EvidenceStore, graph GraphReader, pub kernel.Publisher, clock kernel.Clock) *Service {
 	return &Service{store: store, evidence: evidence, graph: graph, pub: pub, clock: clock, settings: DefaultSettings()}
+}
+
+// WithReleases подключает порт релизов roadmap: StartTrack проверяет, что релиз принадлежит
+// продукту из запроса. Без порта проверка не выполняется.
+func (s *Service) WithReleases(r ReleaseReader) *Service {
+	s.releases = r
+	return s
 }
 
 func (s *Service) emit(ctx context.Context, typ string, aggregate, product kernel.ID, actor string, payload any) error {
@@ -134,28 +152,39 @@ func (s *Service) CreateRequirementSet(ctx context.Context, sc authz.Scope, in R
 		return RequirementSet{}, err
 	}
 	code := strings.ToUpper(strings.TrimSpace(in.Code))
-	existing, err := s.store.RequirementSets(ctx, code)
-	if err != nil {
-		return RequirementSet{}, fmt.Errorf("list requirement sets: %w", err)
-	}
-	version := 1
-	for _, rs := range existing {
-		if rs.ProductType != in.ProductType {
-			return RequirementSet{}, fmt.Errorf("%w: набор %s привязан к типу продукта %s", kernel.ErrConflict, code, rs.ProductType)
+	// Номер версии считается чтением, а уникальность (code, version) обеспечивает индекс БД:
+	// при гонке двух создателей проигравший получает kernel.ErrConflict и пересчитывает версию.
+	var lastErr error
+	for attempt := 0; attempt < writeAttempts; attempt++ {
+		existing, err := s.store.RequirementSets(ctx, code)
+		if err != nil {
+			return RequirementSet{}, fmt.Errorf("list requirement sets: %w", err)
 		}
-		if rs.Version >= version {
-			version = rs.Version + 1
+		version := 1
+		for _, rs := range existing {
+			if rs.ProductType != in.ProductType {
+				return RequirementSet{}, fmt.Errorf("%w: набор %s привязан к типу продукта %s", kernel.ErrConflict, code, rs.ProductType)
+			}
+			if rs.Version >= version {
+				version = rs.Version + 1
+			}
+		}
+		now := s.clock.Now()
+		rs := RequirementSet{
+			ID: kernel.NewID(), Code: code, Version: version, ProductType: in.ProductType,
+			Items: in.Items, Status: RequirementSetDraft, CreatedBy: sc.Subject(), CreatedAt: now, UpdatedAt: now,
+		}
+		err = s.store.SaveRequirementSet(ctx, rs)
+		switch {
+		case err == nil:
+			return rs, nil
+		case errors.Is(err, kernel.ErrConflict):
+			lastErr = err
+		default:
+			return RequirementSet{}, fmt.Errorf("save requirement set: %w", err)
 		}
 	}
-	now := s.clock.Now()
-	rs := RequirementSet{
-		ID: kernel.NewID(), Code: code, Version: version, ProductType: in.ProductType,
-		Items: in.Items, Status: RequirementSetDraft, CreatedBy: sc.Subject(), CreatedAt: now, UpdatedAt: now,
-	}
-	if err := s.store.SaveRequirementSet(ctx, rs); err != nil {
-		return RequirementSet{}, fmt.Errorf("save requirement set: %w", err)
-	}
-	return rs, nil
+	return RequirementSet{}, fmt.Errorf("save requirement set: версия набора %s занята другим создателем, %d попыток исчерпаны: %w", code, writeAttempts, lastErr)
 }
 
 // SetRequirementSetStatus переводит набор: draft → published → retired. Назад — нельзя.
@@ -333,6 +362,17 @@ func (s *Service) StartTrack(ctx context.Context, sc authz.Scope, in TrackInput)
 	product, err := s.graph.Product(ctx, sc, in.ProductID)
 	if err != nil {
 		return Track{}, fmt.Errorf("product: %w", err)
+	}
+	// Релиз чужого продукта запускать нельзя: иначе трек занимает релиз владельца и ломает
+	// ему проверку готовности (CM-05). Без порта релизов проверка недоступна.
+	if s.releases != nil {
+		releaseProduct, err := s.releases.ReleaseProduct(ctx, sc, in.ReleaseID)
+		if err != nil {
+			return Track{}, fmt.Errorf("release product: %w", err)
+		}
+		if releaseProduct != in.ProductID {
+			return Track{}, kernel.Invalid("release_id", "релиз принадлежит другому продукту")
+		}
 	}
 	existing, err := s.store.Tracks(ctx, TrackFilter{ReleaseID: in.ReleaseID})
 	if err != nil {
@@ -557,6 +597,23 @@ func (s *Service) PassGate(ctx context.Context, sc authz.Scope, trackID, gateID 
 	if !g.ChecklistDone() {
 		return Track{}, fmt.Errorf("%w: чек-лист гейта %s не закрыт", kernel.ErrConflict, g.Key)
 	}
+	// CM-05: закрытый пункт держится на доказательстве; отклонённое или исчезнувшее
+	// доказательство не даёт пройти гейт, иначе сертификация опирается на отклонённые артефакты.
+	journal, err := s.trackEvidence(ctx, t.ID)
+	if err != nil {
+		return Track{}, err
+	}
+	var unsupported []string
+	for _, it := range g.Checklist {
+		e, ok := journal[it.EvidenceID]
+		if it.EvidenceID == kernel.NilID || !ok || e.Status == EvidenceRejected {
+			unsupported = append(unsupported, it.Key)
+		}
+	}
+	if len(unsupported) > 0 {
+		return Track{}, fmt.Errorf("%w: пункты гейта %s без действующего доказательства: %s",
+			kernel.ErrConflict, g.Key, strings.Join(unsupported, ", "))
+	}
 	if b := blockers(t, *g); len(b) > 0 {
 		return Track{}, fmt.Errorf("%w: не пройдены предшествующие гейты %s", kernel.ErrConflict, strings.Join(b, ", "))
 	}
@@ -703,6 +760,17 @@ func (s *Service) SetEvidenceStatus(ctx context.Context, sc authz.Scope, evidenc
 	if prev.Status == st {
 		return EvidenceItem{}, fmt.Errorf("%w: доказательство уже в статусе %s", kernel.ErrConflict, st)
 	}
+	// CM-05: отклонение доказательства снимает отметки у пунктов чек-листа, которые им закрыты;
+	// у пройденного гейта отклонять доказательство нельзя — иначе сертификация задним числом
+	// теряет основание. Трек сохраняется после успешной записи в журнал.
+	var reopened Track
+	if st == EvidenceRejected {
+		var err error
+		reopened, err = s.reopenItems(ctx, prev)
+		if err != nil {
+			return EvidenceItem{}, err
+		}
+	}
 	e := prev
 	e.Status, e.Comment, e.Supersedes = st, strings.TrimSpace(comment), prev.Seq
 	e.Actor, e.At = sc.Subject(), s.clock.Now().UTC()
@@ -711,10 +779,63 @@ func (s *Service) SetEvidenceStatus(ctx context.Context, sc authz.Scope, evidenc
 	if err != nil {
 		return EvidenceItem{}, err
 	}
+	if reopened.ID != kernel.NilID {
+		if err := s.store.SaveTrack(ctx, reopened); err != nil {
+			return EvidenceItem{}, fmt.Errorf("save track: %w", err)
+		}
+	}
 	if err := s.emit(ctx, EventEvidenceAppended, e.ID, e.ProductID, sc.Subject(), e); err != nil {
 		return EvidenceItem{}, err
 	}
 	return e, nil
+}
+
+// reopenItems снимает отметки у пунктов чек-листа, закрытых доказательством ev, и возвращает
+// изменённый трек (нулевой Track, если менять нечего). Если пункт принадлежит пройденному
+// гейту — kernel.ErrConflict: отклонить такое доказательство нельзя.
+func (s *Service) reopenItems(ctx context.Context, ev EvidenceItem) (Track, error) {
+	if ev.TrackID == kernel.NilID {
+		return Track{}, nil
+	}
+	t, err := s.store.Track(ctx, ev.TrackID)
+	if err != nil {
+		return Track{}, err
+	}
+	changed := false
+	for i := range t.Gates {
+		g := &t.Gates[i]
+		for j := range g.Checklist {
+			if g.Checklist[j].EvidenceID != ev.ID {
+				continue
+			}
+			if g.Status == GatePassed {
+				return Track{}, fmt.Errorf("%w: гейт %s уже пройден по этому доказательству; отклонить его нельзя", kernel.ErrConflict, g.Key)
+			}
+			g.Checklist[j].Done, g.Checklist[j].EvidenceID = false, kernel.NilID
+			changed = true
+		}
+	}
+	if !changed {
+		return Track{}, nil
+	}
+	t.UpdatedAt = s.clock.Now()
+	return t, nil
+}
+
+// trackEvidence — актуальные записи журнала доказательств трека, собранные одним проходом Walk
+// (по одной на идентификатор доказательства: последняя по Seq).
+func (s *Service) trackEvidence(ctx context.Context, trackID kernel.ID) (map[kernel.ID]EvidenceItem, error) {
+	out := map[kernel.ID]EvidenceItem{}
+	err := s.evidence.Walk(ctx, func(e EvidenceItem) error {
+		if e.TrackID == trackID {
+			out[e.ID] = e
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("evidence walk: %w", err)
+	}
+	return out, nil
 }
 
 // latestEvidence — актуальная запись доказательства (последняя по Seq с этим ID).
@@ -833,11 +954,11 @@ func (s *Service) SetImpactClass(ctx context.Context, sc authz.Scope, featureID,
 	if err := sc.Require(authz.ActionWriteCompliance, productID); err != nil {
 		return ImpactAssessment{}, err
 	}
-	f, err := s.graph.Feature(ctx, sc, featureID)
+	featureProduct, err := s.graph.FeatureProduct(ctx, sc, featureID)
 	if err != nil {
-		return ImpactAssessment{}, fmt.Errorf("feature: %w", err)
+		return ImpactAssessment{}, fmt.Errorf("feature product: %w", err)
 	}
-	if f.ProductID != productID {
+	if featureProduct != productID {
 		return ImpactAssessment{}, kernel.Invalid("product_id", "фича другого продукта")
 	}
 	a := ImpactAssessment{
@@ -888,12 +1009,9 @@ func (s *Service) ImpactHistory(ctx context.Context, sc authz.Scope, featureID k
 // CostByClass[class], со скидкой CertifiedProcessDiscount, если процессы РБПО продукта
 // сертифицированы. Без оценки класс считается none. Порт для prioritization.
 func (s *Service) ConfirmationCost(ctx context.Context, sc authz.Scope, featureID kernel.ID) (kernel.Money, error) {
-	f, err := s.graph.Feature(ctx, sc, featureID)
+	featureProduct, err := s.graph.FeatureProduct(ctx, sc, featureID)
 	if err != nil {
-		return kernel.Money{}, fmt.Errorf("feature: %w", err)
-	}
-	if err := sc.Require(authz.ActionReadStrategic, f.ProductID); err != nil {
-		return kernel.Money{}, err
+		return kernel.Money{}, fmt.Errorf("feature product: %w", err)
 	}
 	class := ImpactNone
 	a, err := s.ImpactClass(ctx, sc, featureID)
@@ -904,7 +1022,7 @@ func (s *Service) ConfirmationCost(ctx context.Context, sc authz.Scope, featureI
 	default:
 		return kernel.Money{}, err
 	}
-	product, err := s.graph.Product(ctx, sc, f.ProductID)
+	product, err := s.graph.Product(ctx, sc, featureProduct)
 	if err != nil {
 		return kernel.Money{}, fmt.Errorf("product: %w", err)
 	}
@@ -937,12 +1055,9 @@ func (s *Service) Baselines(ctx context.Context, sc authz.Scope, productID kerne
 // «общий компонент» (в обе стороны), транзитивно. Path — продукты от продукта фичи до продукта
 // baseline. Procedure — упрощённое подтверждение при SSDLCCertified продукта baseline.
 func (s *Service) AffectedBaselines(ctx context.Context, sc authz.Scope, featureID kernel.ID) ([]AffectedBaseline, error) {
-	f, err := s.graph.Feature(ctx, sc, featureID)
+	featureProduct, err := s.graph.FeatureProduct(ctx, sc, featureID)
 	if err != nil {
-		return nil, fmt.Errorf("feature: %w", err)
-	}
-	if err := sc.Require(authz.ActionReadStrategic, f.ProductID); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("feature product: %w", err)
 	}
 	links, err := s.graph.Links(ctx, sc)
 	if err != nil {
@@ -960,8 +1075,8 @@ func (s *Service) AffectedBaselines(ctx context.Context, sc authz.Scope, feature
 			adj[l.ToProductID] = append(adj[l.ToProductID], l.FromProductID)
 		}
 	}
-	paths := map[kernel.ID][]kernel.ID{f.ProductID: {f.ProductID}}
-	order := []kernel.ID{f.ProductID}
+	paths := map[kernel.ID][]kernel.ID{featureProduct: {featureProduct}}
+	order := []kernel.ID{featureProduct}
 	for head := 0; head < len(order); head++ {
 		cur := order[head]
 		for _, next := range adj[cur] {

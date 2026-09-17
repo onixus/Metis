@@ -24,7 +24,7 @@ import {
 import type { EvidenceItem, Gate, ProductType, Track } from '../api/types'
 import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { ru } from '../i18n/ru'
-import { fmtDate, fmtDateTime, fmtMoney } from '../lib/format'
+import { fmtDate, fmtDateTime, fmtMoney, formatMoneyInput, MONEY_INPUT_STEP, parseMoneyInput } from '../lib/format'
 import { canSeeCompliance, canWriteCompliance, hasRole } from '../lib/roles'
 
 const GATE_TONE: Record<Gate['status'], 'neutral' | 'ok' | 'warn' | 'danger' | 'info'> = {
@@ -221,7 +221,7 @@ function GateRow({ track, gate, evidence, canWrite }: { track: Track; gate: Gate
   const [reason, setReason] = useState('')
   const [owner, setOwner] = useState(gate.owner ?? '')
   const [due, setDue] = useState(gate.due_date ?? '')
-  const [amount, setAmount] = useState(String(Math.floor(gate.cost.amount / 100)))
+  const [amount, setAmount] = useState(formatMoneyInput(gate.cost.amount))
   const [choice, setChoice] = useState<Record<string, string>>({})
   const gateEvidence = evidence.filter((e) => e.gate_id === gate.id && e.status !== 'rejected')
   const err = pass.error ?? fail.error ?? check.error ?? update.error
@@ -337,7 +337,7 @@ function GateRow({ track, gate, evidence, canWrite }: { track: Track; gate: Gate
                 body: {
                   owner: owner.trim() || undefined,
                   due_date: due || undefined,
-                  cost: { amount: Math.round(Number(amount || '0') * 100), currency: gate.cost.currency || 'RUB' },
+                  cost: { amount: parseMoneyInput(amount) ?? gate.cost.amount, currency: gate.cost.currency || 'RUB' },
                 },
               },
               { onSuccess: () => setMode('none') },
@@ -356,7 +356,7 @@ function GateRow({ track, gate, evidence, canWrite }: { track: Track; gate: Gate
             <span>
               {ru.common.cost}, {gate.cost.currency || 'RUB'}
             </span>
-            <input type="number" min={0} step={1} value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <input type="number" min={0} step={MONEY_INPUT_STEP} value={amount} onChange={(e) => setAmount(e.target.value)} />
           </label>
           <button type="submit" className="btn btn-sm btn-primary" disabled={update.isPending}>
             {ru.app.save}

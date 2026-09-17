@@ -871,10 +871,20 @@ export function useSetFeatureDevCost() {
 
 // ---- Решения ---------------------------------------------------------------
 
-export function useDecisions(productId: string | undefined, status: DecisionStatus | undefined, refetchInterval?: number) {
+/** Интервал опроса списка решений, пока ожидается страница базы знаний. */
+const DECISION_PAGE_POLL_MS = 5000
+
+export function useDecisions(productId: string | undefined, status: DecisionStatus | undefined, awaitingPages?: ReadonlySet<string>) {
   return useQuery({
     queryKey: keys2.decisions(productId, status),
-    refetchInterval,
+    // Опрос идёт, только пока у запрошенных решений нет page_id; ошибка запроса его останавливает.
+    refetchInterval: (query) => {
+      if (!awaitingPages || awaitingPages.size === 0) return false
+      if (query.state.status === 'error') return false
+      const data = query.state.data
+      if (data && data.every((d) => !awaitingPages.has(d.id) || !!d.page_id)) return false
+      return DECISION_PAGE_POLL_MS
+    },
     queryFn: async () =>
       unwrap(
         await api.GET('/decisions', {

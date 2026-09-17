@@ -117,6 +117,19 @@ func (s *Store) Alerts(ctx context.Context, productID kernel.ID, onlyOpen bool) 
 	return out, nil
 }
 
+// AlertByEvent возвращает алерт, поднятый по паре «обязательство + событие» (CT-03).
+// Уникальность пары гарантирует частичный индекс alerts_commitment_event_uniq.
+func (s *Store) AlertByEvent(ctx context.Context, commitmentID, eventID kernel.ID) (commitments.Alert, error) {
+	if eventID == kernel.NilID {
+		return commitments.Alert{}, kernel.NotFound("alert", eventID)
+	}
+	r, err := s.q(ctx).GetAlertByEvent(ctx, db.GetAlertByEventParams{CommitmentID: commitmentID, EventID: pgdb.NullID(eventID)})
+	if err != nil {
+		return commitments.Alert{}, fmt.Errorf("commitments alert by event %s/%s: %w", commitmentID, eventID, pgdb.MapError(err))
+	}
+	return alertFromRow(r), nil
+}
+
 // Acknowledge сохраняет подтверждение алерта — единственное изменяемое поле.
 func (s *Store) Acknowledge(ctx context.Context, a commitments.Alert) error {
 	n, err := s.q(ctx).AcknowledgeAlert(ctx, db.AcknowledgeAlertParams{

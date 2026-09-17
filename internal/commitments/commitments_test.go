@@ -622,3 +622,83 @@ func TestCT01_ABACDenied(t *testing.T) {
 		t.Fatalf("pm VM renewals for EDR: %v, %d", err, len(created))
 	}
 }
+
+// failingAppendStore — хранилище, у которого AppendAlert падает на заданном по счёту вызове:
+// имитирует сбой в середине обработки события (дефект 9).
+type failingAppendStore struct {
+	*commitments.MemStore
+	calls  int
+	failOn int
+}
+
+func (s *failingAppendStore) AppendAlert(ctx context.Context, a commitments.Alert) error {
+	s.calls++
+	if s.calls == s.failOn {
+		return errors.New("сбой хранилища алертов")
+	}
+	return s.MemStore.AppendAlert(ctx, a)
+}
+
+// TestCT03_AlertNotDuplicatedOnEventRetry — отметка обработанного события ставится только в конце
+// обработчика, поэтому сбой в середине приводит к повторной доставке. Алерты дедуплицируются по паре
+// «обязательство + событие»: по обязательству, алерт которого уже записан, второй не появляется.
+func TestCT03_AlertNotDuplicatedOnEventRetry(t *testing.T) {
+	store := &failingAppendStore{MemStore: commitments.NewMemStore(), failOn: 2}
+	pub := &memPub{}
+	svc := commitments.NewService(store, pub, kernel.FixedClock{T: now})
+	ctx := context.Background()
+	cpo := cpoScope()
+	src := kernel.NewID()
+	first, err := svc.Create(ctx, cpo, vm, customerInput(kernel.DateOf(2026, 11, 1), src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := svc.Create(ctx, cpo, vm, customerInput(kernel.DateOf(2026, 11, 5), src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h := commitments.NewShiftHandler(svc, serviceScope())
+	ev := shiftEvent(t, src, kernel.DateOf(2026, 12, 1), nil)
+	// Первый алерт записан, на втором обработчик падает: событие не отмечено обработанным.
+	if err := h.Handle(ctx, ev); err == nil {
+		t.Fatal("ожидался сбой на втором обязательстве")
+	}
+	if alerts, _ := svc.Alerts(ctx, cpo, vm, false); len(alerts) != 1 {
+		t.Fatalf("после сбоя ожидался 1 алерт, получено %d", len(alerts))
+	}
+
+	// Повторная доставка того же события: первое обязательство не дублируется, второе догоняет.
+	store.failOn = 0
+	if err := h.Handle(ctx, ev); err != nil {
+		t.Fatalf("повтор: %v", err)
+	}
+	alerts, err := svc.Alerts(ctx, cpo, vm, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(alerts) != 2 {
+		t.Fatalf("после повтора ожидалось 2 алерта (по одному на обязательство), получено %d", len(alerts))
+	}
+	byCommitment := map[kernel.ID]int{}
+	for _, a := range alerts {
+		if a.EventID != ev.ID {
+			t.Fatalf("алерт без события: %+v", a)
+		}
+		byCommitment[a.CommitmentID]++
+	}
+	if byCommitment[first.ID] != 1 || byCommitment[second.ID] != 1 {
+		t.Fatalf("дубль алерта по обязательству: %v", byCommitment)
+	}
+
+	// Третья доставка ничего не добавляет (событие уже отмечено обработанным).
+	if err := h.Handle(ctx, ev); err != nil {
+		t.Fatal(err)
+	}
+	if alerts, _ := svc.Alerts(ctx, cpo, vm, false); len(alerts) != 2 {
+		t.Fatalf("третья доставка добавила алерт: %d", len(alerts))
+	}
+	if pub.count(commitments.EventAlertRaised) != 2 {
+		t.Fatalf("событий alert.raised: %d", pub.count(commitments.EventAlertRaised))
+	}
+}

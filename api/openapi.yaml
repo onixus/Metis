@@ -2760,15 +2760,21 @@ components:
         unassigned: { $ref: "#/components/schemas/RoadmapGroup" }
     ReleaseInput:
       type: object
+      description: >-
+        Данные релиза. При создании необязательные поля берут значения по умолчанию
+        (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное
+        необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют
+        текущее значение релиза. Снять дату окончания поддержки можно только через
+        PUT /releases/{releaseId}/eol с пустой датой.
       required: [name, version]
       properties:
         name: { type: string }
         version: { type: string }
         planned_date: { type: string, format: date }
-        status: { type: string, enum: [planned, ready_for_certification, released, eol] }
-        branch: { type: string, enum: [certified, evolving], description: Ветка версии (RM-04); пусто — evolving }
-        base_release_id: { type: string, format: uuid, description: Релиз, от которого ответвлена сертифицированная ветка }
-        eol: { type: string, format: date, description: Дата окончания поддержки (RM-05) }
+        status: { type: string, enum: [planned, ready_for_certification, released, eol], description: "Пусто: при создании planned, при обновлении — текущий статус" }
+        branch: { type: string, enum: [certified, evolving], description: "Ветка версии (RM-04); пусто: при создании evolving, при обновлении — текущая ветка" }
+        base_release_id: { type: string, format: uuid, description: "Релиз, от которого ответвлена сертифицированная ветка; пусто при обновлении — не менять" }
+        eol: { type: string, format: date, description: "Дата окончания поддержки (RM-05); пусто при обновлении — не менять" }
     Release:
       type: object
       required: [id, product_id, name, version, status, branch, created_at, updated_at]

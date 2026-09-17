@@ -36,7 +36,7 @@ export function DecisionsPage() {
   const [status, setStatus] = useState<DecisionStatus | ''>('')
   const [creating, setCreating] = useState(false)
   const [pageRequested, setPageRequested] = useState<Set<string>>(new Set())
-  const list = useDecisions(id, status || undefined, pageRequested.size > 0 ? 5000 : undefined)
+  const list = useDecisions(id, status || undefined, pageRequested)
   const accept = useAcceptDecision()
   const reject = useRejectDecision()
   const supersede = useSupersedeDecision()

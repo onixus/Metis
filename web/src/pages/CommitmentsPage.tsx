@@ -81,6 +81,7 @@ export function CommitmentsPage() {
       {renewals.isSuccess && <div className="alert alert-ok">{ru.commitments.ensureRenewalsDone(renewals.data.length)}</div>}
       {editing && (
         <CommitmentForm
+          key={editing === 'new' ? 'new' : editing.id}
           productId={id}
           initial={editing === 'new' ? null : editing}
           features={(features.data ?? []).map((f) => ({ id: f.id, name: f.name }))}

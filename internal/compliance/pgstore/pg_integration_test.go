@@ -286,3 +286,35 @@ func TestCM04_PGEvidenceStoreRejectsSubMicrosecondTime(t *testing.T) {
 		t.Fatalf("Insert с наносекундами должен быть отклонён: %v", err)
 	}
 }
+
+// TestCM01_PGRequirementSetVersionUnique — версия набора требований уникальна в пределах кода:
+// вторая запись той же версии отклоняется, а нарушение уникальности отображается в
+// kernel.ErrConflict, на который опирается повтор в CreateRequirementSet.
+func TestCM01_PGRequirementSetVersionUnique(t *testing.T) {
+	db := openTestDB(t)
+	ctx := context.Background()
+	store := pgstore.New(db)
+	first := compliance.RequirementSet{ID: kernel.NewID(), Code: "SYN-UNIQ", Version: 1, ProductType: portfoliograph.ProductTypeSecurity,
+		Items: []compliance.RequirementItem{{Key: "r1", Text: "требование 1"}}, Status: compliance.RequirementSetDraft, CreatedBy: "compliance", CreatedAt: now, UpdatedAt: now}
+	if err := store.SaveRequirementSet(ctx, first); err != nil {
+		t.Fatalf("первая версия: %v", err)
+	}
+	// Повторное сохранение той же записи (по id) — обновление, не конфликт.
+	first.Status = compliance.RequirementSetPublished
+	if err := store.SaveRequirementSet(ctx, first); err != nil {
+		t.Fatalf("обновление по id: %v", err)
+	}
+	race := first
+	race.ID, race.Status = kernel.NewID(), compliance.RequirementSetDraft
+	if err := store.SaveRequirementSet(ctx, race); !errors.Is(err, kernel.ErrConflict) {
+		t.Fatalf("дубль версии принят: %v", err)
+	}
+	race.Version = 2
+	if err := store.SaveRequirementSet(ctx, race); err != nil {
+		t.Fatalf("следующая версия: %v", err)
+	}
+	list, err := store.RequirementSets(ctx, "SYN-UNIQ")
+	if err != nil || len(list) != 2 || list[0].Version != 1 || list[1].Version != 2 {
+		t.Fatalf("версии набора: %+v, %v", list, err)
+	}
+}

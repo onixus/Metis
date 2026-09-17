@@ -45,3 +45,6 @@ SELECT lead_months FROM commitments.settings WHERE id = 1;
 -- name: UpsertSettings :exec
 INSERT INTO commitments.settings (id, lead_months, updated_at) VALUES (1, $1, $2)
 ON CONFLICT (id) DO UPDATE SET lead_months = EXCLUDED.lead_months, updated_at = EXCLUDED.updated_at;
+
+-- name: GetAlertByEvent :one
+SELECT * FROM commitments.alerts WHERE commitment_id = $1 AND event_id = $2 ORDER BY seq LIMIT 1;

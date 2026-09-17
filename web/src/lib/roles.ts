@@ -33,6 +33,11 @@ export function canWriteRoadmap(me: Me | undefined, level: AccessLevel): boolean
   return hasRole(me, 'admin', 'cpo') || (hasRole(me, 'pm') && level === 'private')
 }
 
+/** Портфельный список решений (без продукта) читают только cpo, admin и service — см. internal/decisions/service.go. */
+export function canReadPortfolioDecisions(me: Me | undefined): boolean {
+  return hasRole(me, 'cpo', 'admin', 'service')
+}
+
 /** Compliance-дашборд: руководитель РБПО, CPO и администратор. */
 export function canSeeCompliance(me: Me | undefined): boolean {
   return hasRole(me, 'compliance', 'cpo', 'admin')

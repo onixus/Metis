@@ -28,6 +28,26 @@ export function fmtMoney(m: Money | null | undefined): string {
   return `${neg ? '−' : ''}${majorStr}${minorStr} ${m.currency}`
 }
 
+/** Минорные единицы → значение для поля ввода в основных единицах (две цифры после запятой). */
+export function formatMoneyInput(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined || !Number.isFinite(amount)) return ''
+  const neg = amount < 0
+  const abs = Math.abs(Math.trunc(amount))
+  return `${neg ? '-' : ''}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`
+}
+
+/** Значение поля ввода в основных единицах → минорные единицы; null, если пусто или не число. */
+export function parseMoneyInput(value: string): number | null {
+  const raw = value.trim().replace(',', '.')
+  if (!raw) return null
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return null
+  return Math.round(n * 100)
+}
+
+/** Шаг поля ввода денег: одна минорная единица. */
+export const MONEY_INPUT_STEP = 0.01
+
 /** Разница в днях между двумя датами формата YYYY-MM-DD; null, если одной нет. */
 export function daysBetween(a: string | null | undefined, b: string | null | undefined): number | null {
   if (!a || !b) return null

@@ -332,9 +332,17 @@ func (s *Server) VerifyEvidenceLog(ctx context.Context, _ gen.VerifyEvidenceLogR
 	return gen.VerifyEvidenceLog200JSONResponse(out), nil
 }
 
-// GetReleaseReadiness — CM-05.
+// GetReleaseReadiness — CM-05. Права проверяются по продукту релиза до расчёта готовности:
+// у релиза может не быть трека, и тогда проверка готовности отвечает «не готов» без обращения
+// к правам — субъект без доступа к продукту отличал бы чужой релиз без трека от релиза с треком.
 func (s *Server) GetReleaseReadiness(ctx context.Context, req gen.GetReleaseReadinessRequestObject) (gen.GetReleaseReadinessResponseObject, error) {
 	if err := s.requireCompliance(); err != nil {
+		return nil, err
+	}
+	if err := s.requireRoadmap(); err != nil {
+		return nil, err
+	}
+	if _, err := s.d.Roadmap.Release(ctx, scope(ctx), req.ReleaseId); err != nil {
 		return nil, err
 	}
 	r, err := s.d.Compliance.ReleaseReadiness(ctx, scope(ctx), req.ReleaseId)

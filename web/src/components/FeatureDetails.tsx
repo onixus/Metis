@@ -12,7 +12,7 @@ import {
 } from '../api/hooks'
 import type { ImpactClass } from '../api/types'
 import { ru } from '../i18n/ru'
-import { fmtDate, fmtDateTime, fmtMoney } from '../lib/format'
+import { fmtDate, fmtDateTime, fmtMoney, MONEY_INPUT_STEP, parseMoneyInput } from '../lib/format'
 import { Badge, ErrorBox, Loading } from './Status'
 
 const CLASSES: ImpactClass[] = ['none', 'analysis_required', 'security_functions']
@@ -178,14 +178,16 @@ export function FeatureDetails({
             className="row"
             onSubmit={(e) => {
               e.preventDefault()
-              setDev.mutate({ featureId, dev_cost: { amount: Math.round(Number(dev || '0') * 100), currency: cost.data.dev_cost.currency || 'RUB' } })
+              const amount = parseMoneyInput(dev)
+              if (amount === null) return
+              setDev.mutate({ featureId, dev_cost: { amount, currency: cost.data.dev_cost.currency || 'RUB' } })
             }}
           >
             <label className="field">
               <span>
                 {ru.compliance.cost.dev}, {cost.data.dev_cost.currency || 'RUB'}
               </span>
-              <input type="number" min={0} step={1} value={dev} onChange={(e) => setDevAmount(e.target.value)} required />
+              <input type="number" min={0} step={MONEY_INPUT_STEP} value={dev} onChange={(e) => setDevAmount(e.target.value)} required />
             </label>
             <button type="submit" className="btn btn-sm" disabled={setDev.isPending}>
               {ru.compliance.cost.setDev}

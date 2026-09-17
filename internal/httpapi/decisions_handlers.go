@@ -172,16 +172,21 @@ func (s *Server) SupersedeDecision(ctx context.Context, req gen.SupersedeDecisio
 }
 
 // RequestDecisionPage — страница ADR через outbox (DA-01, ТЗ 4.3). Без адаптера базы знаний — 503.
+//
+// Пустое KnowledgeSpace означает, что адаптер не настроен и обработчик публикации не
+// зарегистрирован: событие ушло бы в outbox, воркер подтвердил бы его без обработчиков и удалил —
+// страница не создалась бы никогда. Поэтому 503 возвращается независимо от тела запроса;
+// space_key из тела допустим только как переопределение пространства при настроенном адаптере.
 func (s *Server) RequestDecisionPage(ctx context.Context, req gen.RequestDecisionPageRequestObject) (gen.RequestDecisionPageResponseObject, error) {
 	if err := s.requireDecisions(); err != nil {
 		return nil, err
 	}
+	if s.d.KnowledgeSpace == "" {
+		return nil, kernel.ErrUnavailable
+	}
 	space := s.d.KnowledgeSpace
 	if req.Body != nil && req.Body.SpaceKey != nil && *req.Body.SpaceKey != "" {
 		space = *req.Body.SpaceKey
-	}
-	if space == "" {
-		return nil, kernel.ErrUnavailable
 	}
 	if err := s.d.Decisions.RequestPage(ctx, scope(ctx), req.DecisionId, space); err != nil {
 		return nil, err

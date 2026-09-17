@@ -30,10 +30,11 @@ func TestSeed_Stage2Idempotent(t *testing.T) {
 	if _, err := seed.Infrastructure(ctx, portfolio, sc); err != nil {
 		t.Fatal(err)
 	}
+	evidence := compliance.NewEvidenceMemStore()
 	d := seed.Stage2Deps{
 		Portfolio:   portfolio,
 		Roadmap:     roadmap.NewService(roadmap.NewMemStore(), pub, clock),
-		Compliance:  compliance.NewService(compliance.NewMemStore(), compliance.NewEvidenceMemStore(), portfolio, pub, clock),
+		Compliance:  compliance.NewService(compliance.NewMemStore(), evidence, portfolio, pub, clock),
 		Commitments: commitments.NewService(commitments.NewMemStore(), pub, clock),
 		Discovery:   discovery.NewService(discovery.NewMemStore(), pub, clock, discovery.WithFeatures(portfolio)),
 		Decisions:   decisions.NewService(decisions.NewMemStore(), pub, clock),
@@ -66,8 +67,12 @@ func TestSeed_Stage2Idempotent(t *testing.T) {
 	if len(ds) != 1 || len(ds[0].Links) != 2 {
 		t.Fatalf("решений %d", len(ds))
 	}
-	res, err := compliance.VerifyEvidenceLog(ctx, compliance.NewEvidenceMemStore())
+	// Проверяется журнал, в который писал seed: пустое хранилище цело при любой поломке сцепки.
+	res, err := compliance.VerifyEvidenceLog(ctx, evidence)
 	if err != nil || !res.OK {
 		t.Fatalf("verify: %+v %v", res, err)
+	}
+	if res.Checked == 0 {
+		t.Fatal("журнал доказательств пуст: seed не записал ни одного доказательства")
 	}
 }

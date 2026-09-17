@@ -2175,26 +2175,30 @@ export interface components {
             releases: components["schemas"]["ReleaseGroup"][];
             unassigned: components["schemas"]["RoadmapGroup"];
         };
+        /** @description Данные релиза. При создании необязательные поля берут значения по умолчанию (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют текущее значение релиза. Снять дату окончания поддержки можно только через PUT /releases/{releaseId}/eol с пустой датой. */
         ReleaseInput: {
             name: string;
             version: string;
             /** Format: date */
             planned_date?: string;
-            /** @enum {string} */
+            /**
+             * @description Пусто: при создании planned, при обновлении — текущий статус
+             * @enum {string}
+             */
             status?: "planned" | "ready_for_certification" | "released" | "eol";
             /**
-             * @description Ветка версии (RM-04); пусто — evolving
+             * @description Ветка версии (RM-04); пусто: при создании evolving, при обновлении — текущая ветка
              * @enum {string}
              */
             branch?: "certified" | "evolving";
             /**
              * Format: uuid
-             * @description Релиз
+             * @description Релиз, от которого ответвлена сертифицированная ветка; пусто при обновлении — не менять
              */
             base_release_id?: string;
             /**
              * Format: date
-             * @description Дата окончания поддержки (RM-05)
+             * @description Дата окончания поддержки (RM-05); пусто при обновлении — не менять
              */
             eol?: string;
         };

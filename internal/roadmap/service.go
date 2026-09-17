@@ -475,6 +475,11 @@ func released(st ReleaseStatus) bool { return st == ReleaseReleased || st == Rel
 
 // UpdateRelease изменяет атрибуты релиза. Смена ветки после выпуска запрещена (RM-04).
 // Статус ready_for_certification выставляется только через MarkReadyForCertification.
+//
+// Необязательные поля ReleaseInput означают «не менять»: пустые Status и Branch, нулевая дата EOL
+// и нулевой BaseReleaseID сохраняют текущее значение релиза. Иначе частичное обновление
+// (например, переименование) молча стирало бы дату окончания поддержки сертифицированной ветки
+// и ссылку на базовый релиз. Снять EOL можно через SetReleaseEOL с нулевой датой.
 func (s *Service) UpdateRelease(ctx context.Context, sc authz.Scope, id kernel.ID, in ReleaseInput) (Release, error) {
 	r, err := s.writableRelease(ctx, sc, id)
 	if err != nil {
@@ -485,6 +490,12 @@ func (s *Service) UpdateRelease(ctx context.Context, sc authz.Scope, id kernel.I
 	}
 	if in.Branch == "" {
 		in.Branch = r.Branch
+	}
+	if in.EOL.IsZero() {
+		in.EOL = r.EOL
+	}
+	if in.BaseReleaseID == kernel.NilID {
+		in.BaseReleaseID = r.BaseReleaseID
 	}
 	if err := validateReleaseInput(in); err != nil {
 		return Release{}, err
@@ -662,6 +673,22 @@ func (s *Service) Release(ctx context.Context, sc authz.Scope, releaseID kernel.
 		r = stripInternal(r)
 	}
 	return r, nil
+}
+
+// ReleaseProduct возвращает продукт релиза. Порт для compliance: трек сертификации
+// запускается только на релиз своего продукта (CM-03).
+func (s *Service) ReleaseProduct(ctx context.Context, sc authz.Scope, releaseID kernel.ID) (kernel.ID, error) {
+	if !sc.Valid() {
+		return kernel.NilID, kernel.ErrForbidden
+	}
+	r, err := s.store.Release(ctx, releaseID)
+	if err != nil {
+		return kernel.NilID, err
+	}
+	if err := sc.Require(authz.ActionReadStrategic, r.ProductID); err != nil {
+		return kernel.NilID, err
+	}
+	return r.ProductID, nil
 }
 
 // CompatibilityMatrix возвращает матрицу совместимости релиза (RM-05). Доступна обеим аудиториям.

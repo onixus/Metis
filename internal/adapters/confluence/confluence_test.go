@@ -33,11 +33,12 @@ func fixture(t *testing.T, name string) []byte {
 
 // mockConfluence — httptest-сервер на записанных синтетических ответах Confluence Data Center.
 type mockConfluence struct {
-	t        *testing.T
-	mu       sync.Mutex
-	requests []recorded
-	fail     int  // код ответа для всех запросов, если > 0
-	huge     bool // отдавать ответ больше лимита
+	t         *testing.T
+	mu        sync.Mutex
+	requests  []recorded
+	fail      int  // код ответа для всех запросов, если > 0
+	huge      bool // отдавать ответ больше лимита
+	labelFail int  // код ответа только для добавления меток, если > 0
 }
 
 type recorded struct {
@@ -80,6 +81,13 @@ func (m *mockConfluence) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodPost && strings.HasSuffix(p, "/property"):
 		serve("property_created.json", 200)
 	case r.Method == http.MethodPost && strings.HasSuffix(p, "/label"):
+		m.mu.Lock()
+		code := m.labelFail
+		m.mu.Unlock()
+		if code > 0 {
+			w.WriteHeader(code)
+			return
+		}
 		serve("labels_added.json", 200)
 	case r.Method == http.MethodGet && p == "/rest/api/content/search":
 		serve("search_adr.json", 200)
@@ -303,5 +311,33 @@ func TestKB_Contract_ContextCancelled(t *testing.T) {
 	cancel()
 	if _, err := c.Page(ctx, "1001"); !errors.Is(err, kernel.ErrUnavailable) || !errors.Is(err, context.Canceled) {
 		t.Fatalf("отменённый контекст: %v", err)
+	}
+}
+
+// TestDA01_CreatePageReturnsPageWhenDecorationFails — страница создана, а добавление меток упало:
+// адаптер возвращает созданную страницу вместе с ошибкой, чтобы вызывающий сохранил PageID и повтор
+// не создал вторую страницу ADR (дефект 8).
+func TestDA01_CreatePageReturnsPageWhenDecorationFails(t *testing.T) {
+	c, m := newClient(t)
+	m.mu.Lock()
+	m.labelFail = http.StatusInternalServerError
+	m.mu.Unlock()
+	p, err := c.CreatePage(context.Background(), ports.CreatePageInput{
+		SpaceKey: "METIS", Title: "ADR: Коннектор EDR v2", Body: "<h1>ADR</h1>",
+		Labels:     []string{"metis", "adr"},
+		Properties: map[string]string{"metis_decision_id": "0192f3a0-0000-7000-8000-0000000000d1"},
+	})
+	if !errors.Is(err, kernel.ErrUnavailable) {
+		t.Fatalf("сбой меток: ожидался ErrUnavailable, получено %v", err)
+	}
+	if p.ID != "2001" {
+		t.Fatalf("идентификатор созданной страницы потерян: %+v", p)
+	}
+	if !strings.Contains(err.Error(), "2001") {
+		t.Fatalf("ошибка без идентификатора страницы: %v", err)
+	}
+	// Свойства после сбоя меток не выставляются.
+	if _, ok := m.find(http.MethodPost, "/rest/api/content/2001/property"); ok {
+		t.Fatal("свойства не должны выставляться после сбоя меток")
 	}
 }

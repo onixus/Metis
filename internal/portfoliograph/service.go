@@ -529,6 +529,28 @@ func (s *Service) Feature(ctx context.Context, sc authz.Scope, id kernel.ID) (Fe
 	return *f, nil
 }
 
+// FeatureProduct возвращает продукт фичи (PG-10).
+//
+// Принадлежность фичи продукту входит в стратегический срез портфеля (ТЗ 2.4), сама фича —
+// нет: содержание и оценки фичи остаются в приватном контуре. Метод нужен модулям, которые
+// работают при стратегическом доступе и которым требуется только продукт фичи —
+// compliance (CM-06, CM-07, PR-05) и роли presale, владельца хаба по связанному продукту.
+func (s *Service) FeatureProduct(ctx context.Context, sc authz.Scope, id kernel.ID) (kernel.ID, error) {
+	if err := s.ensureLoaded(ctx); err != nil {
+		return kernel.NilID, err
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	f, ok := s.g.features[id]
+	if !ok {
+		return kernel.NilID, kernel.NotFound("feature", id)
+	}
+	if err := sc.Require(authz.ActionReadStrategic, f.ProductID); err != nil {
+		return kernel.NilID, err
+	}
+	return f.ProductID, nil
+}
+
 // FeatureByExternalKey ищет фичу по ключу эпика трекера (DL-01). Для сервисных вызовов.
 func (s *Service) FeatureByExternalKey(ctx context.Context, sc authz.Scope, key string) (Feature, error) {
 	if err := s.ensureLoaded(ctx); err != nil {

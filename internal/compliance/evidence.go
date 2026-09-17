@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -45,28 +46,41 @@ func ValidSHA256(s string) bool {
 }
 
 // appendEvidence сцепляет запись с предыдущей и добавляет её в журнал.
+//
+// Номер записи вычисляется чтением Last, поэтому два параллельных добавления могут получить
+// один Seq: проигравший получает kernel.ErrConflict на вставке и повторяет попытку, заново
+// читая Last и пересчитывая PrevHash и Hash (не более writeAttempts раз).
 func appendEvidence(ctx context.Context, store EvidenceStore, e EvidenceItem) (EvidenceItem, error) {
-	prev, err := store.Last(ctx)
-	seq := int64(1)
-	prevHash := EvidenceGenesisHash
-	switch {
-	case err == nil:
-		seq = prev.Seq + 1
-		prevHash = prev.Hash
-	case kernel.IsNotFound(err):
-	default:
-		return EvidenceItem{}, fmt.Errorf("evidence last: %w", err)
+	var lastErr error
+	for attempt := 0; attempt < writeAttempts; attempt++ {
+		prev, err := store.Last(ctx)
+		seq := int64(1)
+		prevHash := EvidenceGenesisHash
+		switch {
+		case err == nil:
+			seq = prev.Seq + 1
+			prevHash = prev.Hash
+		case kernel.IsNotFound(err):
+		default:
+			return EvidenceItem{}, fmt.Errorf("evidence last: %w", err)
+		}
+		e.Seq, e.PrevHash, e.Hash = seq, prevHash, ""
+		h, err := ComputeEvidenceHash(e)
+		if err != nil {
+			return EvidenceItem{}, err
+		}
+		e.Hash = h
+		err = store.Insert(ctx, e)
+		switch {
+		case err == nil:
+			return e, nil
+		case errors.Is(err, kernel.ErrConflict):
+			lastErr = err
+		default:
+			return EvidenceItem{}, fmt.Errorf("evidence insert: %w", err)
+		}
 	}
-	e.Seq, e.PrevHash = seq, prevHash
-	h, err := ComputeEvidenceHash(e)
-	if err != nil {
-		return EvidenceItem{}, err
-	}
-	e.Hash = h
-	if err := store.Insert(ctx, e); err != nil {
-		return EvidenceItem{}, fmt.Errorf("evidence insert: %w", err)
-	}
-	return e, nil
+	return EvidenceItem{}, fmt.Errorf("evidence insert: номер записи журнала занят параллельной записью, %d попыток исчерпаны: %w", writeAttempts, lastErr)
 }
 
 // VerifyResult — итог проверки целостности журнала доказательств.

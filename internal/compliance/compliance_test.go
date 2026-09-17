@@ -39,6 +39,7 @@ type fixture struct {
 	ctx      context.Context
 	graph    *pg.Service
 	svc      *compliance.Service
+	store    *compliance.MemStore
 	evidence *compliance.EvidenceMemStore
 	pub      *memPub
 	cpo, cmp authz.Scope
@@ -80,7 +81,8 @@ func newFixture(t *testing.T) *fixture {
 	graph := pg.NewService(pg.NewMemStore(), pub, clock)
 	f := &fixture{t: t, ctx: context.Background(), graph: graph, pub: pub, cpo: cpoScope(), cmp: complianceScope()}
 	f.evidence = compliance.NewEvidenceMemStore()
-	f.svc = compliance.NewService(compliance.NewMemStore(), f.evidence, graph, pub, clock)
+	f.store = compliance.NewMemStore()
+	f.svc = compliance.NewService(f.store, f.evidence, graph, pub, clock)
 	for _, tpl := range compliance.DefaultTemplates() {
 		if _, err := f.svc.SaveTemplate(f.ctx, adminScope(), tpl); err != nil {
 			t.Fatalf("seed template: %v", err)
@@ -595,5 +597,211 @@ func TestCM07_AffectedBaselinesViaBundledAndShared(t *testing.T) {
 	got, err = f.svc.AffectedBaselines(f.ctx, pmScope(f.agent), f.agentFeature)
 	if err != nil || len(got) != 1 || got[0].Baseline.ProductID != f.agent {
 		t.Fatalf("PM agent: %+v, %v", got, err)
+	}
+}
+
+// ---------- Дефекты код-ревью итерации 11 ----------
+
+// checklistItem возвращает пункт чек-листа гейта трека.
+func checklistItem(t *testing.T, tr compliance.Track, gateKey, itemKey string) compliance.ChecklistItem {
+	t.Helper()
+	for _, it := range gateByKey(t, tr, gateKey).Checklist {
+		if it.Key == itemKey {
+			return it
+		}
+	}
+	t.Fatalf("пункт %s/%s не найден", gateKey, itemKey)
+	return compliance.ChecklistItem{}
+}
+
+// TestCM05_RejectedEvidenceReopensChecklistItem — отклонение доказательства снимает отметку
+// у закрытых им пунктов, релиз перестаёт быть готовым к сертификации, а у пройденного гейта
+// доказательство отклонить нельзя.
+func TestCM05_RejectedEvidenceReopensChecklistItem(t *testing.T) {
+	f := newFixture(t)
+	tr := f.closeChecklist(f.startTrack(f.server), "ssdlc")
+	sast := checklistItem(t, tr, "ssdlc", "sast")
+	if !sast.Done || sast.EvidenceID == kernel.NilID {
+		t.Fatalf("пункт не закрыт: %+v", sast)
+	}
+	if _, err := f.svc.SetEvidenceStatus(f.ctx, f.cmp, sast.EvidenceID, compliance.EvidenceRejected, "хеш не совпал"); err != nil {
+		t.Fatalf("reject: %v", err)
+	}
+	tr, err := f.svc.Track(f.ctx, f.cmp, tr.ID)
+	if err != nil {
+		t.Fatalf("track: %v", err)
+	}
+	if got := checklistItem(t, tr, "ssdlc", "sast"); got.Done || got.EvidenceID != kernel.NilID {
+		t.Fatalf("отметка не снята: %+v", got)
+	}
+	// Гейт больше не проходится, релиз не готов к сертификации.
+	if _, err := f.svc.PassGate(f.ctx, f.cmp, tr.ID, gateByKey(t, tr, "ssdlc").ID); !errors.Is(err, kernel.ErrConflict) {
+		t.Fatalf("гейт прошёл с открытым пунктом: %v", err)
+	}
+	r, err := f.svc.ReleaseReadiness(f.ctx, f.cmp, tr.ReleaseID)
+	if err != nil || r.Ready {
+		t.Fatalf("готовность: %+v, %v", r, err)
+	}
+	if len(r.OpenItems) != 2 || r.OpenItems[0] != "ssdlc/sast" { // открытый пункт + гейт не пройден
+		t.Fatalf("открытые пункты: %+v", r.OpenItems)
+	}
+	// Пройденный гейт: доказательство отклонить нельзя.
+	tr = f.closeChecklist(tr, "ssdlc")
+	passed, err := f.svc.PassGate(f.ctx, f.cmp, tr.ID, gateByKey(t, tr, "ssdlc").ID)
+	if err != nil {
+		t.Fatalf("pass: %v", err)
+	}
+	sca := checklistItem(t, passed, "ssdlc", "sca")
+	if _, err := f.svc.SetEvidenceStatus(f.ctx, f.cmp, sca.EvidenceID, compliance.EvidenceRejected, "поздно"); !errors.Is(err, kernel.ErrConflict) {
+		t.Fatalf("отклонение у пройденного гейта: %v", err)
+	}
+	if got := checklistItem(t, passed, "ssdlc", "sca"); !got.Done {
+		t.Fatalf("отметка пройденного гейта снята: %+v", got)
+	}
+}
+
+// TestCM03_PassGateRejectsWhenEvidenceRejected — гейт не проходится, если доказательство пункта
+// отклонено или отсутствует в журнале, даже когда отметка в чек-листе осталась.
+func TestCM03_PassGateRejectsWhenEvidenceRejected(t *testing.T) {
+	f := newFixture(t)
+	tr := f.closeChecklist(f.startTrack(f.server), "ssdlc")
+	sast := checklistItem(t, tr, "ssdlc", "sast")
+	if _, err := f.svc.SetEvidenceStatus(f.ctx, f.cmp, sast.EvidenceID, compliance.EvidenceRejected, "артефакт отозван"); err != nil {
+		t.Fatalf("reject: %v", err)
+	}
+	// Рассогласование в обход сервиса: отметка возвращена, доказательство отклонено.
+	stored, err := f.store.Track(f.ctx, tr.ID)
+	if err != nil {
+		t.Fatalf("track: %v", err)
+	}
+	for i := range stored.Gates {
+		for j := range stored.Gates[i].Checklist {
+			if stored.Gates[i].Checklist[j].Key == "sast" {
+				stored.Gates[i].Checklist[j].Done, stored.Gates[i].Checklist[j].EvidenceID = true, sast.EvidenceID
+			}
+		}
+	}
+	if err := f.store.SaveTrack(f.ctx, stored); err != nil {
+		t.Fatalf("save track: %v", err)
+	}
+	_, err = f.svc.PassGate(f.ctx, f.cmp, tr.ID, gateByKey(t, tr, "ssdlc").ID)
+	if !errors.Is(err, kernel.ErrConflict) || !strings.Contains(err.Error(), "sast") {
+		t.Fatalf("гейт прошёл на отклонённом доказательстве: %v", err)
+	}
+	// Пункт, ссылающийся на отсутствующее доказательство, тоже блокирует гейт.
+	for i := range stored.Gates {
+		for j := range stored.Gates[i].Checklist {
+			if stored.Gates[i].Checklist[j].Key == "sast" {
+				stored.Gates[i].Checklist[j].EvidenceID = kernel.NewID()
+			}
+		}
+	}
+	if err := f.store.SaveTrack(f.ctx, stored); err != nil {
+		t.Fatalf("save track: %v", err)
+	}
+	if _, err := f.svc.PassGate(f.ctx, f.cmp, tr.ID, gateByKey(t, tr, "ssdlc").ID); !errors.Is(err, kernel.ErrConflict) {
+		t.Fatalf("гейт прошёл без доказательства: %v", err)
+	}
+}
+
+// fakeReleases — порт релизов roadmap для теста: релиз принадлежит заданному продукту.
+type fakeReleases struct {
+	product map[kernel.ID]kernel.ID
+}
+
+func (f fakeReleases) ReleaseProduct(_ context.Context, sc authz.Scope, releaseID kernel.ID) (kernel.ID, error) {
+	if !sc.Valid() {
+		return kernel.NilID, kernel.ErrForbidden
+	}
+	pid, ok := f.product[releaseID]
+	if !ok {
+		return kernel.NilID, kernel.NotFound("release", releaseID)
+	}
+	return pid, nil
+}
+
+// TestCM03_StartTrackRejectsForeignRelease — трек нельзя запустить на релиз другого продукта:
+// иначе релиз владельца занят чужим треком и его проверка готовности ломается.
+func TestCM03_StartTrackRejectsForeignRelease(t *testing.T) {
+	f := newFixture(t)
+	own, foreign := kernel.NewID(), kernel.NewID()
+	f.svc.WithReleases(fakeReleases{product: map[kernel.ID]kernel.ID{own: f.server, foreign: f.agent}})
+	if _, err := f.svc.StartTrack(f.ctx, f.cmp, compliance.TrackInput{ProductID: f.server, ReleaseID: foreign, Version: "3.1.0"}); !errors.Is(err, kernel.ErrValidation) {
+		t.Fatalf("трек на релиз чужого продукта: %v", err)
+	}
+	tr, err := f.svc.StartTrack(f.ctx, f.cmp, compliance.TrackInput{ProductID: f.server, ReleaseID: own, Version: "3.1.0"})
+	if err != nil || tr.ReleaseID != own {
+		t.Fatalf("трек на свой релиз: %+v, %v", tr, err)
+	}
+	// Неизвестный релиз не даёт занять чужой идентификатор.
+	if _, err := f.svc.StartTrack(f.ctx, f.cmp, compliance.TrackInput{ProductID: f.server, ReleaseID: kernel.NewID(), Version: "3.2.0"}); !errors.Is(err, kernel.ErrNotFound) {
+		t.Fatalf("неизвестный релиз: %v", err)
+	}
+}
+
+// conflictOnceStore — журнал доказательств, отклоняющий первую вставку конфликтом:
+// имитирует параллельное добавление, занявшее тот же Seq.
+type conflictOnceStore struct {
+	*compliance.EvidenceMemStore
+	rejected bool
+}
+
+func (s *conflictOnceStore) Insert(ctx context.Context, e compliance.EvidenceItem) error {
+	if !s.rejected {
+		s.rejected = true
+		return kernel.ErrConflict
+	}
+	return s.EvidenceMemStore.Insert(ctx, e)
+}
+
+// TestCM04_AppendEvidenceRetriesOnSeqConflict — конфликт номера записи не выдаётся пользователю:
+// номер пересчитывается, сцепка хешей остаётся целой.
+func TestCM04_AppendEvidenceRetriesOnSeqConflict(t *testing.T) {
+	f := newFixture(t)
+	tr := f.startTrack(f.server)
+	g := gateByKey(t, tr, "ssdlc")
+	e1, err := f.svc.AppendEvidence(f.ctx, f.cmp, compliance.EvidenceInput{TrackID: tr.ID, GateID: g.ID, URL: "https://ci.example.test/sast", SHA256: sha})
+	if err != nil {
+		t.Fatalf("append 1: %v", err)
+	}
+	// Хранилище с конфликтом на первой вставке: сервис повторяет попытку.
+	retry := &conflictOnceStore{EvidenceMemStore: f.evidence}
+	svc := compliance.NewService(f.store, retry, f.graph, f.pub, kernel.FixedClock{T: time.Date(2026, 9, 17, 11, 0, 0, 0, time.UTC)})
+	e2, err := svc.AppendEvidence(f.ctx, f.cmp, compliance.EvidenceInput{TrackID: tr.ID, GateID: g.ID, URL: "https://ci.example.test/sca", SHA256: sha})
+	if err != nil {
+		t.Fatalf("append после конфликта: %v", err)
+	}
+	if !retry.rejected {
+		t.Fatal("конфликт не сымитирован")
+	}
+	if e2.Seq != e1.Seq+1 || e2.PrevHash != e1.Hash {
+		t.Fatalf("сцепка нарушена: e1=%+v e2=%+v", e1, e2)
+	}
+	res, err := compliance.VerifyEvidenceLog(f.ctx, f.evidence)
+	if err != nil || !res.OK || res.Checked != 2 {
+		t.Fatalf("целостность журнала: %+v, %v", res, err)
+	}
+}
+
+// TestCM06_ConfirmationCostAtStrategicAccess — расчёт ранжирования доступен роли со
+// стратегическим доступом (presale, владелец хаба): порт графа берёт только продукт фичи.
+func TestCM06_ConfirmationCostAtStrategicAccess(t *testing.T) {
+	f := newFixture(t)
+	if _, err := f.svc.SetImpactClass(f.ctx, f.cmp, f.agentFeature, f.agent, compliance.ImpactSecurityFunctions, "затрагивает шифрование"); err != nil {
+		t.Fatalf("set impact: %v", err)
+	}
+	f.certify(f.startTrack(f.agent))
+	presale := presaleScope()
+	cost, err := f.svc.ConfirmationCost(f.ctx, presale, f.agentFeature)
+	if err != nil || cost.Amount != 150_000_00 { // agent: SSDLCCertified, скидка 0,5
+		t.Fatalf("стоимость подтверждения при стратегическом доступе: %v, %v", cost, err)
+	}
+	affected, err := f.svc.AffectedBaselines(f.ctx, presale, f.agentFeature)
+	if err != nil || len(affected) != 1 || affected[0].Baseline.ProductID != f.agent {
+		t.Fatalf("затронутые baseline при стратегическом доступе: %+v, %v", affected, err)
+	}
+	// Нулевой Scope запрещает всё.
+	if _, err := f.svc.ConfirmationCost(f.ctx, authz.Scope{}, f.agentFeature); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("нулевой scope: %v", err)
 	}
 }

@@ -67,6 +67,10 @@ type Store interface {
 	Alerts(ctx context.Context, productID kernel.ID, onlyOpen bool) ([]Alert, error)
 	// Acknowledge отмечает алерт подтверждённым.
 	Acknowledge(ctx context.Context, a Alert) error
+	// AlertByEvent возвращает алерт, поднятый по паре «обязательство + событие» (CT-03).
+	// kernel.ErrNotFound, если такого алерта нет. Нужен для дедупликации при повторной
+	// доставке события: отметка обработанного события ставится только в конце обработчика.
+	AlertByEvent(ctx context.Context, commitmentID, eventID kernel.ID) (Alert, error)
 
 	// EventProcessed сообщает, обрабатывалось ли событие (идемпотентность обработчика по Event.ID).
 	EventProcessed(ctx context.Context, eventID kernel.ID) (bool, error)
@@ -175,6 +179,21 @@ func (m *MemStore) Acknowledge(_ context.Context, a Alert) error {
 		}
 	}
 	return kernel.NotFound("alert", a.ID)
+}
+
+// AlertByEvent возвращает алерт по паре «обязательство + событие».
+func (m *MemStore) AlertByEvent(_ context.Context, commitmentID, eventID kernel.ID) (Alert, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if eventID == kernel.NilID {
+		return Alert{}, kernel.NotFound("alert", eventID)
+	}
+	for _, a := range m.alerts {
+		if a.CommitmentID == commitmentID && a.EventID == eventID {
+			return a, nil
+		}
+	}
+	return Alert{}, kernel.NotFound("alert", eventID)
 }
 
 // EventProcessed сообщает, обрабатывалось ли событие.

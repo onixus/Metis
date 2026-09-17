@@ -584,3 +584,32 @@ func TestPG01_DeleteProductCascadesAndBlocksOnContracts(t *testing.T) {
 		t.Fatalf("после перезагрузки продуктов %d", len(ps))
 	}
 }
+
+// TestPG10_FeatureProductVisibleAtStrategicAccess — продукт фичи доступен при стратегическом
+// доступе (ТЗ 2.4), сама фича — только в приватном контуре; нулевой Scope и чужой продукт — отказ.
+func TestPG10_FeatureProductVisibleAtStrategicAccess(t *testing.T) {
+	f := newFixture(t)
+	feat := f.feature(f.edr, "Поведенческий анализ", d(2026, time.June, 1))
+	presale := authz.New(authz.Params{Subject: "presale-1", Roles: []authz.Role{authz.RolePresale}, AllProducts: authz.AccessStrategic})
+	got, err := f.svc.FeatureProduct(f.ctx, presale, feat)
+	if err != nil || got != f.edr {
+		t.Fatalf("продукт фичи при стратегическом доступе: %v, %v", got, err)
+	}
+	// Сама фича остаётся в приватном контуре.
+	if _, err := f.svc.Feature(f.ctx, presale, feat); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("фича видна при стратегическом доступе: %v", err)
+	}
+	// Нулевой Scope запрещает всё.
+	if _, err := f.svc.FeatureProduct(f.ctx, authz.Scope{}, feat); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("нулевой scope: %v", err)
+	}
+	// Чужой продукт: PM видит только свой.
+	pm := pmScope("pm-soar", map[kernel.ID]authz.Access{f.soar: authz.AccessPrivate})
+	if _, err := f.svc.FeatureProduct(f.ctx, pm, feat); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("PM чужого продукта: %v", err)
+	}
+	// Несуществующая фича.
+	if _, err := f.svc.FeatureProduct(f.ctx, f.cpo, kernel.NewID()); !errors.Is(err, kernel.ErrNotFound) {
+		t.Fatalf("несуществующая фича: %v", err)
+	}
+}

@@ -73,6 +73,36 @@ func (q *Queries) GetAlert(ctx context.Context, id uuid.UUID) (CommitmentsAlert,
 	return i, err
 }
 
+const getAlertByEvent = `-- name: GetAlertByEvent :one
+SELECT seq, id, commitment_id, product_id, kind, message, event_id, new_date, due_date, raised_at, acknowledged, acknowledged_by, acknowledged_at FROM commitments.alerts WHERE commitment_id = $1 AND event_id = $2 ORDER BY seq LIMIT 1
+`
+
+type GetAlertByEventParams struct {
+	CommitmentID uuid.UUID
+	EventID      uuid.NullUUID
+}
+
+func (q *Queries) GetAlertByEvent(ctx context.Context, arg GetAlertByEventParams) (CommitmentsAlert, error) {
+	row := q.db.QueryRow(ctx, getAlertByEvent, arg.CommitmentID, arg.EventID)
+	var i CommitmentsAlert
+	err := row.Scan(
+		&i.Seq,
+		&i.ID,
+		&i.CommitmentID,
+		&i.ProductID,
+		&i.Kind,
+		&i.Message,
+		&i.EventID,
+		&i.NewDate,
+		&i.DueDate,
+		&i.RaisedAt,
+		&i.Acknowledged,
+		&i.AcknowledgedBy,
+		&i.AcknowledgedAt,
+	)
+	return i, err
+}
+
 const getCommitment = `-- name: GetCommitment :one
 SELECT id, product_id, kind, subtype, counterparty, subject, due_date, basis, owner, status, feature_id, release_id, renewal_item_id, created_by, created_at, updated_at FROM commitments.commitments WHERE id = $1
 `

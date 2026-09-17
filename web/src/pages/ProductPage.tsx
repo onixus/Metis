@@ -454,7 +454,9 @@ function TriageQueue({ productId, me }: { productId: string; me: Me | undefined 
           </table>
         </div>
       )}
-      {similarFor && <SimilarSignals productId={productId} signal={similarFor} onClose={() => setSimilarFor(null)} />}
+      {similarFor && (
+        <SimilarSignals key={similarFor.id} productId={productId} signal={similarFor} onClose={() => setSimilarFor(null)} />
+      )}
     </div>
   )
 }
@@ -464,6 +466,8 @@ function SimilarSignals({ productId, signal, onClose }: { productId: string; sig
   const similar = useSimilarSignals(signal.id, true)
   const merge = useMergeSignals(productId)
   const [picked, setPicked] = useState<string[]>([])
+  // Объединять можно только отмеченные из текущего списка: чужие отметки в него не попадают.
+  const mergeable = picked.filter((pid) => (similar.data ?? []).some(({ signal: s }) => s.id === pid && s.status !== 'merged'))
   return (
     <div className="card form-inline stack">
       <div className="row wrap-row">
@@ -514,8 +518,8 @@ function SimilarSignals({ productId, signal, onClose }: { productId: string; sig
             <button
               type="button"
               className="btn btn-sm btn-primary"
-              disabled={picked.length === 0 || merge.isPending}
-              onClick={() => merge.mutate({ signalId: signal.id, duplicate_ids: picked }, { onSuccess: () => setPicked([]) })}
+              disabled={mergeable.length === 0 || merge.isPending}
+              onClick={() => merge.mutate({ signalId: signal.id, duplicate_ids: mergeable }, { onSuccess: () => setPicked([]) })}
             >
               {ru.signal2.merge}
             </button>

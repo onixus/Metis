@@ -1,0 +1,9 @@
+{
+  "results": [
+    { "prefix": "global", "name": "metis" },
+    { "prefix": "global", "name": "adr" }
+  ],
+  "start": 0,
+  "limit": 200,
+  "size": 2
+}

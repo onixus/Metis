@@ -12,7 +12,9 @@ type Filter struct {
 	ProductID  kernel.ID
 	FeatureID  kernel.ID
 	ContractID kernel.ID
-	Statuses   []Status
+	// HypothesisID — сигналы, привязанные к гипотезе discovery (DS-01).
+	HypothesisID kernel.ID
+	Statuses     []Status
 }
 
 func (f Filter) matches(s Signal) bool {
@@ -23,6 +25,9 @@ func (f Filter) matches(s Signal) bool {
 		return false
 	}
 	if f.ContractID != kernel.NilID && s.ContractID != f.ContractID {
+		return false
+	}
+	if f.HypothesisID != kernel.NilID && s.HypothesisID != f.HypothesisID {
 		return false
 	}
 	if len(f.Statuses) > 0 {

@@ -11,6 +11,10 @@ import (
 
 	"github.com/onixus/metis/api"
 	"github.com/onixus/metis/internal/audit"
+	"github.com/onixus/metis/internal/commitments"
+	"github.com/onixus/metis/internal/compliance"
+	"github.com/onixus/metis/internal/decisions"
+	"github.com/onixus/metis/internal/discovery"
 	"github.com/onixus/metis/internal/httpapi/gen"
 	"github.com/onixus/metis/internal/portfoliograph"
 	"github.com/onixus/metis/internal/ports"
@@ -31,6 +35,12 @@ type Deps struct {
 	Prioritization *prioritization.Service
 	Roadmap        *roadmap.Service
 	CRM            ports.CRM
+	Discovery      *discovery.Service
+	Commitments    *commitments.Service
+	Compliance     *compliance.Service
+	Decisions      *decisions.Service
+	// KnowledgeSpace — пространство базы знаний по умолчанию для страниц ADR (METIS_CONFLUENCE_SPACE).
+	KnowledgeSpace string
 	// Ready сообщает о готовности зависимостей (БД, миграции) для /readyz.
 	Ready func(ctx context.Context) error
 	// Metrics — обработчик метрик Prometheus; nil — не монтируется.

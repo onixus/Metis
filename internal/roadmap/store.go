@@ -14,6 +14,8 @@ type Store interface {
 	Items(ctx context.Context, productID kernel.ID) ([]RoadmapItem, error)
 	// ItemsByFeature возвращает элементы, привязанные к фиче (во всех продуктах).
 	ItemsByFeature(ctx context.Context, featureID kernel.ID) ([]RoadmapItem, error)
+	// ItemByCommitment возвращает элемент, созданный по обязательству (CT-04); ErrNotFound, если его нет.
+	ItemByCommitment(ctx context.Context, commitmentID kernel.ID) (RoadmapItem, error)
 	SaveRelease(ctx context.Context, r Release) error
 	Release(ctx context.Context, id kernel.ID) (Release, error)
 	Releases(ctx context.Context, productID kernel.ID) ([]Release, error)
@@ -89,10 +91,24 @@ func (m *MemStore) ItemsByFeature(_ context.Context, featureID kernel.ID) ([]Roa
 	return out, nil
 }
 
+// ItemByCommitment возвращает элемент по обязательству.
+func (m *MemStore) ItemByCommitment(_ context.Context, commitmentID kernel.ID) (RoadmapItem, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, it := range m.items {
+		if it.CommitmentID == commitmentID {
+			return it, nil
+		}
+	}
+	return RoadmapItem{}, kernel.NotFound("roadmap_item", commitmentID)
+}
+
 // SaveRelease сохраняет релиз.
 func (m *MemStore) SaveRelease(_ context.Context, r Release) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	r.FeatureIDs = append([]kernel.ID(nil), r.FeatureIDs...)
+	r.CompatibilityMatrix = nil // вычисляемое поле не хранится
 	m.releases[r.ID] = r
 	return nil
 }

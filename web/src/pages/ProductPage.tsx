@@ -6,16 +6,23 @@ import {
   useDeleteProduct,
   useFeatureValues,
   useFeatures,
+  useHypotheses,
   useLinkSignal,
+  useLinkSignalToHypothesis,
   useMe,
+  useMergeSignals,
   useShiftDate,
+  useSimilarSignals,
   useStrategic,
   useTriageQueue,
 } from '../api/hooks'
-import type { Contract, Feature, FeatureValue, Signal } from '../api/types'
+import type { Contract, Feature, FeatureValue, Me, Signal } from '../api/types'
+import { FeatureDetails } from '../components/FeatureDetails'
+import { RankingBlock } from '../components/RankingBlock'
 import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { ru } from '../i18n/ru'
 import { fmtDate, fmtMoney, pick } from '../lib/format'
+import { canWriteCompliance, canWriteDiscovery, hasRole } from '../lib/roles'
 
 const STATUS_TONE: Record<Feature['status'], 'neutral' | 'ok' | 'warn' | 'danger' | 'info'> = {
   idea: 'neutral',
@@ -54,6 +61,22 @@ export function ProductPage() {
         <div className="row">
           <Link className="btn" to={`/products/${id}/roadmap`}>
             {ru.product.roadmap}
+          </Link>
+          {isPrivate && (
+            <>
+              <Link className="btn" to={`/products/${id}/discovery`}>
+                {ru.productLinks.discovery}
+              </Link>
+              <Link className="btn" to={`/products/${id}/commitments`}>
+                {ru.productLinks.commitments}
+              </Link>
+            </>
+          )}
+          <Link className="btn" to={`/products/${id}/compliance`}>
+            {ru.productLinks.compliance}
+          </Link>
+          <Link className="btn" to={`/products/${id}/decisions`}>
+            {ru.productLinks.decisions}
           </Link>
           {canManage && (
             <>
@@ -117,8 +140,9 @@ export function ProductPage() {
 
       {isPrivate ? (
         <>
-          <Backlog productId={id} />
-          <TriageQueue productId={id} />
+          <Backlog productId={id} me={me.data} />
+          <RankingBlock productId={id} />
+          <TriageQueue productId={id} me={me.data} />
         </>
       ) : (
         <p className="muted">{ru.productPage.backlogPrivateOnly}</p>
@@ -159,10 +183,13 @@ export function ContractsTable({ contracts }: { contracts: Contract[] }) {
   )
 }
 
-function Backlog({ productId }: { productId: string }) {
+function Backlog({ productId, me }: { productId: string; me: Me | undefined }) {
   const features = useFeatures(productId)
   const values = useFeatureValues(productId)
   const [shifting, setShifting] = useState<Feature | null>(null)
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const canCompliance = canWriteCompliance(me, accessLevel(me, productId))
+  const canPriority = hasRole(me, 'admin', 'cpo', 'pm')
 
   const valueById = useMemo(
     () => new Map<string, FeatureValue>((values.data ?? []).map((v) => [v.feature_id, v])),
@@ -199,7 +226,10 @@ function Backlog({ productId }: { productId: string }) {
               {features.data.map((f) => {
                 const v = valueById.get(f.id)
                 return (
-                  <tr key={f.id} className={f.affected ? 'row-affected' : undefined}>
+                  <FeatureRows key={f.id} expanded={expanded === f.id} details={
+                    <FeatureDetails featureId={f.id} productId={productId} canCompliance={canCompliance} canPriority={canPriority} />
+                  }>
+                  <tr className={f.affected ? 'row-affected' : undefined}>
                     <td>
                       {f.name}
                       {f.external_key && <span className="muted mono"> {f.external_key}</span>}
@@ -223,11 +253,20 @@ function Backlog({ productId }: { productId: string }) {
                       )}
                     </td>
                     <td>
-                      <button type="button" className="btn btn-sm" onClick={() => setShifting(f)}>
-                        {ru.feature.shiftDate}
-                      </button>
+                      <div className="row">
+                        <button type="button" className="btn btn-sm" onClick={() => setShifting(f)}>
+                          {ru.feature.shiftDate}
+                        </button>
+                        <button type="button" className="btn btn-sm" onClick={() => setExpanded(expanded === f.id ? null : f.id)}>
+                          {expanded === f.id ? ru.productLinks.hide : ru.productLinks.details}
+                        </button>
+                        <Link className="btn btn-sm" to={`/trace/feature/${f.id}`}>
+                          {ru.discovery.hypothesis.trace}
+                        </Link>
+                      </div>
                     </td>
                   </tr>
+                  </FeatureRows>
                 )
               })}
             </tbody>
@@ -236,6 +275,20 @@ function Backlog({ productId }: { productId: string }) {
       )}
       {shifting && <ShiftDateForm productId={productId} feature={shifting} onClose={() => setShifting(null)} />}
     </div>
+  )
+}
+
+/** Строка бэклога и раскрываемая под ней карточка этапа 2. */
+function FeatureRows({ expanded, details, children }: { expanded: boolean; details: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <>
+      {children}
+      {expanded && (
+        <tr>
+          <td colSpan={9}>{details}</td>
+        </tr>
+      )}
+    </>
   )
 }
 
@@ -287,11 +340,16 @@ function ShiftDateForm({ productId, feature, onClose }: { productId: string; fea
   )
 }
 
-function TriageQueue({ productId }: { productId: string }) {
+function TriageQueue({ productId, me }: { productId: string; me: Me | undefined }) {
   const queue = useTriageQueue(productId)
   const features = useFeatures(productId)
+  const hyps = useHypotheses(productId)
   const link = useLinkSignal(productId)
+  const linkHyp = useLinkSignalToHypothesis(productId)
   const [choice, setChoice] = useState<Record<string, string>>({})
+  const [hypChoice, setHypChoice] = useState<Record<string, string>>({})
+  const [similarFor, setSimilarFor] = useState<Signal | null>(null)
+  const canDiscovery = canWriteDiscovery(me, accessLevel(me, productId))
 
   if (queue.isPending) return <Loading />
   if (queue.isError) return <ErrorBox error={queue.error} onRetry={() => void queue.refetch()} />
@@ -303,6 +361,8 @@ function TriageQueue({ productId }: { productId: string }) {
       <h2>{ru.productPage.signals}</h2>
       {link.isError && <ErrorBox error={link.error} />}
       {link.isSuccess && <div className="alert alert-ok">{ru.signal.linked}</div>}
+      {linkHyp.isError && <ErrorBox error={linkHyp.error} />}
+      {linkHyp.isSuccess && <div className="alert alert-ok">{ru.signal2.linkedHypothesis}</div>}
       {queue.data.length === 0 ? (
         <Empty text={ru.productPage.noSignals} />
       ) : (
@@ -317,6 +377,7 @@ function TriageQueue({ productId }: { productId: string }) {
                 <th>{ru.signal.blocksDeal}</th>
                 <th>{ru.signal.dueDate}</th>
                 <th>{ru.signal.linkTo}</th>
+                <th>{ru.signal2.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -355,11 +416,117 @@ function TriageQueue({ productId }: { productId: string }) {
                       s.feature_id ?? ru.app.dash
                     )}
                   </td>
+                  <td>
+                    <div className="row">
+                      <Link className="btn btn-sm" to={`/trace/signal/${s.id}`}>
+                        {ru.discovery.hypothesis.trace}
+                      </Link>
+                      {linkable(s) && (
+                        <button type="button" className="btn btn-sm" onClick={() => setSimilarFor(similarFor?.id === s.id ? null : s)}>
+                          {ru.signal2.similar}
+                        </button>
+                      )}
+                      {canDiscovery && linkable(s) && (
+                        <>
+                          <select value={hypChoice[s.id] ?? ''} onChange={(e) => setHypChoice((c) => ({ ...c, [s.id]: e.target.value }))}>
+                            <option value="">{ru.signal2.chooseHypothesis}</option>
+                            {(hyps.data ?? []).map((h) => (
+                              <option key={h.id} value={h.id}>
+                                {h.title}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            disabled={!hypChoice[s.id] || linkHyp.isPending}
+                            onClick={() => linkHyp.mutate({ signalId: s.id, hypothesisId: hypChoice[s.id] })}
+                          >
+                            {ru.signal2.linkHypothesis}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+      {similarFor && (
+        <SimilarSignals key={similarFor.id} productId={productId} signal={similarFor} onClose={() => setSimilarFor(null)} />
+      )}
+    </div>
+  )
+}
+
+/** Похожие сигналы (SG-04) с объединением дубликатов в текущий. */
+function SimilarSignals({ productId, signal, onClose }: { productId: string; signal: Signal; onClose: () => void }) {
+  const similar = useSimilarSignals(signal.id, true)
+  const merge = useMergeSignals(productId)
+  const [picked, setPicked] = useState<string[]>([])
+  // Объединять можно только отмеченные из текущего списка: чужие отметки в него не попадают.
+  const mergeable = picked.filter((pid) => (similar.data ?? []).some(({ signal: s }) => s.id === pid && s.status !== 'merged'))
+  return (
+    <div className="card form-inline stack">
+      <div className="row wrap-row">
+        <h3>
+          {ru.signal2.similar}: {signal.text.slice(0, 80)}
+        </h3>
+        <button type="button" className="btn btn-sm" onClick={onClose}>
+          {ru.common.close}
+        </button>
+      </div>
+      {similar.isPending && <Loading />}
+      {similar.isError && <ErrorBox error={similar.error} />}
+      {similar.data && similar.data.length === 0 && <Empty text={ru.signal2.similarEmpty} />}
+      {similar.data && similar.data.length > 0 && (
+        <>
+          <div className="table-wrap">
+            <table className="table table-compact">
+              <thead>
+                <tr>
+                  <th />
+                  <th>{ru.signal.text}</th>
+                  <th>{ru.signal.status}</th>
+                  <th>{ru.signal2.score}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {similar.data.map(({ signal: s, score }) => (
+                  <tr key={s.id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        aria-label={s.text}
+                        checked={picked.includes(s.id)}
+                        disabled={s.status === 'merged'}
+                        onChange={(e) => setPicked((p) => (e.target.checked ? [...p, s.id] : p.filter((x) => x !== s.id)))}
+                      />
+                    </td>
+                    <td className="wrap">{s.text}</td>
+                    <td>{pick(ru.signal.statuses, s.status)}</td>
+                    <td className="num mono">{score.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted">{ru.signal2.mergeHint}</p>
+          <div className="row">
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              disabled={mergeable.length === 0 || merge.isPending}
+              onClick={() => merge.mutate({ signalId: signal.id, duplicate_ids: mergeable }, { onSuccess: () => setPicked([]) })}
+            >
+              {ru.signal2.merge}
+            </button>
+            {merge.isSuccess && <span className="alert alert-ok">{ru.signal2.merged}</span>}
+            {merge.isError && <span className="alert alert-error">{errorMessage(merge.error)}</span>}
+          </div>
+        </>
       )}
     </div>
   )

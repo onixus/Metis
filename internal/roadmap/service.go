@@ -13,9 +13,11 @@ import (
 // Service — публичный интерфейс модуля roadmap. Каждый метод принимает authz.Scope;
 // нулевой Scope запрещает всё. Аудитория среза берётся только из Scope (RM-02).
 type Service struct {
-	store Store
-	pub   kernel.Publisher
-	clock kernel.Clock
+	store     Store
+	pub       kernel.Publisher
+	clock     kernel.Clock
+	contracts ContractReader   // может быть nil: матрица совместимости пуста
+	readiness ReadinessChecker // может быть nil: MarkReadyForCertification недоступен
 }
 
 // NewService создаёт сервис. Publisher может быть nil (события не публикуются).
@@ -24,6 +26,18 @@ func NewService(store Store, pub kernel.Publisher, clock kernel.Clock) *Service 
 		clock = kernel.SystemClock{}
 	}
 	return &Service{store: store, pub: pub, clock: clock}
+}
+
+// WithContracts подключает порт контрактов для матрицы совместимости (RM-05).
+func (s *Service) WithContracts(c ContractReader) *Service {
+	s.contracts = c
+	return s
+}
+
+// WithReadiness подключает порт готовности к сертификации (RM-05, CM-05).
+func (s *Service) WithReadiness(r ReadinessChecker) *Service {
+	s.readiness = r
+	return s
 }
 
 func (s *Service) emit(ctx context.Context, typ string, aggregate, product kernel.ID, actor string, payload any) error {
@@ -52,6 +66,7 @@ type ItemInput struct {
 	ReleaseID kernel.ID
 	Audience  authz.Audience
 	Status    ItemStatus
+	Kind      ItemKind // по умолчанию feature (RM-04)
 }
 
 func validateDates(start, end kernel.Date) error {
@@ -74,6 +89,9 @@ func (s *Service) validateItem(ctx context.Context, productID kernel.ID, in Item
 	if !in.Status.valid() {
 		return kernel.Invalid("status", "недопустимый статус")
 	}
+	if !in.Kind.valid() {
+		return kernel.Invalid("kind", "допустимы feature, fix")
+	}
 	if err := validateDates(in.StartDate, in.EndDate); err != nil {
 		return err
 	}
@@ -84,6 +102,10 @@ func (s *Service) validateItem(ctx context.Context, productID kernel.ID, in Item
 		}
 		if r.ProductID != productID {
 			return kernel.Invalid("release_id", "релиз принадлежит другому продукту")
+		}
+		if r.Branch == BranchCertified && in.Kind != KindFix {
+			return fmt.Errorf("%w: релиз %s в сертифицированной ветке принимает только исправления (kind=fix), элемент вида %q привязать нельзя",
+				kernel.ErrConflict, r.Version, in.Kind)
 		}
 	}
 	return nil
@@ -100,6 +122,9 @@ func (s *Service) CreateItem(ctx context.Context, sc authz.Scope, productID kern
 	if in.Audience == "" {
 		in.Audience = authz.AudienceInternal
 	}
+	if in.Kind == "" {
+		in.Kind = KindFeature
+	}
 	if err := s.validateItem(ctx, productID, in); err != nil {
 		return RoadmapItem{}, err
 	}
@@ -107,7 +132,7 @@ func (s *Service) CreateItem(ctx context.Context, sc authz.Scope, productID kern
 	it := RoadmapItem{
 		ID: kernel.NewID(), ProductID: productID, FeatureID: in.FeatureID, Title: in.Title, Bucket: in.Bucket,
 		StartDate: in.StartDate, EndDate: in.EndDate, ReleaseID: in.ReleaseID, Audience: in.Audience, Status: in.Status,
-		CreatedAt: now, UpdatedAt: now,
+		Kind: in.Kind, CreatedAt: now, UpdatedAt: now,
 	}
 	if err := s.store.SaveItem(ctx, it); err != nil {
 		return RoadmapItem{}, fmt.Errorf("save item: %w", err)
@@ -133,11 +158,14 @@ func (s *Service) UpdateItem(ctx context.Context, sc authz.Scope, id kernel.ID, 
 	if in.StartDate != it.StartDate || in.EndDate != it.EndDate {
 		return RoadmapItem{}, kernel.Invalid("dates", "изменение дат выполняется через ChangeDates с указанием причины")
 	}
+	if in.Kind == "" {
+		in.Kind = it.Kind
+	}
 	if err := s.validateItem(ctx, it.ProductID, in); err != nil {
 		return RoadmapItem{}, err
 	}
-	it.FeatureID, it.Title, it.Bucket, it.ReleaseID, it.Audience, it.Status =
-		in.FeatureID, in.Title, in.Bucket, in.ReleaseID, in.Audience, in.Status
+	it.FeatureID, it.Title, it.Bucket, it.ReleaseID, it.Audience, it.Status, it.Kind =
+		in.FeatureID, in.Title, in.Bucket, in.ReleaseID, in.Audience, in.Status, in.Kind
 	it.UpdatedAt = s.clock.Now()
 	if err := s.store.SaveItem(ctx, it); err != nil {
 		return RoadmapItem{}, fmt.Errorf("save item: %w", err)
@@ -258,11 +286,10 @@ func (s *Service) ByRelease(ctx context.Context, sc authz.Scope, productID kerne
 	if err != nil {
 		return ByRelease{}, err
 	}
-	rels, err := s.store.Releases(ctx, productID)
+	rels, err := s.releasesFor(ctx, sc, productID)
 	if err != nil {
-		return ByRelease{}, fmt.Errorf("releases: %w", err)
+		return ByRelease{}, err
 	}
-	sortReleases(rels)
 	by := map[kernel.ID][]RoadmapItem{}
 	for _, it := range items {
 		by[it.ReleaseID] = append(by[it.ReleaseID], it)
@@ -270,6 +297,10 @@ func (s *Service) ByRelease(ctx context.Context, sc authz.Scope, productID kerne
 	v := ByRelease{ProductID: productID, Audience: sc.Audience(), Releases: make([]ReleaseGroup, 0, len(rels))}
 	for _, r := range rels {
 		g := ReleaseGroup{Release: r}
+		if sc.Audience() != authz.AudienceInternal {
+			ss := toSalesSafeRelease(r)
+			g.SalesSafeRelease = &ss
+		}
 		g.Items, g.SalesSafe = split(sc, by[r.ID])
 		v.Releases = append(v.Releases, g)
 	}
@@ -342,7 +373,7 @@ func (s *Service) DateHistory(ctx context.Context, sc authz.Scope, itemID kernel
 	return hist, nil
 }
 
-// ---- Релизы ----
+// ---- Релизы (RM-04, RM-05) ----
 
 // ReleaseInput — данные релиза.
 type ReleaseInput struct {
@@ -350,9 +381,66 @@ type ReleaseInput struct {
 	Version     string
 	PlannedDate kernel.Date
 	Status      ReleaseStatus
+	// Branch — ветка версии (RM-04); пустое значение — evolving при создании, без изменения при обновлении.
+	Branch Branch
+	// BaseReleaseID — релиз, от которого ответвлена сертифицированная ветка (опционально).
+	BaseReleaseID kernel.ID
+	// EOL — дата окончания поддержки (RM-05), опционально.
+	EOL kernel.Date
 }
 
-// CreateRelease создаёт релиз продукта. Требует ActionWriteRoadmap.
+func validateReleaseInput(in ReleaseInput) error {
+	if strings.TrimSpace(in.Name) == "" {
+		return kernel.Invalid("name", "название обязательно")
+	}
+	if strings.TrimSpace(in.Version) == "" {
+		return kernel.Invalid("version", "версия обязательна")
+	}
+	if !in.Status.valid() {
+		return kernel.Invalid("status", "допустимы planned, ready_for_certification, released, eol")
+	}
+	if !in.Branch.valid() {
+		return kernel.Invalid("branch", "допустимы certified, evolving")
+	}
+	if !in.EOL.IsZero() && !in.PlannedDate.IsZero() && in.EOL.Before(in.PlannedDate) {
+		return kernel.Invalid("eol", "дата EOL раньше плановой даты релиза")
+	}
+	return nil
+}
+
+// validateBase проверяет базовый релиз ветки: существует, того же продукта, не сам релиз.
+func (s *Service) validateBase(ctx context.Context, productID, selfID, baseID kernel.ID) error {
+	if baseID == kernel.NilID {
+		return nil
+	}
+	if baseID == selfID {
+		return kernel.Invalid("base_release_id", "релиз не может быть базой самого себя")
+	}
+	base, err := s.store.Release(ctx, baseID)
+	if err != nil {
+		return fmt.Errorf("base release: %w", err)
+	}
+	if base.ProductID != productID {
+		return kernel.Invalid("base_release_id", "базовый релиз принадлежит другому продукту")
+	}
+	return nil
+}
+
+// versionTaken проверяет уникальность версии среди релизов продукта (кроме exclude).
+func (s *Service) versionTaken(ctx context.Context, productID kernel.ID, version string, exclude kernel.ID) error {
+	existing, err := s.store.Releases(ctx, productID)
+	if err != nil {
+		return fmt.Errorf("releases: %w", err)
+	}
+	for _, r := range existing {
+		if r.ID != exclude && r.Version == version {
+			return fmt.Errorf("%w: версия %q уже есть у продукта", kernel.ErrConflict, version)
+		}
+	}
+	return nil
+}
+
+// CreateRelease создаёт релиз продукта. Требует ActionWriteRoadmap. Ветка по умолчанию — evolving.
 func (s *Service) CreateRelease(ctx context.Context, sc authz.Scope, productID kernel.ID, in ReleaseInput) (Release, error) {
 	if err := sc.Require(authz.ActionWriteRoadmap, productID); err != nil {
 		return Release{}, err
@@ -360,47 +448,399 @@ func (s *Service) CreateRelease(ctx context.Context, sc authz.Scope, productID k
 	if in.Status == "" {
 		in.Status = ReleasePlanned
 	}
-	if strings.TrimSpace(in.Name) == "" {
-		return Release{}, kernel.Invalid("name", "название обязательно")
+	if in.Branch == "" {
+		in.Branch = BranchEvolving
 	}
-	if strings.TrimSpace(in.Version) == "" {
-		return Release{}, kernel.Invalid("version", "версия обязательна")
+	if err := validateReleaseInput(in); err != nil {
+		return Release{}, err
 	}
-	if !in.Status.valid() {
-		return Release{}, kernel.Invalid("status", "допустимы planned, released, eol")
+	if err := s.validateBase(ctx, productID, kernel.NilID, in.BaseReleaseID); err != nil {
+		return Release{}, err
 	}
-	existing, err := s.store.Releases(ctx, productID)
-	if err != nil {
-		return Release{}, fmt.Errorf("releases: %w", err)
-	}
-	for _, r := range existing {
-		if r.Version == in.Version {
-			return Release{}, fmt.Errorf("%w: версия %q уже есть у продукта", kernel.ErrConflict, in.Version)
-		}
+	if err := s.versionTaken(ctx, productID, in.Version, kernel.NilID); err != nil {
+		return Release{}, err
 	}
 	now := s.clock.Now()
 	r := Release{ID: kernel.NewID(), ProductID: productID, Name: in.Name, Version: in.Version,
-		PlannedDate: in.PlannedDate, Status: in.Status, CreatedAt: now, UpdatedAt: now}
-	if err := s.store.SaveRelease(ctx, r); err != nil {
-		return Release{}, fmt.Errorf("save release: %w", err)
-	}
-	if err := s.emit(ctx, EventReleaseSaved, r.ID, r.ProductID, sc.Subject(), r); err != nil {
+		PlannedDate: in.PlannedDate, Status: in.Status, Branch: in.Branch, BaseReleaseID: in.BaseReleaseID, EOL: in.EOL,
+		CreatedAt: now, UpdatedAt: now}
+	if err := s.saveRelease(ctx, sc, r); err != nil {
 		return Release{}, err
 	}
 	return r, nil
 }
 
-// Releases возвращает релизы продукта по плановой дате. Доступны обеим аудиториям (внутренних полей нет).
-func (s *Service) Releases(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]Release, error) {
-	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
+// released сообщает, выпущен ли релиз (released или eol): после выпуска ветка не меняется.
+func released(st ReleaseStatus) bool { return st == ReleaseReleased || st == ReleaseEOL }
+
+// UpdateRelease изменяет атрибуты релиза. Смена ветки после выпуска запрещена (RM-04).
+// Статус ready_for_certification выставляется только через MarkReadyForCertification.
+//
+// Необязательные поля ReleaseInput означают «не менять»: пустые Status и Branch, нулевая дата EOL
+// и нулевой BaseReleaseID сохраняют текущее значение релиза. Иначе частичное обновление
+// (например, переименование) молча стирало бы дату окончания поддержки сертифицированной ветки
+// и ссылку на базовый релиз. Снять EOL можно через SetReleaseEOL с нулевой датой.
+func (s *Service) UpdateRelease(ctx context.Context, sc authz.Scope, id kernel.ID, in ReleaseInput) (Release, error) {
+	r, err := s.writableRelease(ctx, sc, id)
+	if err != nil {
+		return Release{}, err
+	}
+	if in.Status == "" {
+		in.Status = r.Status
+	}
+	if in.Branch == "" {
+		in.Branch = r.Branch
+	}
+	if in.EOL.IsZero() {
+		in.EOL = r.EOL
+	}
+	if in.BaseReleaseID == kernel.NilID {
+		in.BaseReleaseID = r.BaseReleaseID
+	}
+	if err := validateReleaseInput(in); err != nil {
+		return Release{}, err
+	}
+	if in.Status == ReleaseReadyForCertification && r.Status != ReleaseReadyForCertification {
+		return Release{}, fmt.Errorf("%w: статус ready_for_certification выставляется через MarkReadyForCertification", kernel.ErrConflict)
+	}
+	if in.Branch != r.Branch && released(r.Status) {
+		return Release{}, fmt.Errorf("%w: ветка релиза %s не меняется после выпуска (статус %s)", kernel.ErrConflict, r.Version, r.Status)
+	}
+	if in.Branch == BranchCertified && r.Branch != BranchCertified {
+		if err := s.certifiedAllowed(ctx, r); err != nil {
+			return Release{}, err
+		}
+	}
+	if err := s.validateBase(ctx, r.ProductID, r.ID, in.BaseReleaseID); err != nil {
+		return Release{}, err
+	}
+	if in.Version != r.Version {
+		if err := s.versionTaken(ctx, r.ProductID, in.Version, r.ID); err != nil {
+			return Release{}, err
+		}
+	}
+	r.Name, r.Version, r.PlannedDate, r.Status, r.Branch, r.BaseReleaseID, r.EOL =
+		in.Name, in.Version, in.PlannedDate, in.Status, in.Branch, in.BaseReleaseID, in.EOL
+	r.UpdatedAt = s.clock.Now()
+	if err := s.saveRelease(ctx, sc, r); err != nil {
+		return Release{}, err
+	}
+	return r, nil
+}
+
+// certifiedAllowed проверяет, что в релизе нет элементов вида feature — иначе перевод в сертифицированную ветку невозможен.
+func (s *Service) certifiedAllowed(ctx context.Context, r Release) error {
+	items, err := s.store.Items(ctx, r.ProductID)
+	if err != nil {
+		return fmt.Errorf("items: %w", err)
+	}
+	for _, it := range items {
+		if it.ReleaseID == r.ID && it.Kind != KindFix {
+			return fmt.Errorf("%w: релиз %s содержит элемент %q вида %s; в сертифицированной ветке допустимы только исправления",
+				kernel.ErrConflict, r.Version, it.Title, it.Kind)
+		}
+	}
+	return nil
+}
+
+// writableRelease загружает релиз и проверяет право записи.
+func (s *Service) writableRelease(ctx context.Context, sc authz.Scope, id kernel.ID) (Release, error) {
+	if !sc.Valid() {
+		return Release{}, kernel.ErrForbidden
+	}
+	r, err := s.store.Release(ctx, id)
+	if err != nil {
+		return Release{}, err
+	}
+	if err := sc.Require(authz.ActionWriteRoadmap, r.ProductID); err != nil {
+		return Release{}, err
+	}
+	return r, nil
+}
+
+func (s *Service) saveRelease(ctx context.Context, sc authz.Scope, r Release) error {
+	if err := s.store.SaveRelease(ctx, r); err != nil {
+		return fmt.Errorf("save release: %w", err)
+	}
+	return s.emit(ctx, EventReleaseSaved, r.ID, r.ProductID, sc.Subject(), r)
+}
+
+// SetReleaseFeatures задаёт состав релиза (RM-05). Дубликаты идентификаторов убираются.
+func (s *Service) SetReleaseFeatures(ctx context.Context, sc authz.Scope, releaseID kernel.ID, featureIDs []kernel.ID) (Release, error) {
+	r, err := s.writableRelease(ctx, sc, releaseID)
+	if err != nil {
+		return Release{}, err
+	}
+	seen := make(map[kernel.ID]struct{}, len(featureIDs))
+	ids := make([]kernel.ID, 0, len(featureIDs))
+	for _, id := range featureIDs {
+		if id == kernel.NilID {
+			return Release{}, kernel.Invalid("feature_ids", "пустой идентификатор фичи")
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	r.FeatureIDs, r.UpdatedAt = ids, s.clock.Now()
+	if err := s.saveRelease(ctx, sc, r); err != nil {
+		return Release{}, err
+	}
+	return r, nil
+}
+
+// SetReleaseNotes задаёт release notes (RM-05).
+func (s *Service) SetReleaseNotes(ctx context.Context, sc authz.Scope, releaseID kernel.ID, notes string) (Release, error) {
+	r, err := s.writableRelease(ctx, sc, releaseID)
+	if err != nil {
+		return Release{}, err
+	}
+	r.ReleaseNotes, r.UpdatedAt = notes, s.clock.Now()
+	if err := s.saveRelease(ctx, sc, r); err != nil {
+		return Release{}, err
+	}
+	return r, nil
+}
+
+// SetReleaseEOL задаёт дату окончания поддержки (RM-05). Нулевая дата снимает EOL.
+func (s *Service) SetReleaseEOL(ctx context.Context, sc authz.Scope, releaseID kernel.ID, eol kernel.Date) (Release, error) {
+	r, err := s.writableRelease(ctx, sc, releaseID)
+	if err != nil {
+		return Release{}, err
+	}
+	if !eol.IsZero() && !r.PlannedDate.IsZero() && eol.Before(r.PlannedDate) {
+		return Release{}, kernel.Invalid("eol", "дата EOL раньше плановой даты релиза")
+	}
+	r.EOL, r.UpdatedAt = eol, s.clock.Now()
+	if err := s.saveRelease(ctx, sc, r); err != nil {
+		return Release{}, err
+	}
+	return r, nil
+}
+
+// MarkReadyForCertification переводит релиз в статус ready_for_certification, если порт готовности
+// (CM-05) подтверждает закрытие чек-листов гейтов SSDLC. Без порта — ErrUnavailable.
+// Незакрытые пункты возвращаются в ошибке ErrConflict.
+func (s *Service) MarkReadyForCertification(ctx context.Context, sc authz.Scope, releaseID kernel.ID) (Release, error) {
+	r, err := s.writableRelease(ctx, sc, releaseID)
+	if err != nil {
+		return Release{}, err
+	}
+	if s.readiness == nil {
+		return Release{}, fmt.Errorf("%w: проверка готовности к сертификации не подключена", kernel.ErrUnavailable)
+	}
+	if released(r.Status) {
+		return Release{}, fmt.Errorf("%w: релиз %s уже выпущен (статус %s)", kernel.ErrConflict, r.Version, r.Status)
+	}
+	rd, err := s.readiness.ReleaseReadiness(ctx, sc, releaseID)
+	if err != nil {
+		return Release{}, fmt.Errorf("release readiness: %w", err)
+	}
+	if !rd.Ready {
+		return Release{}, fmt.Errorf("%w: релиз %s не готов к сертификации, открыто: %s",
+			kernel.ErrConflict, r.Version, strings.Join(rd.OpenItems, "; "))
+	}
+	if r.Status == ReleaseReadyForCertification {
+		return r, nil // идемпотентно
+	}
+	r.Status, r.UpdatedAt = ReleaseReadyForCertification, s.clock.Now()
+	if err := s.saveRelease(ctx, sc, r); err != nil {
+		return Release{}, err
+	}
+	if err := s.emit(ctx, EventReleaseReadyForCertification, r.ID, r.ProductID, sc.Subject(), r); err != nil {
+		return Release{}, err
+	}
+	return r, nil
+}
+
+// Release возвращает релиз с матрицей совместимости. Sales-safe аудитория получает релиз без release notes и состава.
+func (s *Service) Release(ctx context.Context, sc authz.Scope, releaseID kernel.ID) (Release, error) {
+	if !sc.Valid() {
+		return Release{}, kernel.ErrForbidden
+	}
+	r, err := s.store.Release(ctx, releaseID)
+	if err != nil {
+		return Release{}, err
+	}
+	if err := sc.Require(authz.ActionReadStrategic, r.ProductID); err != nil {
+		return Release{}, err
+	}
+	if r.CompatibilityMatrix, err = s.compatibility(ctx, sc, r); err != nil {
+		return Release{}, err
+	}
+	if sc.Audience() != authz.AudienceInternal {
+		r = stripInternal(r)
+	}
+	return r, nil
+}
+
+// ReleaseProduct возвращает продукт релиза. Порт для compliance: трек сертификации
+// запускается только на релиз своего продукта (CM-03).
+func (s *Service) ReleaseProduct(ctx context.Context, sc authz.Scope, releaseID kernel.ID) (kernel.ID, error) {
+	if !sc.Valid() {
+		return kernel.NilID, kernel.ErrForbidden
+	}
+	r, err := s.store.Release(ctx, releaseID)
+	if err != nil {
+		return kernel.NilID, err
+	}
+	if err := sc.Require(authz.ActionReadStrategic, r.ProductID); err != nil {
+		return kernel.NilID, err
+	}
+	return r.ProductID, nil
+}
+
+// CompatibilityMatrix возвращает матрицу совместимости релиза (RM-05). Доступна обеим аудиториям.
+func (s *Service) CompatibilityMatrix(ctx context.Context, sc authz.Scope, releaseID kernel.ID) ([]CompatRow, error) {
+	r, err := s.Release(ctx, sc, releaseID)
+	if err != nil {
 		return nil, err
 	}
+	return r.CompatibilityMatrix, nil
+}
+
+// compatibility строит матрицу совместимости из контрактов, где продукт релиза — поставщик или потребитель,
+// оставляя пары версий, в которых версия стороны продукта совпадает с версией релиза.
+func (s *Service) compatibility(ctx context.Context, sc authz.Scope, r Release) ([]CompatRow, error) {
+	if s.contracts == nil {
+		return nil, nil
+	}
+	contracts, err := s.contracts.Contracts(ctx, sc)
+	if err != nil {
+		return nil, fmt.Errorf("contracts: %w", err)
+	}
+	var rows []CompatRow
+	for _, c := range contracts {
+		provider, consumer := c.ProviderProductID == r.ProductID, c.ConsumerProductID == r.ProductID
+		if !provider && !consumer {
+			continue
+		}
+		for _, p := range c.Compatibility {
+			if (provider && p.ProviderVersion == r.Version) || (consumer && p.ConsumerVersion == r.Version) {
+				rows = append(rows, CompatRow{ContractID: c.ID, ContractName: c.Name,
+					ProviderProductID: c.ProviderProductID, ConsumerProductID: c.ConsumerProductID,
+					ProviderVersion: p.ProviderVersion, ConsumerVersion: p.ConsumerVersion, Compatible: p.Compatible})
+			}
+		}
+	}
+	sort.SliceStable(rows, func(i, j int) bool {
+		a, b := rows[i], rows[j]
+		if a.ContractName != b.ContractName {
+			return a.ContractName < b.ContractName
+		}
+		if a.ContractID != b.ContractID {
+			return a.ContractID.String() < b.ContractID.String()
+		}
+		if a.ProviderVersion != b.ProviderVersion {
+			return a.ProviderVersion < b.ProviderVersion
+		}
+		return a.ConsumerVersion < b.ConsumerVersion
+	})
+	return rows, nil
+}
+
+// releasesFor возвращает релизы продукта с матрицами, отсортированные по дате, в проекции аудитории Scope.
+func (s *Service) releasesFor(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]Release, error) {
 	rels, err := s.store.Releases(ctx, productID)
 	if err != nil {
 		return nil, fmt.Errorf("releases: %w", err)
 	}
 	sortReleases(rels)
+	for i := range rels {
+		if rels[i].CompatibilityMatrix, err = s.compatibility(ctx, sc, rels[i]); err != nil {
+			return nil, err
+		}
+		if sc.Audience() != authz.AudienceInternal {
+			rels[i] = stripInternal(rels[i])
+		}
+	}
 	return rels, nil
+}
+
+// Releases возвращает релизы продукта по плановой дате. Sales-safe аудитория получает релизы без
+// release notes и состава; матрица совместимости и EOL доступны обеим аудиториям.
+func (s *Service) Releases(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]Release, error) {
+	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
+		return nil, err
+	}
+	return s.releasesFor(ctx, sc, productID)
+}
+
+// ---- Порт для commitments (CT-04) ----
+
+// Сроки корзин для элементов, создаваемых по обязательствам: до 90 дней — now, до года — next, иначе later.
+const (
+	renewalNowDays  = 90
+	renewalNextDays = 365
+)
+
+func bucketFor(now, end kernel.Date) Bucket {
+	if end.IsZero() {
+		return BucketLater
+	}
+	switch days := now.DaysUntil(end); {
+	case days <= renewalNowDays:
+		return BucketNow
+	case days <= renewalNextDays:
+		return BucketNext
+	default:
+		return BucketLater
+	}
+}
+
+// EnsureRenewalItem создаёт элемент roadmap по обязательству (CT-04: продление сертификата) один раз на
+// commitmentID: повторный вызов возвращает существующий элемент. Аудитория internal, вид feature.
+// Требует ActionWriteRoadmap.
+func (s *Service) EnsureRenewalItem(ctx context.Context, sc authz.Scope, productID, commitmentID kernel.ID, title string, start, end kernel.Date) (kernel.ID, error) {
+	if err := sc.Require(authz.ActionWriteRoadmap, productID); err != nil {
+		return kernel.NilID, err
+	}
+	if commitmentID == kernel.NilID {
+		return kernel.NilID, kernel.Invalid("commitment_id", "идентификатор обязательства обязателен")
+	}
+	existing, err := s.store.ItemByCommitment(ctx, commitmentID)
+	switch {
+	case err == nil:
+		if existing.ProductID != productID {
+			return kernel.NilID, fmt.Errorf("%w: элемент по обязательству %s принадлежит другому продукту", kernel.ErrConflict, commitmentID)
+		}
+		return existing.ID, nil
+	case !kernel.IsNotFound(err):
+		return kernel.NilID, fmt.Errorf("item by commitment: %w", err)
+	}
+	in := ItemInput{Title: title, Bucket: bucketFor(kernel.DateFromTime(s.clock.Now()), end), StartDate: start, EndDate: end,
+		Audience: authz.AudienceInternal, Status: ItemPlanned, Kind: KindFeature}
+	if err := s.validateItem(ctx, productID, in); err != nil {
+		return kernel.NilID, err
+	}
+	now := s.clock.Now()
+	it := RoadmapItem{ID: kernel.NewID(), ProductID: productID, Title: in.Title, Bucket: in.Bucket, StartDate: start, EndDate: end,
+		Audience: in.Audience, Status: in.Status, Kind: in.Kind, CommitmentID: commitmentID, CreatedAt: now, UpdatedAt: now}
+	if err := s.store.SaveItem(ctx, it); err != nil {
+		return kernel.NilID, fmt.Errorf("save item: %w", err)
+	}
+	if err := s.emit(ctx, EventItemSaved, it.ID, it.ProductID, sc.Subject(), it); err != nil {
+		return kernel.NilID, err
+	}
+	return it.ID, nil
+}
+
+// ItemLinks возвращает привязки элемента roadmap — фичу и релиз (NilID — нет привязки).
+// Порт commitments.RoadmapReader (CT-03): обработчику roadmap.EventDatesChanged нужны привязки
+// сдвинутого элемента. Право: стратегический срез продукта элемента.
+func (s *Service) ItemLinks(ctx context.Context, sc authz.Scope, itemID kernel.ID) (featureID, releaseID kernel.ID, err error) {
+	if !sc.Valid() {
+		return kernel.NilID, kernel.NilID, kernel.ErrForbidden
+	}
+	it, err := s.store.Item(ctx, itemID)
+	if err != nil {
+		return kernel.NilID, kernel.NilID, err
+	}
+	if err := sc.Require(authz.ActionReadStrategic, it.ProductID); err != nil {
+		return kernel.NilID, kernel.NilID, err
+	}
+	return it.FeatureID, it.ReleaseID, nil
 }
 
 func sortReleases(rels []Release) {

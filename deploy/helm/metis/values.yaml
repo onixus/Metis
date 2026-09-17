@@ -1,4 +1,4 @@
-# Значения по умолчанию. Секреты (URL БД с паролем, токен Jira) передаются через существующий Secret (NF-S04).
+# Значения по умолчанию. Секреты (URL БД с паролем, токены Jira и Confluence) передаются через существующий Secret (NF-S04).
 image:
   registry: registry.local/metis   # офлайн-реестр образов (NF-O02)
   tag: "0.1.0"
@@ -19,12 +19,14 @@ config:
   oidcIssuer: https://idp.example.internal/realms/metis
   oidcClientId: metis-web
   jiraBaseURL: ""      # пусто — адаптер Jira выключен (NF-L03)
+  confluenceBaseURL: ""  # пусто — адаптер Confluence выключен (NF-L03)
+  confluenceSpace: METIS # пространство страниц ADR
   crmDir: /data/crm
   otelExporter: otlp
   logLevel: info
   migrateOnStart: true
 secrets:
-  existingSecret: metis-secrets   # ключи: databaseUrl, jiraToken, webhookToken
+  existingSecret: metis-secrets   # ключи: databaseUrl, jiraToken, webhookToken, confluenceToken
 ingress:
   enabled: false
   className: nginx

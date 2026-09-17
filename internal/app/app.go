@@ -16,11 +16,21 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/onixus/metis/internal/adapters/confluence"
 	"github.com/onixus/metis/internal/adapters/crmfile"
 	"github.com/onixus/metis/internal/adapters/jira"
 	"github.com/onixus/metis/internal/audit"
 	auditpg "github.com/onixus/metis/internal/audit/pgstore"
+	"github.com/onixus/metis/internal/commitments"
+	commitmentspg "github.com/onixus/metis/internal/commitments/pgstore"
+	"github.com/onixus/metis/internal/compliance"
+	compliancepg "github.com/onixus/metis/internal/compliance/pgstore"
+	"github.com/onixus/metis/internal/decisions"
+	decisionspg "github.com/onixus/metis/internal/decisions/pgstore"
 	"github.com/onixus/metis/internal/delivery"
+	deliverypg "github.com/onixus/metis/internal/delivery/pgstore"
+	"github.com/onixus/metis/internal/discovery"
+	discoverypg "github.com/onixus/metis/internal/discovery/pgstore"
 	"github.com/onixus/metis/internal/httpapi"
 	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
@@ -33,9 +43,12 @@ import (
 	graphpg "github.com/onixus/metis/internal/portfoliograph/pgstore"
 	"github.com/onixus/metis/internal/ports"
 	"github.com/onixus/metis/internal/prioritization"
+	prioritypg "github.com/onixus/metis/internal/prioritization/pgstore"
 	"github.com/onixus/metis/internal/roadmap"
+	roadmappg "github.com/onixus/metis/internal/roadmap/pgstore"
 	"github.com/onixus/metis/internal/seed"
 	"github.com/onixus/metis/internal/signals"
+	signalspg "github.com/onixus/metis/internal/signals/pgstore"
 )
 
 // Config — конфигурация приложения.
@@ -51,30 +64,37 @@ type Config struct {
 	HMACIssuer  string // METIS_HMAC_ISSUER
 	JiraBaseURL string // METIS_JIRA_BASE_URL (пусто — адаптер выключен, NF-L03)
 	JiraToken   string // METIS_JIRA_TOKEN
-	CRMDir      string // METIS_CRM_DIR (каталог CSV-выгрузок)
-	Seed        bool   // METIS_SEED: загрузить референсные портфели
-	OTelExport  string // METIS_OTEL_EXPORTER: stdout | otlp | none
-	LogLevel    string // METIS_LOG_LEVEL
-	Version     string
+	// Адаптер Confluence (порт KnowledgeBase): пусто — выключен, ядро работает без него (NF-L03).
+	ConfluenceBaseURL string // METIS_CONFLUENCE_BASE_URL
+	ConfluenceToken   string // METIS_CONFLUENCE_TOKEN
+	ConfluenceSpace   string // METIS_CONFLUENCE_SPACE (пространство страниц ADR по умолчанию)
+	CRMDir            string // METIS_CRM_DIR (каталог CSV-выгрузок)
+	Seed              bool   // METIS_SEED: загрузить референсные портфели
+	OTelExport        string // METIS_OTEL_EXPORTER: stdout | otlp | none
+	LogLevel          string // METIS_LOG_LEVEL
+	Version           string
 }
 
 // FromEnv читает конфигурацию из окружения.
 func FromEnv() (Config, error) {
 	c := Config{
-		HTTPAddr:    envOr("METIS_HTTP_ADDR", ":8081"),
-		Storage:     envOr("METIS_STORAGE", "postgres"),
-		DatabaseURL: os.Getenv("METIS_DATABASE_URL"),
-		AuthMode:    envOr("METIS_AUTH_MODE", "oidc"),
-		OIDCIssuer:  os.Getenv("METIS_OIDC_ISSUER"),
-		OIDCClient:  os.Getenv("METIS_OIDC_CLIENT_ID"),
-		HMACSecret:  os.Getenv("METIS_HMAC_SECRET"),
-		HMACIssuer:  envOr("METIS_HMAC_ISSUER", "metis-stand"),
-		JiraBaseURL: os.Getenv("METIS_JIRA_BASE_URL"),
-		JiraToken:   os.Getenv("METIS_JIRA_TOKEN"),
-		CRMDir:      os.Getenv("METIS_CRM_DIR"),
-		OTelExport:  envOr("METIS_OTEL_EXPORTER", "none"),
-		LogLevel:    envOr("METIS_LOG_LEVEL", "info"),
-		Version:     envOr("METIS_VERSION", "0.1.0"),
+		HTTPAddr:          envOr("METIS_HTTP_ADDR", ":8081"),
+		Storage:           envOr("METIS_STORAGE", "postgres"),
+		DatabaseURL:       os.Getenv("METIS_DATABASE_URL"),
+		AuthMode:          envOr("METIS_AUTH_MODE", "oidc"),
+		OIDCIssuer:        os.Getenv("METIS_OIDC_ISSUER"),
+		OIDCClient:        os.Getenv("METIS_OIDC_CLIENT_ID"),
+		HMACSecret:        os.Getenv("METIS_HMAC_SECRET"),
+		HMACIssuer:        envOr("METIS_HMAC_ISSUER", "metis-stand"),
+		JiraBaseURL:       os.Getenv("METIS_JIRA_BASE_URL"),
+		JiraToken:         os.Getenv("METIS_JIRA_TOKEN"),
+		ConfluenceBaseURL: os.Getenv("METIS_CONFLUENCE_BASE_URL"),
+		ConfluenceToken:   os.Getenv("METIS_CONFLUENCE_TOKEN"),
+		ConfluenceSpace:   envOr("METIS_CONFLUENCE_SPACE", "METIS"),
+		CRMDir:            os.Getenv("METIS_CRM_DIR"),
+		OTelExport:        envOr("METIS_OTEL_EXPORTER", "none"),
+		LogLevel:          envOr("METIS_LOG_LEVEL", "info"),
+		Version:           envOr("METIS_VERSION", "0.1.0"),
 	}
 	var err error
 	if c.Migrate, err = envBool("METIS_MIGRATE"); err != nil {
@@ -118,14 +138,21 @@ type App struct {
 	Prioritization *prioritization.Service
 	Roadmap        *roadmap.Service
 	Delivery       *delivery.Service
-	Audit          *audit.Logger
-	AuditStore     audit.Store
-	Outbox         outbox.Store
-	Worker         *outbox.Worker
-	Jira           *jira.Client
-	ServiceScope   authz.Scope
-	db             *pgdb.DB
-	shutdownTrace  func(context.Context) error
+	Discovery      *discovery.Service
+	Commitments    *commitments.Service
+	Compliance     *compliance.Service
+	Decisions      *decisions.Service
+	// Index — индекс похожести сигналов (SG-04); в памяти до появления pgvector-хранилища.
+	Index         *discovery.MemIndex
+	Audit         *audit.Logger
+	AuditStore    audit.Store
+	Outbox        outbox.Store
+	Worker        *outbox.Worker
+	Jira          *jira.Client
+	Confluence    *confluence.Client
+	ServiceScope  authz.Scope
+	db            *pgdb.DB
+	shutdownTrace func(context.Context) error
 }
 
 // Build собирает приложение по конфигурации.
@@ -141,6 +168,19 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		auditStore audit.Store
 		obStore    outbox.Store
 		auditClock kernel.Clock = clock
+		// complianceClock усекает время до микросекунд на PG: At входит в хеш журнала доказательств (вопрос №10).
+		complianceClock kernel.Clock = clock
+		// Хранилища модулей: память по умолчанию, PG-реализации в ветке "postgres" (вопрос №12 закрыт итерацией 11).
+		signalsStore     signals.Store             = signals.NewMemStore()
+		priorityStore    prioritization.Store      = prioritization.NewMemStore()
+		roadmapStore     roadmap.Store             = roadmap.NewMemStore()
+		deliveryStore    delivery.Store            = delivery.NewMemStore()
+		discoveryStore   discovery.Store           = discovery.NewMemStore()
+		commitmentsStore commitments.Store         = commitments.NewMemStore()
+		complianceStore  compliance.Store          = compliance.NewMemStore()
+		evidenceStore    compliance.EvidenceStore  = compliance.NewEvidenceMemStore()
+		decisionsStore   decisions.Store           = decisions.NewMemStore()
+		index            discovery.SimilarityIndex = discovery.NewMemIndex()
 	)
 	switch cfg.Storage {
 	case "memory":
@@ -158,6 +198,11 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		}
 		graphStore, auditStore, obStore = graphpg.New(db, clock), auditpg.New(db), outbox.NewPGStore(db)
 		auditClock = auditpg.Clock{Inner: clock}
+		signalsStore, priorityStore, roadmapStore, deliveryStore = signalspg.New(db), prioritypg.New(db), roadmappg.New(db), deliverypg.New(db, clock)
+		discoveryStore, index = discoverypg.New(db), discoverypg.NewIndex(db)
+		commitmentsStore, decisionsStore = commitmentspg.New(db, clock), decisionspg.New(db)
+		complianceStore, evidenceStore = compliancepg.New(db), compliancepg.NewEvidenceStore(db)
+		complianceClock = compliancepg.Clock{Inner: clock}
 	default:
 		return nil, fmt.Errorf("%w: неизвестное хранилище %q", kernel.ErrValidation, cfg.Storage)
 	}
@@ -169,9 +214,23 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 	if err := a.Portfolio.Load(ctx); err != nil {
 		return nil, err
 	}
-	a.Signals = signals.NewService(signals.NewMemStore(), a.Portfolio, pub, clock)
-	a.Prioritization = prioritization.NewService(prioritization.NewMemStore(), pub, clock).WithMoneyMetrics(a.Signals).WithDerivedDemand(a.Portfolio)
-	a.Roadmap = roadmap.NewService(roadmap.NewMemStore(), pub, clock)
+	if mi, ok := index.(*discovery.MemIndex); ok {
+		a.Index = mi
+	}
+	a.Signals = signals.NewService(signalsStore, a.Portfolio, pub, clock).WithIndexer(index)
+	// Этап 2: compliance — порт стоимости подтверждения (PR-05) и готовности релиза (CM-05);
+	// commitments — порт обязательств графа (CT-03) и писатель roadmap (CT-04); decisions — связи трассировки (DS-04).
+	a.Compliance = compliance.NewService(complianceStore, evidenceStore, a.Portfolio, pub, complianceClock)
+	a.Prioritization = prioritization.NewService(priorityStore, pub, clock).WithMoneyMetrics(a.Signals).WithDerivedDemand(a.Portfolio).WithImpactCost(a.Compliance)
+	a.Roadmap = roadmap.NewService(roadmapStore, pub, clock).WithContracts(a.Portfolio).WithReadiness(readinessAdapter{a.Compliance})
+	// Порты roadmap подключаются после его создания: compliance проверяет принадлежность релиза продукту (CM-03).
+	a.Compliance = a.Compliance.WithReleases(a.Roadmap)
+	a.Commitments = commitments.NewService(commitmentsStore, pub, clock).WithRoadmapWriter(a.Roadmap).WithRoadmapReader(a.Roadmap)
+	a.Portfolio = a.Portfolio.WithCommitments(a.Commitments)
+	a.Decisions = decisions.NewService(decisionsStore, pub, clock)
+	a.Discovery = discovery.NewService(discoveryStore, pub, clock,
+		discovery.WithSignals(a.Signals), discovery.WithSignalMerger(a.Signals), discovery.WithSignalLinker(a.Signals),
+		discovery.WithFeatures(a.Portfolio), discovery.WithDecisions(decisionLinks{a.Decisions}), discovery.WithIndex(index))
 
 	// Delivery: адаптер Jira подключается только при заданном URL; ядро работает без него (NF-L03).
 	var tracker ports.DeliveryTracker
@@ -182,13 +241,27 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		}
 		a.Jira, tracker = jc, jc
 	}
-	a.Delivery = delivery.NewService(delivery.NewMemStore(), tracker, a.Portfolio, pub, clock, delivery.Config{Name: "jira", ServiceScope: identityaccess.ServiceScope("delivery")})
+	a.Delivery = delivery.NewService(deliveryStore, tracker, a.Portfolio, pub, clock, delivery.Config{Name: "jira", ServiceScope: identityaccess.ServiceScope("delivery")})
 
 	// Воркер outbox: обработчики модулей.
 	a.Worker = outbox.NewWorker(obStore, clock, outbox.Config{}, log)
 	a.Worker.Register(portfoliograph.EventDateShifted, roadmap.NewShiftHandler(a.Roadmap, identityaccess.ServiceScope("roadmap")))
 	if tracker != nil {
 		a.Worker.Register(delivery.EventEpicCreateRequested, delivery.NewCreateEpicHandler(tracker, a.Delivery, a.Portfolio, identityaccess.ServiceScope("delivery")))
+	}
+	// CT-03: алерты по обязательствам при сдвигах фич и элементов roadmap.
+	shift := commitments.NewShiftHandler(a.Commitments, identityaccess.ServiceScope("commitments"))
+	a.Worker.Register(portfoliograph.EventDateShifted, shift)
+	a.Worker.Register(roadmap.EventDatesChanged, shift)
+	// База знаний: адаптер Confluence подключается только при заданном URL (NF-L03); страницы ADR
+	// создаются исключительно обработчиком outbox (инвариант 5).
+	if cfg.ConfluenceBaseURL != "" {
+		cc, err := confluence.New(cfg.ConfluenceBaseURL, confluence.NewStaticToken(cfg.ConfluenceToken), &http.Client{Timeout: 15 * time.Second})
+		if err != nil {
+			return nil, fmt.Errorf("адаптер Confluence: %w", err)
+		}
+		a.Confluence = cc
+		a.Worker.Register(decisions.EventPageRequested, decisions.NewPublishPageHandler(a.Decisions, cc, identityaccess.ServiceScope("decisions")))
 	}
 	a.Delivery = a.Delivery.WithDLQ(dlqAdapter{a.Worker})
 
@@ -225,6 +298,11 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		if _, err := seed.Infrastructure(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
 			return nil, fmt.Errorf("seed: %w", err)
 		}
+		if err := seed.Stage2(ctx, seed.Stage2Deps{
+			Portfolio: a.Portfolio, Roadmap: a.Roadmap, Compliance: a.Compliance, Commitments: a.Commitments, Discovery: a.Discovery, Decisions: a.Decisions,
+		}, identityaccess.ServiceScope("seed")); err != nil {
+			return nil, fmt.Errorf("seed этапа 2: %w", err)
+		}
 	}
 
 	shutdown, err := observability.Tracing(ctx, "metis-api", cfg.Version, cfg.OTelExport)
@@ -238,10 +316,12 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		Log: log, Auth: httpapi.NewAuthenticator(verifier, resolver, a.Audit),
 		Portfolio: a.Portfolio, AuditStore: auditStore, Audit: a.Audit,
 		Signals: a.Signals, Prioritization: a.Prioritization, Roadmap: a.Roadmap, CRM: crm,
-		Ready:      a.ready,
-		Metrics:    metrics.Handler(),
-		Instrument: func(h http.Handler) http.Handler { return observability.Instrument(h, "metis-api") },
-		Extra:      a.extraRoutes,
+		Discovery: a.Discovery, Commitments: a.Commitments, Compliance: a.Compliance, Decisions: a.Decisions,
+		KnowledgeSpace: knowledgeSpace(cfg),
+		Ready:          a.ready,
+		Metrics:        metrics.Handler(),
+		Instrument:     func(h http.Handler) http.Handler { return observability.Instrument(h, "metis-api") },
+		Extra:          a.extraRoutes,
 	})
 	a.Handler = srv.Handler()
 	return a, nil
@@ -327,6 +407,41 @@ func parseLevel(s string) slog.Level {
 		return slog.LevelError
 	}
 	return slog.LevelInfo
+}
+
+// knowledgeSpace — пространство базы знаний для страниц ADR; без адаптера страницы не запрашиваются (503).
+func knowledgeSpace(cfg Config) string {
+	if cfg.ConfluenceBaseURL == "" {
+		return ""
+	}
+	return cfg.ConfluenceSpace
+}
+
+// readinessAdapter соединяет порт roadmap.ReadinessChecker с compliance.ReleaseReadiness (CM-05):
+// типы Readiness у модулей разные, чтобы roadmap не зависел от compliance.
+type readinessAdapter struct{ c *compliance.Service }
+
+func (r readinessAdapter) ReleaseReadiness(ctx context.Context, sc authz.Scope, releaseID kernel.ID) (roadmap.Readiness, error) {
+	rd, err := r.c.ReleaseReadiness(ctx, sc, releaseID)
+	if err != nil {
+		return roadmap.Readiness{}, err
+	}
+	return roadmap.Readiness{Ready: rd.Ready, OpenItems: rd.OpenItems}, nil
+}
+
+// decisionLinks соединяет порт discovery.DecisionLinks с decisions.DecisionsFor (DS-04): типы DecisionRef у модулей свои.
+type decisionLinks struct{ d *decisions.Service }
+
+func (l decisionLinks) DecisionsFor(ctx context.Context, sc authz.Scope, kind string, id kernel.ID) ([]discovery.DecisionRef, error) {
+	refs, err := l.d.DecisionsFor(ctx, sc, kind, id)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]discovery.DecisionRef, 0, len(refs))
+	for _, r := range refs {
+		out = append(out, discovery.DecisionRef{ID: r.ID, Title: r.Title})
+	}
+	return out, nil
 }
 
 // dlqAdapter приводит счётчик DLQ воркера к порту delivery.DLQReader.

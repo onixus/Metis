@@ -37,3 +37,83 @@ sql:
         sql_package: pgx/v5
         emit_json_tags: false
         overrides: *overrides
+  - engine: postgresql
+    schema: db/signals/migrations
+    queries: db/signals/queries
+    gen:
+      go:
+        package: db
+        out: internal/signals/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides
+  - engine: postgresql
+    schema: db/prioritization/migrations
+    queries: db/prioritization/queries
+    gen:
+      go:
+        package: db
+        out: internal/prioritization/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides
+  - engine: postgresql
+    schema: db/roadmap/migrations
+    queries: db/roadmap/queries
+    gen:
+      go:
+        package: db
+        out: internal/roadmap/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides
+  - engine: postgresql
+    schema: db/delivery/migrations
+    queries: db/delivery/queries
+    gen:
+      go:
+        package: db
+        out: internal/delivery/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides
+  - engine: postgresql
+    schema: db/discovery/migrations
+    queries: db/discovery/queries
+    gen:
+      go:
+        package: db
+        out: internal/discovery/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides
+  - engine: postgresql
+    schema: db/commitments/migrations
+    queries: db/commitments/queries
+    gen:
+      go:
+        package: db
+        out: internal/commitments/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides
+  - engine: postgresql
+    schema: db/compliance/migrations
+    queries: db/compliance/queries
+    gen:
+      go:
+        package: db
+        out: internal/compliance/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides
+  - engine: postgresql
+    schema: db/decisions/migrations
+    queries: db/decisions/queries
+    gen:
+      go:
+        package: db
+        out: internal/decisions/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides: *overrides

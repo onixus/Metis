@@ -58,16 +58,21 @@ const (
 type Action string
 
 const (
-	ActionReadStrategic  Action = "read_strategic"
-	ActionReadPrivate    Action = "read_private"
-	ActionWriteGraph     Action = "write_graph"
-	ActionWritePriority  Action = "write_priority"
-	ActionWriteRoadmap   Action = "write_roadmap"
-	ActionWriteSignals   Action = "write_signals"
-	ActionAdminSettings  Action = "admin_settings"
-	ActionReadAudit      Action = "read_audit"
-	ActionManageAccess   Action = "manage_access"
-	ActionManageConnects Action = "manage_connectors"
+	ActionReadStrategic Action = "read_strategic"
+	ActionReadPrivate   Action = "read_private"
+	ActionWriteGraph    Action = "write_graph"
+	ActionWritePriority Action = "write_priority"
+	ActionWriteRoadmap  Action = "write_roadmap"
+	ActionWriteSignals  Action = "write_signals"
+	// Этап 2.
+	ActionWriteDiscovery   Action = "write_discovery"   // гипотезы, интервью, инсайты, evidence (DS-01…DS-04)
+	ActionWriteCommitments Action = "write_commitments" // реестр обязательств (CT-01…CT-04)
+	ActionWriteCompliance  Action = "write_compliance"  // треки, гейты, доказательства, классы влияния (CM-01…CM-07)
+	ActionWriteDecisions   Action = "write_decisions"   // Decision Records (DA-01)
+	ActionAdminSettings    Action = "admin_settings"
+	ActionReadAudit        Action = "read_audit"
+	ActionManageAccess     Action = "manage_access"
+	ActionManageConnects   Action = "manage_connectors"
 )
 
 // Scope — область доступа субъекта. Неизменяемый; нулевое значение запрещает всё.
@@ -197,6 +202,26 @@ func (s Scope) Allows(action Action, product kernel.ID) bool {
 			return true
 		}
 		return (s.HasRole(RolePM) || s.HasRole(RoleMarketing)) && s.Product(product) >= AccessPrivate
+	case ActionWriteDiscovery:
+		if s.HasRole(RoleAdmin) || s.HasRole(RoleCPO) || s.HasRole(RoleService) {
+			return true
+		}
+		return (s.HasRole(RolePM) || s.HasRole(RoleMarketing)) && s.Product(product) >= AccessPrivate
+	case ActionWriteCommitments:
+		if s.HasRole(RoleAdmin) || s.HasRole(RoleCPO) || s.HasRole(RoleService) {
+			return true
+		}
+		return (s.HasRole(RolePM) || s.HasRole(RoleCompliance)) && s.Product(product) >= AccessPrivate
+	case ActionWriteCompliance:
+		if s.HasRole(RoleAdmin) || s.HasRole(RoleService) {
+			return true
+		}
+		return s.HasRole(RoleCompliance) && s.Product(product) >= AccessStrategic
+	case ActionWriteDecisions:
+		if s.HasRole(RoleAdmin) || s.HasRole(RoleCPO) || s.HasRole(RoleService) {
+			return true
+		}
+		return s.HasRole(RolePM) && s.Product(product) >= AccessPrivate
 	case ActionAdminSettings, ActionManageAccess, ActionManageConnects:
 		return s.HasRole(RoleAdmin)
 	case ActionReadAudit:

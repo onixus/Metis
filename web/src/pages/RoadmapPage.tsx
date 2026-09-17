@@ -2,23 +2,30 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import {
+  accessLevel,
   useChangeItemDates,
   useItemHistory,
+  useMe,
   useProduct,
   useRoadmapByRelease,
   useRoadmapNnl,
   useRoadmapTimeline,
+  useUpdateRoadmapItemKind,
   type RoadmapView,
 } from '../api/hooks'
 import type { RoadmapItem, SalesSafeItem } from '../api/types'
 import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { ru } from '../i18n/ru'
 import { daysBetween, fmtDate, fmtDateTime, pick } from '../lib/format'
+import { canWriteRoadmap } from '../lib/roles'
+import { CompatMatrix, ReleaseBadges, ReleasesPanel } from './ReleasesPanel'
 
-const VIEWS: { key: RoadmapView; label: string }[] = [
+type View = RoadmapView | 'releases'
+const VIEWS: { key: View; label: string; internalOnly?: boolean }[] = [
   { key: 'timeline', label: ru.roadmap.viewTimeline },
   { key: 'now-next-later', label: ru.roadmap.viewNnl },
   { key: 'by-release', label: ru.roadmap.viewByRelease },
+  { key: 'releases', label: ru.release.title, internalOnly: true },
 ]
 
 /** Единое представление элемента для обеих аудиторий. */
@@ -30,6 +37,7 @@ interface Row {
   end: string | null
   status?: RoadmapItem['status']
   audience?: RoadmapItem['audience']
+  kind?: RoadmapItem['kind']
   internal: boolean
 }
 
@@ -52,19 +60,23 @@ function rows(audience: 'internal' | 'sales_safe', items?: RoadmapItem[], safe?:
     end: i.end_date ?? null,
     status: i.status,
     audience: i.audience,
+    kind: i.kind,
     internal: true,
   }))
 }
 
 export function RoadmapPage() {
   const { id = '' } = useParams()
-  const [view, setView] = useState<RoadmapView>('timeline')
+  const [view, setView] = useState<View>('timeline')
+  const me = useMe()
   const product = useProduct(id)
+  const canWrite = canWriteRoadmap(me.data, accessLevel(me.data, id))
   const timeline = useRoadmapTimeline(id, view === 'timeline')
   const nnl = useRoadmapNnl(id, view === 'now-next-later')
   const byRelease = useRoadmapByRelease(id, view === 'by-release')
   const active = view === 'timeline' ? timeline : view === 'now-next-later' ? nnl : byRelease
-  const audience = active.data?.audience
+  const audience = active.data?.audience ?? me.data?.audience
+  const visibleViews = VIEWS.filter((v) => !v.internalOnly || me.data?.audience === 'internal')
 
   return (
     <section className="stack">
@@ -76,7 +88,7 @@ export function RoadmapPage() {
           <Link to={`/products/${id}`}>{ru.product.open}</Link>
         </div>
         <div className="segmented" role="tablist">
-          {VIEWS.map((v) => (
+          {visibleViews.map((v) => (
             <button
               key={v.key}
               type="button"
@@ -91,17 +103,18 @@ export function RoadmapPage() {
         </div>
       </div>
       {audience === 'sales_safe' && <div className="alert alert-warn">{ru.roadmap.salesSafeBanner}</div>}
-      {active.isPending && <Loading />}
-      {active.isError && <ErrorBox error={active.error} onRetry={() => void active.refetch()} />}
+      {view !== 'releases' && active.isPending && <Loading />}
+      {view !== 'releases' && active.isError && <ErrorBox error={active.error} onRetry={() => void active.refetch()} />}
+      {view === 'releases' && <ReleasesPanel productId={id} canWrite={canWrite} />}
       {view === 'timeline' && timeline.data && (
-        <Timeline productId={id} data={rows(timeline.data.audience, timeline.data.items, timeline.data.sales_safe)} />
+        <Timeline productId={id} canWrite={canWrite} data={rows(timeline.data.audience, timeline.data.items, timeline.data.sales_safe)} />
       )}
       {view === 'now-next-later' && nnl.data && (
         <div className="columns">
           {(['now', 'next', 'later'] as const).map((b) => (
             <div key={b} className="card stack">
               <h2>{ru.roadmap.bucket[b]}</h2>
-              <ItemList productId={id} data={rows(nnl.data.audience, nnl.data[b].items, nnl.data[b].sales_safe)} />
+              <ItemList productId={id} canWrite={canWrite} data={rows(nnl.data.audience, nnl.data[b].items, nnl.data[b].sales_safe)} />
             </div>
           ))}
         </div>
@@ -110,20 +123,27 @@ export function RoadmapPage() {
         <div className="stack">
           {byRelease.data.releases.map((g) => (
             <div key={g.release.id} className="card stack">
-              <h2>
-                {g.release.name} <span className="mono muted">{g.release.version}</span>{' '}
-                <Badge tone={g.release.status === 'released' ? 'ok' : 'info'}>
-                  {pick(ru.roadmap.releaseStatuses, g.release.status)}
-                </Badge>{' '}
+              <div className="row wrap-row">
+                <h2>
+                  {g.release.name} <span className="mono muted">{g.release.version}</span>
+                </h2>
+                <ReleaseBadges r={g.sales_safe_release ?? g.release} />
                 <span className="muted">{fmtDate(g.release.planned_date)}</span>
-              </h2>
-              <ItemList productId={id} data={rows(byRelease.data.audience, g.items, g.sales_safe)} />
+              </div>
+              <ItemList productId={id} canWrite={canWrite} data={rows(byRelease.data.audience, g.items, g.sales_safe)} />
+              {byRelease.data.audience === 'sales_safe' && g.sales_safe_release && (
+                <>
+                  <h3>{ru.release.compat}</h3>
+                  <CompatMatrix rows={g.sales_safe_release.compatibility_matrix} />
+                </>
+              )}
             </div>
           ))}
           <div className="card stack">
             <h2>{ru.roadmap.unassigned}</h2>
             <ItemList
               productId={id}
+              canWrite={canWrite}
               data={rows(byRelease.data.audience, byRelease.data.unassigned.items, byRelease.data.unassigned.sales_safe)}
             />
           </div>
@@ -133,7 +153,7 @@ export function RoadmapPage() {
   )
 }
 
-function Timeline({ productId, data }: { productId: string; data: Row[] }) {
+function Timeline({ productId, canWrite, data }: { productId: string; canWrite: boolean; data: Row[] }) {
   const sorted = useMemo(
     () => [...data].sort((a, b) => (a.start ?? '9999').localeCompare(b.start ?? '9999')),
     [data],
@@ -168,7 +188,7 @@ function Timeline({ productId, data }: { productId: string; data: Row[] }) {
             <div className="tl-dates muted">
               {fmtDate(r.start)} — {fmtDate(r.end)}
             </div>
-            <ItemActions productId={productId} row={r} />
+            <ItemActions productId={productId} canWrite={canWrite} row={r} />
           </div>
         )
       })}
@@ -176,7 +196,7 @@ function Timeline({ productId, data }: { productId: string; data: Row[] }) {
   )
 }
 
-function ItemList({ productId, data }: { productId: string; data: Row[] }) {
+function ItemList({ productId, canWrite, data }: { productId: string; canWrite: boolean; data: Row[] }) {
   if (data.length === 0) return <Empty text={ru.roadmap.noItems} />
   return (
     <ul className="items">
@@ -186,7 +206,7 @@ function ItemList({ productId, data }: { productId: string; data: Row[] }) {
           <div className="muted">
             {fmtDate(r.start)} — {fmtDate(r.end)}
           </div>
-          <ItemActions productId={productId} row={r} />
+          <ItemActions productId={productId} canWrite={canWrite} row={r} />
         </li>
       ))}
     </ul>
@@ -199,25 +219,41 @@ function ItemHeader({ row }: { row: Row }) {
       <strong>{row.title}</strong>
       <Badge tone="neutral">{ru.roadmap.bucket[row.bucket]}</Badge>
       {row.status && <Badge tone={row.status === 'done' ? 'ok' : row.status === 'cancelled' ? 'danger' : 'info'}>{pick(ru.roadmap.statuses, row.status)}</Badge>}
+      {row.kind && <Badge tone={row.kind === 'fix' ? 'warn' : 'neutral'}>{ru.release.itemKinds[row.kind]}</Badge>}
       {row.audience === 'sales_safe' && <Badge tone="warn">{ru.me.audienceSalesSafe}</Badge>}
     </div>
   )
 }
 
-function ItemActions({ productId, row }: { productId: string; row: Row }) {
+function ItemActions({ productId, canWrite, row }: { productId: string; canWrite: boolean; row: Row }) {
   const [open, setOpen] = useState<'none' | 'edit' | 'history'>('none')
+  const setKind = useUpdateRoadmapItemKind(productId)
   if (!row.internal) return null
   return (
     <div className="stack">
       <div className="row">
-        <button type="button" className="btn btn-sm" onClick={() => setOpen(open === 'edit' ? 'none' : 'edit')}>
-          {ru.roadmap.changeDates}
-        </button>
+        {canWrite && (
+          <>
+            <select
+              aria-label={ru.release.itemKind}
+              value={row.kind ?? 'feature'}
+              disabled={setKind.isPending}
+              onChange={(e) => setKind.mutate({ itemId: row.id, kind: e.target.value as 'feature' | 'fix' })}
+            >
+              <option value="feature">{ru.release.itemKinds.feature}</option>
+              <option value="fix">{ru.release.itemKinds.fix}</option>
+            </select>
+            <button type="button" className="btn btn-sm" onClick={() => setOpen(open === 'edit' ? 'none' : 'edit')}>
+              {ru.roadmap.changeDates}
+            </button>
+          </>
+        )}
         <button type="button" className="btn btn-sm" onClick={() => setOpen(open === 'history' ? 'none' : 'history')}>
           {ru.roadmap.history}
         </button>
       </div>
-      {open === 'edit' && <ChangeDatesForm productId={productId} row={row} onDone={() => setOpen('history')} />}
+      {setKind.isError && <div className="alert alert-error">{errorMessage(setKind.error)}</div>}
+      {canWrite && open === 'edit' && <ChangeDatesForm key={row.id} productId={productId} row={row} onDone={() => setOpen('history')} />}
       {open === 'history' && <History itemId={row.id} />}
     </div>
   )

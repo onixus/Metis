@@ -36,6 +36,17 @@ services:
       retries: 10
     volumes:
       - ./jira-mock:/home/wiremock:ro
+  confluence-mock:
+    image: wiremock/wiremock:3.9.1
+    command: ["--global-response-templating", "--port", "8091"]
+    ports: ["8091:8091"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8091/__admin/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - ./confluence-mock:/home/wiremock:ro
   api:
     build:
       context: ../..
@@ -55,6 +66,9 @@ services:
       METIS_JIRA_BASE_URL: http://jira-mock:8090
       METIS_JIRA_TOKEN: metis-dev-only
       METIS_WEBHOOK_TOKEN: metis-dev-only-webhook
+      METIS_CONFLUENCE_BASE_URL: http://confluence-mock:8091
+      METIS_CONFLUENCE_TOKEN: metis-dev-only
+      METIS_CONFLUENCE_SPACE: METIS
       METIS_CRM_DIR: /fixtures/crm
       METIS_OTEL_EXPORTER: stdout
     ports: ["8081:8081"]
@@ -71,6 +85,8 @@ services:
       METIS_DATABASE_URL: postgres://metis:metis-dev-only@postgres:5432/metis?sslmode=disable
       METIS_MIGRATE: "true"   # миграции идемпотентны и под advisory lock; воркер не зависит от api
       METIS_JIRA_BASE_URL: http://jira-mock:8090
+      METIS_CONFLUENCE_BASE_URL: http://confluence-mock:8091
+      METIS_CONFLUENCE_TOKEN: metis-dev-only
       METIS_OTEL_EXPORTER: stdout
     depends_on:
       postgres: { condition: service_healthy }

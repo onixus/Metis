@@ -1,11 +1,11 @@
 // Package signals — приём и разбор сигналов: запросов и потребностей с привязкой к продукту,
 // аккаунту, сделке, версии (SG-01…SG-03, SG-05). Сырьё приходит из CRM через порт ports.CRM,
 // из service desk, ручного ввода и импорта файлов. Публичный интерфейс — этот пакет.
-//
-// TODO(question-07): гипотезы (discovery) — этап 2; поле HypothesisID зарезервировано.
+// Привязка к гипотезе discovery (DS-01) — LinkToHypothesis; слияние дубликатов (SG-04) — Merge.
 package signals
 
 import (
+	"context"
 	"time"
 
 	"github.com/onixus/metis/internal/kernel"
@@ -80,7 +80,10 @@ type Signal struct {
 	// Привязка (SG-05): ровно одна из FeatureID / ContractID / HypothesisID.
 	FeatureID    kernel.ID `json:"feature_id,omitempty"`
 	ContractID   kernel.ID `json:"contract_id,omitempty"`
-	HypothesisID kernel.ID `json:"hypothesis_id,omitempty"` // этап 2, зарезервировано
+	HypothesisID kernel.ID `json:"hypothesis_id,omitempty"` // гипотеза discovery (DS-01)
+
+	// MergedInto — сигнал, в который слит этот дубликат (SG-04); заполнено только при StatusMerged.
+	MergedInto kernel.ID `json:"merged_into,omitempty"`
 
 	CreatedBy string    `json:"created_by"`
 	CreatedAt time.Time `json:"created_at"`
@@ -97,4 +100,14 @@ const (
 	EventSignalIngested = "signals.signal.ingested"
 	EventSignalTriaged  = "signals.signal.triaged"
 	EventSignalLinked   = "signals.signal.linked"
+	EventSignalMerged   = "signals.signal.merged"
 )
+
+// IndexKindSignal — вид документа сигнала в индексе похожести (SG-04).
+const IndexKindSignal = "signal"
+
+// Indexer — порт индекса похожести (SG-04). Реализация — discovery.SimilarityIndex.
+// Текст сигнала индексируется при приёме (Ingest).
+type Indexer interface {
+	Upsert(ctx context.Context, kind string, id, productID kernel.ID, text string) error
+}

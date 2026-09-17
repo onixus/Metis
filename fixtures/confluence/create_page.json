@@ -1,0 +1,14 @@
+{
+  "id": "2001",
+  "type": "page",
+  "status": "current",
+  "title": "ADR: Коннектор EDR v2",
+  "space": { "key": "METIS" },
+  "version": { "number": 1, "when": "2026-09-17T10:00:00.000Z" },
+  "body": { "storage": { "value": "<h1>ADR: Коннектор EDR v2</h1>", "representation": "storage" } },
+  "metadata": { "labels": { "results": [] } },
+  "_links": {
+    "webui": "/pages/viewpage.action?pageId=2001",
+    "base": "https://confluence.example.test"
+  }
+}

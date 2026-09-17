@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "id": "5001",
+      "key": "metis_decision_id",
+      "value": "0192f3a0-0000-7000-8000-0000000000d1",
+      "version": { "number": 1 }
+    },
+    {
+      "id": "5002",
+      "key": "metis_links",
+      "value": { "feature": "0192f3a0-0000-7000-8000-000000000042" },
+      "version": { "number": 2 }
+    }
+  ],
+  "start": 0,
+  "limit": 25,
+  "size": 2
+}

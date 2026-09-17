@@ -31,6 +31,7 @@ type Service struct {
 	graph Graph
 	pub   kernel.Publisher
 	clock kernel.Clock
+	index Indexer // опциональный индекс похожести (SG-04)
 	// DefaultTriageDays — срок разбора по умолчанию от даты приёма (SG-03).
 	// TODO(question-08): норматив срока разбора не задан в ТЗ; 14 дней.
 	DefaultTriageDays int
@@ -39,6 +40,12 @@ type Service struct {
 // NewService создаёт сервис.
 func NewService(store Store, graph Graph, pub kernel.Publisher, clock kernel.Clock) *Service {
 	return &Service{store: store, graph: graph, pub: pub, clock: clock, DefaultTriageDays: 14}
+}
+
+// WithIndexer подключает индекс похожести: текст каждого принятого сигнала попадает в него (SG-04).
+func (s *Service) WithIndexer(ix Indexer) *Service {
+	s.index = ix
+	return s
 }
 
 func (s *Service) emit(ctx context.Context, typ string, sig Signal, actor string) error {
@@ -139,6 +146,7 @@ func (s *Service) Ingest(ctx context.Context, sc authz.Scope, in IngestInput) (S
 			}
 			sig.ID, sig.Status, sig.DueDate = prev.ID, prev.Status, prev.DueDate
 			sig.FeatureID, sig.ContractID, sig.HypothesisID = prev.FeatureID, prev.ContractID, prev.HypothesisID
+			sig.MergedInto = prev.MergedInto
 			sig.CreatedBy, sig.CreatedAt = prev.CreatedBy, prev.CreatedAt
 		case !errors.Is(err, kernel.ErrNotFound):
 			return Signal{}, fmt.Errorf("lookup signal: %w", err)
@@ -149,6 +157,11 @@ func (s *Service) Ingest(ctx context.Context, sc authz.Scope, in IngestInput) (S
 	}
 	if err := s.emit(ctx, EventSignalIngested, sig, sc.Subject()); err != nil {
 		return Signal{}, err
+	}
+	if s.index != nil {
+		if err := s.index.Upsert(ctx, IndexKindSignal, sig.ID, sig.ProductID, sig.Text); err != nil {
+			return Signal{}, fmt.Errorf("index signal: %w", err)
+		}
 	}
 	if sig.IsLinked() {
 		if err := s.recomputeTarget(ctx, sc, sig); err != nil {
@@ -287,7 +300,7 @@ func (s *Service) Triage(ctx context.Context, sc authz.Scope, id kernel.ID, in T
 	case StatusLinked:
 		return Signal{}, kernel.Invalid("status", "статус linked выставляется привязкой к фиче или контракту")
 	case StatusMerged:
-		return Signal{}, kernel.Invalid("status", "слияние сигналов — этап 2")
+		return Signal{}, kernel.Invalid("status", "статус merged выставляется слиянием (Merge)")
 	default:
 		return Signal{}, kernel.Invalid("status", fmt.Sprintf("неизвестный статус %q", in.Status))
 	}
@@ -360,6 +373,103 @@ func (s *Service) LinkToContract(ctx context.Context, sc authz.Scope, id, contra
 	prev := sig
 	sig.FeatureID, sig.ContractID, sig.HypothesisID = kernel.NilID, contractID, kernel.NilID
 	return s.link(ctx, sc, prev, sig)
+}
+
+// LinkToHypothesis привязывает сигнал к гипотезе discovery (DS-01, SG-05). Ценность не
+// пересчитывается: гипотеза не несёт денежной оценки. Принадлежность гипотезы продукту сигнала
+// проверяет модуль discovery (LinkSignalToHypothesis) — signals не зависит от него.
+func (s *Service) LinkToHypothesis(ctx context.Context, sc authz.Scope, id, hypothesisID kernel.ID) (Signal, error) {
+	if hypothesisID == kernel.NilID {
+		return Signal{}, kernel.Invalid("hypothesis_id", "обязателен")
+	}
+	sig, err := s.store.Get(ctx, id)
+	if err != nil {
+		return Signal{}, err
+	}
+	if err := sc.Require(authz.ActionWriteSignals, sig.ProductID); err != nil {
+		return Signal{}, err
+	}
+	prev := sig
+	sig.FeatureID, sig.ContractID, sig.HypothesisID = kernel.NilID, kernel.NilID, hypothesisID
+	return s.link(ctx, sc, prev, sig)
+}
+
+// SignalsByHypothesis возвращает сигналы, привязанные к гипотезе, из продуктов, на которые у
+// субъекта есть приватный доступ (для discovery: DS-04, SG-04).
+func (s *Service) SignalsByHypothesis(ctx context.Context, sc authz.Scope, hypothesisID kernel.ID) ([]Signal, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
+	list, err := s.store.List(ctx, Filter{HypothesisID: hypothesisID})
+	if err != nil {
+		return nil, fmt.Errorf("list signals: %w", err)
+	}
+	out := make([]Signal, 0, len(list))
+	for _, sig := range list {
+		if sc.Allows(authz.ActionReadPrivate, sig.ProductID) {
+			out = append(out, sig)
+		}
+	}
+	return out, nil
+}
+
+// Merge помечает сигналы dupIDs дубликатами targetID (SG-04): они получают StatusMerged и
+// MergedInto, привязки снимаются, а ценность их прежних целей пересчитывается. Целевой сигнал не
+// меняется — веса не суммируются повторно. На каждый дубликат публикуется signals.signal.merged.
+func (s *Service) Merge(ctx context.Context, sc authz.Scope, targetID kernel.ID, dupIDs []kernel.ID) error {
+	if len(dupIDs) == 0 {
+		return kernel.Invalid("duplicate_ids", "пустой список")
+	}
+	target, err := s.store.Get(ctx, targetID)
+	if err != nil {
+		return err
+	}
+	if err := sc.Require(authz.ActionWriteSignals, target.ProductID); err != nil {
+		return err
+	}
+	if target.Status == StatusMerged {
+		return fmt.Errorf("%w: целевой сигнал %s сам слит", kernel.ErrConflict, targetID)
+	}
+	dups := make([]Signal, 0, len(dupIDs))
+	seen := make(map[kernel.ID]struct{}, len(dupIDs))
+	for _, id := range dupIDs {
+		if id == targetID {
+			return kernel.Invalid("duplicate_ids", "сигнал не может быть дубликатом самого себя")
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		dup, err := s.store.Get(ctx, id)
+		if err != nil {
+			return err
+		}
+		if dup.ProductID != target.ProductID {
+			return kernel.Invalid("duplicate_ids", fmt.Sprintf("сигнал %s другого продукта", id))
+		}
+		if dup.Status == StatusMerged {
+			return fmt.Errorf("%w: сигнал %s уже слит", kernel.ErrConflict, id)
+		}
+		dups = append(dups, dup)
+	}
+	now := s.clock.Now()
+	for _, prev := range dups {
+		dup := prev
+		dup.Status, dup.MergedInto, dup.UpdatedAt = StatusMerged, targetID, now
+		dup.FeatureID, dup.ContractID, dup.HypothesisID = kernel.NilID, kernel.NilID, kernel.NilID
+		if err := s.store.Save(ctx, dup); err != nil {
+			return fmt.Errorf("save signal: %w", err)
+		}
+		if err := s.emit(ctx, EventSignalMerged, dup, sc.Subject()); err != nil {
+			return err
+		}
+		if prev.IsLinked() {
+			if err := s.recomputeTarget(ctx, sc, prev); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (s *Service) link(ctx context.Context, sc authz.Scope, prev, sig Signal) (Signal, error) {

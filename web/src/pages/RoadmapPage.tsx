@@ -1,0 +1,305 @@
+import { useMemo, useState, type FormEvent } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { errorMessage } from '../api/client'
+import {
+  useChangeItemDates,
+  useItemHistory,
+  useProduct,
+  useRoadmapByRelease,
+  useRoadmapNnl,
+  useRoadmapTimeline,
+  type RoadmapView,
+} from '../api/hooks'
+import type { RoadmapItem, SalesSafeItem } from '../api/types'
+import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
+import { ru } from '../i18n/ru'
+import { daysBetween, fmtDate, fmtDateTime, pick } from '../lib/format'
+
+const VIEWS: { key: RoadmapView; label: string }[] = [
+  { key: 'timeline', label: ru.roadmap.viewTimeline },
+  { key: 'now-next-later', label: ru.roadmap.viewNnl },
+  { key: 'by-release', label: ru.roadmap.viewByRelease },
+]
+
+/** Единое представление элемента для обеих аудиторий. */
+interface Row {
+  id: string
+  title: string
+  bucket: RoadmapItem['bucket']
+  start: string | null
+  end: string | null
+  status?: RoadmapItem['status']
+  audience?: RoadmapItem['audience']
+  internal: boolean
+}
+
+function rows(audience: 'internal' | 'sales_safe', items?: RoadmapItem[], safe?: SalesSafeItem[]): Row[] {
+  if (audience === 'sales_safe') {
+    return (safe ?? []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      bucket: s.bucket,
+      start: s.start_date ?? null,
+      end: s.end_date ?? null,
+      internal: false,
+    }))
+  }
+  return (items ?? []).map((i) => ({
+    id: i.id,
+    title: i.title,
+    bucket: i.bucket,
+    start: i.start_date ?? null,
+    end: i.end_date ?? null,
+    status: i.status,
+    audience: i.audience,
+    internal: true,
+  }))
+}
+
+export function RoadmapPage() {
+  const { id = '' } = useParams()
+  const [view, setView] = useState<RoadmapView>('timeline')
+  const product = useProduct(id)
+  const timeline = useRoadmapTimeline(id, view === 'timeline')
+  const nnl = useRoadmapNnl(id, view === 'now-next-later')
+  const byRelease = useRoadmapByRelease(id, view === 'by-release')
+  const active = view === 'timeline' ? timeline : view === 'now-next-later' ? nnl : byRelease
+  const audience = active.data?.audience
+
+  return (
+    <section className="stack">
+      <div className="page-head">
+        <div>
+          <h1>
+            {ru.roadmap.title}: {product.data?.name ?? ru.app.loading}
+          </h1>
+          <Link to={`/products/${id}`}>{ru.product.open}</Link>
+        </div>
+        <div className="segmented" role="tablist">
+          {VIEWS.map((v) => (
+            <button
+              key={v.key}
+              type="button"
+              role="tab"
+              aria-selected={view === v.key}
+              className={view === v.key ? 'active' : undefined}
+              onClick={() => setView(v.key)}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {audience === 'sales_safe' && <div className="alert alert-warn">{ru.roadmap.salesSafeBanner}</div>}
+      {active.isPending && <Loading />}
+      {active.isError && <ErrorBox error={active.error} onRetry={() => void active.refetch()} />}
+      {view === 'timeline' && timeline.data && (
+        <Timeline productId={id} data={rows(timeline.data.audience, timeline.data.items, timeline.data.sales_safe)} />
+      )}
+      {view === 'now-next-later' && nnl.data && (
+        <div className="columns">
+          {(['now', 'next', 'later'] as const).map((b) => (
+            <div key={b} className="card stack">
+              <h2>{ru.roadmap.bucket[b]}</h2>
+              <ItemList productId={id} data={rows(nnl.data.audience, nnl.data[b].items, nnl.data[b].sales_safe)} />
+            </div>
+          ))}
+        </div>
+      )}
+      {view === 'by-release' && byRelease.data && (
+        <div className="stack">
+          {byRelease.data.releases.map((g) => (
+            <div key={g.release.id} className="card stack">
+              <h2>
+                {g.release.name} <span className="mono muted">{g.release.version}</span>{' '}
+                <Badge tone={g.release.status === 'released' ? 'ok' : 'info'}>
+                  {pick(ru.roadmap.releaseStatuses, g.release.status)}
+                </Badge>{' '}
+                <span className="muted">{fmtDate(g.release.planned_date)}</span>
+              </h2>
+              <ItemList productId={id} data={rows(byRelease.data.audience, g.items, g.sales_safe)} />
+            </div>
+          ))}
+          <div className="card stack">
+            <h2>{ru.roadmap.unassigned}</h2>
+            <ItemList
+              productId={id}
+              data={rows(byRelease.data.audience, byRelease.data.unassigned.items, byRelease.data.unassigned.sales_safe)}
+            />
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function Timeline({ productId, data }: { productId: string; data: Row[] }) {
+  const sorted = useMemo(
+    () => [...data].sort((a, b) => (a.start ?? '9999').localeCompare(b.start ?? '9999')),
+    [data],
+  )
+  const range = useMemo(() => {
+    const dates = sorted.flatMap((r) => [r.start, r.end]).filter((d): d is string => !!d)
+    if (dates.length === 0) return null
+    const min = dates.reduce((a, b) => (a < b ? a : b))
+    const max = dates.reduce((a, b) => (a > b ? a : b))
+    const span = Math.max(daysBetween(min, max) ?? 1, 1)
+    return { min, span }
+  }, [sorted])
+
+  if (sorted.length === 0) return <Empty text={ru.roadmap.noItems} />
+  return (
+    <div className="stack">
+      {sorted.map((r) => {
+        const left = range && r.start ? ((daysBetween(range.min, r.start) ?? 0) / range.span) * 100 : 0
+        const width = range && r.start && r.end ? Math.max(((daysBetween(r.start, r.end) ?? 0) / range.span) * 100, 1) : 1
+        return (
+          <div key={r.id} className="tl-row">
+            <div className="tl-label">
+              <ItemHeader row={r} />
+            </div>
+            <div className="tl-track">
+              {r.start ? (
+                <div className="tl-bar" style={{ left: `${left}%`, width: `${width}%` }} title={`${fmtDate(r.start)} — ${fmtDate(r.end)}`} />
+              ) : (
+                <span className="muted">{ru.roadmap.noDates}</span>
+              )}
+            </div>
+            <div className="tl-dates muted">
+              {fmtDate(r.start)} — {fmtDate(r.end)}
+            </div>
+            <ItemActions productId={productId} row={r} />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function ItemList({ productId, data }: { productId: string; data: Row[] }) {
+  if (data.length === 0) return <Empty text={ru.roadmap.noItems} />
+  return (
+    <ul className="items">
+      {data.map((r) => (
+        <li key={r.id} className="item">
+          <ItemHeader row={r} />
+          <div className="muted">
+            {fmtDate(r.start)} — {fmtDate(r.end)}
+          </div>
+          <ItemActions productId={productId} row={r} />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function ItemHeader({ row }: { row: Row }) {
+  return (
+    <div className="row wrap-row">
+      <strong>{row.title}</strong>
+      <Badge tone="neutral">{ru.roadmap.bucket[row.bucket]}</Badge>
+      {row.status && <Badge tone={row.status === 'done' ? 'ok' : row.status === 'cancelled' ? 'danger' : 'info'}>{pick(ru.roadmap.statuses, row.status)}</Badge>}
+      {row.audience === 'sales_safe' && <Badge tone="warn">{ru.me.audienceSalesSafe}</Badge>}
+    </div>
+  )
+}
+
+function ItemActions({ productId, row }: { productId: string; row: Row }) {
+  const [open, setOpen] = useState<'none' | 'edit' | 'history'>('none')
+  if (!row.internal) return null
+  return (
+    <div className="stack">
+      <div className="row">
+        <button type="button" className="btn btn-sm" onClick={() => setOpen(open === 'edit' ? 'none' : 'edit')}>
+          {ru.roadmap.changeDates}
+        </button>
+        <button type="button" className="btn btn-sm" onClick={() => setOpen(open === 'history' ? 'none' : 'history')}>
+          {ru.roadmap.history}
+        </button>
+      </div>
+      {open === 'edit' && <ChangeDatesForm productId={productId} row={row} onDone={() => setOpen('history')} />}
+      {open === 'history' && <History itemId={row.id} />}
+    </div>
+  )
+}
+
+function ChangeDatesForm({ productId, row, onDone }: { productId: string; row: Row; onDone: () => void }) {
+  const change = useChangeItemDates(productId)
+  const [start, setStart] = useState(row.start ?? '')
+  const [end, setEnd] = useState(row.end ?? '')
+  const [reason, setReason] = useState('')
+  const [validation, setValidation] = useState<string | null>(null)
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    if (!reason.trim()) return setValidation(ru.feature.reasonRequired)
+    setValidation(null)
+    change.mutate(
+      { itemId: row.id, start_date: start || undefined, end_date: end || undefined, reason: reason.trim() },
+      { onSuccess: onDone },
+    )
+  }
+
+  return (
+    <form className="form-inline stack" onSubmit={submit}>
+      <div className="row">
+        <label className="field">
+          <span>{ru.roadmap.start}</span>
+          <input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+        </label>
+        <label className="field">
+          <span>{ru.roadmap.end}</span>
+          <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+        </label>
+        <label className="field grow">
+          <span>{ru.feature.reason}</span>
+          <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} required />
+        </label>
+      </div>
+      {validation && <div className="alert alert-error">{validation}</div>}
+      {change.isError && <div className="alert alert-error">{errorMessage(change.error)}</div>}
+      <div className="row">
+        <button type="submit" className="btn btn-primary btn-sm" disabled={change.isPending}>
+          {ru.app.save}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function History({ itemId }: { itemId: string }) {
+  const history = useItemHistory(itemId, true)
+  if (history.isPending) return <Loading />
+  if (history.isError) return <ErrorBox error={history.error} />
+  if (history.data.length === 0) return <Empty text={ru.roadmap.historyEmpty} />
+  return (
+    <div className="table-wrap">
+      <table className="table table-compact">
+        <thead>
+          <tr>
+            <th>{ru.roadmap.at}</th>
+            <th>{ru.roadmap.actor}</th>
+            <th>{ru.roadmap.was}</th>
+            <th>{ru.roadmap.became}</th>
+            <th>{ru.feature.reason}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {history.data.map((h) => (
+            <tr key={h.id}>
+              <td>{fmtDateTime(h.at)}</td>
+              <td>{h.actor}</td>
+              <td>
+                {fmtDate(h.old_start)} — {fmtDate(h.old_end)}
+              </td>
+              <td>
+                {fmtDate(h.new_start)} — {fmtDate(h.new_end)}
+              </td>
+              <td className="wrap">{h.reason}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}

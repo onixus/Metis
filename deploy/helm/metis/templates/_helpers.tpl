@@ -13,6 +13,12 @@ app.kubernetes.io/version: {{ .Chart.AppVersion }}
   value: {{ .Values.config.jiraBaseURL | quote }}
 - name: METIS_JIRA_TOKEN
   valueFrom: { secretKeyRef: { name: {{ .Values.secrets.existingSecret }}, key: jiraToken, optional: true } }
+- name: METIS_CONFLUENCE_BASE_URL
+  value: {{ .Values.config.confluenceBaseURL | quote }}
+- name: METIS_CONFLUENCE_TOKEN
+  valueFrom: { secretKeyRef: { name: {{ .Values.secrets.existingSecret }}, key: confluenceToken, optional: true } }
+- name: METIS_CONFLUENCE_SPACE
+  value: {{ .Values.config.confluenceSpace | quote }}
 - name: METIS_OTEL_EXPORTER
   value: {{ .Values.config.otelExporter | quote }}
 - name: METIS_LOG_LEVEL

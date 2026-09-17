@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/shopspring/decimal"
 
 	"github.com/onixus/metis/internal/httpapi/gen"
@@ -27,7 +28,7 @@ func toSignal(s signals.Signal) gen.Signal {
 		Id: s.ID, ProductId: s.ProductID, Source: gen.SignalSource(s.Source), Text: s.Text, ExternalKey: strPtr(s.ExternalKey),
 		AccountId: strPtr(s.AccountID), DealId: strPtr(s.DealID), Version: strPtr(s.Version), Segment: strPtr(s.Segment),
 		Weight: money(s.Weight), AccountArr: money(s.AccountARR), BlocksDeal: s.BlocksDeal, Status: gen.SignalStatus(s.Status),
-		DueDate: datePtr(s.DueDate), FeatureId: idPtr(s.FeatureID), ContractId: idPtr(s.ContractID),
+		DueDate: datePtr(s.DueDate), FeatureId: idPtr(s.FeatureID), ContractId: idPtr(s.ContractID), HypothesisId: idPtr(s.HypothesisID), MergedInto: idPtr(s.MergedInto),
 		CreatedBy: s.CreatedBy, CreatedAt: s.CreatedAt, UpdatedAt: s.UpdatedAt,
 	}
 }
@@ -153,15 +154,27 @@ func (s *Server) LinkSignal(ctx context.Context, req gen.LinkSignalRequestObject
 		sg  signals.Signal
 		err error
 	)
+	targets := 0
+	for _, p := range []*openapi_types.UUID{req.Body.FeatureId, req.Body.ContractId, req.Body.HypothesisId} {
+		if p != nil {
+			targets++
+		}
+	}
 	switch {
-	case req.Body.FeatureId != nil && req.Body.ContractId != nil:
-		return nil, kernel.Invalid("link", "укажите фичу или контракт, не оба")
+	case targets > 1:
+		return nil, kernel.Invalid("link", "укажите одну цель: фичу, контракт или гипотезу")
 	case req.Body.FeatureId != nil:
 		sg, err = s.d.Signals.LinkToFeature(ctx, scope(ctx), req.SignalId, *req.Body.FeatureId)
 	case req.Body.ContractId != nil:
 		sg, err = s.d.Signals.LinkToContract(ctx, scope(ctx), req.SignalId, *req.Body.ContractId)
+	case req.Body.HypothesisId != nil:
+		// Принадлежность гипотезы продукту сигнала проверяет discovery (DS-01).
+		if err := s.requireDiscovery(); err != nil {
+			return nil, err
+		}
+		sg, err = s.d.Discovery.LinkSignalToHypothesis(ctx, scope(ctx), req.SignalId, *req.Body.HypothesisId)
 	default:
-		return nil, kernel.Invalid("link", "укажите фичу или контракт")
+		return nil, kernel.Invalid("link", "укажите фичу, контракт или гипотезу")
 	}
 	if err != nil {
 		return nil, err
@@ -291,7 +304,8 @@ func toItem(it roadmap.RoadmapItem) gen.RoadmapItem {
 	return gen.RoadmapItem{
 		Id: it.ID, ProductId: it.ProductID, FeatureId: idPtr(it.FeatureID), Title: it.Title, Bucket: gen.RoadmapItemBucket(it.Bucket),
 		StartDate: datePtr(it.StartDate), EndDate: datePtr(it.EndDate), ReleaseId: idPtr(it.ReleaseID),
-		Audience: gen.RoadmapItemAudience(it.Audience), Status: gen.RoadmapItemStatus(it.Status), CreatedAt: it.CreatedAt, UpdatedAt: it.UpdatedAt,
+		Audience: gen.RoadmapItemAudience(it.Audience), Status: gen.RoadmapItemStatus(it.Status), Kind: gen.RoadmapItemKind(it.Kind),
+		CommitmentId: idPtr(it.CommitmentID), CreatedAt: it.CreatedAt, UpdatedAt: it.UpdatedAt,
 	}
 }
 
@@ -325,8 +339,45 @@ func toGroup(g roadmap.BucketGroup) gen.RoadmapGroup {
 	return gen.RoadmapGroup{Items: toItems(g.Items), SalesSafe: toSafes(g.SalesSafe)}
 }
 
+func toCompat(rows []roadmap.CompatRow) *[]gen.CompatRow {
+	if rows == nil {
+		return nil
+	}
+	out := make([]gen.CompatRow, 0, len(rows))
+	for _, c := range rows {
+		out = append(out, gen.CompatRow{ContractId: c.ContractID, ContractName: c.ContractName, ProviderProductId: c.ProviderProductID, ConsumerProductId: c.ConsumerProductID,
+			ProviderVersion: c.ProviderVersion, ConsumerVersion: c.ConsumerVersion, Compatible: c.Compatible})
+	}
+	return &out
+}
+
 func toRelease(r roadmap.Release) gen.Release {
-	return gen.Release{Id: r.ID, ProductId: r.ProductID, Name: r.Name, Version: r.Version, PlannedDate: datePtr(r.PlannedDate), Status: gen.ReleaseStatus(r.Status), CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
+	return gen.Release{
+		Id: r.ID, ProductId: r.ProductID, Name: r.Name, Version: r.Version, PlannedDate: datePtr(r.PlannedDate), Status: gen.ReleaseStatus(r.Status),
+		Branch: gen.ReleaseBranch(r.Branch), BaseReleaseId: idPtr(r.BaseReleaseID), FeatureIds: idsPtr(r.FeatureIDs), ReleaseNotes: strPtr(r.ReleaseNotes),
+		Eol: datePtr(r.EOL), CompatibilityMatrix: toCompat(r.CompatibilityMatrix), CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt,
+	}
+}
+
+func toSafeRelease(r *roadmap.SalesSafeRelease) *gen.SalesSafeRelease {
+	if r == nil {
+		return nil
+	}
+	return &gen.SalesSafeRelease{
+		Id: r.ID, ProductId: r.ProductID, Name: r.Name, Version: r.Version, PlannedDate: datePtr(r.PlannedDate), Status: gen.SalesSafeReleaseStatus(r.Status),
+		Branch: gen.SalesSafeReleaseBranch(r.Branch), Eol: datePtr(r.EOL), CompatibilityMatrix: toCompat(r.CompatibilityMatrix),
+	}
+}
+
+func toReleaseInput(in gen.ReleaseInput) roadmap.ReleaseInput {
+	out := roadmap.ReleaseInput{Name: in.Name, Version: in.Version, PlannedDate: dateOf(in.PlannedDate), BaseReleaseID: idOrNil(in.BaseReleaseId), EOL: dateOf(in.Eol)}
+	if in.Status != nil {
+		out.Status = roadmap.ReleaseStatus(*in.Status)
+	}
+	if in.Branch != nil {
+		out.Branch = roadmap.Branch(*in.Branch)
+	}
+	return out
 }
 
 func toItemInput(in gen.RoadmapItemInput) roadmap.ItemInput {
@@ -339,6 +390,9 @@ func toItemInput(in gen.RoadmapItemInput) roadmap.ItemInput {
 	}
 	if in.Status != nil {
 		out.Status = roadmap.ItemStatus(*in.Status)
+	}
+	if in.Kind != nil {
+		out.Kind = roadmap.ItemKind(*in.Kind)
 	}
 	return out
 }
@@ -413,7 +467,7 @@ func (s *Server) GetRoadmapByRelease(ctx context.Context, req gen.GetRoadmapByRe
 	}
 	out := gen.RoadmapByRelease{ProductId: v.ProductID, Audience: gen.RoadmapByReleaseAudience(v.Audience), Releases: []gen.ReleaseGroup{}, Unassigned: toGroup(v.Unassigned)}
 	for _, g := range v.Releases {
-		out.Releases = append(out.Releases, gen.ReleaseGroup{Release: toRelease(g.Release), Items: toItems(g.Items), SalesSafe: toSafes(g.SalesSafe)})
+		out.Releases = append(out.Releases, gen.ReleaseGroup{Release: toRelease(g.Release), SalesSafeRelease: toSafeRelease(g.SalesSafeRelease), Items: toItems(g.Items), SalesSafe: toSafes(g.SalesSafe)})
 	}
 	return gen.GetRoadmapByRelease200JSONResponse(out), nil
 }
@@ -439,11 +493,7 @@ func (s *Server) CreateRelease(ctx context.Context, req gen.CreateReleaseRequest
 	if err := s.requireRoadmap(); err != nil {
 		return nil, err
 	}
-	in := roadmap.ReleaseInput{Name: req.Body.Name, Version: req.Body.Version, PlannedDate: dateOf(req.Body.PlannedDate)}
-	if req.Body.Status != nil {
-		in.Status = roadmap.ReleaseStatus(*req.Body.Status)
-	}
-	r, err := s.d.Roadmap.CreateRelease(ctx, scope(ctx), req.ProductId, in)
+	r, err := s.d.Roadmap.CreateRelease(ctx, scope(ctx), req.ProductId, toReleaseInput(*req.Body))
 	if err != nil {
 		return nil, err
 	}
@@ -488,4 +538,182 @@ func (s *Server) GetRoadmapItemHistory(ctx context.Context, req gen.GetRoadmapIt
 		out = append(out, gen.DateChange{Id: h.ID, ItemId: h.ItemID, ProductId: h.ProductID, OldStart: datePtr(h.OldStart), OldEnd: datePtr(h.OldEnd), NewStart: datePtr(h.NewStart), NewEnd: datePtr(h.NewEnd), Reason: h.Reason, Actor: h.Actor, At: h.At, EventId: idPtr(h.EventID)})
 	}
 	return out, nil
+}
+
+// GetRelease — RM-05: релиз с матрицей совместимости; sales-safe без внутренних полей.
+func (s *Server) GetRelease(ctx context.Context, req gen.GetReleaseRequestObject) (gen.GetReleaseResponseObject, error) {
+	if err := s.requireRoadmap(); err != nil {
+		return nil, err
+	}
+	r, err := s.d.Roadmap.Release(ctx, scope(ctx), req.ReleaseId)
+	if err != nil {
+		return nil, err
+	}
+	return gen.GetRelease200JSONResponse(toRelease(r)), nil
+}
+
+// UpdateRelease — RM-04, RM-05.
+func (s *Server) UpdateRelease(ctx context.Context, req gen.UpdateReleaseRequestObject) (gen.UpdateReleaseResponseObject, error) {
+	if err := s.requireRoadmap(); err != nil {
+		return nil, err
+	}
+	r, err := s.d.Roadmap.UpdateRelease(ctx, scope(ctx), req.ReleaseId, toReleaseInput(*req.Body))
+	if err != nil {
+		return nil, err
+	}
+	return gen.UpdateRelease200JSONResponse(toRelease(r)), nil
+}
+
+// SetReleaseFeatures — RM-05.
+func (s *Server) SetReleaseFeatures(ctx context.Context, req gen.SetReleaseFeaturesRequestObject) (gen.SetReleaseFeaturesResponseObject, error) {
+	if err := s.requireRoadmap(); err != nil {
+		return nil, err
+	}
+	r, err := s.d.Roadmap.SetReleaseFeatures(ctx, scope(ctx), req.ReleaseId, kids(&req.Body.FeatureIds))
+	if err != nil {
+		return nil, err
+	}
+	return gen.SetReleaseFeatures200JSONResponse(toRelease(r)), nil
+}
+
+// SetReleaseNotes — RM-05.
+func (s *Server) SetReleaseNotes(ctx context.Context, req gen.SetReleaseNotesRequestObject) (gen.SetReleaseNotesResponseObject, error) {
+	if err := s.requireRoadmap(); err != nil {
+		return nil, err
+	}
+	r, err := s.d.Roadmap.SetReleaseNotes(ctx, scope(ctx), req.ReleaseId, req.Body.ReleaseNotes)
+	if err != nil {
+		return nil, err
+	}
+	return gen.SetReleaseNotes200JSONResponse(toRelease(r)), nil
+}
+
+// SetReleaseEOL — RM-05.
+func (s *Server) SetReleaseEOL(ctx context.Context, req gen.SetReleaseEOLRequestObject) (gen.SetReleaseEOLResponseObject, error) {
+	if err := s.requireRoadmap(); err != nil {
+		return nil, err
+	}
+	r, err := s.d.Roadmap.SetReleaseEOL(ctx, scope(ctx), req.ReleaseId, kernel.DateFromTime(req.Body.Eol.Time))
+	if err != nil {
+		return nil, err
+	}
+	return gen.SetReleaseEOL200JSONResponse(toRelease(r)), nil
+}
+
+// MarkReleaseReady — RM-05 через порт готовности (CM-05).
+func (s *Server) MarkReleaseReady(ctx context.Context, req gen.MarkReleaseReadyRequestObject) (gen.MarkReleaseReadyResponseObject, error) {
+	if err := s.requireRoadmap(); err != nil {
+		return nil, err
+	}
+	r, err := s.d.Roadmap.MarkReadyForCertification(ctx, scope(ctx), req.ReleaseId)
+	if err != nil {
+		return nil, err
+	}
+	return gen.MarkReleaseReady200JSONResponse(toRelease(r)), nil
+}
+
+// ---- prioritization PR-04/PR-05 ----
+
+func toFlags(f prioritization.FeatureFlags) gen.FeatureFlags {
+	out := gen.FeatureFlags{FeatureId: f.FeatureID, ProductId: f.ProductID, RegulatoryMandatory: f.RegulatoryMandatory, Reason: strPtr(f.Reason), SetBy: strPtr(f.SetBy)}
+	if !f.SetAt.IsZero() {
+		out.SetAt = ptr(f.SetAt)
+	}
+	return out
+}
+
+func toCost(c prioritization.FeatureCost) gen.FeatureCost {
+	return gen.FeatureCost{FeatureId: c.FeatureID, ProductId: c.ProductID, DevCost: money(c.DevCost), ConfirmationCost: money(c.ConfirmationCost), Total: money(c.Total)}
+}
+
+// GetRankingResult — PR-04.
+func (s *Server) GetRankingResult(ctx context.Context, req gen.GetRankingResultRequestObject) (gen.GetRankingResultResponseObject, error) {
+	if err := s.requirePrioritization(); err != nil {
+		return nil, err
+	}
+	rr, err := s.d.Prioritization.Rank(ctx, scope(ctx), req.ModelId, req.ProductId)
+	if err != nil {
+		return nil, err
+	}
+	out := gen.RankingResult{Ranked: make([]gen.ScoreResult, 0, len(rr.Ranked)), Mandatory: make([]gen.ScoreResult, 0, len(rr.Mandatory))}
+	for _, r := range rr.Ranked {
+		out.Ranked = append(out.Ranked, toScore(r))
+	}
+	for _, r := range rr.Mandatory {
+		out.Mandatory = append(out.Mandatory, toScore(r))
+	}
+	return gen.GetRankingResult200JSONResponse(out), nil
+}
+
+// featureProduct возвращает продукт фичи для операций, которым нужен product_id (инвариант 3).
+func (s *Server) featureProduct(ctx context.Context, featureID kernel.ID) (kernel.ID, error) {
+	f, err := s.d.Portfolio.Feature(ctx, scope(ctx), featureID)
+	if err != nil {
+		return kernel.NilID, err
+	}
+	return f.ProductID, nil
+}
+
+// GetFeatureFlags — PR-04.
+func (s *Server) GetFeatureFlags(ctx context.Context, req gen.GetFeatureFlagsRequestObject) (gen.GetFeatureFlagsResponseObject, error) {
+	if err := s.requirePrioritization(); err != nil {
+		return nil, err
+	}
+	pid, err := s.featureProduct(ctx, req.FeatureId)
+	if err != nil {
+		return nil, err
+	}
+	f, err := s.d.Prioritization.Flags(ctx, scope(ctx), pid, req.FeatureId)
+	if err != nil {
+		return nil, err
+	}
+	return gen.GetFeatureFlags200JSONResponse(toFlags(f)), nil
+}
+
+// SetFeatureFlags — PR-04.
+func (s *Server) SetFeatureFlags(ctx context.Context, req gen.SetFeatureFlagsRequestObject) (gen.SetFeatureFlagsResponseObject, error) {
+	if err := s.requirePrioritization(); err != nil {
+		return nil, err
+	}
+	pid, err := s.featureProduct(ctx, req.FeatureId)
+	if err != nil {
+		return nil, err
+	}
+	f, err := s.d.Prioritization.SetRegulatoryMandatory(ctx, scope(ctx), pid, req.FeatureId, req.Body.RegulatoryMandatory, strOrEmpty(req.Body.Reason))
+	if err != nil {
+		return nil, err
+	}
+	return gen.SetFeatureFlags200JSONResponse(toFlags(f)), nil
+}
+
+// GetFeatureCost — PR-05.
+func (s *Server) GetFeatureCost(ctx context.Context, req gen.GetFeatureCostRequestObject) (gen.GetFeatureCostResponseObject, error) {
+	if err := s.requirePrioritization(); err != nil {
+		return nil, err
+	}
+	pid, err := s.featureProduct(ctx, req.FeatureId)
+	if err != nil {
+		return nil, err
+	}
+	c, err := s.d.Prioritization.Cost(ctx, scope(ctx), pid, req.FeatureId)
+	if err != nil {
+		return nil, err
+	}
+	return gen.GetFeatureCost200JSONResponse(toCost(c)), nil
+}
+
+// SetFeatureDevCost — PR-05.
+func (s *Server) SetFeatureDevCost(ctx context.Context, req gen.SetFeatureDevCostRequestObject) (gen.SetFeatureDevCostResponseObject, error) {
+	if err := s.requirePrioritization(); err != nil {
+		return nil, err
+	}
+	pid, err := s.featureProduct(ctx, req.FeatureId)
+	if err != nil {
+		return nil, err
+	}
+	c, err := s.d.Prioritization.SetDevCost(ctx, scope(ctx), pid, req.FeatureId, kernel.Money{Amount: req.Body.DevCost.Amount, Currency: req.Body.DevCost.Currency})
+	if err != nil {
+		return nil, err
+	}
+	return gen.SetFeatureDevCost200JSONResponse(toCost(c)), nil
 }

@@ -62,7 +62,8 @@ func requireCatalog(sc authz.Scope) error {
 	if !sc.Valid() {
 		return kernel.ErrForbidden
 	}
-	if sc.Allows(authz.ActionAdminSettings, kernel.NilID) || sc.HasRole(authz.RoleCompliance) {
+	// Сервисный Scope (seed, воркер) наравне с admin — как и в остальных действиях записи authz.
+	if sc.Allows(authz.ActionAdminSettings, kernel.NilID) || sc.HasRole(authz.RoleCompliance) || sc.HasRole(authz.RoleService) {
 		return nil
 	}
 	return kernel.ErrForbidden

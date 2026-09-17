@@ -20,6 +20,10 @@ tags:
   - name: prioritization
   - name: roadmap
   - name: delivery
+  - name: discovery
+  - name: commitments
+  - name: compliance
+  - name: decisions
   - name: admin
 paths:
   /me:
@@ -566,7 +570,7 @@ paths:
     post:
       tags: [signals]
       operationId: linkSignal
-      summary: Привязать к фиче или контракту с сохранением денежного веса (SG-05)
+      summary: Привязать к фиче, контракту или гипотезе с сохранением денежного веса (SG-05, DS-01)
       requestBody:
         required: true
         content:
@@ -576,6 +580,7 @@ paths:
               properties:
                 feature_id: { type: string, format: uuid }
                 contract_id: { type: string, format: uuid }
+                hypothesis_id: { type: string, format: uuid, description: Гипотеза discovery (DS-01) }
       responses:
         "200":
           description: OK
@@ -844,6 +849,1395 @@ paths:
                 items: { $ref: "#/components/schemas/DateChange" }
         default: { $ref: "#/components/responses/Problem" }
 
+  # ---- roadmap RM-04/RM-05 ----
+  /releases/{releaseId}:
+    parameters:
+      - $ref: "#/components/parameters/releaseId"
+    get:
+      tags: [roadmap]
+      operationId: getRelease
+      summary: Релиз с матрицей совместимости (RM-05); sales-safe аудитория без release notes и состава
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Release" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [roadmap]
+      operationId: updateRelease
+      summary: Изменить релиз, ветку и EOL (RM-04, RM-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReleaseInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Release" }
+        default: { $ref: "#/components/responses/Problem" }
+  /releases/{releaseId}/features:
+    parameters:
+      - $ref: "#/components/parameters/releaseId"
+    put:
+      tags: [roadmap]
+      operationId: setReleaseFeatures
+      summary: Задать состав релиза (RM-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [feature_ids]
+              properties:
+                feature_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Release" }
+        default: { $ref: "#/components/responses/Problem" }
+  /releases/{releaseId}/notes:
+    parameters:
+      - $ref: "#/components/parameters/releaseId"
+    put:
+      tags: [roadmap]
+      operationId: setReleaseNotes
+      summary: Задать release notes (RM-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [release_notes]
+              properties:
+                release_notes: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Release" }
+        default: { $ref: "#/components/responses/Problem" }
+  /releases/{releaseId}/eol:
+    parameters:
+      - $ref: "#/components/parameters/releaseId"
+    put:
+      tags: [roadmap]
+      operationId: setReleaseEOL
+      summary: Задать дату окончания поддержки (RM-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eol]
+              properties:
+                eol: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Release" }
+        default: { $ref: "#/components/responses/Problem" }
+  /releases/{releaseId}/mark-ready:
+    parameters:
+      - $ref: "#/components/parameters/releaseId"
+    post:
+      tags: [roadmap]
+      operationId: markReleaseReady
+      summary: Перевести релиз в ready_for_certification; 409, пока гейты SSDLC не закрыты (RM-05, CM-05)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Release" }
+        default: { $ref: "#/components/responses/Problem" }
+  /releases/{releaseId}/readiness:
+    parameters:
+      - $ref: "#/components/parameters/releaseId"
+    get:
+      tags: [compliance]
+      operationId: getReleaseReadiness
+      summary: Готовность релиза к сертификации (CM-05)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Readiness" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  # ---- prioritization PR-04/PR-05 ----
+  /scoring-models/{modelId}/products/{productId}/rank:
+    parameters:
+      - $ref: "#/components/parameters/modelId"
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [prioritization]
+      operationId: getRankingResult
+      summary: Ранжирование с отдельным списком регуляторно обязательных фич (PR-04)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RankingResult" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}/flags:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    get:
+      tags: [prioritization]
+      operationId: getFeatureFlags
+      summary: Флаги фичи (PR-04)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeatureFlags" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [prioritization]
+      operationId: setFeatureFlags
+      summary: Пометить фичу регуляторно обязательной (PR-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeatureFlagsInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeatureFlags" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}/cost:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    get:
+      tags: [prioritization]
+      operationId: getFeatureCost
+      summary: Стоимость фичи с подтверждением изменений (PR-05)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeatureCost" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [prioritization]
+      operationId: setFeatureDevCost
+      summary: Задать стоимость разработки (PR-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dev_cost]
+              properties:
+                dev_cost: { $ref: "#/components/schemas/Money" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeatureCost" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  # ---- discovery DS-01…DS-04, SG-04, AD-03 ----
+  /products/{productId}/hypotheses:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [discovery]
+      operationId: listHypotheses
+      summary: Гипотезы продукта (DS-01)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: array
+            items: { type: string }
+        - name: featureId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Hypothesis" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [discovery]
+      operationId: createHypothesis
+      summary: Создать гипотезу (DS-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HypothesisInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Hypothesis" }
+        default: { $ref: "#/components/responses/Problem" }
+  /hypotheses/{hypothesisId}:
+    parameters:
+      - $ref: "#/components/parameters/hypothesisId"
+    get:
+      tags: [discovery]
+      operationId: getHypothesis
+      summary: Гипотеза
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Hypothesis" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [discovery]
+      operationId: updateHypothesis
+      summary: Изменить гипотезу (статус — через /status)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HypothesisInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Hypothesis" }
+        default: { $ref: "#/components/responses/Problem" }
+  /hypotheses/{hypothesisId}/status:
+    parameters:
+      - $ref: "#/components/parameters/hypothesisId"
+    post:
+      tags: [discovery]
+      operationId: changeHypothesisStatus
+      summary: Сменить статус гипотезы (DS-01, AD-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, description: Встроенный или пользовательский статус }
+                resolution: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Hypothesis" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/interviews:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [discovery]
+      operationId: listInterviews
+      summary: Интервью продукта (DS-02)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Interview" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [discovery]
+      operationId: createInterview
+      summary: Создать интервью (DS-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InterviewInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Interview" }
+        default: { $ref: "#/components/responses/Problem" }
+  /interviews/{interviewId}:
+    parameters:
+      - $ref: "#/components/parameters/interviewId"
+    get:
+      tags: [discovery]
+      operationId: getInterview
+      summary: Интервью
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Interview" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [discovery]
+      operationId: updateInterview
+      summary: Изменить интервью
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InterviewInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Interview" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/insights:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [discovery]
+      operationId: listInsights
+      summary: Инсайты продукта (DS-02)
+      parameters:
+        - name: interviewId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: hypothesisId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: signalId
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Insight" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [discovery]
+      operationId: createInsight
+      summary: Создать инсайт (DS-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InsightInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Insight" }
+        default: { $ref: "#/components/responses/Problem" }
+  /insights/{insightId}:
+    parameters:
+      - $ref: "#/components/parameters/insightId"
+    get:
+      tags: [discovery]
+      operationId: getInsight
+      summary: Инсайт
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Insight" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [discovery]
+      operationId: updateInsight
+      summary: Изменить инсайт
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InsightInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Insight" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/evidence:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [discovery]
+      operationId: listEvidence
+      summary: Evidence продукта (DS-03)
+      parameters:
+        - name: hypothesisId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: insightId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: featureId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: verification
+          in: query
+          schema: { type: string, enum: [unverified, verified, rejected] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Evidence" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [discovery]
+      operationId: createEvidence
+      summary: Добавить evidence (DS-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EvidenceInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Evidence" }
+        default: { $ref: "#/components/responses/Problem" }
+  /evidence/{evidenceId}:
+    parameters:
+      - $ref: "#/components/parameters/evidenceId"
+    get:
+      tags: [discovery]
+      operationId: getEvidence
+      summary: Evidence
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Evidence" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [discovery]
+      operationId: updateEvidence
+      summary: Изменить evidence (в т. ч. статус проверки)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EvidenceInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Evidence" }
+        default: { $ref: "#/components/responses/Problem" }
+  /trace/{kind}/{id}:
+    parameters:
+      - name: kind
+        in: path
+        required: true
+        schema: { type: string, enum: [signal, insight, hypothesis, feature] }
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [discovery]
+      operationId: getTrace
+      summary: Трассировка «сигнал → инсайт → гипотеза → фича → решение» (DS-04)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TraceGraph" }
+        default: { $ref: "#/components/responses/Problem" }
+  /signals/{signalId}/similar:
+    parameters:
+      - $ref: "#/components/parameters/signalId"
+    get:
+      tags: [discovery]
+      operationId: getSimilarSignals
+      summary: Похожие сигналы продукта (SG-04)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SimilarSignal" }
+        default: { $ref: "#/components/responses/Problem" }
+  /signals/{signalId}/merge:
+    parameters:
+      - $ref: "#/components/parameters/signalId"
+    post:
+      tags: [discovery]
+      operationId: mergeSignals
+      summary: Слить дубликаты в сигнал (SG-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [duplicate_ids]
+              properties:
+                duplicate_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Слито
+        default: { $ref: "#/components/responses/Problem" }
+  /admin/custom-fields:
+    get:
+      tags: [admin]
+      operationId: listCustomFields
+      summary: Кастомные поля сущности (AD-03)
+      parameters:
+        - $ref: "#/components/parameters/entity"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CustomFieldDef" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [admin]
+      operationId: defineCustomField
+      summary: Определить или обновить кастомное поле (AD-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CustomFieldDefInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomFieldDef" }
+        default: { $ref: "#/components/responses/Problem" }
+  /admin/custom-statuses:
+    get:
+      tags: [admin]
+      operationId: listCustomStatuses
+      summary: Пользовательские статусы сущности (AD-03)
+      parameters:
+        - $ref: "#/components/parameters/entity"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CustomStatusDef" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [admin]
+      operationId: defineCustomStatus
+      summary: Определить пользовательский статус (AD-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CustomStatusDef" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomStatusDef" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  # ---- commitments CT-01…CT-04 ----
+  /products/{productId}/commitments:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [commitments]
+      operationId: listCommitments
+      summary: Обязательства продукта (CT-01, CT-02)
+      parameters:
+        - name: kind
+          in: query
+          schema: { type: string, enum: [customer, regulatory] }
+        - name: status
+          in: query
+          schema:
+            type: array
+            items: { type: string, enum: [active, fulfilled, breached, cancelled] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Commitment" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [commitments]
+      operationId: createCommitment
+      summary: Создать обязательство (CT-01, CT-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommitmentInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Commitment" }
+        default: { $ref: "#/components/responses/Problem" }
+  /commitments/{commitmentId}:
+    parameters:
+      - $ref: "#/components/parameters/commitmentId"
+    get:
+      tags: [commitments]
+      operationId: getCommitment
+      summary: Обязательство
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Commitment" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [commitments]
+      operationId: updateCommitment
+      summary: Изменить активное обязательство
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommitmentInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Commitment" }
+        default: { $ref: "#/components/responses/Problem" }
+  /commitments/{commitmentId}/fulfil:
+    parameters:
+      - $ref: "#/components/parameters/commitmentId"
+    post:
+      tags: [commitments]
+      operationId: fulfilCommitment
+      summary: Отметить исполненным
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Commitment" }
+        default: { $ref: "#/components/responses/Problem" }
+  /commitments/{commitmentId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/commitmentId"
+    post:
+      tags: [commitments]
+      operationId: cancelCommitment
+      summary: Отменить
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Commitment" }
+        default: { $ref: "#/components/responses/Problem" }
+  /commitments/ensure-renewals:
+    post:
+      tags: [commitments]
+      operationId: ensureRenewals
+      summary: Завести элементы roadmap на продление сертификатов (CT-04)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                now: { type: string, format: date, description: Дата отсчёта; пусто — сегодня }
+      responses:
+        "200":
+          description: Обязательства, для которых элемент создан этим вызовом
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Commitment" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/commitment-alerts:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [commitments]
+      operationId: listCommitmentAlerts
+      summary: Алерты по обязательствам (CT-03)
+      parameters:
+        - name: open
+          in: query
+          schema: { type: boolean, description: Только неподтверждённые }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CommitmentAlert" }
+        default: { $ref: "#/components/responses/Problem" }
+  /commitment-alerts/{alertId}/ack:
+    parameters:
+      - $ref: "#/components/parameters/alertId"
+    post:
+      tags: [commitments]
+      operationId: acknowledgeCommitmentAlert
+      summary: Подтвердить алерт
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommitmentAlert" }
+        default: { $ref: "#/components/responses/Problem" }
+  /admin/settings/commitments:
+    get:
+      tags: [admin]
+      operationId: getCommitmentSettings
+      summary: Настройки обязательств (CT-04)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommitmentSettings" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [admin]
+      operationId: updateCommitmentSettings
+      summary: Изменить настройки обязательств
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommitmentSettings" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommitmentSettings" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  # ---- compliance CM-01…CM-07 ----
+  /admin/requirement-sets:
+    get:
+      tags: [compliance]
+      operationId: listRequirementSets
+      summary: Каталог наборов требований (CM-01)
+      parameters:
+        - name: code
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RequirementSet" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [compliance]
+      operationId: createRequirementSet
+      summary: Новая версия набора требований (CM-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RequirementSetInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequirementSet" }
+        default: { $ref: "#/components/responses/Problem" }
+  /requirement-sets/{setId}/status:
+    parameters:
+      - $ref: "#/components/parameters/setId"
+    post:
+      tags: [compliance]
+      operationId: setRequirementSetStatus
+      summary: Опубликовать или вывести из оборота набор (CM-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [draft, published, retired] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequirementSet" }
+        default: { $ref: "#/components/responses/Problem" }
+  /admin/track-templates:
+    get:
+      tags: [compliance]
+      operationId: listTrackTemplates
+      summary: Шаблоны треков (CM-02)
+      parameters:
+        - name: productType
+          in: query
+          schema: { type: string, enum: [security, infrastructure, platform, other] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TrackTemplate" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [compliance]
+      operationId: saveTrackTemplate
+      summary: Создать или изменить шаблон трека (CM-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TrackTemplateInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrackTemplate" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/tracks:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [compliance]
+      operationId: listTracks
+      summary: Треки сертификации продукта (CM-03)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Track" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [compliance]
+      operationId: startTrack
+      summary: Запустить трек сертификации версии (CM-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TrackInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Track" }
+        default: { $ref: "#/components/responses/Problem" }
+  /tracks/{trackId}:
+    parameters:
+      - $ref: "#/components/parameters/trackId"
+    get:
+      tags: [compliance]
+      operationId: getTrack
+      summary: Трек
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Track" }
+        default: { $ref: "#/components/responses/Problem" }
+  /tracks/{trackId}/gates/{gateId}:
+    parameters:
+      - $ref: "#/components/parameters/trackId"
+      - $ref: "#/components/parameters/gateId"
+    patch:
+      tags: [compliance]
+      operationId: updateGate
+      summary: Владелец, срок, затраты гейта (CM-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GateUpdate" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Track" }
+        default: { $ref: "#/components/responses/Problem" }
+  /tracks/{trackId}/gates/{gateId}/check:
+    parameters:
+      - $ref: "#/components/parameters/trackId"
+      - $ref: "#/components/parameters/gateId"
+    post:
+      tags: [compliance]
+      operationId: checkGateItem
+      summary: Закрыть пункт чек-листа доказательством (CM-03, CM-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, evidence_id]
+              properties:
+                key: { type: string }
+                evidence_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Track" }
+        default: { $ref: "#/components/responses/Problem" }
+  /tracks/{trackId}/gates/{gateId}/pass:
+    parameters:
+      - $ref: "#/components/parameters/trackId"
+      - $ref: "#/components/parameters/gateId"
+    post:
+      tags: [compliance]
+      operationId: passGate
+      summary: Пройти гейт; 409, если чек-лист или предшествующие гейты не закрыты (CM-03, CM-07)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Track" }
+        default: { $ref: "#/components/responses/Problem" }
+  /tracks/{trackId}/gates/{gateId}/fail:
+    parameters:
+      - $ref: "#/components/parameters/trackId"
+      - $ref: "#/components/parameters/gateId"
+    post:
+      tags: [compliance]
+      operationId: failGate
+      summary: Провалить гейт с причиной (CM-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Track" }
+        default: { $ref: "#/components/responses/Problem" }
+  /tracks/{trackId}/evidence:
+    parameters:
+      - $ref: "#/components/parameters/trackId"
+    get:
+      tags: [compliance]
+      operationId: listTrackEvidence
+      summary: Журнал доказательств трека (CM-04)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/EvidenceItem" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [compliance]
+      operationId: appendTrackEvidence
+      summary: Приложить доказательство со ссылкой и SHA-256 (CM-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EvidenceItemInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvidenceItem" }
+        default: { $ref: "#/components/responses/Problem" }
+  /evidence-items/{evidenceId}/status:
+    parameters:
+      - $ref: "#/components/parameters/evidenceId"
+    post:
+      tags: [compliance]
+      operationId: setEvidenceItemStatus
+      summary: Принять или отклонить доказательство — новая запись журнала (CM-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [submitted, accepted, rejected] }
+                comment: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EvidenceItem" }
+        default: { $ref: "#/components/responses/Problem" }
+  /admin/evidence/verify:
+    post:
+      tags: [compliance]
+      operationId: verifyEvidenceLog
+      summary: Проверить целостность журнала доказательств (CM-04)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditVerifyResult" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}/impact:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    get:
+      tags: [compliance]
+      operationId: getFeatureImpact
+      summary: Действующий класс влияния фичи (CM-06)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImpactAssessment" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [compliance]
+      operationId: setFeatureImpact
+      summary: Задать класс влияния с обоснованием (CM-06)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ImpactInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImpactAssessment" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}/impact/history:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    get:
+      tags: [compliance]
+      operationId: getFeatureImpactHistory
+      summary: История оценок класса влияния (CM-06)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ImpactAssessment" }
+        default: { $ref: "#/components/responses/Problem" }
+  /features/{featureId}/affected-baselines:
+    parameters:
+      - $ref: "#/components/parameters/featureId"
+    get:
+      tags: [compliance]
+      operationId: getAffectedBaselines
+      summary: Затронутые сертифицированные конфигурации (CM-07)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AffectedBaseline" }
+        default: { $ref: "#/components/responses/Problem" }
+  /products/{productId}/baselines:
+    parameters:
+      - $ref: "#/components/parameters/productId"
+    get:
+      tags: [compliance]
+      operationId: listBaselines
+      summary: Сертифицированные конфигурации продукта (CM-07)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CertifiedBaseline" }
+        default: { $ref: "#/components/responses/Problem" }
+  /admin/settings/compliance:
+    get:
+      tags: [admin]
+      operationId: getComplianceSettings
+      summary: Настройки compliance (PR-05, CM-07)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ComplianceSettings" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [admin]
+      operationId: updateComplianceSettings
+      summary: Изменить настройки compliance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComplianceSettings" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ComplianceSettings" }
+        default: { $ref: "#/components/responses/Problem" }
+
+  # ---- decisions DA-01 ----
+  /decisions:
+    get:
+      tags: [decisions]
+      operationId: listDecisions
+      summary: Решения продукта; без productId — портфельные (DA-01)
+      parameters:
+        - name: productId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema: { type: string, enum: [proposed, accepted, superseded, rejected] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Decision" }
+        default: { $ref: "#/components/responses/Problem" }
+    post:
+      tags: [decisions]
+      operationId: createDecision
+      summary: Зафиксировать решение (DA-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DecisionInput" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Decision" }
+        default: { $ref: "#/components/responses/Problem" }
+  /decisions/for/{kind}/{id}:
+    parameters:
+      - name: kind
+        in: path
+        required: true
+        schema: { type: string, enum: [hypothesis, feature, signal, commitment, release, track] }
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [decisions]
+      operationId: listDecisionsFor
+      summary: Решения, связанные с сущностью (DS-04)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DecisionRef" }
+        default: { $ref: "#/components/responses/Problem" }
+  /decisions/{decisionId}:
+    parameters:
+      - $ref: "#/components/parameters/decisionId"
+    get:
+      tags: [decisions]
+      operationId: getDecision
+      summary: Решение
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Decision" }
+        default: { $ref: "#/components/responses/Problem" }
+    put:
+      tags: [decisions]
+      operationId: updateDecision
+      summary: Изменить предложенное решение
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DecisionInput" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Decision" }
+        default: { $ref: "#/components/responses/Problem" }
+  /decisions/{decisionId}/accept:
+    parameters:
+      - $ref: "#/components/parameters/decisionId"
+    post:
+      tags: [decisions]
+      operationId: acceptDecision
+      summary: Принять
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Decision" }
+        default: { $ref: "#/components/responses/Problem" }
+  /decisions/{decisionId}/reject:
+    parameters:
+      - $ref: "#/components/parameters/decisionId"
+    post:
+      tags: [decisions]
+      operationId: rejectDecision
+      summary: Отклонить
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Decision" }
+        default: { $ref: "#/components/responses/Problem" }
+  /decisions/{decisionId}/supersede:
+    parameters:
+      - $ref: "#/components/parameters/decisionId"
+    post:
+      tags: [decisions]
+      operationId: supersedeDecision
+      summary: Заменить другим решением
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [by]
+              properties:
+                by: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Decision" }
+        default: { $ref: "#/components/responses/Problem" }
+  /decisions/{decisionId}/request-page:
+    parameters:
+      - $ref: "#/components/parameters/decisionId"
+    post:
+      tags: [decisions]
+      operationId: requestDecisionPage
+      summary: Запросить страницу ADR в базе знаний через outbox (DA-01, ТЗ 4.3)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                space_key: { type: string, description: Пусто — пространство из настроек сервера }
+      responses:
+        "202":
+          description: Запрос поставлен в outbox
+        default: { $ref: "#/components/responses/Problem" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -876,6 +2270,66 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    releaseId:
+      name: releaseId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    hypothesisId:
+      name: hypothesisId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    interviewId:
+      name: interviewId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    insightId:
+      name: insightId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    evidenceId:
+      name: evidenceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    commitmentId:
+      name: commitmentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    alertId:
+      name: alertId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    setId:
+      name: setId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    trackId:
+      name: trackId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    gateId:
+      name: gateId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    decisionId:
+      name: decisionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    entity:
+      name: entity
+      in: query
+      required: true
+      schema: { type: string, enum: [feature, signal, hypothesis] }
   responses:
     Problem:
       description: Ошибка
@@ -1154,6 +2608,8 @@ components:
         due_date: { type: string, format: date, nullable: true }
         feature_id: { type: string, format: uuid }
         contract_id: { type: string, format: uuid }
+        hypothesis_id: { type: string, format: uuid }
+        merged_into: { type: string, format: uuid, description: Сигнал, в который слит дубликат (SG-04) }
         created_by: { type: string }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -1220,9 +2676,10 @@ components:
         release_id: { type: string, format: uuid }
         audience: { type: string, enum: [internal, sales_safe] }
         status: { type: string, enum: [planned, in_progress, done, cancelled] }
+        kind: { type: string, enum: [feature, fix], description: Вид элемента (RM-04); по умолчанию feature }
     RoadmapItem:
       type: object
-      required: [id, product_id, title, bucket, audience, status, created_at, updated_at]
+      required: [id, product_id, title, bucket, audience, status, kind, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         product_id: { type: string, format: uuid }
@@ -1234,6 +2691,8 @@ components:
         release_id: { type: string, format: uuid }
         audience: { type: string, enum: [internal, sales_safe] }
         status: { type: string, enum: [planned, in_progress, done, cancelled] }
+        kind: { type: string, enum: [feature, fix] }
+        commitment_id: { type: string, format: uuid, description: Обязательство, породившее элемент (CT-04) }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     SalesSafeItem:
@@ -1282,6 +2741,7 @@ components:
       required: [release]
       properties:
         release: { $ref: "#/components/schemas/Release" }
+        sales_safe_release: { $ref: "#/components/schemas/SalesSafeRelease" }
         items:
           type: array
           items: { $ref: "#/components/schemas/RoadmapItem" }
@@ -1305,17 +2765,31 @@ components:
         name: { type: string }
         version: { type: string }
         planned_date: { type: string, format: date }
-        status: { type: string, enum: [planned, released, eol] }
+        status: { type: string, enum: [planned, ready_for_certification, released, eol] }
+        branch: { type: string, enum: [certified, evolving], description: Ветка версии (RM-04); пусто — evolving }
+        base_release_id: { type: string, format: uuid, description: Релиз, от которого ответвлена сертифицированная ветка }
+        eol: { type: string, format: date, description: Дата окончания поддержки (RM-05) }
     Release:
       type: object
-      required: [id, product_id, name, version, status, created_at, updated_at]
+      required: [id, product_id, name, version, status, branch, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         product_id: { type: string, format: uuid }
         name: { type: string }
         version: { type: string }
         planned_date: { type: string, format: date, nullable: true }
-        status: { type: string, enum: [planned, released, eol] }
+        status: { type: string, enum: [planned, ready_for_certification, released, eol] }
+        branch: { type: string, enum: [certified, evolving] }
+        base_release_id: { type: string, format: uuid }
+        feature_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: Состав релиза (RM-05); внутренняя информация
+        release_notes: { type: string, description: Внутренняя информация; sales-safe аудитории не выдаётся }
+        eol: { type: string, format: date, nullable: true }
+        compatibility_matrix:
+          type: array
+          items: { $ref: "#/components/schemas/CompatRow" }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     DateChange:
@@ -1333,3 +2807,535 @@ components:
         actor: { type: string }
         at: { type: string, format: date-time }
         event_id: { type: string, format: uuid }
+
+    # ---- roadmap RM-04/RM-05 ----
+    CompatRow:
+      type: object
+      required: [contract_id, contract_name, provider_product_id, consumer_product_id, provider_version, consumer_version, compatible]
+      properties:
+        contract_id: { type: string, format: uuid }
+        contract_name: { type: string }
+        provider_product_id: { type: string, format: uuid }
+        consumer_product_id: { type: string, format: uuid }
+        provider_version: { type: string }
+        consumer_version: { type: string }
+        compatible: { type: boolean }
+    SalesSafeRelease:
+      type: object
+      required: [id, product_id, name, version, status, branch]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        name: { type: string }
+        version: { type: string }
+        planned_date: { type: string, format: date, nullable: true }
+        status: { type: string, enum: [planned, ready_for_certification, released, eol] }
+        branch: { type: string, enum: [certified, evolving] }
+        eol: { type: string, format: date, nullable: true }
+        compatibility_matrix:
+          type: array
+          items: { $ref: "#/components/schemas/CompatRow" }
+    Readiness:
+      type: object
+      required: [ready, open_items]
+      properties:
+        ready: { type: boolean }
+        open_items:
+          type: array
+          items: { type: string }
+
+    # ---- prioritization PR-04/PR-05 ----
+    RankingResult:
+      type: object
+      required: [ranked, mandatory]
+      properties:
+        ranked:
+          type: array
+          items: { $ref: "#/components/schemas/ScoreResult" }
+        mandatory:
+          type: array
+          items: { $ref: "#/components/schemas/ScoreResult" }
+    FeatureFlagsInput:
+      type: object
+      required: [regulatory_mandatory]
+      properties:
+        regulatory_mandatory: { type: boolean }
+        reason: { type: string }
+    FeatureFlags:
+      type: object
+      required: [feature_id, product_id, regulatory_mandatory]
+      properties:
+        feature_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        regulatory_mandatory: { type: boolean }
+        reason: { type: string }
+        set_by: { type: string }
+        set_at: { type: string, format: date-time }
+    FeatureCost:
+      type: object
+      required: [feature_id, product_id, dev_cost, confirmation_cost, total]
+      properties:
+        feature_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        dev_cost: { $ref: "#/components/schemas/Money" }
+        confirmation_cost: { $ref: "#/components/schemas/Money" }
+        total: { $ref: "#/components/schemas/Money" }
+
+    # ---- discovery ----
+    HypothesisInput:
+      type: object
+      required: [title, statement, confirmation_criterion]
+      properties:
+        title: { type: string }
+        statement: { type: string }
+        assumptions:
+          type: array
+          items: { type: string }
+        confirmation_criterion: { type: string }
+        feature_id: { type: string, format: uuid }
+        custom_fields:
+          type: object
+          additionalProperties: true
+    Hypothesis:
+      allOf:
+        - $ref: "#/components/schemas/HypothesisInput"
+        - type: object
+          required: [id, product_id, status, created_by, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            product_id: { type: string, format: uuid }
+            status: { type: string }
+            resolution: { type: string }
+            created_by: { type: string }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    InterviewInput:
+      type: object
+      required: [date]
+      properties:
+        account_id: { type: string }
+        segment: { type: string }
+        date: { type: string, format: date }
+        participants:
+          type: array
+          items: { type: string }
+        notes: { type: string }
+        hypothesis_ids:
+          type: array
+          items: { type: string, format: uuid }
+    Interview:
+      allOf:
+        - $ref: "#/components/schemas/InterviewInput"
+        - type: object
+          required: [id, product_id, created_by, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            product_id: { type: string, format: uuid }
+            created_by: { type: string }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    InsightInput:
+      type: object
+      required: [text, confidence]
+      properties:
+        text: { type: string }
+        interview_id: { type: string, format: uuid }
+        hypothesis_ids:
+          type: array
+          items: { type: string, format: uuid }
+        signal_ids:
+          type: array
+          items: { type: string, format: uuid }
+        confidence: { type: string, enum: [low, medium, high] }
+    Insight:
+      allOf:
+        - $ref: "#/components/schemas/InsightInput"
+        - type: object
+          required: [id, product_id, created_by, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            product_id: { type: string, format: uuid }
+            created_by: { type: string }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    EvidenceInput:
+      type: object
+      required: [source, date, trust]
+      properties:
+        source: { type: string, description: manual | interview | external_research | иное }
+        source_ref: { type: string }
+        date: { type: string, format: date }
+        trust: { type: string, enum: [low, medium, high] }
+        verification: { type: string, enum: [unverified, verified, rejected] }
+        sha256: { type: string, description: hex, 64 символа }
+        hypothesis_id: { type: string, format: uuid }
+        insight_id: { type: string, format: uuid }
+        feature_id: { type: string, format: uuid }
+    Evidence:
+      allOf:
+        - $ref: "#/components/schemas/EvidenceInput"
+        - type: object
+          required: [id, product_id, verification, created_by, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            product_id: { type: string, format: uuid }
+            created_by: { type: string }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    TraceRef:
+      type: object
+      required: [kind, id]
+      properties:
+        kind: { type: string, enum: [signal, insight, hypothesis, feature, decision] }
+        id: { type: string, format: uuid }
+    TraceNode:
+      allOf:
+        - $ref: "#/components/schemas/TraceRef"
+        - type: object
+          required: [title]
+          properties:
+            product_id: { type: string, format: uuid }
+            title: { type: string }
+    TraceEdge:
+      type: object
+      required: [from, to]
+      properties:
+        from: { $ref: "#/components/schemas/TraceRef" }
+        to: { $ref: "#/components/schemas/TraceRef" }
+    TraceGraph:
+      type: object
+      required: [root, nodes, edges]
+      properties:
+        root: { $ref: "#/components/schemas/TraceRef" }
+        nodes:
+          type: array
+          items: { $ref: "#/components/schemas/TraceNode" }
+        edges:
+          type: array
+          items: { $ref: "#/components/schemas/TraceEdge" }
+    SimilarSignal:
+      type: object
+      required: [signal, score]
+      properties:
+        signal: { $ref: "#/components/schemas/Signal" }
+        score: { type: number, format: double, description: Косинусная близость 0…1 }
+    CustomFieldDefInput:
+      type: object
+      required: [entity, key, label, type]
+      properties:
+        entity: { type: string, enum: [feature, signal, hypothesis] }
+        key: { type: string, pattern: "^[a-z][a-z0-9_]{0,31}$" }
+        label: { type: string }
+        type: { type: string, enum: [string, number, date, enum] }
+        options:
+          type: array
+          items: { type: string }
+        required: { type: boolean }
+    CustomFieldDef:
+      allOf:
+        - $ref: "#/components/schemas/CustomFieldDefInput"
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+    CustomStatusDef:
+      type: object
+      required: [entity, key, label, category]
+      properties:
+        entity: { type: string, enum: [feature, signal, hypothesis] }
+        key: { type: string, pattern: "^[a-z][a-z0-9_]{0,31}$" }
+        label: { type: string }
+        category: { type: string, description: Встроенная категория статуса сущности }
+
+    # ---- commitments ----
+    CommitmentInput:
+      type: object
+      required: [kind, counterparty, subject, due_date, basis, owner]
+      properties:
+        kind: { type: string, enum: [customer, regulatory] }
+        subtype: { type: string, enum: [certificate_expiry, support_end, vuln_fix_deadline] }
+        counterparty: { type: string }
+        subject: { type: string }
+        due_date: { type: string, format: date }
+        basis: { type: string }
+        owner: { type: string }
+        feature_id: { type: string, format: uuid }
+        release_id: { type: string, format: uuid }
+    Commitment:
+      allOf:
+        - $ref: "#/components/schemas/CommitmentInput"
+        - type: object
+          required: [id, product_id, status, created_by, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            product_id: { type: string, format: uuid }
+            status: { type: string, enum: [active, fulfilled, breached, cancelled] }
+            renewal_item_id: { type: string, format: uuid }
+            created_by: { type: string }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    CommitmentAlert:
+      type: object
+      required: [id, commitment_id, product_id, kind, message, event_id, raised_at, acknowledged]
+      properties:
+        id: { type: string, format: uuid }
+        commitment_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        kind: { type: string, enum: [roadmap_shift] }
+        message: { type: string }
+        event_id: { type: string, format: uuid }
+        new_date: { type: string, format: date, nullable: true }
+        due_date: { type: string, format: date, nullable: true }
+        raised_at: { type: string, format: date-time }
+        acknowledged: { type: boolean }
+        acknowledged_by: { type: string }
+        acknowledged_at: { type: string, format: date-time }
+    CommitmentSettings:
+      type: object
+      required: [lead_months]
+      properties:
+        lead_months: { type: integer, description: Месяцев до истечения сертификата для элемента продления (CT-04) }
+
+    # ---- compliance ----
+    RequirementItem:
+      type: object
+      required: [key, text]
+      properties:
+        key: { type: string }
+        text: { type: string }
+    RequirementSetInput:
+      type: object
+      required: [code, product_type, items]
+      properties:
+        code: { type: string, description: Синтетический код набора }
+        product_type: { type: string, enum: [security, infrastructure, platform, other] }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RequirementItem" }
+    RequirementSet:
+      allOf:
+        - $ref: "#/components/schemas/RequirementSetInput"
+        - type: object
+          required: [id, version, status, created_by, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            version: { type: integer }
+            status: { type: string, enum: [draft, published, retired] }
+            created_by: { type: string }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    GateTemplate:
+      type: object
+      required: [key, name, kind, order, checklist]
+      properties:
+        key: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [ssdlc, registry, fstec, support] }
+        order: { type: integer }
+        parallel_group: { type: string }
+        requirement_set_code: { type: string }
+        checklist:
+          type: array
+          items: { type: string }
+    TrackTemplateInput:
+      type: object
+      required: [product_type, name, gates]
+      properties:
+        id: { type: string, format: uuid, description: Пусто — создание }
+        product_type: { type: string, enum: [security, infrastructure, platform, other] }
+        name: { type: string }
+        gates:
+          type: array
+          items: { $ref: "#/components/schemas/GateTemplate" }
+    TrackTemplate:
+      allOf:
+        - $ref: "#/components/schemas/TrackTemplateInput"
+        - type: object
+          required: [id, created_at, updated_at]
+          properties:
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    TrackInput:
+      type: object
+      required: [release_id, version]
+      properties:
+        release_id: { type: string, format: uuid }
+        version: { type: string }
+        template_id: { type: string, format: uuid, description: Пусто — первый шаблон типа продукта }
+    ChecklistItem:
+      type: object
+      required: [key, text, done]
+      properties:
+        key: { type: string }
+        text: { type: string }
+        done: { type: boolean }
+        evidence_id: { type: string, format: uuid }
+    Gate:
+      type: object
+      required: [id, key, name, kind, order, cost, checklist, status]
+      properties:
+        id: { type: string, format: uuid }
+        key: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [ssdlc, registry, fstec, support] }
+        order: { type: integer }
+        parallel_group: { type: string }
+        requirement_set_code: { type: string }
+        owner: { type: string }
+        due_date: { type: string, format: date, nullable: true }
+        cost: { $ref: "#/components/schemas/Money" }
+        checklist:
+          type: array
+          items: { $ref: "#/components/schemas/ChecklistItem" }
+        status: { type: string, enum: [pending, in_progress, passed, failed] }
+        passed_at: { type: string, format: date-time }
+    GateUpdate:
+      type: object
+      properties:
+        owner: { type: string }
+        due_date: { type: string, format: date }
+        cost: { $ref: "#/components/schemas/Money" }
+    Track:
+      type: object
+      required: [id, product_id, release_id, version, template_id, status, gates, created_by, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        release_id: { type: string, format: uuid }
+        version: { type: string }
+        template_id: { type: string, format: uuid }
+        status: { type: string, enum: [active, certified, failed] }
+        gates:
+          type: array
+          items: { $ref: "#/components/schemas/Gate" }
+        baseline_id: { type: string, format: uuid }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    EvidenceItemInput:
+      type: object
+      required: [gate_id, url, sha256]
+      properties:
+        gate_id: { type: string, format: uuid }
+        url: { type: string }
+        sha256: { type: string, description: hex, 64 символа }
+        comment: { type: string }
+    EvidenceItem:
+      type: object
+      required: [seq, id, product_id, track_id, gate_id, url, sha256, status, actor, at]
+      properties:
+        seq: { type: integer, format: int64 }
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        track_id: { type: string, format: uuid }
+        gate_id: { type: string, format: uuid }
+        url: { type: string }
+        sha256: { type: string }
+        status: { type: string, enum: [submitted, accepted, rejected] }
+        comment: { type: string }
+        supersedes: { type: integer, format: int64 }
+        actor: { type: string }
+        at: { type: string, format: date-time }
+    ImpactInput:
+      type: object
+      required: [class, justification]
+      properties:
+        class: { type: string, enum: [none, analysis_required, security_functions] }
+        justification: { type: string }
+    ImpactAssessment:
+      type: object
+      required: [id, feature_id, product_id, class, justification, author, at]
+      properties:
+        id: { type: string, format: uuid }
+        feature_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        class: { type: string, enum: [none, analysis_required, security_functions] }
+        justification: { type: string }
+        author: { type: string }
+        at: { type: string, format: date-time }
+    CertifiedBaseline:
+      type: object
+      required: [id, product_id, version, certificate_no, certified_at, eol, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        track_id: { type: string, format: uuid }
+        version: { type: string }
+        requirement_set_id: { type: string, format: uuid }
+        certificate_no: { type: string }
+        certified_at: { type: string, format: date }
+        eol: { type: string, format: date }
+        created_at: { type: string, format: date-time }
+    AffectedBaseline:
+      type: object
+      required: [baseline, path, procedure]
+      properties:
+        baseline: { $ref: "#/components/schemas/CertifiedBaseline" }
+        path:
+          type: array
+          items: { type: string, format: uuid }
+          description: Продукты от продукта фичи до продукта baseline
+        procedure: { type: string, enum: [simplified_confirmation, full_procedure] }
+    ComplianceSettings:
+      type: object
+      required: [cost_by_class, certified_process_discount, baseline_lifetime_years]
+      properties:
+        cost_by_class:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/Money" }
+        certified_process_discount: { type: string, description: Доля 0…1 десятичной строкой }
+        baseline_lifetime_years: { type: integer }
+
+    # ---- decisions ----
+    DecisionOption:
+      type: object
+      required: [key, title]
+      properties:
+        key: { type: string }
+        title: { type: string }
+        description: { type: string }
+    DecisionLink:
+      type: object
+      required: [kind, id]
+      properties:
+        kind: { type: string, enum: [hypothesis, feature, signal, commitment, release, track] }
+        id: { type: string, format: uuid }
+    DecisionInput:
+      type: object
+      required: [title, context]
+      properties:
+        product_id: { type: string, format: uuid, description: Пусто — портфельное решение }
+        title: { type: string }
+        context: { type: string }
+        snapshot:
+          type: object
+          additionalProperties: true
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/DecisionOption" }
+        chosen_key: { type: string }
+        rationale: { type: string }
+        expected_effect: { type: string }
+        review_date: { type: string, format: date }
+        links:
+          type: array
+          items: { $ref: "#/components/schemas/DecisionLink" }
+    Decision:
+      allOf:
+        - $ref: "#/components/schemas/DecisionInput"
+        - type: object
+          required: [id, status, author, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            status: { type: string, enum: [proposed, accepted, superseded, rejected] }
+            superseded_by: { type: string, format: uuid }
+            page_id: { type: string }
+            author: { type: string }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    DecisionRef:
+      type: object
+      required: [id, title]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }

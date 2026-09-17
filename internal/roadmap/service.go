@@ -799,6 +799,23 @@ func (s *Service) EnsureRenewalItem(ctx context.Context, sc authz.Scope, product
 	return it.ID, nil
 }
 
+// ItemLinks возвращает привязки элемента roadmap — фичу и релиз (NilID — нет привязки).
+// Порт commitments.RoadmapReader (CT-03): обработчику roadmap.EventDatesChanged нужны привязки
+// сдвинутого элемента. Право: стратегический срез продукта элемента.
+func (s *Service) ItemLinks(ctx context.Context, sc authz.Scope, itemID kernel.ID) (featureID, releaseID kernel.ID, err error) {
+	if !sc.Valid() {
+		return kernel.NilID, kernel.NilID, kernel.ErrForbidden
+	}
+	it, err := s.store.Item(ctx, itemID)
+	if err != nil {
+		return kernel.NilID, kernel.NilID, err
+	}
+	if err := sc.Require(authz.ActionReadStrategic, it.ProductID); err != nil {
+		return kernel.NilID, kernel.NilID, err
+	}
+	return it.FeatureID, it.ReleaseID, nil
+}
+
 func sortReleases(rels []Release) {
 	sort.SliceStable(rels, func(i, j int) bool {
 		a, b := rels[i], rels[j]

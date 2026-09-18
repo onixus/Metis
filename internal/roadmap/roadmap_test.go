@@ -368,3 +368,61 @@ func TestRM_ABAC_PMOfVMCannotWriteEDRRoadmap(t *testing.T) {
 		t.Fatalf("нулевой Scope обработчика: %v", err)
 	}
 }
+
+// TestRM06_LaunchCalendar: уровни запуска попадают в календарь, период фильтруется,
+// sales-safe аудитория видит только свой срез.
+func TestRM06_LaunchCalendar(t *testing.T) {
+	f := newFixture(t)
+	mustItem := func(title string, audience authz.Audience, tier roadmap.LaunchTier, launch kernel.Date) roadmap.RoadmapItem {
+		t.Helper()
+		it, err := f.svc.CreateItem(f.ctx, f.cpo, f.edr, roadmap.ItemInput{
+			Title: title, Bucket: roadmap.BucketNow, Audience: audience, Status: roadmap.ItemPlanned,
+			StartDate: d(2026, 9, 1), EndDate: d(2026, 11, 1), LaunchTier: tier, LaunchDate: launch})
+		if err != nil {
+			t.Fatalf("элемент %q: %v", title, err)
+		}
+		return it
+	}
+	mustItem("Запуск 4.0", authz.AudienceSalesSafe, roadmap.LaunchTier1, d(2026, 11, 10))
+	mustItem("Внутренний рефакторинг", authz.AudienceInternal, roadmap.LaunchTier3, d(2026, 11, 20))
+	mustItem("Запуск в следующем году", authz.AudienceSalesSafe, roadmap.LaunchTier2, d(2027, 2, 1))
+	mustItem("Без запуска", authz.AudienceInternal, roadmap.LaunchNone, kernel.Date{})
+
+	cal, err := f.svc.LaunchCalendar(f.ctx, f.cpo, f.edr, d(2026, 10, 1), d(2026, 12, 31))
+	if err != nil {
+		t.Fatalf("календарь: %v", err)
+	}
+	if len(cal.Entries) != 2 {
+		t.Fatalf("записей календаря %d, ожидалось 2: %+v", len(cal.Entries), cal.Entries)
+	}
+	if cal.Entries[0].Title != "Запуск 4.0" || cal.Entries[0].Tier != roadmap.LaunchTier1 {
+		t.Fatalf("первая запись: %+v", cal.Entries[0])
+	}
+	salesSafe, err := f.svc.LaunchCalendar(f.ctx, presaleScope(), f.edr, kernel.Date{}, kernel.Date{})
+	if err != nil {
+		t.Fatalf("sales-safe календарь: %v", err)
+	}
+	for _, e := range salesSafe.Entries {
+		if e.Audience != authz.AudienceSalesSafe {
+			t.Fatalf("во внешнем календаре внутренний запуск: %+v", e)
+		}
+	}
+	if len(salesSafe.Entries) != 2 {
+		t.Fatalf("sales-safe записей %d, ожидалось 2", len(salesSafe.Entries))
+	}
+	var zero authz.Scope
+	if _, err := f.svc.LaunchCalendar(f.ctx, zero, f.edr, kernel.Date{}, kernel.Date{}); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("нулевой Scope: ожидался отказ, получено %v", err)
+	}
+}
+
+// TestRM06_LaunchTierRequiresDate: уровень запуска без даты запуска не сохраняется.
+func TestRM06_LaunchTierRequiresDate(t *testing.T) {
+	f := newFixture(t)
+	_, err := f.svc.CreateItem(f.ctx, f.cpo, f.edr, roadmap.ItemInput{
+		Title: "Запуск без даты", Bucket: roadmap.BucketNow, Audience: authz.AudienceInternal,
+		Status: roadmap.ItemPlanned, LaunchTier: roadmap.LaunchTier1})
+	if !errors.Is(err, kernel.ErrValidation) {
+		t.Fatalf("ожидалась ошибка валидации, получено %v", err)
+	}
+}

@@ -2,6 +2,7 @@ package decisions
 
 import (
 	"context"
+	"sort"
 	"sync"
 
 	"github.com/onixus/metis/internal/kernel"
@@ -45,6 +46,8 @@ type Store interface {
 	Save(ctx context.Context, r DecisionRecord) error
 	Get(ctx context.Context, id kernel.ID) (DecisionRecord, error)
 	List(ctx context.Context, f Filter) ([]DecisionRecord, error)
+	// DueForReview возвращает принятые решения с датой ревизии не позже указанной и без ревизии (DA-06).
+	DueForReview(ctx context.Context, on kernel.Date) ([]DecisionRecord, error)
 	// EventProcessed сообщает, обрабатывалось ли событие (идемпотентность обработчиков по Event.ID).
 	EventProcessed(ctx context.Context, eventID kernel.ID) (bool, error)
 	// MarkEventProcessed отмечает событие обработанным; в SQL-реализации — в одной транзакции с записью PageID.
@@ -99,6 +102,26 @@ func (m *MemStore) List(_ context.Context, f Filter) ([]DecisionRecord, error) {
 			out = append(out, r)
 		}
 	}
+	return out, nil
+}
+
+// DueForReview возвращает принятые решения с наступившей датой ревизии и без ревизии (DA-06).
+func (m *MemStore) DueForReview(_ context.Context, on kernel.Date) ([]DecisionRecord, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]DecisionRecord, 0)
+	for _, r := range m.items {
+		if r.Review != nil || r.Status != StatusAccepted || r.ReviewDate.IsZero() || r.ReviewDate.After(on) {
+			continue
+		}
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].ReviewDate != out[j].ReviewDate {
+			return out[i].ReviewDate.Before(out[j].ReviewDate)
+		}
+		return out[i].ID.String() < out[j].ID.String()
+	})
 	return out, nil
 }
 

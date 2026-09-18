@@ -2,7 +2,7 @@
 
 Внутренняя платформа портфельного управления продуктами: граф портфеля, сигналы спроса, приоритизация, roadmap, обязательства, SSDLC и сертификация, экономика, решения. ТЗ — [docs/spec.md](docs/spec.md), инструкция агента-разработчика — [AGENTS.md](AGENTS.md).
 
-Состояние: **этап 1 (ядро и delivery)** — граф портфеля, сигналы, приоритизация, roadmap, проекция трекера, аудит, RBAC/ABAC, API, фронтенд. Сценарий приёмки 7.7 автоматизирован в `tests/e2e`.
+Состояние: **этапы 1–3** — ядро и delivery (граф портфеля, сигналы, приоритизация, roadmap, проекция трекера, аудит, RBAC/ABAC); discovery, обязательства, SSDLC и сертификация, решения; экономика и маркетинг (импорт финансовых данных, формулы показателей, P&L, сценарии, win/loss, лицензирование поставки). Сценарии приёмки этапов автоматизированы в `tests/e2e`.
 
 ## Быстрый старт
 
@@ -10,7 +10,7 @@
 
 ```bash
 make ci                 # gofmt, vet, golangci-lint, тесты с -race, сборка
-go test ./tests/e2e/    # сценарий приёмки этапа 1 в процессе (память + мок Jira)
+go test ./tests/e2e/    # сценарии приёмки этапов 1–3 в процессе (память + мок Jira)
 ```
 
 Стенд (PostgreSQL, Keycloak, мок Jira, api, worker):
@@ -43,6 +43,9 @@ cd web && npm ci && npm run dev
 | `METIS_CONFLUENCE_SPACE` | пространство Confluence для страниц ADR (по умолчанию `METIS`) |
 | `METIS_WEBHOOK_TOKEN` | секрет входящего webhook трекера (`POST /api/v1/webhooks/jira`) |
 | `METIS_CRM_DIR` | каталог CSV-выгрузок CRM |
+| `METIS_SECURITY_DIR` | каталог манифестов пайплайна безопасности для автосбора доказательств (CM-09) |
+| `METIS_FINANCE_DIR`, `METIS_FINANCE_TEMPLATE`, `METIS_FINANCE_INTERVAL` | загрузка книг XLSX по расписанию: каталог, название шаблона импорта, интервал (по умолчанию `1h`) |
+| `METIS_LICENSE_KEY`, `METIS_LICENSE_PUBKEY` | лицензионный ключ поставки и публичный ключ поставщика в base64 (AD-06) |
 | `METIS_OTEL_EXPORTER` | `none`, `stdout`, `otlp` |
 
 Секреты передаются только через окружение или Secret Kubernetes (см. `deploy/helm/metis`).

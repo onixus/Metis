@@ -91,10 +91,18 @@ func toImpact(a compliance.ImpactAssessment) gen.ImpactAssessment {
 }
 
 func toBaseline(b compliance.CertifiedBaseline) gen.CertifiedBaseline {
-	return gen.CertifiedBaseline{
+	out := gen.CertifiedBaseline{
 		Id: b.ID, ProductId: b.ProductID, TrackId: idPtr(b.TrackID), Version: b.Version, RequirementSetId: idPtr(b.RequirementSetID),
 		CertificateNo: b.CertificateNo, CertifiedAt: openapi_types.Date{Time: b.CertifiedAt.Time()}, Eol: openapi_types.Date{Time: b.EOL.Time()}, CreatedAt: b.CreatedAt,
 	}
+	if len(b.Components) > 0 {
+		components := make([]gen.Component, 0, len(b.Components))
+		for _, c := range b.Components {
+			components = append(components, gen.Component{Key: c.Key, Version: strPtr(c.Version)})
+		}
+		out.Components = &components
+	}
+	return out
 }
 
 func toComplianceSettings(st compliance.Settings) gen.ComplianceSettings {

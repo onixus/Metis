@@ -36,6 +36,27 @@ func (e AffectedBaselineProcedure) Valid() bool {
 	}
 }
 
+// Defines values for AllocationRuleInputBasis.
+const (
+	AllocationRuleInputBasisManual   AllocationRuleInputBasis = "manual"
+	AllocationRuleInputBasisRevenue  AllocationRuleInputBasis = "revenue"
+	AllocationRuleInputBasisWorklogs AllocationRuleInputBasis = "worklogs"
+)
+
+// Valid indicates whether the value is a known member of the AllocationRuleInputBasis enum.
+func (e AllocationRuleInputBasis) Valid() bool {
+	switch e {
+	case AllocationRuleInputBasisManual:
+		return true
+	case AllocationRuleInputBasisRevenue:
+		return true
+	case AllocationRuleInputBasisWorklogs:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CommitmentKind.
 const (
 	CommitmentKindCustomer   CommitmentKind = "customer"
@@ -348,6 +369,30 @@ func (e CustomStatusDefEntity) Valid() bool {
 	}
 }
 
+// Defines values for DashboardPanelKind.
+const (
+	Bar   DashboardPanelKind = "bar"
+	Line  DashboardPanelKind = "line"
+	Stat  DashboardPanelKind = "stat"
+	Table DashboardPanelKind = "table"
+)
+
+// Valid indicates whether the value is a known member of the DashboardPanelKind enum.
+func (e DashboardPanelKind) Valid() bool {
+	switch e {
+	case Bar:
+		return true
+	case Line:
+		return true
+	case Stat:
+		return true
+	case Table:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DecisionStatus.
 const (
 	DecisionStatusAccepted   DecisionStatus = "accepted"
@@ -396,6 +441,27 @@ func (e DecisionLinkKind) Valid() bool {
 	case DecisionLinkKindSignal:
 		return true
 	case DecisionLinkKindTrack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DecisionReviewVerdict.
+const (
+	Confirmed DecisionReviewVerdict = "confirmed"
+	Missed    DecisionReviewVerdict = "missed"
+	Partial   DecisionReviewVerdict = "partial"
+)
+
+// Valid indicates whether the value is a known member of the DecisionReviewVerdict enum.
+func (e DecisionReviewVerdict) Valid() bool {
+	switch e {
+	case Confirmed:
+		return true
+	case Missed:
+		return true
+	case Partial:
 		return true
 	default:
 		return false
@@ -507,6 +573,24 @@ func (e EvidenceItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for ExplanationKind.
+const (
+	ExplanationKindField  ExplanationKind = "field"
+	ExplanationKindMetric ExplanationKind = "metric"
+)
+
+// Valid indicates whether the value is a known member of the ExplanationKind enum.
+func (e ExplanationKind) Valid() bool {
+	switch e {
+	case ExplanationKindField:
+		return true
+	case ExplanationKindMetric:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for FeatureStatus.
 const (
 	FeatureStatusDiscovery  FeatureStatus = "discovery"
@@ -561,6 +645,78 @@ func (e FeatureInputStatus) Valid() bool {
 	case FeatureInputStatusPlanned:
 		return true
 	case FeatureInputStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialFieldInputDimensions.
+const (
+	FinancialFieldInputDimensionsItem    FinancialFieldInputDimensions = "item"
+	FinancialFieldInputDimensionsPeriod  FinancialFieldInputDimensions = "period"
+	FinancialFieldInputDimensionsProduct FinancialFieldInputDimensions = "product"
+	FinancialFieldInputDimensionsTeam    FinancialFieldInputDimensions = "team"
+)
+
+// Valid indicates whether the value is a known member of the FinancialFieldInputDimensions enum.
+func (e FinancialFieldInputDimensions) Valid() bool {
+	switch e {
+	case FinancialFieldInputDimensionsItem:
+		return true
+	case FinancialFieldInputDimensionsPeriod:
+		return true
+	case FinancialFieldInputDimensionsProduct:
+		return true
+	case FinancialFieldInputDimensionsTeam:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialFieldInputSource.
+const (
+	FinancialFieldInputSourceCalculated FinancialFieldInputSource = "calculated"
+	FinancialFieldInputSourceImport     FinancialFieldInputSource = "import"
+	FinancialFieldInputSourceManual     FinancialFieldInputSource = "manual"
+)
+
+// Valid indicates whether the value is a known member of the FinancialFieldInputSource enum.
+func (e FinancialFieldInputSource) Valid() bool {
+	switch e {
+	case FinancialFieldInputSourceCalculated:
+		return true
+	case FinancialFieldInputSourceImport:
+		return true
+	case FinancialFieldInputSourceManual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialFieldInputType.
+const (
+	FinancialFieldInputTypeDate      FinancialFieldInputType = "date"
+	FinancialFieldInputTypeMoney     FinancialFieldInputType = "money"
+	FinancialFieldInputTypeNumber    FinancialFieldInputType = "number"
+	FinancialFieldInputTypePercent   FinancialFieldInputType = "percent"
+	FinancialFieldInputTypeReference FinancialFieldInputType = "reference"
+)
+
+// Valid indicates whether the value is a known member of the FinancialFieldInputType enum.
+func (e FinancialFieldInputType) Valid() bool {
+	switch e {
+	case FinancialFieldInputTypeDate:
+		return true
+	case FinancialFieldInputTypeMoney:
+		return true
+	case FinancialFieldInputTypeNumber:
+		return true
+	case FinancialFieldInputTypePercent:
+		return true
+	case FinancialFieldInputTypeReference:
 		return true
 	default:
 		return false
@@ -681,6 +837,27 @@ func (e ImpactInputClass) Valid() bool {
 	}
 }
 
+// Defines values for ImportBatchStatus.
+const (
+	ImportBatchStatusApplied  ImportBatchStatus = "applied"
+	ImportBatchStatusPreview  ImportBatchStatus = "preview"
+	ImportBatchStatusRejected ImportBatchStatus = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ImportBatchStatus enum.
+func (e ImportBatchStatus) Valid() bool {
+	switch e {
+	case ImportBatchStatusApplied:
+		return true
+	case ImportBatchStatusPreview:
+		return true
+	case ImportBatchStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InsightConfidence.
 const (
 	InsightConfidenceHigh   InsightConfidence = "high"
@@ -717,6 +894,63 @@ func (e InsightInputConfidence) Valid() bool {
 	case InsightInputConfidenceLow:
 		return true
 	case InsightInputConfidenceMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LaunchCalendarAudience.
+const (
+	LaunchCalendarAudienceInternal  LaunchCalendarAudience = "internal"
+	LaunchCalendarAudienceSalesSafe LaunchCalendarAudience = "sales_safe"
+)
+
+// Valid indicates whether the value is a known member of the LaunchCalendarAudience enum.
+func (e LaunchCalendarAudience) Valid() bool {
+	switch e {
+	case LaunchCalendarAudienceInternal:
+		return true
+	case LaunchCalendarAudienceSalesSafe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LaunchEntryAudience.
+const (
+	LaunchEntryAudienceInternal  LaunchEntryAudience = "internal"
+	LaunchEntryAudienceSalesSafe LaunchEntryAudience = "sales_safe"
+)
+
+// Valid indicates whether the value is a known member of the LaunchEntryAudience enum.
+func (e LaunchEntryAudience) Valid() bool {
+	switch e {
+	case LaunchEntryAudienceInternal:
+		return true
+	case LaunchEntryAudienceSalesSafe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LaunchEntryTier.
+const (
+	LaunchEntryTierTier1 LaunchEntryTier = "tier1"
+	LaunchEntryTierTier2 LaunchEntryTier = "tier2"
+	LaunchEntryTierTier3 LaunchEntryTier = "tier3"
+)
+
+// Valid indicates whether the value is a known member of the LaunchEntryTier enum.
+func (e LaunchEntryTier) Valid() bool {
+	switch e {
+	case LaunchEntryTierTier1:
+		return true
+	case LaunchEntryTierTier2:
+		return true
+	case LaunchEntryTierTier3:
 		return true
 	default:
 		return false
@@ -1197,6 +1431,27 @@ func (e RoadmapItemKind) Valid() bool {
 	}
 }
 
+// Defines values for RoadmapItemLaunchTier.
+const (
+	RoadmapItemLaunchTierTier1 RoadmapItemLaunchTier = "tier1"
+	RoadmapItemLaunchTierTier2 RoadmapItemLaunchTier = "tier2"
+	RoadmapItemLaunchTierTier3 RoadmapItemLaunchTier = "tier3"
+)
+
+// Valid indicates whether the value is a known member of the RoadmapItemLaunchTier enum.
+func (e RoadmapItemLaunchTier) Valid() bool {
+	switch e {
+	case RoadmapItemLaunchTierTier1:
+		return true
+	case RoadmapItemLaunchTierTier2:
+		return true
+	case RoadmapItemLaunchTierTier3:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RoadmapItemStatus.
 const (
 	RoadmapItemStatusCancelled  RoadmapItemStatus = "cancelled"
@@ -1278,6 +1533,27 @@ func (e RoadmapItemInputKind) Valid() bool {
 	}
 }
 
+// Defines values for RoadmapItemInputLaunchTier.
+const (
+	RoadmapItemInputLaunchTierTier1 RoadmapItemInputLaunchTier = "tier1"
+	RoadmapItemInputLaunchTierTier2 RoadmapItemInputLaunchTier = "tier2"
+	RoadmapItemInputLaunchTierTier3 RoadmapItemInputLaunchTier = "tier3"
+)
+
+// Valid indicates whether the value is a known member of the RoadmapItemInputLaunchTier enum.
+func (e RoadmapItemInputLaunchTier) Valid() bool {
+	switch e {
+	case RoadmapItemInputLaunchTierTier1:
+		return true
+	case RoadmapItemInputLaunchTierTier2:
+		return true
+	case RoadmapItemInputLaunchTierTier3:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RoadmapItemInputStatus.
 const (
 	RoadmapItemInputStatusCancelled  RoadmapItemInputStatus = "cancelled"
@@ -1353,6 +1629,27 @@ func (e SalesSafeItemBucket) Valid() bool {
 	case SalesSafeItemBucketNext:
 		return true
 	case SalesSafeItemBucketNow:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SalesSafeItemLaunchTier.
+const (
+	SalesSafeItemLaunchTierTier1 SalesSafeItemLaunchTier = "tier1"
+	SalesSafeItemLaunchTierTier2 SalesSafeItemLaunchTier = "tier2"
+	SalesSafeItemLaunchTierTier3 SalesSafeItemLaunchTier = "tier3"
+)
+
+// Valid indicates whether the value is a known member of the SalesSafeItemLaunchTier enum.
+func (e SalesSafeItemLaunchTier) Valid() bool {
+	switch e {
+	case SalesSafeItemLaunchTierTier1:
+		return true
+	case SalesSafeItemLaunchTierTier2:
+		return true
+	case SalesSafeItemLaunchTierTier3:
 		return true
 	default:
 		return false
@@ -1518,6 +1815,24 @@ func (e SignalInputSource) Valid() bool {
 	}
 }
 
+// Defines values for TeamSharesInputSource.
+const (
+	TeamSharesInputSourceManual   TeamSharesInputSource = "manual"
+	TeamSharesInputSourceWorklogs TeamSharesInputSource = "worklogs"
+)
+
+// Valid indicates whether the value is a known member of the TeamSharesInputSource enum.
+func (e TeamSharesInputSource) Valid() bool {
+	switch e {
+	case TeamSharesInputSourceManual:
+		return true
+	case TeamSharesInputSourceWorklogs:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TraceNodeKind.
 const (
 	TraceNodeKindDecision   TraceNodeKind = "decision"
@@ -1635,6 +1950,30 @@ func (e TrackTemplateInputProductType) Valid() bool {
 	case TrackTemplateInputProductTypePlatform:
 		return true
 	case TrackTemplateInputProductTypeSecurity:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VulnerabilityInputSeverity.
+const (
+	VulnerabilityInputSeverityCritical VulnerabilityInputSeverity = "critical"
+	VulnerabilityInputSeverityHigh     VulnerabilityInputSeverity = "high"
+	VulnerabilityInputSeverityLow      VulnerabilityInputSeverity = "low"
+	VulnerabilityInputSeverityMedium   VulnerabilityInputSeverity = "medium"
+)
+
+// Valid indicates whether the value is a known member of the VulnerabilityInputSeverity enum.
+func (e VulnerabilityInputSeverity) Valid() bool {
+	switch e {
+	case VulnerabilityInputSeverityCritical:
+		return true
+	case VulnerabilityInputSeverityHigh:
+		return true
+	case VulnerabilityInputSeverityLow:
+		return true
+	case VulnerabilityInputSeverityMedium:
 		return true
 	default:
 		return false
@@ -1927,12 +2266,62 @@ type AffectedFeature struct {
 	ViaFeature  openapi_types.UUID  `json:"via_feature"`
 }
 
+// AllocationRule defines model for AllocationRule.
+type AllocationRule struct {
+	Actor         *string               `json:"actor,omitempty"`
+	At            *time.Time            `json:"at,omitempty"`
+	Basis         string                `json:"basis"`
+	Consumers     *[]openapi_types.UUID `json:"consumers,omitempty"`
+	EffectiveFrom *openapi_types.Date   `json:"effective_from,omitempty"`
+	HubProductId  openapi_types.UUID    `json:"hub_product_id"`
+	Id            openapi_types.UUID    `json:"id"`
+	Shares        *map[string]string    `json:"shares,omitempty"`
+	Version       int                   `json:"version"`
+}
+
+// AllocationRuleInput defines model for AllocationRuleInput.
+type AllocationRuleInput struct {
+	Basis         AllocationRuleInputBasis `json:"basis"`
+	Consumers     *[]openapi_types.UUID    `json:"consumers,omitempty"`
+	EffectiveFrom *openapi_types.Date      `json:"effective_from,omitempty"`
+	HubProductId  openapi_types.UUID       `json:"hub_product_id"`
+	Shares        *map[string]string       `json:"shares,omitempty"`
+}
+
+// AllocationRuleInputBasis defines model for AllocationRuleInput.Basis.
+type AllocationRuleInputBasis string
+
 // AuditVerifyResult defines model for AuditVerifyResult.
 type AuditVerifyResult struct {
 	BrokenSeq *int64  `json:"broken_seq,omitempty"`
 	Checked   int64   `json:"checked"`
 	Ok        bool    `json:"ok"`
 	Reason    *string `json:"reason,omitempty"`
+}
+
+// BranchCost defines model for BranchCost.
+type BranchCost struct {
+	Branch    string             `json:"branch"`
+	Cost      Money              `json:"cost"`
+	ProductId openapi_types.UUID `json:"product_id"`
+}
+
+// BundleRule defines model for BundleRule.
+type BundleRule struct {
+	Actor         *string             `json:"actor,omitempty"`
+	At            *time.Time          `json:"at,omitempty"`
+	BundleKey     string              `json:"bundle_key"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Id            openapi_types.UUID  `json:"id"`
+	Shares        map[string]string   `json:"shares"`
+	Version       int                 `json:"version"`
+}
+
+// BundleRuleInput defines model for BundleRuleInput.
+type BundleRuleInput struct {
+	BundleKey     string              `json:"bundle_key"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Shares        map[string]string   `json:"shares"`
 }
 
 // Capability defines model for Capability.
@@ -1942,10 +2331,22 @@ type Capability struct {
 	ProductId openapi_types.UUID `json:"product_id"`
 }
 
+// CertificationEconomics defines model for CertificationEconomics.
+type CertificationEconomics struct {
+	Balance          Money              `json:"balance"`
+	CertifiedRevenue Money              `json:"certified_revenue"`
+	Period           string             `json:"period"`
+	ProductId        openapi_types.UUID `json:"product_id"`
+	TrackCost        Money              `json:"track_cost"`
+}
+
 // CertifiedBaseline defines model for CertifiedBaseline.
 type CertifiedBaseline struct {
-	CertificateNo    string              `json:"certificate_no"`
-	CertifiedAt      openapi_types.Date  `json:"certified_at"`
+	CertificateNo string             `json:"certificate_no"`
+	CertifiedAt   openapi_types.Date `json:"certified_at"`
+
+	// Components Состав поставки для поиска по уязвимому компоненту (CM-08)
+	Components       *[]Component        `json:"components,omitempty"`
 	CreatedAt        time.Time           `json:"created_at"`
 	Eol              openapi_types.Date  `json:"eol"`
 	Id               openapi_types.UUID  `json:"id"`
@@ -2011,6 +2412,19 @@ type CommitmentAlert struct {
 // CommitmentAlertKind defines model for CommitmentAlert.Kind.
 type CommitmentAlertKind string
 
+// CommitmentImpact defines model for CommitmentImpact.
+type CommitmentImpact struct {
+	Breached   bool `json:"breached"`
+	Commitment struct {
+		DueDate    *openapi_types.Date `json:"due_date,omitempty"`
+		Id         *openapi_types.UUID `json:"id,omitempty"`
+		ProductId  *openapi_types.UUID `json:"product_id,omitempty"`
+		Regulatory *bool               `json:"regulatory,omitempty"`
+		Title      *string             `json:"title,omitempty"`
+	} `json:"commitment"`
+	Reason *string `json:"reason,omitempty"`
+}
+
 // CommitmentInput defines model for CommitmentInput.
 type CommitmentInput struct {
 	Basis        string                  `json:"basis"`
@@ -2054,6 +2468,13 @@ type ComplianceSettings struct {
 	// CertifiedProcessDiscount Доля 0…1 десятичной строкой
 	CertifiedProcessDiscount string           `json:"certified_process_discount"`
 	CostByClass              map[string]Money `json:"cost_by_class"`
+}
+
+// Component defines model for Component.
+type Component struct {
+	// Key Идентификатор компонента из SBOM (purl
+	Key     string  `json:"key"`
+	Version *string `json:"version,omitempty"`
 }
 
 // Contract defines model for Contract.
@@ -2157,6 +2578,40 @@ type CycleProblem struct {
 	Type   string               `json:"type"`
 }
 
+// Dashboard defines model for Dashboard.
+type Dashboard struct {
+	CreatedAt *time.Time          `json:"created_at,omitempty"`
+	Id        openapi_types.UUID  `json:"id"`
+	Name      string              `json:"name"`
+	Owner     string              `json:"owner"`
+	Panels    []DashboardPanel    `json:"panels"`
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
+	Shared    *bool               `json:"shared,omitempty"`
+	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
+}
+
+// DashboardInput defines model for DashboardInput.
+type DashboardInput struct {
+	Id        *openapi_types.UUID `json:"id,omitempty"`
+	Name      string              `json:"name"`
+	Panels    []DashboardPanel    `json:"panels"`
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
+	Shared    *bool               `json:"shared,omitempty"`
+}
+
+// DashboardPanel defines model for DashboardPanel.
+type DashboardPanel struct {
+	Key    string             `json:"key"`
+	Kind   DashboardPanelKind `json:"kind"`
+	Params *map[string]string `json:"params,omitempty"`
+	Source string             `json:"source"`
+	Title  string             `json:"title"`
+	Width  *int               `json:"width,omitempty"`
+}
+
+// DashboardPanelKind defines model for DashboardPanel.Kind.
+type DashboardPanelKind string
+
 // DateChange defines model for DateChange.
 type DateChange struct {
 	Actor     string              `json:"actor"`
@@ -2174,10 +2629,13 @@ type DateChange struct {
 
 // Decision defines model for Decision.
 type Decision struct {
-	Author         string             `json:"author"`
-	ChosenKey      *string            `json:"chosen_key,omitempty"`
-	Context        string             `json:"context"`
-	CreatedAt      time.Time          `json:"created_at"`
+	Author    string    `json:"author"`
+	ChosenKey *string   `json:"chosen_key,omitempty"`
+	Context   string    `json:"context"`
+	CreatedAt time.Time `json:"created_at"`
+
+	// Effect Измеримая часть ожидаемого эффекта решения (DA-06)
+	Effect         *DecisionEffect    `json:"effect,omitempty"`
 	ExpectedEffect *string            `json:"expected_effect,omitempty"`
 	Id             openapi_types.UUID `json:"id"`
 	Links          *[]DecisionLink    `json:"links,omitempty"`
@@ -2187,6 +2645,7 @@ type Decision struct {
 	// ProductId Пусто — портфельное решение
 	ProductId    *openapi_types.UUID     `json:"product_id,omitempty"`
 	Rationale    *string                 `json:"rationale,omitempty"`
+	Review       *DecisionReview         `json:"review,omitempty"`
 	ReviewDate   *openapi_types.Date     `json:"review_date,omitempty"`
 	Snapshot     *map[string]interface{} `json:"snapshot,omitempty"`
 	Status       DecisionStatus          `json:"status"`
@@ -2198,10 +2657,22 @@ type Decision struct {
 // DecisionStatus defines model for Decision.Status.
 type DecisionStatus string
 
+// DecisionEffect Измеримая часть ожидаемого эффекта решения (DA-06)
+type DecisionEffect struct {
+	MetricKey *string `json:"metric_key,omitempty"`
+	Period    *string `json:"period,omitempty"`
+
+	// Value Десятичное значение строкой
+	Value *string `json:"value,omitempty"`
+}
+
 // DecisionInput defines model for DecisionInput.
 type DecisionInput struct {
-	ChosenKey      *string           `json:"chosen_key,omitempty"`
-	Context        string            `json:"context"`
+	ChosenKey *string `json:"chosen_key,omitempty"`
+	Context   string  `json:"context"`
+
+	// Effect Измеримая часть ожидаемого эффекта решения (DA-06)
+	Effect         *DecisionEffect   `json:"effect,omitempty"`
 	ExpectedEffect *string           `json:"expected_effect,omitempty"`
 	Links          *[]DecisionLink   `json:"links,omitempty"`
 	Options        *[]DecisionOption `json:"options,omitempty"`
@@ -2235,6 +2706,20 @@ type DecisionRef struct {
 	Id    openapi_types.UUID `json:"id"`
 	Title string             `json:"title"`
 }
+
+// DecisionReview defines model for DecisionReview.
+type DecisionReview struct {
+	Actor    string                `json:"actor"`
+	Actual   string                `json:"actual"`
+	At       time.Time             `json:"at"`
+	Comment  *string               `json:"comment,omitempty"`
+	Delta    string                `json:"delta"`
+	Expected string                `json:"expected"`
+	Verdict  DecisionReviewVerdict `json:"verdict"`
+}
+
+// DecisionReviewVerdict defines model for DecisionReview.Verdict.
+type DecisionReviewVerdict string
 
 // Evidence defines model for Evidence.
 type Evidence struct {
@@ -2316,6 +2801,34 @@ type EvidenceItemInput struct {
 	Url    string `json:"url"`
 }
 
+// Explanation defines model for Explanation.
+type Explanation struct {
+	Expression *string         `json:"expression,omitempty"`
+	Inputs     *[]Explanation  `json:"inputs,omitempty"`
+	Key        string          `json:"key"`
+	Kind       ExplanationKind `json:"kind"`
+	Rows       *[]FactRow      `json:"rows,omitempty"`
+	Value      string          `json:"value"`
+}
+
+// ExplanationKind defines model for Explanation.Kind.
+type ExplanationKind string
+
+// FactRow defines model for FactRow.
+type FactRow struct {
+	BatchId     *openapi_types.UUID `json:"batch_id,omitempty"`
+	DataVersion *int                `json:"data_version,omitempty"`
+	FieldKey    string              `json:"field_key"`
+	Id          openapi_types.UUID  `json:"id"`
+	Item        *string             `json:"item,omitempty"`
+	Period      string              `json:"period"`
+	ProductId   *openapi_types.UUID `json:"product_id,omitempty"`
+	Row         *int                `json:"row,omitempty"`
+	Sheet       *string             `json:"sheet,omitempty"`
+	TeamId      *openapi_types.UUID `json:"team_id,omitempty"`
+	Value       string              `json:"value"`
+}
+
 // Feature defines model for Feature.
 type Feature struct {
 	Affected     bool                `json:"affected"`
@@ -2343,6 +2856,14 @@ type FeatureCost struct {
 	FeatureId        openapi_types.UUID `json:"feature_id"`
 	ProductId        openapi_types.UUID `json:"product_id"`
 	Total            Money              `json:"total"`
+}
+
+// FeatureEconomics defines model for FeatureEconomics.
+type FeatureEconomics struct {
+	Balance    Money              `json:"balance"`
+	FeatureId  openapi_types.UUID `json:"feature_id"`
+	Investment Money              `json:"investment"`
+	Revenue    Money              `json:"revenue"`
 }
 
 // FeatureFlags defines model for FeatureFlags.
@@ -2381,6 +2902,69 @@ type FeatureValue struct {
 	OwnValue     Money              `json:"own_value"`
 	ProductId    openapi_types.UUID `json:"product_id"`
 	TotalValue   Money              `json:"total_value"`
+}
+
+// FinanceImportResult defines model for FinanceImportResult.
+type FinanceImportResult struct {
+	Batch ImportBatch `json:"batch"`
+	Rows  *[]FactRow  `json:"rows,omitempty"`
+}
+
+// FinancialField defines model for FinancialField.
+type FinancialField struct {
+	Id       openapi_types.UUID      `json:"id"`
+	Key      string                  `json:"key"`
+	Versions []FinancialFieldVersion `json:"versions"`
+}
+
+// FinancialFieldInput defines model for FinancialFieldInput.
+type FinancialFieldInput struct {
+	Currency      *string                          `json:"currency,omitempty"`
+	Dimensions    *[]FinancialFieldInputDimensions `json:"dimensions,omitempty"`
+	EffectiveFrom *openapi_types.Date              `json:"effective_from,omitempty"`
+	Key           string                           `json:"key"`
+	Name          string                           `json:"name"`
+	Source        FinancialFieldInputSource        `json:"source"`
+	Type          FinancialFieldInputType          `json:"type"`
+}
+
+// FinancialFieldInputDimensions defines model for FinancialFieldInput.Dimensions.
+type FinancialFieldInputDimensions string
+
+// FinancialFieldInputSource defines model for FinancialFieldInput.Source.
+type FinancialFieldInputSource string
+
+// FinancialFieldInputType defines model for FinancialFieldInput.Type.
+type FinancialFieldInputType string
+
+// FinancialFieldVersion defines model for FinancialFieldVersion.
+type FinancialFieldVersion struct {
+	Actor         *string             `json:"actor,omitempty"`
+	At            *time.Time          `json:"at,omitempty"`
+	Currency      *string             `json:"currency,omitempty"`
+	Dimensions    *[]string           `json:"dimensions,omitempty"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Name          string              `json:"name"`
+	Source        string              `json:"source"`
+	Type          string              `json:"type"`
+	Version       int                 `json:"version"`
+}
+
+// Forecast defines model for Forecast.
+type Forecast struct {
+	EpicKey       *string             `json:"epic_key,omitempty"`
+	FeatureId     openapi_types.UUID  `json:"feature_id"`
+	From          *openapi_types.Date `json:"from,omitempty"`
+	IntervalHigh  *openapi_types.Date `json:"interval_high,omitempty"`
+	IntervalLow   *openapi_types.Date `json:"interval_low,omitempty"`
+	IterationDays *int                `json:"iteration_days,omitempty"`
+	P50           *openapi_types.Date `json:"p50"`
+	P85           *openapi_types.Date `json:"p85"`
+	P95           *openapi_types.Date `json:"p95"`
+	ProductId     openapi_types.UUID  `json:"product_id"`
+	Remaining     int                 `json:"remaining"`
+	Samples       *int                `json:"samples,omitempty"`
+	Throughput    *[]int              `json:"throughput,omitempty"`
 }
 
 // Gate defines model for Gate.
@@ -2491,10 +3075,63 @@ type ImpactInput struct {
 // ImpactInputClass defines model for ImpactInput.Class.
 type ImpactInputClass string
 
+// ImportBatch defines model for ImportBatch.
+type ImportBatch struct {
+	Actor       *string             `json:"actor,omitempty"`
+	At          *time.Time          `json:"at,omitempty"`
+	DataVersion *int                `json:"data_version,omitempty"`
+	Errors      *[]RowError         `json:"errors,omitempty"`
+	FileName    *string             `json:"file_name,omitempty"`
+	Id          openapi_types.UUID  `json:"id"`
+	Period      string              `json:"period"`
+	Rows        *int                `json:"rows,omitempty"`
+	Scheduled   *bool               `json:"scheduled,omitempty"`
+	Sha256      *string             `json:"sha256,omitempty"`
+	Status      ImportBatchStatus   `json:"status"`
+	TemplateId  *openapi_types.UUID `json:"template_id,omitempty"`
+}
+
+// ImportBatchStatus defines model for ImportBatch.Status.
+type ImportBatchStatus string
+
+// ImportColumn defines model for ImportColumn.
+type ImportColumn struct {
+	Column     string `json:"column"`
+	FieldKey   string `json:"field_key"`
+	MinorUnits *bool  `json:"minor_units,omitempty"`
+}
+
 // ImportResult defines model for ImportResult.
 type ImportResult struct {
 	Imported int               `json:"imported"`
 	Skipped  map[string]string `json:"skipped"`
+}
+
+// ImportSheet defines model for ImportSheet.
+type ImportSheet struct {
+	Columns       []ImportColumn `json:"columns"`
+	HeaderRow     *int           `json:"header_row,omitempty"`
+	ItemColumn    *string        `json:"item_column,omitempty"`
+	PeriodColumn  *string        `json:"period_column,omitempty"`
+	ProductColumn *string        `json:"product_column,omitempty"`
+	Sheet         string         `json:"sheet"`
+	TeamColumn    *string        `json:"team_column,omitempty"`
+}
+
+// ImportTemplate defines model for ImportTemplate.
+type ImportTemplate struct {
+	CreatedAt *time.Time         `json:"created_at,omitempty"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	Sheets    []ImportSheet      `json:"sheets"`
+	UpdatedAt *time.Time         `json:"updated_at,omitempty"`
+}
+
+// ImportTemplateInput defines model for ImportTemplateInput.
+type ImportTemplateInput struct {
+	Id     *openapi_types.UUID `json:"id,omitempty"`
+	Name   string              `json:"name"`
+	Sheets []ImportSheet       `json:"sheets"`
 }
 
 // Insight defines model for Insight.
@@ -2551,6 +3188,57 @@ type InterviewInput struct {
 	Segment       *string               `json:"segment,omitempty"`
 }
 
+// LaunchCalendar defines model for LaunchCalendar.
+type LaunchCalendar struct {
+	Audience LaunchCalendarAudience `json:"audience"`
+	Entries  []LaunchEntry          `json:"entries"`
+	From     *openapi_types.Date    `json:"from,omitempty"`
+	To       *openapi_types.Date    `json:"to,omitempty"`
+}
+
+// LaunchCalendarAudience defines model for LaunchCalendar.Audience.
+type LaunchCalendarAudience string
+
+// LaunchEntry defines model for LaunchEntry.
+type LaunchEntry struct {
+	Audience   *LaunchEntryAudience `json:"audience,omitempty"`
+	ItemId     openapi_types.UUID   `json:"item_id"`
+	LaunchDate *openapi_types.Date  `json:"launch_date"`
+	ProductId  openapi_types.UUID   `json:"product_id"`
+	ReleaseId  *openapi_types.UUID  `json:"release_id,omitempty"`
+	Tier       LaunchEntryTier      `json:"tier"`
+	Title      string               `json:"title"`
+}
+
+// LaunchEntryAudience defines model for LaunchEntry.Audience.
+type LaunchEntryAudience string
+
+// LaunchEntryTier defines model for LaunchEntry.Tier.
+type LaunchEntryTier string
+
+// LicenseStatus defines model for LicenseStatus.
+type LicenseStatus struct {
+	DaysLeft  *int  `json:"days_left,omitempty"`
+	Expired   *bool `json:"expired,omitempty"`
+	InGrace   *bool `json:"in_grace,omitempty"`
+	Installed bool  `json:"installed"`
+	License   *struct {
+		Customer *string             `json:"customer,omitempty"`
+		Edition  *string             `json:"edition,omitempty"`
+		Id       *string             `json:"id,omitempty"`
+		IssuedAt *openapi_types.Date `json:"issued_at,omitempty"`
+		Limits   *struct {
+			Products *int `json:"products,omitempty"`
+			Users    *int `json:"users,omitempty"`
+		} `json:"limits,omitempty"`
+		Modules   *[]string           `json:"modules,omitempty"`
+		NotAfter  *openapi_types.Date `json:"not_after,omitempty"`
+		NotBefore *openapi_types.Date `json:"not_before,omitempty"`
+	} `json:"license,omitempty"`
+	Reason *string `json:"reason,omitempty"`
+	Valid  bool    `json:"valid"`
+}
+
 // Link defines model for Link.
 type Link struct {
 	ContractId    *openapi_types.UUID `json:"contract_id,omitempty"`
@@ -2605,11 +3293,98 @@ type MeAudience string
 // MeProducts defines model for Me.Products.
 type MeProducts string
 
+// Metric defines model for Metric.
+type Metric struct {
+	Id       openapi_types.UUID `json:"id"`
+	Key      string             `json:"key"`
+	Versions []MetricVersion    `json:"versions"`
+}
+
+// MetricComparison defines model for MetricComparison.
+type MetricComparison struct {
+	A      int    `json:"a"`
+	B      int    `json:"b"`
+	Key    string `json:"key"`
+	ValueA string `json:"value_a"`
+	ValueB string `json:"value_b"`
+}
+
+// MetricInput defines model for MetricInput.
+type MetricInput struct {
+	Currency      *string             `json:"currency,omitempty"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Expression    string              `json:"expression"`
+	Key           string              `json:"key"`
+	Name          string              `json:"name"`
+}
+
+// MetricValue defines model for MetricValue.
+type MetricValue struct {
+	Key       string              `json:"key"`
+	Period    *string             `json:"period,omitempty"`
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
+
+	// Value Десятичное значение строкой
+	Value string `json:"value"`
+}
+
+// MetricVersion defines model for MetricVersion.
+type MetricVersion struct {
+	Actor         *string             `json:"actor,omitempty"`
+	At            *time.Time          `json:"at,omitempty"`
+	Currency      *string             `json:"currency,omitempty"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Expression    string              `json:"expression"`
+	Name          string              `json:"name"`
+	Refs          *[]struct {
+		Key  *string `json:"key,omitempty"`
+		Kind *string `json:"kind,omitempty"`
+	} `json:"refs,omitempty"`
+	Version int `json:"version"`
+}
+
 // Money defines model for Money.
 type Money struct {
 	// Amount Минорные единицы
 	Amount   int64  `json:"amount"`
 	Currency string `json:"currency"`
+}
+
+// PipelineCollectInput defines model for PipelineCollectInput.
+type PipelineCollectInput struct {
+	Project string     `json:"project"`
+	Since   *time.Time `json:"since,omitempty"`
+}
+
+// PipelineCollectResult defines model for PipelineCollectResult.
+type PipelineCollectResult struct {
+	Collected       *[]EvidenceItem    `json:"collected,omitempty"`
+	ComponentsSaved *int               `json:"components_saved,omitempty"`
+	GateId          openapi_types.UUID `json:"gate_id"`
+	Sbom            *[]Component       `json:"sbom,omitempty"`
+	Skipped         *int               `json:"skipped,omitempty"`
+	TrackId         openapi_types.UUID `json:"track_id"`
+}
+
+// PnL defines model for PnL.
+type PnL struct {
+	BundleRevenue *Money             `json:"bundle_revenue,omitempty"`
+	DirectCosts   Money              `json:"direct_costs"`
+	DirectProfit  Money              `json:"direct_profit"`
+	HubLoad       Money              `json:"hub_load"`
+	LoadedProfit  Money              `json:"loaded_profit"`
+	Period        string             `json:"period"`
+	ProductId     openapi_types.UUID `json:"product_id"`
+	Revenue       Money              `json:"revenue"`
+}
+
+// PortfolioPnL defines model for PortfolioPnL.
+type PortfolioPnL struct {
+	Costs    Money  `json:"costs"`
+	Period   string `json:"period"`
+	Products []PnL  `json:"products"`
+	Profit   Money  `json:"profit"`
+	Revenue  Money  `json:"revenue"`
 }
 
 // Problem defines model for Problem.
@@ -2798,18 +3573,20 @@ type RoadmapItem struct {
 	Bucket   RoadmapItemBucket   `json:"bucket"`
 
 	// CommitmentId Обязательство
-	CommitmentId *openapi_types.UUID `json:"commitment_id,omitempty"`
-	CreatedAt    time.Time           `json:"created_at"`
-	EndDate      *openapi_types.Date `json:"end_date,omitempty"`
-	FeatureId    *openapi_types.UUID `json:"feature_id,omitempty"`
-	Id           openapi_types.UUID  `json:"id"`
-	Kind         RoadmapItemKind     `json:"kind"`
-	ProductId    openapi_types.UUID  `json:"product_id"`
-	ReleaseId    *openapi_types.UUID `json:"release_id,omitempty"`
-	StartDate    *openapi_types.Date `json:"start_date,omitempty"`
-	Status       RoadmapItemStatus   `json:"status"`
-	Title        string              `json:"title"`
-	UpdatedAt    time.Time           `json:"updated_at"`
+	CommitmentId *openapi_types.UUID    `json:"commitment_id,omitempty"`
+	CreatedAt    time.Time              `json:"created_at"`
+	EndDate      *openapi_types.Date    `json:"end_date,omitempty"`
+	FeatureId    *openapi_types.UUID    `json:"feature_id,omitempty"`
+	Id           openapi_types.UUID     `json:"id"`
+	Kind         RoadmapItemKind        `json:"kind"`
+	LaunchDate   *openapi_types.Date    `json:"launch_date,omitempty"`
+	LaunchTier   *RoadmapItemLaunchTier `json:"launch_tier,omitempty"`
+	ProductId    openapi_types.UUID     `json:"product_id"`
+	ReleaseId    *openapi_types.UUID    `json:"release_id,omitempty"`
+	StartDate    *openapi_types.Date    `json:"start_date,omitempty"`
+	Status       RoadmapItemStatus      `json:"status"`
+	Title        string                 `json:"title"`
+	UpdatedAt    time.Time              `json:"updated_at"`
 }
 
 // RoadmapItemAudience defines model for RoadmapItem.Audience.
@@ -2820,6 +3597,9 @@ type RoadmapItemBucket string
 
 // RoadmapItemKind defines model for RoadmapItem.Kind.
 type RoadmapItemKind string
+
+// RoadmapItemLaunchTier defines model for RoadmapItem.LaunchTier.
+type RoadmapItemLaunchTier string
 
 // RoadmapItemStatus defines model for RoadmapItem.Status.
 type RoadmapItemStatus string
@@ -2832,11 +3612,13 @@ type RoadmapItemInput struct {
 	FeatureId *openapi_types.UUID       `json:"feature_id,omitempty"`
 
 	// Kind Вид элемента (RM-04); по умолчанию feature
-	Kind      *RoadmapItemInputKind   `json:"kind,omitempty"`
-	ReleaseId *openapi_types.UUID     `json:"release_id,omitempty"`
-	StartDate *openapi_types.Date     `json:"start_date,omitempty"`
-	Status    *RoadmapItemInputStatus `json:"status,omitempty"`
-	Title     *string                 `json:"title,omitempty"`
+	Kind       *RoadmapItemInputKind       `json:"kind,omitempty"`
+	LaunchDate *openapi_types.Date         `json:"launch_date,omitempty"`
+	LaunchTier *RoadmapItemInputLaunchTier `json:"launch_tier,omitempty"`
+	ReleaseId  *openapi_types.UUID         `json:"release_id,omitempty"`
+	StartDate  *openapi_types.Date         `json:"start_date,omitempty"`
+	Status     *RoadmapItemInputStatus     `json:"status,omitempty"`
+	Title      *string                     `json:"title,omitempty"`
 }
 
 // RoadmapItemInputAudience defines model for RoadmapItemInput.Audience.
@@ -2847,6 +3629,9 @@ type RoadmapItemInputBucket string
 
 // RoadmapItemInputKind Вид элемента (RM-04); по умолчанию feature
 type RoadmapItemInputKind string
+
+// RoadmapItemInputLaunchTier defines model for RoadmapItemInput.LaunchTier.
+type RoadmapItemInputLaunchTier string
 
 // RoadmapItemInputStatus defines model for RoadmapItemInput.Status.
 type RoadmapItemInputStatus string
@@ -2874,19 +3659,32 @@ type RoadmapTimeline struct {
 // RoadmapTimelineAudience defines model for RoadmapTimeline.Audience.
 type RoadmapTimelineAudience string
 
+// RowError defines model for RowError.
+type RowError struct {
+	Column  *string `json:"column,omitempty"`
+	Message string  `json:"message"`
+	Row     *int    `json:"row,omitempty"`
+	Sheet   *string `json:"sheet,omitempty"`
+}
+
 // SalesSafeItem defines model for SalesSafeItem.
 type SalesSafeItem struct {
-	Bucket    SalesSafeItemBucket `json:"bucket"`
-	EndDate   *openapi_types.Date `json:"end_date,omitempty"`
-	Id        openapi_types.UUID  `json:"id"`
-	ProductId openapi_types.UUID  `json:"product_id"`
-	ReleaseId *openapi_types.UUID `json:"release_id,omitempty"`
-	StartDate *openapi_types.Date `json:"start_date,omitempty"`
-	Title     string              `json:"title"`
+	Bucket     SalesSafeItemBucket      `json:"bucket"`
+	EndDate    *openapi_types.Date      `json:"end_date,omitempty"`
+	Id         openapi_types.UUID       `json:"id"`
+	LaunchDate *openapi_types.Date      `json:"launch_date,omitempty"`
+	LaunchTier *SalesSafeItemLaunchTier `json:"launch_tier,omitempty"`
+	ProductId  openapi_types.UUID       `json:"product_id"`
+	ReleaseId  *openapi_types.UUID      `json:"release_id,omitempty"`
+	StartDate  *openapi_types.Date      `json:"start_date,omitempty"`
+	Title      string                   `json:"title"`
 }
 
 // SalesSafeItemBucket defines model for SalesSafeItem.Bucket.
 type SalesSafeItemBucket string
+
+// SalesSafeItemLaunchTier defines model for SalesSafeItem.LaunchTier.
+type SalesSafeItemLaunchTier string
 
 // SalesSafeRelease defines model for SalesSafeRelease.
 type SalesSafeRelease struct {
@@ -2906,6 +3704,52 @@ type SalesSafeReleaseBranch string
 
 // SalesSafeReleaseStatus defines model for SalesSafeRelease.Status.
 type SalesSafeReleaseStatus string
+
+// Scenario defines model for Scenario.
+type Scenario struct {
+	Actor             *string               `json:"actor,omitempty"`
+	BudgetDelta       *Money                `json:"budget_delta,omitempty"`
+	CapacityShiftDays *int                  `json:"capacity_shift_days,omitempty"`
+	CreatedAt         *time.Time            `json:"created_at,omitempty"`
+	Description       *string               `json:"description,omitempty"`
+	Id                openapi_types.UUID    `json:"id"`
+	Name              string                `json:"name"`
+	Overrides         *[]ScenarioOverride   `json:"overrides,omitempty"`
+	Period            string                `json:"period"`
+	Products          *[]openapi_types.UUID `json:"products,omitempty"`
+	UpdatedAt         *time.Time            `json:"updated_at,omitempty"`
+}
+
+// ScenarioInput defines model for ScenarioInput.
+type ScenarioInput struct {
+	BudgetDelta       *Money                `json:"budget_delta,omitempty"`
+	CapacityShiftDays *int                  `json:"capacity_shift_days,omitempty"`
+	Description       *string               `json:"description,omitempty"`
+	Id                *openapi_types.UUID   `json:"id,omitempty"`
+	Name              string                `json:"name"`
+	Overrides         *[]ScenarioOverride   `json:"overrides,omitempty"`
+	Period            string                `json:"period"`
+	Products          *[]openapi_types.UUID `json:"products,omitempty"`
+}
+
+// ScenarioOverride defines model for ScenarioOverride.
+type ScenarioOverride struct {
+	FieldKey  string              `json:"field_key"`
+	Period    *string             `json:"period,omitempty"`
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
+	Value     string              `json:"value"`
+}
+
+// ScenarioResult defines model for ScenarioResult.
+type ScenarioResult struct {
+	BaseMetrics *map[string]string  `json:"base_metrics,omitempty"`
+	BasePnl     *[]PnL              `json:"base_pnl,omitempty"`
+	Commitments *[]CommitmentImpact `json:"commitments,omitempty"`
+	Metrics     *map[string]string  `json:"metrics,omitempty"`
+	Pnl         *[]PnL              `json:"pnl,omitempty"`
+	Scenario    Scenario            `json:"scenario"`
+	Tracks      *[]TrackImpact      `json:"tracks,omitempty"`
+}
 
 // ScoreComponent defines model for ScoreComponent.
 type ScoreComponent struct {
@@ -3039,6 +3883,37 @@ type StrategicSlice struct {
 	Product   Product            `json:"product"`
 }
 
+// Team defines model for Team.
+type Team struct {
+	Id   openapi_types.UUID `json:"id"`
+	Key  string             `json:"key"`
+	Name string             `json:"name"`
+}
+
+// TeamInput defines model for TeamInput.
+type TeamInput struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+}
+
+// TeamProductMatrix defines model for TeamProductMatrix.
+type TeamProductMatrix struct {
+	Cells    map[string]map[string]Money `json:"cells"`
+	Period   string                      `json:"period"`
+	Products []openapi_types.UUID        `json:"products"`
+	Teams    []openapi_types.UUID        `json:"teams"`
+}
+
+// TeamSharesInput defines model for TeamSharesInput.
+type TeamSharesInput struct {
+	Period string                 `json:"period"`
+	Shares map[string]string      `json:"shares"`
+	Source *TeamSharesInputSource `json:"source,omitempty"`
+}
+
+// TeamSharesInputSource defines model for TeamSharesInput.Source.
+type TeamSharesInputSource string
+
 // TraceEdge defines model for TraceEdge.
 type TraceEdge struct {
 	From TraceRef `json:"from"`
@@ -3090,6 +3965,20 @@ type Track struct {
 // TrackStatus defines model for Track.Status.
 type TrackStatus string
 
+// TrackImpact defines model for TrackImpact.
+type TrackImpact struct {
+	AtRisk   bool    `json:"at_risk"`
+	Reason   *string `json:"reason,omitempty"`
+	Shortage *Money  `json:"shortage,omitempty"`
+	Track    struct {
+		Deadline    *openapi_types.Date `json:"deadline,omitempty"`
+		Id          *openapi_types.UUID `json:"id,omitempty"`
+		Name        *string             `json:"name,omitempty"`
+		PlannedCost *Money              `json:"planned_cost,omitempty"`
+		ProductId   *openapi_types.UUID `json:"product_id,omitempty"`
+	} `json:"track"`
+}
+
 // TrackInput defines model for TrackInput.
 type TrackInput struct {
 	ReleaseId openapi_types.UUID `json:"release_id"`
@@ -3134,11 +4023,85 @@ type VersionPair struct {
 	ProviderVersion string `json:"provider_version"`
 }
 
+// VulnerabilityImpact defines model for VulnerabilityImpact.
+type VulnerabilityImpact struct {
+	Baselines *[]CertifiedBaseline `json:"baselines,omitempty"`
+	Component Component            `json:"component"`
+	Deadlines *[]struct {
+		BaselineId   *openapi_types.UUID `json:"baseline_id,omitempty"`
+		CommitmentId *openapi_types.UUID `json:"commitment_id,omitempty"`
+		DueDate      *openapi_types.Date `json:"due_date,omitempty"`
+		ProductId    *openapi_types.UUID `json:"product_id,omitempty"`
+		Version      *string             `json:"version,omitempty"`
+	} `json:"deadlines,omitempty"`
+	ReportedAt *openapi_types.Date `json:"reported_at,omitempty"`
+	Severity   string              `json:"severity"`
+}
+
+// VulnerabilityInput defines model for VulnerabilityInput.
+type VulnerabilityInput struct {
+	Component Component                  `json:"component"`
+	Severity  VulnerabilityInputSeverity `json:"severity"`
+}
+
+// VulnerabilityInputSeverity defines model for VulnerabilityInput.Severity.
+type VulnerabilityInputSeverity string
+
+// WinLossCounter defines model for WinLossCounter.
+type WinLossCounter struct {
+	Amount *Money `json:"amount,omitempty"`
+	Key    string `json:"key"`
+	Lost   int    `json:"lost"`
+	Won    int    `json:"won"`
+}
+
+// WinLossReport defines model for WinLossReport.
+type WinLossReport struct {
+	AttachRate *[]struct {
+		Deals      *int    `json:"deals,omitempty"`
+		ProductKey *string `json:"product_key,omitempty"`
+		Rate       *string `json:"rate,omitempty"`
+	} `json:"attach_rate,omitempty"`
+	ByReason  *[]WinLossCounter `json:"by_reason,omitempty"`
+	BySegment *[]WinLossCounter `json:"by_segment,omitempty"`
+	Features  *[]struct {
+		Amount  *Money  `json:"amount,omitempty"`
+		Deals   *int    `json:"deals,omitempty"`
+		Feature *string `json:"feature,omitempty"`
+	} `json:"features,omitempty"`
+	Lost       int     `json:"lost"`
+	LostAmount *Money  `json:"lost_amount,omitempty"`
+	ProductKey *string `json:"product_key,omitempty"`
+	Won        int     `json:"won"`
+	WonAmount  *Money  `json:"won_amount,omitempty"`
+}
+
+// WorklogReport defines model for WorklogReport.
+type WorklogReport struct {
+	ByFeature    *[]WorklogShare `json:"by_feature,omitempty"`
+	ByProduct    *[]WorklogShare `json:"by_product,omitempty"`
+	From         *time.Time      `json:"from,omitempty"`
+	To           *time.Time      `json:"to,omitempty"`
+	TotalSeconds int64           `json:"total_seconds"`
+}
+
+// WorklogShare defines model for WorklogShare.
+type WorklogShare struct {
+	EpicKey   *string             `json:"epic_key,omitempty"`
+	FeatureId *openapi_types.UUID `json:"feature_id,omitempty"`
+	ProductId openapi_types.UUID  `json:"product_id"`
+	Seconds   int64               `json:"seconds"`
+	Share     string              `json:"share"`
+}
+
 // AlertId defines model for alertId.
 type AlertId = openapi_types.UUID
 
 // CommitmentId defines model for commitmentId.
 type CommitmentId = openapi_types.UUID
+
+// DashboardId defines model for dashboardId.
+type DashboardId = openapi_types.UUID
 
 // DecisionId defines model for decisionId.
 type DecisionId = openapi_types.UUID
@@ -3167,20 +4130,35 @@ type InterviewId = openapi_types.UUID
 // ItemId defines model for itemId.
 type ItemId = openapi_types.UUID
 
+// MetricKey defines model for metricKey.
+type MetricKey = string
+
 // ModelId defines model for modelId.
 type ModelId = openapi_types.UUID
+
+// PeriodQuery defines model for periodQuery.
+type PeriodQuery = string
 
 // ProductId defines model for productId.
 type ProductId = openapi_types.UUID
 
+// ProductQuery defines model for productQuery.
+type ProductQuery = openapi_types.UUID
+
 // ReleaseId defines model for releaseId.
 type ReleaseId = openapi_types.UUID
+
+// ScenarioId defines model for scenarioId.
+type ScenarioId = openapi_types.UUID
 
 // SetId defines model for setId.
 type SetId = openapi_types.UUID
 
 // SignalId defines model for signalId.
 type SignalId = openapi_types.UUID
+
+// TeamId defines model for teamId.
+type TeamId = openapi_types.UUID
 
 // TrackId defines model for trackId.
 type TrackId = openapi_types.UUID
@@ -3201,6 +4179,11 @@ type ListCustomStatusesParams struct {
 // ListCustomStatusesParamsEntity defines parameters for ListCustomStatuses.
 type ListCustomStatusesParamsEntity string
 
+// InstallLicenseJSONBody defines parameters for InstallLicense.
+type InstallLicenseJSONBody struct {
+	Key string `json:"key"`
+}
+
 // ListRequirementSetsParams defines parameters for ListRequirementSets.
 type ListRequirementSetsParams struct {
 	Code *string `form:"code,omitempty" json:"code,omitempty"`
@@ -3213,6 +4196,11 @@ type ListTrackTemplatesParams struct {
 
 // ListTrackTemplatesParamsProductType defines parameters for ListTrackTemplates.
 type ListTrackTemplatesParamsProductType string
+
+// SetBaselineComponentsJSONBody defines parameters for SetBaselineComponents.
+type SetBaselineComponentsJSONBody struct {
+	Components []Component `json:"components"`
+}
 
 // EnsureRenewalsJSONBody defines parameters for EnsureRenewals.
 type EnsureRenewalsJSONBody struct {
@@ -3235,9 +4223,100 @@ type RequestDecisionPageJSONBody struct {
 	SpaceKey *string `json:"space_key,omitempty"`
 }
 
+// ReviewDecisionJSONBody defines parameters for ReviewDecision.
+type ReviewDecisionJSONBody struct {
+	Comment *string `json:"comment,omitempty"`
+}
+
 // SupersedeDecisionJSONBody defines parameters for SupersedeDecision.
 type SupersedeDecisionJSONBody struct {
 	By openapi_types.UUID `json:"by"`
+}
+
+// GetWorklogCostBaseParams defines parameters for GetWorklogCostBase.
+type GetWorklogCostBaseParams struct {
+	From *time.Time `form:"from,omitempty" json:"from,omitempty"`
+	To   *time.Time `form:"to,omitempty" json:"to,omitempty"`
+}
+
+// ListImportBatchesParams defines parameters for ListImportBatches.
+type ListImportBatchesParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// ImportFinanceFileParams defines parameters for ImportFinanceFile.
+type ImportFinanceFileParams struct {
+	TemplateId openapi_types.UUID `form:"templateId" json:"templateId"`
+
+	// Period Расчётный период в формате YYYY-MM
+	Period   *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+	FileName *string      `form:"fileName,omitempty" json:"fileName,omitempty"`
+
+	// Preview Только предпросмотр, без сохранения
+	Preview *bool `form:"preview,omitempty" json:"preview,omitempty"`
+
+	// Force Разрешить загрузку в закрытый период (EC-11)
+	Force *bool `form:"force,omitempty" json:"force,omitempty"`
+}
+
+// GetTeamProductMatrixParams defines parameters for GetTeamProductMatrix.
+type GetTeamProductMatrixParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// CompareMetricVersionsParams defines parameters for CompareMetricVersions.
+type CompareMetricVersionsParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period    *PeriodQuery  `form:"period,omitempty" json:"period,omitempty"`
+	ProductId *ProductQuery `form:"productId,omitempty" json:"productId,omitempty"`
+	A         int           `form:"a" json:"a"`
+	B         int           `form:"b" json:"b"`
+}
+
+// ExplainMetricParams defines parameters for ExplainMetric.
+type ExplainMetricParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period    *PeriodQuery  `form:"period,omitempty" json:"period,omitempty"`
+	ProductId *ProductQuery `form:"productId,omitempty" json:"productId,omitempty"`
+}
+
+// GetMetricValueParams defines parameters for GetMetricValue.
+type GetMetricValueParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period    *PeriodQuery  `form:"period,omitempty" json:"period,omitempty"`
+	ProductId *ProductQuery `form:"productId,omitempty" json:"productId,omitempty"`
+}
+
+// GetPortfolioPnLParams defines parameters for GetPortfolioPnL.
+type GetPortfolioPnLParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetProductPnLParams defines parameters for GetProductPnL.
+type GetProductPnLParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetBranchCostsParams defines parameters for GetBranchCosts.
+type GetBranchCostsParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetCertificationEconomicsParams defines parameters for GetCertificationEconomics.
+type GetCertificationEconomicsParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetFeatureEconomicsParams defines parameters for GetFeatureEconomics.
+type GetFeatureEconomicsParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
 }
 
 // SetEvidenceItemStatusJSONBody defines parameters for SetEvidenceItemStatus.
@@ -3252,6 +4331,14 @@ type SetEvidenceItemStatusJSONBodyStatus string
 // SetFeatureDevCostJSONBody defines parameters for SetFeatureDevCost.
 type SetFeatureDevCostJSONBody struct {
 	DevCost Money `json:"dev_cost"`
+}
+
+// GetFeatureForecastParams defines parameters for GetFeatureForecast.
+type GetFeatureForecastParams struct {
+	Samples *int `form:"samples,omitempty" json:"samples,omitempty"`
+
+	// Seed Зерно генератора для воспроизводимого прогноза
+	Seed *string `form:"seed,omitempty" json:"seed,omitempty"`
 }
 
 // CreateRequirementJSONBody defines parameters for CreateRequirement.
@@ -3271,6 +4358,13 @@ type ChangeHypothesisStatusJSONBody struct {
 
 	// Status Встроенный или пользовательский статус
 	Status string `json:"status"`
+}
+
+// GetWinLossParams defines parameters for GetWinLoss.
+type GetWinLossParams struct {
+	ProductKey *string             `form:"productKey,omitempty" json:"productKey,omitempty"`
+	From       *openapi_types.Date `form:"from,omitempty" json:"from,omitempty"`
+	To         *openapi_types.Date `form:"to,omitempty" json:"to,omitempty"`
 }
 
 // CreateCapabilityJSONBody defines parameters for CreateCapability.
@@ -3319,6 +4413,12 @@ type ListInsightsParams struct {
 	SignalId     *openapi_types.UUID `form:"signalId,omitempty" json:"signalId,omitempty"`
 }
 
+// GetLaunchCalendarParams defines parameters for GetLaunchCalendar.
+type GetLaunchCalendarParams struct {
+	From *openapi_types.Date `form:"from,omitempty" json:"from,omitempty"`
+	To   *openapi_types.Date `form:"to,omitempty" json:"to,omitempty"`
+}
+
 // ListSignalsParams defines parameters for ListSignals.
 type ListSignalsParams struct {
 	Status    *[]ListSignalsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
@@ -3356,6 +4456,11 @@ type ChangeRoadmapItemDatesJSONBody struct {
 	EndDate   *openapi_types.Date `json:"end_date,omitempty"`
 	Reason    string              `json:"reason"`
 	StartDate *openapi_types.Date `json:"start_date,omitempty"`
+}
+
+// RunScenarioJSONBody defines parameters for RunScenario.
+type RunScenarioJSONBody struct {
+	Metrics *[]string `json:"metrics,omitempty"`
 }
 
 // SetFeatureScoreInputsJSONBody defines parameters for SetFeatureScoreInputs.
@@ -3408,6 +4513,9 @@ type DefineCustomFieldJSONRequestBody = CustomFieldDefInput
 // DefineCustomStatusJSONRequestBody defines body for DefineCustomStatus for application/json ContentType.
 type DefineCustomStatusJSONRequestBody = CustomStatusDef
 
+// InstallLicenseJSONRequestBody defines body for InstallLicense for application/json ContentType.
+type InstallLicenseJSONRequestBody InstallLicenseJSONBody
+
 // CreateRequirementSetJSONRequestBody defines body for CreateRequirementSet for application/json ContentType.
 type CreateRequirementSetJSONRequestBody = RequirementSetInput
 
@@ -3423,17 +4531,26 @@ type UpdateGraphSettingsJSONRequestBody = GraphSettings
 // SaveTrackTemplateJSONRequestBody defines body for SaveTrackTemplate for application/json ContentType.
 type SaveTrackTemplateJSONRequestBody = TrackTemplateInput
 
+// SetBaselineComponentsJSONRequestBody defines body for SetBaselineComponents for application/json ContentType.
+type SetBaselineComponentsJSONRequestBody SetBaselineComponentsJSONBody
+
 // EnsureRenewalsJSONRequestBody defines body for EnsureRenewals for application/json ContentType.
 type EnsureRenewalsJSONRequestBody EnsureRenewalsJSONBody
 
 // UpdateCommitmentJSONRequestBody defines body for UpdateCommitment for application/json ContentType.
 type UpdateCommitmentJSONRequestBody = CommitmentInput
 
+// ReportVulnerableComponentJSONRequestBody defines body for ReportVulnerableComponent for application/json ContentType.
+type ReportVulnerableComponentJSONRequestBody = VulnerabilityInput
+
 // CreateContractJSONRequestBody defines body for CreateContract for application/json ContentType.
 type CreateContractJSONRequestBody = ContractInput
 
 // UpdateContractJSONRequestBody defines body for UpdateContract for application/json ContentType.
 type UpdateContractJSONRequestBody = ContractInput
+
+// SaveDashboardJSONRequestBody defines body for SaveDashboard for application/json ContentType.
+type SaveDashboardJSONRequestBody = DashboardInput
 
 // CreateDecisionJSONRequestBody defines body for CreateDecision for application/json ContentType.
 type CreateDecisionJSONRequestBody = DecisionInput
@@ -3444,8 +4561,32 @@ type UpdateDecisionJSONRequestBody = DecisionInput
 // RequestDecisionPageJSONRequestBody defines body for RequestDecisionPage for application/json ContentType.
 type RequestDecisionPageJSONRequestBody RequestDecisionPageJSONBody
 
+// ReviewDecisionJSONRequestBody defines body for ReviewDecision for application/json ContentType.
+type ReviewDecisionJSONRequestBody ReviewDecisionJSONBody
+
 // SupersedeDecisionJSONRequestBody defines body for SupersedeDecision for application/json ContentType.
 type SupersedeDecisionJSONRequestBody SupersedeDecisionJSONBody
+
+// SaveAllocationRuleJSONRequestBody defines body for SaveAllocationRule for application/json ContentType.
+type SaveAllocationRuleJSONRequestBody = AllocationRuleInput
+
+// SaveBundleRuleJSONRequestBody defines body for SaveBundleRule for application/json ContentType.
+type SaveBundleRuleJSONRequestBody = BundleRuleInput
+
+// SaveFinancialFieldJSONRequestBody defines body for SaveFinancialField for application/json ContentType.
+type SaveFinancialFieldJSONRequestBody = FinancialFieldInput
+
+// SaveMetricJSONRequestBody defines body for SaveMetric for application/json ContentType.
+type SaveMetricJSONRequestBody = MetricInput
+
+// CreateTeamJSONRequestBody defines body for CreateTeam for application/json ContentType.
+type CreateTeamJSONRequestBody = TeamInput
+
+// SetTeamSharesJSONRequestBody defines body for SetTeamShares for application/json ContentType.
+type SetTeamSharesJSONRequestBody = TeamSharesInput
+
+// SaveImportTemplateJSONRequestBody defines body for SaveImportTemplate for application/json ContentType.
+type SaveImportTemplateJSONRequestBody = ImportTemplateInput
 
 // SetEvidenceItemStatusJSONRequestBody defines body for SetEvidenceItemStatus for application/json ContentType.
 type SetEvidenceItemStatusJSONRequestBody SetEvidenceItemStatusJSONBody
@@ -3546,6 +4687,12 @@ type UpdateRoadmapItemJSONRequestBody = RoadmapItemInput
 // ChangeRoadmapItemDatesJSONRequestBody defines body for ChangeRoadmapItemDates for application/json ContentType.
 type ChangeRoadmapItemDatesJSONRequestBody ChangeRoadmapItemDatesJSONBody
 
+// SaveScenarioJSONRequestBody defines body for SaveScenario for application/json ContentType.
+type SaveScenarioJSONRequestBody = ScenarioInput
+
+// RunScenarioJSONRequestBody defines body for RunScenario for application/json ContentType.
+type RunScenarioJSONRequestBody RunScenarioJSONBody
+
 // CreateScoringModelJSONRequestBody defines body for CreateScoringModel for application/json ContentType.
 type CreateScoringModelJSONRequestBody = ScoringModelInput
 
@@ -3572,6 +4719,9 @@ type UpdateGateJSONRequestBody = GateUpdate
 
 // CheckGateItemJSONRequestBody defines body for CheckGateItem for application/json ContentType.
 type CheckGateItemJSONRequestBody CheckGateItemJSONBody
+
+// CollectPipelineEvidenceJSONRequestBody defines body for CollectPipelineEvidence for application/json ContentType.
+type CollectPipelineEvidenceJSONRequestBody = PipelineCollectInput
 
 // FailGateJSONRequestBody defines body for FailGate for application/json ContentType.
 type FailGateJSONRequestBody FailGateJSONBody
@@ -3698,6 +4848,25 @@ type ClientInterface interface {
 	// Corresponds with POST /admin/evidence/verify (the `VerifyEvidenceLog` operationId).
 	VerifyEvidenceLog(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLicenseStatus Состояние лицензии поставки (AD-06)
+	//
+	// Corresponds with GET /admin/license (the `GetLicenseStatus` operationId).
+	GetLicenseStatus(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// InstallLicenseWithBody Установить лицензионный ключ (AD-06)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /admin/license (the `InstallLicense` operationId).
+	InstallLicenseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// InstallLicense Установить лицензионный ключ (AD-06)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /admin/license (the `InstallLicense` operationId).
+	InstallLicense(ctx context.Context, body InstallLicenseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListRequirementSets Каталог наборов требований (CM-01)
 	//
 	// Corresponds with GET /admin/requirement-sets (the `ListRequirementSets` operationId).
@@ -3793,6 +4962,20 @@ type ClientInterface interface {
 	// Corresponds with POST /admin/track-templates (the `SaveTrackTemplate` operationId).
 	SaveTrackTemplate(ctx context.Context, body SaveTrackTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// SetBaselineComponentsWithBody Состав компонентов сертифицированной версии (CM-08)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /baselines/{baselineId}/components (the `SetBaselineComponents` operationId).
+	SetBaselineComponentsWithBody(ctx context.Context, baselineId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetBaselineComponents Состав компонентов сертифицированной версии (CM-08)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /baselines/{baselineId}/components (the `SetBaselineComponents` operationId).
+	SetBaselineComponents(ctx context.Context, baselineId openapi_types.UUID, body SetBaselineComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// AcknowledgeCommitmentAlert Подтвердить алерт
 	//
 	// Corresponds with POST /commitment-alerts/{alertId}/ack (the `AcknowledgeCommitmentAlert` operationId).
@@ -3841,6 +5024,20 @@ type ClientInterface interface {
 	// Corresponds with POST /commitments/{commitmentId}/fulfil (the `FulfilCommitment` operationId).
 	FulfilCommitment(ctx context.Context, commitmentId CommitmentId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ReportVulnerableComponentWithBody Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /compliance/vulnerabilities (the `ReportVulnerableComponent` operationId).
+	ReportVulnerableComponentWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReportVulnerableComponent Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /compliance/vulnerabilities (the `ReportVulnerableComponent` operationId).
+	ReportVulnerableComponent(ctx context.Context, body ReportVulnerableComponentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListContracts Интеграционные контракты (PG-04)
 	//
 	// Corresponds with GET /contracts (the `ListContracts` operationId).
@@ -3879,6 +5076,40 @@ type ClientInterface interface {
 	// Corresponds with PUT /contracts/{contractId} (the `UpdateContract` operationId).
 	UpdateContract(ctx context.Context, contractId openapi_types.UUID, body UpdateContractJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListDashboards Дашборды конструктора (DA-05)
+	//
+	// Corresponds with GET /dashboards (the `ListDashboards` operationId).
+	ListDashboards(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveDashboardWithBody Создать или изменить дашборд (DA-05)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /dashboards (the `SaveDashboard` operationId).
+	SaveDashboardWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveDashboard Создать или изменить дашборд (DA-05)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /dashboards (the `SaveDashboard` operationId).
+	SaveDashboard(ctx context.Context, body SaveDashboardJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListDashboardSources Срезы данных, доступные панелям (DA-05)
+	//
+	// Corresponds with GET /dashboards/sources (the `ListDashboardSources` operationId).
+	ListDashboardSources(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteDashboard Удалить дашборд (DA-05)
+	//
+	// Corresponds with DELETE /dashboards/{dashboardId} (the `DeleteDashboard` operationId).
+	DeleteDashboard(ctx context.Context, dashboardId DashboardId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDashboard Дашборд (DA-05)
+	//
+	// Corresponds with GET /dashboards/{dashboardId} (the `GetDashboard` operationId).
+	GetDashboard(ctx context.Context, dashboardId DashboardId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListDecisions Решения продукта; без productId — портфельные (DA-01)
 	//
 	// Corresponds with GET /decisions (the `ListDecisions` operationId).
@@ -3897,6 +5128,11 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /decisions (the `CreateDecision` operationId).
 	CreateDecision(ctx context.Context, body CreateDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListDecisionsDueForReview Решения, которым пора ревизию (DA-06)
+	//
+	// Corresponds with GET /decisions/due (the `ListDecisionsDueForReview` operationId).
+	ListDecisionsDueForReview(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDecisionsFor Решения, связанные с сущностью (DS-04)
 	//
@@ -3946,6 +5182,20 @@ type ClientInterface interface {
 	// Corresponds with POST /decisions/{decisionId}/request-page (the `RequestDecisionPage` operationId).
 	RequestDecisionPage(ctx context.Context, decisionId DecisionId, body RequestDecisionPageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ReviewDecisionWithBody Ревизия решения: ожидание против факта (DA-06)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /decisions/{decisionId}/review (the `ReviewDecision` operationId).
+	ReviewDecisionWithBody(ctx context.Context, decisionId DecisionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReviewDecision Ревизия решения: ожидание против факта (DA-06)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /decisions/{decisionId}/review (the `ReviewDecision` operationId).
+	ReviewDecision(ctx context.Context, decisionId DecisionId, body ReviewDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// SupersedeDecisionWithBody Заменить другим решением
 	//
 	// Takes any type of body and a specified content type.
@@ -3959,6 +5209,201 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /decisions/{decisionId}/supersede (the `SupersedeDecision` operationId).
 	SupersedeDecision(ctx context.Context, decisionId DecisionId, body SupersedeDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetWorklogCostBase Списания времени как база распределения затрат (DL-05)
+	//
+	// Corresponds with GET /delivery/worklog-cost-base (the `GetWorklogCostBase` operationId).
+	GetWorklogCostBase(ctx context.Context, params *GetWorklogCostBaseParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListAllocationRules Правила аллокации затрат хаба (EC-02)
+	//
+	// Corresponds with GET /economics/allocation-rules (the `ListAllocationRules` operationId).
+	ListAllocationRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveAllocationRuleWithBody Новая версия правила аллокации (EC-02)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /economics/allocation-rules (the `SaveAllocationRule` operationId).
+	SaveAllocationRuleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveAllocationRule Новая версия правила аллокации (EC-02)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /economics/allocation-rules (the `SaveAllocationRule` operationId).
+	SaveAllocationRule(ctx context.Context, body SaveAllocationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListBundleRules Правила атрибуции выручки бандлов (EC-04)
+	//
+	// Corresponds with GET /economics/bundle-rules (the `ListBundleRules` operationId).
+	ListBundleRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveBundleRuleWithBody Новая версия правила атрибуции бандла (EC-04)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /economics/bundle-rules (the `SaveBundleRule` operationId).
+	SaveBundleRuleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveBundleRule Новая версия правила атрибуции бандла (EC-04)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /economics/bundle-rules (the `SaveBundleRule` operationId).
+	SaveBundleRule(ctx context.Context, body SaveBundleRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListFinancialFields Настраиваемые финансовые поля (EC-08)
+	//
+	// Corresponds with GET /economics/fields (the `ListFinancialFields` operationId).
+	ListFinancialFields(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveFinancialFieldWithBody Создать поле или новую версию его описания (EC-08, EC-11)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
+	SaveFinancialFieldWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveFinancialField Создать поле или новую версию его описания (EC-08, EC-11)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
+	SaveFinancialField(ctx context.Context, body SaveFinancialFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListImportBatches История загрузок финансовых данных (EC-07)
+	//
+	// Corresponds with GET /economics/imports (the `ListImportBatches` operationId).
+	ListImportBatches(ctx context.Context, params *ListImportBatchesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ImportFinanceFileWithBody Загрузить XLSX с финансовыми данными (EC-01, EC-07)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /economics/imports (the `ImportFinanceFile` operationId).
+	ImportFinanceFileWithBody(ctx context.Context, params *ImportFinanceFileParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetTeamProductMatrix Матрица «команда × продукт» (EC-12)
+	//
+	// Corresponds with GET /economics/matrix (the `GetTeamProductMatrix` operationId).
+	GetTeamProductMatrix(ctx context.Context, params *GetTeamProductMatrixParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListMetrics Расчётные показатели (EC-09)
+	//
+	// Corresponds with GET /economics/metrics (the `ListMetrics` operationId).
+	ListMetrics(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveMetricWithBody Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /economics/metrics (the `SaveMetric` operationId).
+	SaveMetricWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveMetric Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /economics/metrics (the `SaveMetric` operationId).
+	SaveMetric(ctx context.Context, body SaveMetricJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CompareMetricVersions Сравнение результатов двух версий формулы (EC-11)
+	//
+	// Corresponds with GET /economics/metrics/{metricKey}/compare (the `CompareMetricVersions` operationId).
+	CompareMetricVersions(ctx context.Context, metricKey MetricKey, params *CompareMetricVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExplainMetric Объяснение значения до формулы и строк импорта (EC-10)
+	//
+	// Corresponds with GET /economics/metrics/{metricKey}/explain (the `ExplainMetric` operationId).
+	ExplainMetric(ctx context.Context, metricKey MetricKey, params *ExplainMetricParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetMetricValue Значение показателя в срезе (EC-09)
+	//
+	// Corresponds with GET /economics/metrics/{metricKey}/value (the `GetMetricValue` operationId).
+	GetMetricValue(ctx context.Context, metricKey MetricKey, params *GetMetricValueParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ClosePeriod Закрыть период (EC-11)
+	//
+	// Corresponds with POST /economics/periods/{period}/close (the `ClosePeriod` operationId).
+	ClosePeriod(ctx context.Context, period string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPortfolioPnL P&L портфеля (EC-03)
+	//
+	// Corresponds with GET /economics/pnl/portfolio (the `GetPortfolioPnL` operationId).
+	GetPortfolioPnL(ctx context.Context, params *GetPortfolioPnLParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetProductPnL P&L продукта: прямой и с нагрузкой хаба (EC-03)
+	//
+	// Corresponds with GET /economics/pnl/products/{productId} (the `GetProductPnL` operationId).
+	GetProductPnL(ctx context.Context, productId ProductId, params *GetProductPnLParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetBranchCosts Стоимость поддержки веток версий (EC-05)
+	//
+	// Corresponds with GET /economics/products/{productId}/branches (the `GetBranchCosts` operationId).
+	GetBranchCosts(ctx context.Context, productId ProductId, params *GetBranchCostsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCertificationEconomics Экономика сертификации (EC-06)
+	//
+	// Corresponds with GET /economics/products/{productId}/certification (the `GetCertificationEconomics` operationId).
+	GetCertificationEconomics(ctx context.Context, productId ProductId, params *GetCertificationEconomicsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetFeatureEconomics Инвестиции в фичу против привязанной выручки (EC-05)
+	//
+	// Corresponds with GET /economics/products/{productId}/features/{featureId} (the `GetFeatureEconomics` operationId).
+	GetFeatureEconomics(ctx context.Context, productId ProductId, featureId FeatureId, params *GetFeatureEconomicsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListTeams Команды — вторая ось детализации (EC-12)
+	//
+	// Corresponds with GET /economics/teams (the `ListTeams` operationId).
+	ListTeams(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateTeamWithBody Завести команду (EC-12)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /economics/teams (the `CreateTeam` operationId).
+	CreateTeamWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateTeam Завести команду (EC-12)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /economics/teams (the `CreateTeam` operationId).
+	CreateTeam(ctx context.Context, body CreateTeamJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetTeamSharesWithBody Доли команды по продуктам за период (EC-12)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /economics/teams/{teamId}/shares (the `SetTeamShares` operationId).
+	SetTeamSharesWithBody(ctx context.Context, teamId TeamId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetTeamShares Доли команды по продуктам за период (EC-12)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /economics/teams/{teamId}/shares (the `SetTeamShares` operationId).
+	SetTeamShares(ctx context.Context, teamId TeamId, body SetTeamSharesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListImportTemplates Шаблоны импорта XLSX (EC-07)
+	//
+	// Corresponds with GET /economics/templates (the `ListImportTemplates` operationId).
+	ListImportTemplates(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveImportTemplateWithBody Создать или изменить шаблон импорта (EC-07)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /economics/templates (the `SaveImportTemplate` operationId).
+	SaveImportTemplateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveImportTemplate Создать или изменить шаблон импорта (EC-07)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /economics/templates (the `SaveImportTemplate` operationId).
+	SaveImportTemplate(ctx context.Context, body SaveImportTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SetEvidenceItemStatusWithBody Принять или отклонить доказательство — новая запись журнала (CM-04)
 	//
@@ -4054,6 +5499,11 @@ type ClientInterface interface {
 	//
 	// Corresponds with PUT /features/{featureId}/flags (the `SetFeatureFlags` operationId).
 	SetFeatureFlags(ctx context.Context, featureId FeatureId, body SetFeatureFlagsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetFeatureForecast Прогноз даты фичи методом Монте-Карло (DL-04)
+	//
+	// Corresponds with GET /features/{featureId}/forecast (the `GetFeatureForecast` operationId).
+	GetFeatureForecast(ctx context.Context, featureId FeatureId, params *GetFeatureForecastParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetFeatureImpact Действующий класс влияния фичи (CM-06)
 	//
@@ -4211,6 +5661,11 @@ type ClientInterface interface {
 	//
 	// Corresponds with DELETE /links/{linkId} (the `DeleteLink` operationId).
 	DeleteLink(ctx context.Context, linkId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetWinLoss Win/loss, фичи выигранных сделок, attach rate (DA-04)
+	//
+	// Corresponds with GET /marketing/win-loss (the `GetWinLoss` operationId).
+	GetWinLoss(ctx context.Context, params *GetWinLossParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetMe Область доступа текущего субъекта
 	//
@@ -4446,6 +5901,11 @@ type ClientInterface interface {
 	// Corresponds with POST /products/{productId}/roadmap/items (the `CreateRoadmapItem` operationId).
 	CreateRoadmapItem(ctx context.Context, productId ProductId, body CreateRoadmapItemJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLaunchCalendar Календарь запусков (RM-06)
+	//
+	// Corresponds with GET /products/{productId}/roadmap/launch-calendar (the `GetLaunchCalendar` operationId).
+	GetLaunchCalendar(ctx context.Context, productId ProductId, params *GetLaunchCalendarParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetRoadmapNowNextLater Now/Next/Later (RM-01)
 	//
 	// Corresponds with GET /products/{productId}/roadmap/now-next-later (the `GetRoadmapNowNextLater` operationId).
@@ -4622,6 +6082,39 @@ type ClientInterface interface {
 	// Corresponds with GET /roadmap/items/{itemId}/history (the `GetRoadmapItemHistory` operationId).
 	GetRoadmapItemHistory(ctx context.Context, itemId ItemId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListScenarios Сценарии «что если» (DA-02)
+	//
+	// Corresponds with GET /scenarios (the `ListScenarios` operationId).
+	ListScenarios(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveScenarioWithBody Создать или изменить сценарий (DA-02, EC-13)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /scenarios (the `SaveScenario` operationId).
+	SaveScenarioWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveScenario Создать или изменить сценарий (DA-02, EC-13)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /scenarios (the `SaveScenario` operationId).
+	SaveScenario(ctx context.Context, body SaveScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RunScenarioWithBody Посчитать сценарий и влияние на обязательства и треки (DA-02)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /scenarios/{scenarioId}/run (the `RunScenario` operationId).
+	RunScenarioWithBody(ctx context.Context, scenarioId ScenarioId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RunScenario Посчитать сценарий и влияние на обязательства и треки (DA-02)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /scenarios/{scenarioId}/run (the `RunScenario` operationId).
+	RunScenario(ctx context.Context, scenarioId ScenarioId, body RunScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListScoringModels Модели оценки (PR-01)
 	//
 	// Corresponds with GET /scoring-models (the `ListScoringModels` operationId).
@@ -4793,6 +6286,20 @@ type ClientInterface interface {
 	// Corresponds with POST /tracks/{trackId}/gates/{gateId}/check (the `CheckGateItem` operationId).
 	CheckGateItem(ctx context.Context, trackId TrackId, gateId GateId, body CheckGateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CollectPipelineEvidenceWithBody Автосбор доказательств из пайплайна безопасности (CM-09)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /tracks/{trackId}/gates/{gateId}/collect-evidence (the `CollectPipelineEvidence` operationId).
+	CollectPipelineEvidenceWithBody(ctx context.Context, trackId TrackId, gateId GateId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CollectPipelineEvidence Автосбор доказательств из пайплайна безопасности (CM-09)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /tracks/{trackId}/gates/{gateId}/collect-evidence (the `CollectPipelineEvidence` operationId).
+	CollectPipelineEvidence(ctx context.Context, trackId TrackId, gateId GateId, body CollectPipelineEvidenceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// FailGateWithBody Провалить гейт с причиной (CM-03)
 	//
 	// Takes any type of body and a specified content type.
@@ -4931,6 +6438,55 @@ func (c *Client) DefineCustomStatus(ctx context.Context, body DefineCustomStatus
 // Corresponds with POST /admin/evidence/verify (the `VerifyEvidenceLog` operationId).
 func (c *Client) VerifyEvidenceLog(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewVerifyEvidenceLogRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetLicenseStatus Состояние лицензии поставки (AD-06)
+//
+// Corresponds with GET /admin/license (the `GetLicenseStatus` operationId).
+func (c *Client) GetLicenseStatus(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLicenseStatusRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// InstallLicenseWithBody Установить лицензионный ключ (AD-06)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /admin/license (the `InstallLicense` operationId).
+func (c *Client) InstallLicenseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInstallLicenseRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// InstallLicense Установить лицензионный ключ (AD-06)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /admin/license (the `InstallLicense` operationId).
+func (c *Client) InstallLicense(ctx context.Context, body InstallLicenseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInstallLicenseRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5186,6 +6742,40 @@ func (c *Client) SaveTrackTemplate(ctx context.Context, body SaveTrackTemplateJS
 	return c.Client.Do(req)
 }
 
+// SetBaselineComponentsWithBody Состав компонентов сертифицированной версии (CM-08)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /baselines/{baselineId}/components (the `SetBaselineComponents` operationId).
+func (c *Client) SetBaselineComponentsWithBody(ctx context.Context, baselineId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetBaselineComponentsRequestWithBody(c.Server, baselineId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SetBaselineComponents Состав компонентов сертифицированной версии (CM-08)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /baselines/{baselineId}/components (the `SetBaselineComponents` operationId).
+func (c *Client) SetBaselineComponents(ctx context.Context, baselineId openapi_types.UUID, body SetBaselineComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetBaselineComponentsRequest(c.Server, baselineId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // AcknowledgeCommitmentAlert Подтвердить алерт
 //
 // Corresponds with POST /commitment-alerts/{alertId}/ack (the `AcknowledgeCommitmentAlert` operationId).
@@ -5314,6 +6904,40 @@ func (c *Client) FulfilCommitment(ctx context.Context, commitmentId CommitmentId
 	return c.Client.Do(req)
 }
 
+// ReportVulnerableComponentWithBody Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /compliance/vulnerabilities (the `ReportVulnerableComponent` operationId).
+func (c *Client) ReportVulnerableComponentWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReportVulnerableComponentRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReportVulnerableComponent Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /compliance/vulnerabilities (the `ReportVulnerableComponent` operationId).
+func (c *Client) ReportVulnerableComponent(ctx context.Context, body ReportVulnerableComponentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReportVulnerableComponentRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListContracts Интеграционные контракты (PG-04)
 //
 // Corresponds with GET /contracts (the `ListContracts` operationId).
@@ -5412,6 +7036,100 @@ func (c *Client) UpdateContract(ctx context.Context, contractId openapi_types.UU
 	return c.Client.Do(req)
 }
 
+// ListDashboards Дашборды конструктора (DA-05)
+//
+// Corresponds with GET /dashboards (the `ListDashboards` operationId).
+func (c *Client) ListDashboards(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDashboardsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveDashboardWithBody Создать или изменить дашборд (DA-05)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /dashboards (the `SaveDashboard` operationId).
+func (c *Client) SaveDashboardWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveDashboardRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveDashboard Создать или изменить дашборд (DA-05)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /dashboards (the `SaveDashboard` operationId).
+func (c *Client) SaveDashboard(ctx context.Context, body SaveDashboardJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveDashboardRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListDashboardSources Срезы данных, доступные панелям (DA-05)
+//
+// Corresponds with GET /dashboards/sources (the `ListDashboardSources` operationId).
+func (c *Client) ListDashboardSources(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDashboardSourcesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteDashboard Удалить дашборд (DA-05)
+//
+// Corresponds with DELETE /dashboards/{dashboardId} (the `DeleteDashboard` operationId).
+func (c *Client) DeleteDashboard(ctx context.Context, dashboardId DashboardId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteDashboardRequest(c.Server, dashboardId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetDashboard Дашборд (DA-05)
+//
+// Corresponds with GET /dashboards/{dashboardId} (the `GetDashboard` operationId).
+func (c *Client) GetDashboard(ctx context.Context, dashboardId DashboardId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDashboardRequest(c.Server, dashboardId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListDecisions Решения продукта; без productId — портфельные (DA-01)
 //
 // Corresponds with GET /decisions (the `ListDecisions` operationId).
@@ -5451,6 +7169,21 @@ func (c *Client) CreateDecisionWithBody(ctx context.Context, contentType string,
 // Corresponds with POST /decisions (the `CreateDecision` operationId).
 func (c *Client) CreateDecision(ctx context.Context, body CreateDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateDecisionRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListDecisionsDueForReview Решения, которым пора ревизию (DA-06)
+//
+// Corresponds with GET /decisions/due (the `ListDecisionsDueForReview` operationId).
+func (c *Client) ListDecisionsDueForReview(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDecisionsDueForReviewRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -5589,6 +7322,40 @@ func (c *Client) RequestDecisionPage(ctx context.Context, decisionId DecisionId,
 	return c.Client.Do(req)
 }
 
+// ReviewDecisionWithBody Ревизия решения: ожидание против факта (DA-06)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /decisions/{decisionId}/review (the `ReviewDecision` operationId).
+func (c *Client) ReviewDecisionWithBody(ctx context.Context, decisionId DecisionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReviewDecisionRequestWithBody(c.Server, decisionId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReviewDecision Ревизия решения: ожидание против факта (DA-06)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /decisions/{decisionId}/review (the `ReviewDecision` operationId).
+func (c *Client) ReviewDecision(ctx context.Context, decisionId DecisionId, body ReviewDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReviewDecisionRequest(c.Server, decisionId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // SupersedeDecisionWithBody Заменить другим решением
 //
 // Takes any type of body and a specified content type.
@@ -5613,6 +7380,531 @@ func (c *Client) SupersedeDecisionWithBody(ctx context.Context, decisionId Decis
 // Corresponds with POST /decisions/{decisionId}/supersede (the `SupersedeDecision` operationId).
 func (c *Client) SupersedeDecision(ctx context.Context, decisionId DecisionId, body SupersedeDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSupersedeDecisionRequest(c.Server, decisionId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetWorklogCostBase Списания времени как база распределения затрат (DL-05)
+//
+// Corresponds with GET /delivery/worklog-cost-base (the `GetWorklogCostBase` operationId).
+func (c *Client) GetWorklogCostBase(ctx context.Context, params *GetWorklogCostBaseParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWorklogCostBaseRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListAllocationRules Правила аллокации затрат хаба (EC-02)
+//
+// Corresponds with GET /economics/allocation-rules (the `ListAllocationRules` operationId).
+func (c *Client) ListAllocationRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAllocationRulesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveAllocationRuleWithBody Новая версия правила аллокации (EC-02)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /economics/allocation-rules (the `SaveAllocationRule` operationId).
+func (c *Client) SaveAllocationRuleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveAllocationRuleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveAllocationRule Новая версия правила аллокации (EC-02)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /economics/allocation-rules (the `SaveAllocationRule` operationId).
+func (c *Client) SaveAllocationRule(ctx context.Context, body SaveAllocationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveAllocationRuleRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListBundleRules Правила атрибуции выручки бандлов (EC-04)
+//
+// Corresponds with GET /economics/bundle-rules (the `ListBundleRules` operationId).
+func (c *Client) ListBundleRules(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListBundleRulesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveBundleRuleWithBody Новая версия правила атрибуции бандла (EC-04)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /economics/bundle-rules (the `SaveBundleRule` operationId).
+func (c *Client) SaveBundleRuleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveBundleRuleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveBundleRule Новая версия правила атрибуции бандла (EC-04)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /economics/bundle-rules (the `SaveBundleRule` operationId).
+func (c *Client) SaveBundleRule(ctx context.Context, body SaveBundleRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveBundleRuleRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListFinancialFields Настраиваемые финансовые поля (EC-08)
+//
+// Corresponds with GET /economics/fields (the `ListFinancialFields` operationId).
+func (c *Client) ListFinancialFields(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListFinancialFieldsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveFinancialFieldWithBody Создать поле или новую версию его описания (EC-08, EC-11)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
+func (c *Client) SaveFinancialFieldWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveFinancialFieldRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveFinancialField Создать поле или новую версию его описания (EC-08, EC-11)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
+func (c *Client) SaveFinancialField(ctx context.Context, body SaveFinancialFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveFinancialFieldRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListImportBatches История загрузок финансовых данных (EC-07)
+//
+// Corresponds with GET /economics/imports (the `ListImportBatches` operationId).
+func (c *Client) ListImportBatches(ctx context.Context, params *ListImportBatchesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListImportBatchesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ImportFinanceFileWithBody Загрузить XLSX с финансовыми данными (EC-01, EC-07)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /economics/imports (the `ImportFinanceFile` operationId).
+func (c *Client) ImportFinanceFileWithBody(ctx context.Context, params *ImportFinanceFileParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportFinanceFileRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetTeamProductMatrix Матрица «команда × продукт» (EC-12)
+//
+// Corresponds with GET /economics/matrix (the `GetTeamProductMatrix` operationId).
+func (c *Client) GetTeamProductMatrix(ctx context.Context, params *GetTeamProductMatrixParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetTeamProductMatrixRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListMetrics Расчётные показатели (EC-09)
+//
+// Corresponds with GET /economics/metrics (the `ListMetrics` operationId).
+func (c *Client) ListMetrics(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListMetricsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveMetricWithBody Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /economics/metrics (the `SaveMetric` operationId).
+func (c *Client) SaveMetricWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveMetricRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveMetric Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /economics/metrics (the `SaveMetric` operationId).
+func (c *Client) SaveMetric(ctx context.Context, body SaveMetricJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveMetricRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CompareMetricVersions Сравнение результатов двух версий формулы (EC-11)
+//
+// Corresponds with GET /economics/metrics/{metricKey}/compare (the `CompareMetricVersions` operationId).
+func (c *Client) CompareMetricVersions(ctx context.Context, metricKey MetricKey, params *CompareMetricVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCompareMetricVersionsRequest(c.Server, metricKey, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ExplainMetric Объяснение значения до формулы и строк импорта (EC-10)
+//
+// Corresponds with GET /economics/metrics/{metricKey}/explain (the `ExplainMetric` operationId).
+func (c *Client) ExplainMetric(ctx context.Context, metricKey MetricKey, params *ExplainMetricParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExplainMetricRequest(c.Server, metricKey, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetMetricValue Значение показателя в срезе (EC-09)
+//
+// Corresponds with GET /economics/metrics/{metricKey}/value (the `GetMetricValue` operationId).
+func (c *Client) GetMetricValue(ctx context.Context, metricKey MetricKey, params *GetMetricValueParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetMetricValueRequest(c.Server, metricKey, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ClosePeriod Закрыть период (EC-11)
+//
+// Corresponds with POST /economics/periods/{period}/close (the `ClosePeriod` operationId).
+func (c *Client) ClosePeriod(ctx context.Context, period string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewClosePeriodRequest(c.Server, period)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetPortfolioPnL P&L портфеля (EC-03)
+//
+// Corresponds with GET /economics/pnl/portfolio (the `GetPortfolioPnL` operationId).
+func (c *Client) GetPortfolioPnL(ctx context.Context, params *GetPortfolioPnLParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPortfolioPnLRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetProductPnL P&L продукта: прямой и с нагрузкой хаба (EC-03)
+//
+// Corresponds with GET /economics/pnl/products/{productId} (the `GetProductPnL` operationId).
+func (c *Client) GetProductPnL(ctx context.Context, productId ProductId, params *GetProductPnLParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProductPnLRequest(c.Server, productId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetBranchCosts Стоимость поддержки веток версий (EC-05)
+//
+// Corresponds with GET /economics/products/{productId}/branches (the `GetBranchCosts` operationId).
+func (c *Client) GetBranchCosts(ctx context.Context, productId ProductId, params *GetBranchCostsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetBranchCostsRequest(c.Server, productId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCertificationEconomics Экономика сертификации (EC-06)
+//
+// Corresponds with GET /economics/products/{productId}/certification (the `GetCertificationEconomics` operationId).
+func (c *Client) GetCertificationEconomics(ctx context.Context, productId ProductId, params *GetCertificationEconomicsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCertificationEconomicsRequest(c.Server, productId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetFeatureEconomics Инвестиции в фичу против привязанной выручки (EC-05)
+//
+// Corresponds with GET /economics/products/{productId}/features/{featureId} (the `GetFeatureEconomics` operationId).
+func (c *Client) GetFeatureEconomics(ctx context.Context, productId ProductId, featureId FeatureId, params *GetFeatureEconomicsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetFeatureEconomicsRequest(c.Server, productId, featureId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListTeams Команды — вторая ось детализации (EC-12)
+//
+// Corresponds with GET /economics/teams (the `ListTeams` operationId).
+func (c *Client) ListTeams(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTeamsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateTeamWithBody Завести команду (EC-12)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /economics/teams (the `CreateTeam` operationId).
+func (c *Client) CreateTeamWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateTeamRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateTeam Завести команду (EC-12)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /economics/teams (the `CreateTeam` operationId).
+func (c *Client) CreateTeam(ctx context.Context, body CreateTeamJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateTeamRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SetTeamSharesWithBody Доли команды по продуктам за период (EC-12)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /economics/teams/{teamId}/shares (the `SetTeamShares` operationId).
+func (c *Client) SetTeamSharesWithBody(ctx context.Context, teamId TeamId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetTeamSharesRequestWithBody(c.Server, teamId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SetTeamShares Доли команды по продуктам за период (EC-12)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /economics/teams/{teamId}/shares (the `SetTeamShares` operationId).
+func (c *Client) SetTeamShares(ctx context.Context, teamId TeamId, body SetTeamSharesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetTeamSharesRequest(c.Server, teamId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListImportTemplates Шаблоны импорта XLSX (EC-07)
+//
+// Corresponds with GET /economics/templates (the `ListImportTemplates` operationId).
+func (c *Client) ListImportTemplates(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListImportTemplatesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveImportTemplateWithBody Создать или изменить шаблон импорта (EC-07)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /economics/templates (the `SaveImportTemplate` operationId).
+func (c *Client) SaveImportTemplateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveImportTemplateRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveImportTemplate Создать или изменить шаблон импорта (EC-07)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /economics/templates (the `SaveImportTemplate` operationId).
+func (c *Client) SaveImportTemplate(ctx context.Context, body SaveImportTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveImportTemplateRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5858,6 +8150,21 @@ func (c *Client) SetFeatureFlagsWithBody(ctx context.Context, featureId FeatureI
 // Corresponds with PUT /features/{featureId}/flags (the `SetFeatureFlags` operationId).
 func (c *Client) SetFeatureFlags(ctx context.Context, featureId FeatureId, body SetFeatureFlagsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSetFeatureFlagsRequest(c.Server, featureId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetFeatureForecast Прогноз даты фичи методом Монте-Карло (DL-04)
+//
+// Corresponds with GET /features/{featureId}/forecast (the `GetFeatureForecast` operationId).
+func (c *Client) GetFeatureForecast(ctx context.Context, featureId FeatureId, params *GetFeatureForecastParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetFeatureForecastRequest(c.Server, featureId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6265,6 +8572,21 @@ func (c *Client) CreateLink(ctx context.Context, body CreateLinkJSONRequestBody,
 // Corresponds with DELETE /links/{linkId} (the `DeleteLink` operationId).
 func (c *Client) DeleteLink(ctx context.Context, linkId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteLinkRequest(c.Server, linkId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetWinLoss Win/loss, фичи выигранных сделок, attach rate (DA-04)
+//
+// Corresponds with GET /marketing/win-loss (the `GetWinLoss` operationId).
+func (c *Client) GetWinLoss(ctx context.Context, params *GetWinLossParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWinLossRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6889,6 +9211,21 @@ func (c *Client) CreateRoadmapItem(ctx context.Context, productId ProductId, bod
 	return c.Client.Do(req)
 }
 
+// GetLaunchCalendar Календарь запусков (RM-06)
+//
+// Corresponds with GET /products/{productId}/roadmap/launch-calendar (the `GetLaunchCalendar` operationId).
+func (c *Client) GetLaunchCalendar(ctx context.Context, productId ProductId, params *GetLaunchCalendarParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLaunchCalendarRequest(c.Server, productId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // GetRoadmapNowNextLater Now/Next/Later (RM-01)
 //
 // Corresponds with GET /products/{productId}/roadmap/now-next-later (the `GetRoadmapNowNextLater` operationId).
@@ -7345,6 +9682,89 @@ func (c *Client) GetRoadmapItemHistory(ctx context.Context, itemId ItemId, reqEd
 	return c.Client.Do(req)
 }
 
+// ListScenarios Сценарии «что если» (DA-02)
+//
+// Corresponds with GET /scenarios (the `ListScenarios` operationId).
+func (c *Client) ListScenarios(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListScenariosRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveScenarioWithBody Создать или изменить сценарий (DA-02, EC-13)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /scenarios (the `SaveScenario` operationId).
+func (c *Client) SaveScenarioWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveScenarioRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveScenario Создать или изменить сценарий (DA-02, EC-13)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /scenarios (the `SaveScenario` operationId).
+func (c *Client) SaveScenario(ctx context.Context, body SaveScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveScenarioRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RunScenarioWithBody Посчитать сценарий и влияние на обязательства и треки (DA-02)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /scenarios/{scenarioId}/run (the `RunScenario` operationId).
+func (c *Client) RunScenarioWithBody(ctx context.Context, scenarioId ScenarioId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRunScenarioRequestWithBody(c.Server, scenarioId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RunScenario Посчитать сценарий и влияние на обязательства и треки (DA-02)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /scenarios/{scenarioId}/run (the `RunScenario` operationId).
+func (c *Client) RunScenario(ctx context.Context, scenarioId ScenarioId, body RunScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRunScenarioRequest(c.Server, scenarioId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListScoringModels Модели оценки (PR-01)
 //
 // Corresponds with GET /scoring-models (the `ListScoringModels` operationId).
@@ -7786,6 +10206,40 @@ func (c *Client) CheckGateItem(ctx context.Context, trackId TrackId, gateId Gate
 	return c.Client.Do(req)
 }
 
+// CollectPipelineEvidenceWithBody Автосбор доказательств из пайплайна безопасности (CM-09)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /tracks/{trackId}/gates/{gateId}/collect-evidence (the `CollectPipelineEvidence` operationId).
+func (c *Client) CollectPipelineEvidenceWithBody(ctx context.Context, trackId TrackId, gateId GateId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCollectPipelineEvidenceRequestWithBody(c.Server, trackId, gateId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CollectPipelineEvidence Автосбор доказательств из пайплайна безопасности (CM-09)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /tracks/{trackId}/gates/{gateId}/collect-evidence (the `CollectPipelineEvidence` operationId).
+func (c *Client) CollectPipelineEvidence(ctx context.Context, trackId TrackId, gateId GateId, body CollectPipelineEvidenceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCollectPipelineEvidenceRequest(c.Server, trackId, gateId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // FailGateWithBody Провалить гейт с причиной (CM-03)
 //
 // Takes any type of body and a specified content type.
@@ -8065,6 +10519,73 @@ func NewVerifyEvidenceLogRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewGetLicenseStatusRequest constructs an http.Request for the GetLicenseStatus method
+func NewGetLicenseStatusRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/license")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewInstallLicenseRequest calls the generic InstallLicense builder with application/json body
+func NewInstallLicenseRequest(server string, body InstallLicenseJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewInstallLicenseRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewInstallLicenseRequestWithBody constructs an http.Request for the InstallLicense method, with any body, and a specified content type
+func NewInstallLicenseRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/license")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -8458,6 +10979,53 @@ func NewSaveTrackTemplateRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewSetBaselineComponentsRequest calls the generic SetBaselineComponents builder with application/json body
+func NewSetBaselineComponentsRequest(server string, baselineId openapi_types.UUID, body SetBaselineComponentsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetBaselineComponentsRequestWithBody(server, baselineId, "application/json", bodyReader)
+}
+
+// NewSetBaselineComponentsRequestWithBody constructs an http.Request for the SetBaselineComponents method, with any body, and a specified content type
+func NewSetBaselineComponentsRequestWithBody(server string, baselineId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "baselineId", baselineId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/baselines/%s/components", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewAcknowledgeCommitmentAlertRequest constructs an http.Request for the AcknowledgeCommitmentAlert method
 func NewAcknowledgeCommitmentAlertRequest(server string, alertId AlertId) (*http.Request, error) {
 	var err error
@@ -8681,6 +11249,46 @@ func NewFulfilCommitmentRequest(server string, commitmentId CommitmentId) (*http
 	return req, nil
 }
 
+// NewReportVulnerableComponentRequest calls the generic ReportVulnerableComponent builder with application/json body
+func NewReportVulnerableComponentRequest(server string, body ReportVulnerableComponentJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewReportVulnerableComponentRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewReportVulnerableComponentRequestWithBody constructs an http.Request for the ReportVulnerableComponent method, with any body, and a specified content type
+func NewReportVulnerableComponentRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/compliance/vulnerabilities")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListContractsRequest constructs an http.Request for the ListContracts method
 func NewListContractsRequest(server string) (*http.Request, error) {
 	var err error
@@ -8829,6 +11437,168 @@ func NewUpdateContractRequestWithBody(server string, contractId openapi_types.UU
 	return req, nil
 }
 
+// NewListDashboardsRequest constructs an http.Request for the ListDashboards method
+func NewListDashboardsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dashboards")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveDashboardRequest calls the generic SaveDashboard builder with application/json body
+func NewSaveDashboardRequest(server string, body SaveDashboardJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveDashboardRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSaveDashboardRequestWithBody constructs an http.Request for the SaveDashboard method, with any body, and a specified content type
+func NewSaveDashboardRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dashboards")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListDashboardSourcesRequest constructs an http.Request for the ListDashboardSources method
+func NewListDashboardSourcesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dashboards/sources")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteDashboardRequest constructs an http.Request for the DeleteDashboard method
+func NewDeleteDashboardRequest(server string, dashboardId DashboardId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "dashboardId", dashboardId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dashboards/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetDashboardRequest constructs an http.Request for the GetDashboard method
+func NewGetDashboardRequest(server string, dashboardId DashboardId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "dashboardId", dashboardId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/dashboards/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListDecisionsRequest constructs an http.Request for the ListDecisions method
 func NewListDecisionsRequest(server string, params *ListDecisionsParams) (*http.Request, error) {
 	var err error
@@ -8931,6 +11701,33 @@ func NewCreateDecisionRequestWithBody(server string, contentType string, body io
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListDecisionsDueForReviewRequest constructs an http.Request for the ListDecisionsDueForReview method
+func NewListDecisionsDueForReviewRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/decisions/due")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -9172,6 +11969,53 @@ func NewRequestDecisionPageRequestWithBody(server string, decisionId DecisionId,
 	return req, nil
 }
 
+// NewReviewDecisionRequest calls the generic ReviewDecision builder with application/json body
+func NewReviewDecisionRequest(server string, decisionId DecisionId, body ReviewDecisionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewReviewDecisionRequestWithBody(server, decisionId, "application/json", bodyReader)
+}
+
+// NewReviewDecisionRequestWithBody constructs an http.Request for the ReviewDecision method, with any body, and a specified content type
+func NewReviewDecisionRequestWithBody(server string, decisionId DecisionId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "decisionId", decisionId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/decisions/%s/review", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewSupersedeDecisionRequest calls the generic SupersedeDecision builder with application/json body
 func NewSupersedeDecisionRequest(server string, decisionId DecisionId, body SupersedeDecisionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -9200,6 +12044,1303 @@ func NewSupersedeDecisionRequestWithBody(server string, decisionId DecisionId, c
 	}
 
 	operationPath := fmt.Sprintf("/decisions/%s/supersede", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetWorklogCostBaseRequest constructs an http.Request for the GetWorklogCostBase method
+func NewGetWorklogCostBaseRequest(server string, params *GetWorklogCostBaseParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/delivery/worklog-cost-base")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.From != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "from", *params.From, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.To != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "to", *params.To, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListAllocationRulesRequest constructs an http.Request for the ListAllocationRules method
+func NewListAllocationRulesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/allocation-rules")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveAllocationRuleRequest calls the generic SaveAllocationRule builder with application/json body
+func NewSaveAllocationRuleRequest(server string, body SaveAllocationRuleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveAllocationRuleRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSaveAllocationRuleRequestWithBody constructs an http.Request for the SaveAllocationRule method, with any body, and a specified content type
+func NewSaveAllocationRuleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/allocation-rules")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListBundleRulesRequest constructs an http.Request for the ListBundleRules method
+func NewListBundleRulesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/bundle-rules")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveBundleRuleRequest calls the generic SaveBundleRule builder with application/json body
+func NewSaveBundleRuleRequest(server string, body SaveBundleRuleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveBundleRuleRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSaveBundleRuleRequestWithBody constructs an http.Request for the SaveBundleRule method, with any body, and a specified content type
+func NewSaveBundleRuleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/bundle-rules")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListFinancialFieldsRequest constructs an http.Request for the ListFinancialFields method
+func NewListFinancialFieldsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/fields")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveFinancialFieldRequest calls the generic SaveFinancialField builder with application/json body
+func NewSaveFinancialFieldRequest(server string, body SaveFinancialFieldJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveFinancialFieldRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSaveFinancialFieldRequestWithBody constructs an http.Request for the SaveFinancialField method, with any body, and a specified content type
+func NewSaveFinancialFieldRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/fields")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListImportBatchesRequest constructs an http.Request for the ListImportBatches method
+func NewListImportBatchesRequest(server string, params *ListImportBatchesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/imports")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewImportFinanceFileRequestWithBody constructs an http.Request for the ImportFinanceFile method, with any body, and a specified content type
+func NewImportFinanceFileRequestWithBody(server string, params *ImportFinanceFileParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/imports")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "templateId", params.TemplateId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.FileName != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "fileName", *params.FileName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Preview != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "preview", *params.Preview, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Force != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "force", *params.Force, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetTeamProductMatrixRequest constructs an http.Request for the GetTeamProductMatrix method
+func NewGetTeamProductMatrixRequest(server string, params *GetTeamProductMatrixParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/matrix")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListMetricsRequest constructs an http.Request for the ListMetrics method
+func NewListMetricsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/metrics")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveMetricRequest calls the generic SaveMetric builder with application/json body
+func NewSaveMetricRequest(server string, body SaveMetricJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveMetricRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSaveMetricRequestWithBody constructs an http.Request for the SaveMetric method, with any body, and a specified content type
+func NewSaveMetricRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/metrics")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCompareMetricVersionsRequest constructs an http.Request for the CompareMetricVersions method
+func NewCompareMetricVersionsRequest(server string, metricKey MetricKey, params *CompareMetricVersionsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "metricKey", metricKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/metrics/%s/compare", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.ProductId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "productId", *params.ProductId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "a", params.A, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "b", params.B, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewExplainMetricRequest constructs an http.Request for the ExplainMetric method
+func NewExplainMetricRequest(server string, metricKey MetricKey, params *ExplainMetricParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "metricKey", metricKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/metrics/%s/explain", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.ProductId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "productId", *params.ProductId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetMetricValueRequest constructs an http.Request for the GetMetricValue method
+func NewGetMetricValueRequest(server string, metricKey MetricKey, params *GetMetricValueParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "metricKey", metricKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/metrics/%s/value", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.ProductId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "productId", *params.ProductId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewClosePeriodRequest constructs an http.Request for the ClosePeriod method
+func NewClosePeriodRequest(server string, period string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/periods/%s/close", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetPortfolioPnLRequest constructs an http.Request for the GetPortfolioPnL method
+func NewGetPortfolioPnLRequest(server string, params *GetPortfolioPnLParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/pnl/portfolio")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetProductPnLRequest constructs an http.Request for the GetProductPnL method
+func NewGetProductPnLRequest(server string, productId ProductId, params *GetProductPnLParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/pnl/products/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetBranchCostsRequest constructs an http.Request for the GetBranchCosts method
+func NewGetBranchCostsRequest(server string, productId ProductId, params *GetBranchCostsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/products/%s/branches", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCertificationEconomicsRequest constructs an http.Request for the GetCertificationEconomics method
+func NewGetCertificationEconomicsRequest(server string, productId ProductId, params *GetCertificationEconomicsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/products/%s/certification", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetFeatureEconomicsRequest constructs an http.Request for the GetFeatureEconomics method
+func NewGetFeatureEconomicsRequest(server string, productId ProductId, featureId FeatureId, params *GetFeatureEconomicsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "featureId", featureId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/products/%s/features/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Period != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "period", *params.Period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListTeamsRequest constructs an http.Request for the ListTeams method
+func NewListTeamsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/teams")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateTeamRequest calls the generic CreateTeam builder with application/json body
+func NewCreateTeamRequest(server string, body CreateTeamJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateTeamRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateTeamRequestWithBody constructs an http.Request for the CreateTeam method, with any body, and a specified content type
+func NewCreateTeamRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/teams")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSetTeamSharesRequest calls the generic SetTeamShares builder with application/json body
+func NewSetTeamSharesRequest(server string, teamId TeamId, body SetTeamSharesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetTeamSharesRequestWithBody(server, teamId, "application/json", bodyReader)
+}
+
+// NewSetTeamSharesRequestWithBody constructs an http.Request for the SetTeamShares method, with any body, and a specified content type
+func NewSetTeamSharesRequestWithBody(server string, teamId TeamId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "teamId", teamId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/teams/%s/shares", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListImportTemplatesRequest constructs an http.Request for the ListImportTemplates method
+func NewListImportTemplatesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/templates")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveImportTemplateRequest calls the generic SaveImportTemplate builder with application/json body
+func NewSaveImportTemplateRequest(server string, body SaveImportTemplateJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveImportTemplateRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSaveImportTemplateRequestWithBody constructs an http.Request for the SaveImportTemplate method, with any body, and a specified content type
+func NewSaveImportTemplateRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/templates")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -9620,6 +13761,79 @@ func NewSetFeatureFlagsRequestWithBody(server string, featureId FeatureId, conte
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetFeatureForecastRequest constructs an http.Request for the GetFeatureForecast method
+func NewGetFeatureForecastRequest(server string, featureId FeatureId, params *GetFeatureForecastParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "featureId", featureId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/features/%s/forecast", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Samples != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "samples", *params.Samples, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Seed != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "seed", *params.Seed, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -10278,6 +14492,84 @@ func NewDeleteLinkRequest(server string, linkId openapi_types.UUID) (*http.Reque
 	}
 
 	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetWinLossRequest constructs an http.Request for the GetWinLoss method
+func NewGetWinLossRequest(server string, params *GetWinLossParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/marketing/win-loss")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.ProductKey != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "productKey", *params.ProductKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.From != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "from", *params.From, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.To != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "to", *params.To, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -11544,6 +15836,79 @@ func NewCreateRoadmapItemRequestWithBody(server string, productId ProductId, con
 	return req, nil
 }
 
+// NewGetLaunchCalendarRequest constructs an http.Request for the GetLaunchCalendar method
+func NewGetLaunchCalendarRequest(server string, productId ProductId, params *GetLaunchCalendarParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/roadmap/launch-calendar", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.From != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "from", *params.From, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.To != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "to", *params.To, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetRoadmapNowNextLaterRequest constructs an http.Request for the GetRoadmapNowNextLater method
 func NewGetRoadmapNowNextLaterRequest(server string, productId ProductId) (*http.Request, error) {
 	var err error
@@ -12346,6 +16711,120 @@ func NewGetRoadmapItemHistoryRequest(server string, itemId ItemId) (*http.Reques
 	return req, nil
 }
 
+// NewListScenariosRequest constructs an http.Request for the ListScenarios method
+func NewListScenariosRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scenarios")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveScenarioRequest calls the generic SaveScenario builder with application/json body
+func NewSaveScenarioRequest(server string, body SaveScenarioJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveScenarioRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSaveScenarioRequestWithBody constructs an http.Request for the SaveScenario method, with any body, and a specified content type
+func NewSaveScenarioRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scenarios")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRunScenarioRequest calls the generic RunScenario builder with application/json body
+func NewRunScenarioRequest(server string, scenarioId ScenarioId, body RunScenarioJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRunScenarioRequestWithBody(server, scenarioId, "application/json", bodyReader)
+}
+
+// NewRunScenarioRequestWithBody constructs an http.Request for the RunScenario method, with any body, and a specified content type
+func NewRunScenarioRequestWithBody(server string, scenarioId ScenarioId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "scenarioId", scenarioId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/scenarios/%s/run", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListScoringModelsRequest constructs an http.Request for the ListScoringModels method
 func NewListScoringModelsRequest(server string) (*http.Request, error) {
 	var err error
@@ -13123,6 +17602,60 @@ func NewCheckGateItemRequestWithBody(server string, trackId TrackId, gateId Gate
 	return req, nil
 }
 
+// NewCollectPipelineEvidenceRequest calls the generic CollectPipelineEvidence builder with application/json body
+func NewCollectPipelineEvidenceRequest(server string, trackId TrackId, gateId GateId, body CollectPipelineEvidenceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCollectPipelineEvidenceRequestWithBody(server, trackId, gateId, "application/json", bodyReader)
+}
+
+// NewCollectPipelineEvidenceRequestWithBody constructs an http.Request for the CollectPipelineEvidence method, with any body, and a specified content type
+func NewCollectPipelineEvidenceRequestWithBody(server string, trackId TrackId, gateId GateId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "trackId", trackId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "gateId", gateId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/tracks/%s/gates/%s/collect-evidence", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewFailGateRequest calls the generic FailGate builder with application/json body
 func NewFailGateRequest(server string, trackId TrackId, gateId GateId, body FailGateJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -13318,6 +17851,27 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /admin/evidence/verify (the `VerifyEvidenceLog` operationId).
 	VerifyEvidenceLogWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*VerifyEvidenceLogResponse, error)
 
+	// GetLicenseStatusWithResponse Состояние лицензии поставки (AD-06)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /admin/license (the `GetLicenseStatus` operationId).
+	GetLicenseStatusWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetLicenseStatusResponse, error)
+
+	// InstallLicenseWithBodyWithResponse Установить лицензионный ключ (AD-06)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /admin/license (the `InstallLicense` operationId).
+	InstallLicenseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InstallLicenseResponse, error)
+
+	// InstallLicenseWithResponse Установить лицензионный ключ (AD-06)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /admin/license (the `InstallLicense` operationId).
+	InstallLicenseWithResponse(ctx context.Context, body InstallLicenseJSONRequestBody, reqEditors ...RequestEditorFn) (*InstallLicenseResponse, error)
+
 	// ListRequirementSetsWithResponse Каталог наборов требований (CM-01)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -13423,6 +17977,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /admin/track-templates (the `SaveTrackTemplate` operationId).
 	SaveTrackTemplateWithResponse(ctx context.Context, body SaveTrackTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveTrackTemplateResponse, error)
 
+	// SetBaselineComponentsWithBodyWithResponse Состав компонентов сертифицированной версии (CM-08)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /baselines/{baselineId}/components (the `SetBaselineComponents` operationId).
+	SetBaselineComponentsWithBodyWithResponse(ctx context.Context, baselineId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetBaselineComponentsResponse, error)
+
+	// SetBaselineComponentsWithResponse Состав компонентов сертифицированной версии (CM-08)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /baselines/{baselineId}/components (the `SetBaselineComponents` operationId).
+	SetBaselineComponentsWithResponse(ctx context.Context, baselineId openapi_types.UUID, body SetBaselineComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*SetBaselineComponentsResponse, error)
+
 	// AcknowledgeCommitmentAlertWithResponse Подтвердить алерт
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -13479,6 +18047,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /commitments/{commitmentId}/fulfil (the `FulfilCommitment` operationId).
 	FulfilCommitmentWithResponse(ctx context.Context, commitmentId CommitmentId, reqEditors ...RequestEditorFn) (*FulfilCommitmentResponse, error)
 
+	// ReportVulnerableComponentWithBodyWithResponse Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /compliance/vulnerabilities (the `ReportVulnerableComponent` operationId).
+	ReportVulnerableComponentWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReportVulnerableComponentResponse, error)
+
+	// ReportVulnerableComponentWithResponse Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /compliance/vulnerabilities (the `ReportVulnerableComponent` operationId).
+	ReportVulnerableComponentWithResponse(ctx context.Context, body ReportVulnerableComponentJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportVulnerableComponentResponse, error)
+
 	// ListContractsWithResponse Интеграционные контракты (PG-04)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -13521,6 +18103,48 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with PUT /contracts/{contractId} (the `UpdateContract` operationId).
 	UpdateContractWithResponse(ctx context.Context, contractId openapi_types.UUID, body UpdateContractJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateContractResponse, error)
 
+	// ListDashboardsWithResponse Дашборды конструктора (DA-05)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /dashboards (the `ListDashboards` operationId).
+	ListDashboardsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDashboardsResponse, error)
+
+	// SaveDashboardWithBodyWithResponse Создать или изменить дашборд (DA-05)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /dashboards (the `SaveDashboard` operationId).
+	SaveDashboardWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveDashboardResponse, error)
+
+	// SaveDashboardWithResponse Создать или изменить дашборд (DA-05)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /dashboards (the `SaveDashboard` operationId).
+	SaveDashboardWithResponse(ctx context.Context, body SaveDashboardJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveDashboardResponse, error)
+
+	// ListDashboardSourcesWithResponse Срезы данных, доступные панелям (DA-05)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /dashboards/sources (the `ListDashboardSources` operationId).
+	ListDashboardSourcesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDashboardSourcesResponse, error)
+
+	// DeleteDashboardWithResponse Удалить дашборд (DA-05)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /dashboards/{dashboardId} (the `DeleteDashboard` operationId).
+	DeleteDashboardWithResponse(ctx context.Context, dashboardId DashboardId, reqEditors ...RequestEditorFn) (*DeleteDashboardResponse, error)
+
+	// GetDashboardWithResponse Дашборд (DA-05)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /dashboards/{dashboardId} (the `GetDashboard` operationId).
+	GetDashboardWithResponse(ctx context.Context, dashboardId DashboardId, reqEditors ...RequestEditorFn) (*GetDashboardResponse, error)
+
 	// ListDecisionsWithResponse Решения продукта; без productId — портфельные (DA-01)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -13541,6 +18165,13 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /decisions (the `CreateDecision` operationId).
 	CreateDecisionWithResponse(ctx context.Context, body CreateDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDecisionResponse, error)
+
+	// ListDecisionsDueForReviewWithResponse Решения, которым пора ревизию (DA-06)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /decisions/due (the `ListDecisionsDueForReview` operationId).
+	ListDecisionsDueForReviewWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDecisionsDueForReviewResponse, error)
 
 	// ListDecisionsForWithResponse Решения, связанные с сущностью (DS-04)
 	//
@@ -13598,6 +18229,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /decisions/{decisionId}/request-page (the `RequestDecisionPage` operationId).
 	RequestDecisionPageWithResponse(ctx context.Context, decisionId DecisionId, body RequestDecisionPageJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestDecisionPageResponse, error)
 
+	// ReviewDecisionWithBodyWithResponse Ревизия решения: ожидание против факта (DA-06)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /decisions/{decisionId}/review (the `ReviewDecision` operationId).
+	ReviewDecisionWithBodyWithResponse(ctx context.Context, decisionId DecisionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReviewDecisionResponse, error)
+
+	// ReviewDecisionWithResponse Ревизия решения: ожидание против факта (DA-06)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /decisions/{decisionId}/review (the `ReviewDecision` operationId).
+	ReviewDecisionWithResponse(ctx context.Context, decisionId DecisionId, body ReviewDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*ReviewDecisionResponse, error)
+
 	// SupersedeDecisionWithBodyWithResponse Заменить другим решением
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -13611,6 +18256,237 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /decisions/{decisionId}/supersede (the `SupersedeDecision` operationId).
 	SupersedeDecisionWithResponse(ctx context.Context, decisionId DecisionId, body SupersedeDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*SupersedeDecisionResponse, error)
+
+	// GetWorklogCostBaseWithResponse Списания времени как база распределения затрат (DL-05)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /delivery/worklog-cost-base (the `GetWorklogCostBase` operationId).
+	GetWorklogCostBaseWithResponse(ctx context.Context, params *GetWorklogCostBaseParams, reqEditors ...RequestEditorFn) (*GetWorklogCostBaseResponse, error)
+
+	// ListAllocationRulesWithResponse Правила аллокации затрат хаба (EC-02)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/allocation-rules (the `ListAllocationRules` operationId).
+	ListAllocationRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAllocationRulesResponse, error)
+
+	// SaveAllocationRuleWithBodyWithResponse Новая версия правила аллокации (EC-02)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/allocation-rules (the `SaveAllocationRule` operationId).
+	SaveAllocationRuleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveAllocationRuleResponse, error)
+
+	// SaveAllocationRuleWithResponse Новая версия правила аллокации (EC-02)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/allocation-rules (the `SaveAllocationRule` operationId).
+	SaveAllocationRuleWithResponse(ctx context.Context, body SaveAllocationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveAllocationRuleResponse, error)
+
+	// ListBundleRulesWithResponse Правила атрибуции выручки бандлов (EC-04)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/bundle-rules (the `ListBundleRules` operationId).
+	ListBundleRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBundleRulesResponse, error)
+
+	// SaveBundleRuleWithBodyWithResponse Новая версия правила атрибуции бандла (EC-04)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/bundle-rules (the `SaveBundleRule` operationId).
+	SaveBundleRuleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveBundleRuleResponse, error)
+
+	// SaveBundleRuleWithResponse Новая версия правила атрибуции бандла (EC-04)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/bundle-rules (the `SaveBundleRule` operationId).
+	SaveBundleRuleWithResponse(ctx context.Context, body SaveBundleRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveBundleRuleResponse, error)
+
+	// ListFinancialFieldsWithResponse Настраиваемые финансовые поля (EC-08)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/fields (the `ListFinancialFields` operationId).
+	ListFinancialFieldsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListFinancialFieldsResponse, error)
+
+	// SaveFinancialFieldWithBodyWithResponse Создать поле или новую версию его описания (EC-08, EC-11)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
+	SaveFinancialFieldWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveFinancialFieldResponse, error)
+
+	// SaveFinancialFieldWithResponse Создать поле или новую версию его описания (EC-08, EC-11)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
+	SaveFinancialFieldWithResponse(ctx context.Context, body SaveFinancialFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveFinancialFieldResponse, error)
+
+	// ListImportBatchesWithResponse История загрузок финансовых данных (EC-07)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/imports (the `ListImportBatches` operationId).
+	ListImportBatchesWithResponse(ctx context.Context, params *ListImportBatchesParams, reqEditors ...RequestEditorFn) (*ListImportBatchesResponse, error)
+
+	// ImportFinanceFileWithBodyWithResponse Загрузить XLSX с финансовыми данными (EC-01, EC-07)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/imports (the `ImportFinanceFile` operationId).
+	ImportFinanceFileWithBodyWithResponse(ctx context.Context, params *ImportFinanceFileParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportFinanceFileResponse, error)
+
+	// GetTeamProductMatrixWithResponse Матрица «команда × продукт» (EC-12)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/matrix (the `GetTeamProductMatrix` operationId).
+	GetTeamProductMatrixWithResponse(ctx context.Context, params *GetTeamProductMatrixParams, reqEditors ...RequestEditorFn) (*GetTeamProductMatrixResponse, error)
+
+	// ListMetricsWithResponse Расчётные показатели (EC-09)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/metrics (the `ListMetrics` operationId).
+	ListMetricsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsResponse, error)
+
+	// SaveMetricWithBodyWithResponse Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/metrics (the `SaveMetric` operationId).
+	SaveMetricWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveMetricResponse, error)
+
+	// SaveMetricWithResponse Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/metrics (the `SaveMetric` operationId).
+	SaveMetricWithResponse(ctx context.Context, body SaveMetricJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveMetricResponse, error)
+
+	// CompareMetricVersionsWithResponse Сравнение результатов двух версий формулы (EC-11)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/metrics/{metricKey}/compare (the `CompareMetricVersions` operationId).
+	CompareMetricVersionsWithResponse(ctx context.Context, metricKey MetricKey, params *CompareMetricVersionsParams, reqEditors ...RequestEditorFn) (*CompareMetricVersionsResponse, error)
+
+	// ExplainMetricWithResponse Объяснение значения до формулы и строк импорта (EC-10)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/metrics/{metricKey}/explain (the `ExplainMetric` operationId).
+	ExplainMetricWithResponse(ctx context.Context, metricKey MetricKey, params *ExplainMetricParams, reqEditors ...RequestEditorFn) (*ExplainMetricResponse, error)
+
+	// GetMetricValueWithResponse Значение показателя в срезе (EC-09)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/metrics/{metricKey}/value (the `GetMetricValue` operationId).
+	GetMetricValueWithResponse(ctx context.Context, metricKey MetricKey, params *GetMetricValueParams, reqEditors ...RequestEditorFn) (*GetMetricValueResponse, error)
+
+	// ClosePeriodWithResponse Закрыть период (EC-11)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/periods/{period}/close (the `ClosePeriod` operationId).
+	ClosePeriodWithResponse(ctx context.Context, period string, reqEditors ...RequestEditorFn) (*ClosePeriodResponse, error)
+
+	// GetPortfolioPnLWithResponse P&L портфеля (EC-03)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/pnl/portfolio (the `GetPortfolioPnL` operationId).
+	GetPortfolioPnLWithResponse(ctx context.Context, params *GetPortfolioPnLParams, reqEditors ...RequestEditorFn) (*GetPortfolioPnLResponse, error)
+
+	// GetProductPnLWithResponse P&L продукта: прямой и с нагрузкой хаба (EC-03)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/pnl/products/{productId} (the `GetProductPnL` operationId).
+	GetProductPnLWithResponse(ctx context.Context, productId ProductId, params *GetProductPnLParams, reqEditors ...RequestEditorFn) (*GetProductPnLResponse, error)
+
+	// GetBranchCostsWithResponse Стоимость поддержки веток версий (EC-05)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/products/{productId}/branches (the `GetBranchCosts` operationId).
+	GetBranchCostsWithResponse(ctx context.Context, productId ProductId, params *GetBranchCostsParams, reqEditors ...RequestEditorFn) (*GetBranchCostsResponse, error)
+
+	// GetCertificationEconomicsWithResponse Экономика сертификации (EC-06)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/products/{productId}/certification (the `GetCertificationEconomics` operationId).
+	GetCertificationEconomicsWithResponse(ctx context.Context, productId ProductId, params *GetCertificationEconomicsParams, reqEditors ...RequestEditorFn) (*GetCertificationEconomicsResponse, error)
+
+	// GetFeatureEconomicsWithResponse Инвестиции в фичу против привязанной выручки (EC-05)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/products/{productId}/features/{featureId} (the `GetFeatureEconomics` operationId).
+	GetFeatureEconomicsWithResponse(ctx context.Context, productId ProductId, featureId FeatureId, params *GetFeatureEconomicsParams, reqEditors ...RequestEditorFn) (*GetFeatureEconomicsResponse, error)
+
+	// ListTeamsWithResponse Команды — вторая ось детализации (EC-12)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/teams (the `ListTeams` operationId).
+	ListTeamsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTeamsResponse, error)
+
+	// CreateTeamWithBodyWithResponse Завести команду (EC-12)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/teams (the `CreateTeam` operationId).
+	CreateTeamWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateTeamResponse, error)
+
+	// CreateTeamWithResponse Завести команду (EC-12)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/teams (the `CreateTeam` operationId).
+	CreateTeamWithResponse(ctx context.Context, body CreateTeamJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateTeamResponse, error)
+
+	// SetTeamSharesWithBodyWithResponse Доли команды по продуктам за период (EC-12)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /economics/teams/{teamId}/shares (the `SetTeamShares` operationId).
+	SetTeamSharesWithBodyWithResponse(ctx context.Context, teamId TeamId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetTeamSharesResponse, error)
+
+	// SetTeamSharesWithResponse Доли команды по продуктам за период (EC-12)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /economics/teams/{teamId}/shares (the `SetTeamShares` operationId).
+	SetTeamSharesWithResponse(ctx context.Context, teamId TeamId, body SetTeamSharesJSONRequestBody, reqEditors ...RequestEditorFn) (*SetTeamSharesResponse, error)
+
+	// ListImportTemplatesWithResponse Шаблоны импорта XLSX (EC-07)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /economics/templates (the `ListImportTemplates` operationId).
+	ListImportTemplatesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListImportTemplatesResponse, error)
+
+	// SaveImportTemplateWithBodyWithResponse Создать или изменить шаблон импорта (EC-07)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/templates (the `SaveImportTemplate` operationId).
+	SaveImportTemplateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveImportTemplateResponse, error)
+
+	// SaveImportTemplateWithResponse Создать или изменить шаблон импорта (EC-07)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/templates (the `SaveImportTemplate` operationId).
+	SaveImportTemplateWithResponse(ctx context.Context, body SaveImportTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveImportTemplateResponse, error)
 
 	// SetEvidenceItemStatusWithBodyWithResponse Принять или отклонить доказательство — новая запись журнала (CM-04)
 	//
@@ -13716,6 +18592,13 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /features/{featureId}/flags (the `SetFeatureFlags` operationId).
 	SetFeatureFlagsWithResponse(ctx context.Context, featureId FeatureId, body SetFeatureFlagsJSONRequestBody, reqEditors ...RequestEditorFn) (*SetFeatureFlagsResponse, error)
+
+	// GetFeatureForecastWithResponse Прогноз даты фичи методом Монте-Карло (DL-04)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /features/{featureId}/forecast (the `GetFeatureForecast` operationId).
+	GetFeatureForecastWithResponse(ctx context.Context, featureId FeatureId, params *GetFeatureForecastParams, reqEditors ...RequestEditorFn) (*GetFeatureForecastResponse, error)
 
 	// GetFeatureImpactWithResponse Действующий класс влияния фичи (CM-06)
 	//
@@ -13891,6 +18774,13 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with DELETE /links/{linkId} (the `DeleteLink` operationId).
 	DeleteLinkWithResponse(ctx context.Context, linkId openapi_types.UUID, reqEditors ...RequestEditorFn) (*DeleteLinkResponse, error)
+
+	// GetWinLossWithResponse Win/loss, фичи выигранных сделок, attach rate (DA-04)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /marketing/win-loss (the `GetWinLoss` operationId).
+	GetWinLossWithResponse(ctx context.Context, params *GetWinLossParams, reqEditors ...RequestEditorFn) (*GetWinLossResponse, error)
 
 	// GetMeWithResponse Область доступа текущего субъекта
 	//
@@ -14158,6 +19048,13 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /products/{productId}/roadmap/items (the `CreateRoadmapItem` operationId).
 	CreateRoadmapItemWithResponse(ctx context.Context, productId ProductId, body CreateRoadmapItemJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateRoadmapItemResponse, error)
 
+	// GetLaunchCalendarWithResponse Календарь запусков (RM-06)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /products/{productId}/roadmap/launch-calendar (the `GetLaunchCalendar` operationId).
+	GetLaunchCalendarWithResponse(ctx context.Context, productId ProductId, params *GetLaunchCalendarParams, reqEditors ...RequestEditorFn) (*GetLaunchCalendarResponse, error)
+
 	// GetRoadmapNowNextLaterWithResponse Now/Next/Later (RM-01)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -14354,6 +19251,41 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /roadmap/items/{itemId}/history (the `GetRoadmapItemHistory` operationId).
 	GetRoadmapItemHistoryWithResponse(ctx context.Context, itemId ItemId, reqEditors ...RequestEditorFn) (*GetRoadmapItemHistoryResponse, error)
 
+	// ListScenariosWithResponse Сценарии «что если» (DA-02)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /scenarios (the `ListScenarios` operationId).
+	ListScenariosWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListScenariosResponse, error)
+
+	// SaveScenarioWithBodyWithResponse Создать или изменить сценарий (DA-02, EC-13)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /scenarios (the `SaveScenario` operationId).
+	SaveScenarioWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveScenarioResponse, error)
+
+	// SaveScenarioWithResponse Создать или изменить сценарий (DA-02, EC-13)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /scenarios (the `SaveScenario` operationId).
+	SaveScenarioWithResponse(ctx context.Context, body SaveScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveScenarioResponse, error)
+
+	// RunScenarioWithBodyWithResponse Посчитать сценарий и влияние на обязательства и треки (DA-02)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /scenarios/{scenarioId}/run (the `RunScenario` operationId).
+	RunScenarioWithBodyWithResponse(ctx context.Context, scenarioId ScenarioId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RunScenarioResponse, error)
+
+	// RunScenarioWithResponse Посчитать сценарий и влияние на обязательства и треки (DA-02)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /scenarios/{scenarioId}/run (the `RunScenario` operationId).
+	RunScenarioWithResponse(ctx context.Context, scenarioId ScenarioId, body RunScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*RunScenarioResponse, error)
+
 	// ListScoringModelsWithResponse Модели оценки (PR-01)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -14542,6 +19474,20 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /tracks/{trackId}/gates/{gateId}/check (the `CheckGateItem` operationId).
 	CheckGateItemWithResponse(ctx context.Context, trackId TrackId, gateId GateId, body CheckGateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*CheckGateItemResponse, error)
+
+	// CollectPipelineEvidenceWithBodyWithResponse Автосбор доказательств из пайплайна безопасности (CM-09)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /tracks/{trackId}/gates/{gateId}/collect-evidence (the `CollectPipelineEvidence` operationId).
+	CollectPipelineEvidenceWithBodyWithResponse(ctx context.Context, trackId TrackId, gateId GateId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CollectPipelineEvidenceResponse, error)
+
+	// CollectPipelineEvidenceWithResponse Автосбор доказательств из пайплайна безопасности (CM-09)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /tracks/{trackId}/gates/{gateId}/collect-evidence (the `CollectPipelineEvidence` operationId).
+	CollectPipelineEvidenceWithResponse(ctx context.Context, trackId TrackId, gateId GateId, body CollectPipelineEvidenceJSONRequestBody, reqEditors ...RequestEditorFn) (*CollectPipelineEvidenceResponse, error)
 
 	// FailGateWithBodyWithResponse Провалить гейт с причиной (CM-03)
 	//
@@ -14847,6 +19793,102 @@ func (r VerifyEvidenceLogResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r VerifyEvidenceLogResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetLicenseStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *LicenseStatus
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetLicenseStatusResponse) GetJSON200() *LicenseStatus {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetLicenseStatusResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetLicenseStatusResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLicenseStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLicenseStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetLicenseStatusResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type InstallLicenseResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *LicenseStatus
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r InstallLicenseResponse) GetJSON200() *LicenseStatus {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r InstallLicenseResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r InstallLicenseResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r InstallLicenseResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r InstallLicenseResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r InstallLicenseResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -15326,6 +20368,54 @@ func (r SaveTrackTemplateResponse) ContentType() string {
 	return ""
 }
 
+type SetBaselineComponentsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CertifiedBaseline
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SetBaselineComponentsResponse) GetJSON200() *CertifiedBaseline {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SetBaselineComponentsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SetBaselineComponentsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SetBaselineComponentsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetBaselineComponentsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SetBaselineComponentsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type AcknowledgeCommitmentAlertResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -15614,6 +20704,54 @@ func (r FulfilCommitmentResponse) ContentType() string {
 	return ""
 }
 
+type ReportVulnerableComponentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *VulnerabilityImpact
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ReportVulnerableComponentResponse) GetJSON200() *VulnerabilityImpact {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ReportVulnerableComponentResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ReportVulnerableComponentResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ReportVulnerableComponentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReportVulnerableComponentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReportVulnerableComponentResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListContractsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -15813,6 +20951,239 @@ func (r UpdateContractResponse) ContentType() string {
 	return ""
 }
 
+type ListDashboardsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Dashboard
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListDashboardsResponse) GetJSON200() *[]Dashboard {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListDashboardsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListDashboardsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDashboardsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDashboardsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListDashboardsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveDashboardResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Dashboard
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SaveDashboardResponse) GetJSON200() *Dashboard {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SaveDashboardResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SaveDashboardResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveDashboardResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveDashboardResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveDashboardResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListDashboardSourcesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]string
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListDashboardSourcesResponse) GetJSON200() *[]string {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListDashboardSourcesResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListDashboardSourcesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDashboardSourcesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDashboardSourcesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListDashboardSourcesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteDashboardResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r DeleteDashboardResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteDashboardResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteDashboardResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteDashboardResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteDashboardResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetDashboardResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Dashboard
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetDashboardResponse) GetJSON200() *Dashboard {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetDashboardResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetDashboardResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDashboardResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDashboardResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetDashboardResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListDecisionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -15903,6 +21274,54 @@ func (r CreateDecisionResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r CreateDecisionResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListDecisionsDueForReviewResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Decision
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListDecisionsDueForReviewResponse) GetJSON200() *[]Decision {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListDecisionsDueForReviewResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListDecisionsDueForReviewResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDecisionsDueForReviewResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDecisionsDueForReviewResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListDecisionsDueForReviewResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -16190,6 +21609,54 @@ func (r RequestDecisionPageResponse) ContentType() string {
 	return ""
 }
 
+type ReviewDecisionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Decision
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ReviewDecisionResponse) GetJSON200() *Decision {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ReviewDecisionResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ReviewDecisionResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ReviewDecisionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReviewDecisionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReviewDecisionResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type SupersedeDecisionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -16232,6 +21699,1240 @@ func (r SupersedeDecisionResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r SupersedeDecisionResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetWorklogCostBaseResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *WorklogReport
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetWorklogCostBaseResponse) GetJSON200() *WorklogReport {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetWorklogCostBaseResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetWorklogCostBaseResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWorklogCostBaseResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWorklogCostBaseResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetWorklogCostBaseResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListAllocationRulesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]AllocationRule
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListAllocationRulesResponse) GetJSON200() *[]AllocationRule {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListAllocationRulesResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListAllocationRulesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAllocationRulesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAllocationRulesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListAllocationRulesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveAllocationRuleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *AllocationRule
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r SaveAllocationRuleResponse) GetJSON201() *AllocationRule {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SaveAllocationRuleResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SaveAllocationRuleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveAllocationRuleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveAllocationRuleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveAllocationRuleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListBundleRulesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]BundleRule
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListBundleRulesResponse) GetJSON200() *[]BundleRule {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListBundleRulesResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListBundleRulesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListBundleRulesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListBundleRulesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListBundleRulesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveBundleRuleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *BundleRule
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r SaveBundleRuleResponse) GetJSON201() *BundleRule {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SaveBundleRuleResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SaveBundleRuleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveBundleRuleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveBundleRuleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveBundleRuleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListFinancialFieldsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]FinancialField
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListFinancialFieldsResponse) GetJSON200() *[]FinancialField {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListFinancialFieldsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListFinancialFieldsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListFinancialFieldsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListFinancialFieldsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListFinancialFieldsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveFinancialFieldResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *FinancialField
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SaveFinancialFieldResponse) GetJSON200() *FinancialField {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SaveFinancialFieldResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SaveFinancialFieldResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveFinancialFieldResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveFinancialFieldResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveFinancialFieldResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListImportBatchesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]ImportBatch
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListImportBatchesResponse) GetJSON200() *[]ImportBatch {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListImportBatchesResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListImportBatchesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListImportBatchesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListImportBatchesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListImportBatchesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ImportFinanceFileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *FinanceImportResult
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ImportFinanceFileResponse) GetJSON200() *FinanceImportResult {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ImportFinanceFileResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ImportFinanceFileResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ImportFinanceFileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ImportFinanceFileResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ImportFinanceFileResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetTeamProductMatrixResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *TeamProductMatrix
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetTeamProductMatrixResponse) GetJSON200() *TeamProductMatrix {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetTeamProductMatrixResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetTeamProductMatrixResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetTeamProductMatrixResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetTeamProductMatrixResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetTeamProductMatrixResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListMetricsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Metric
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListMetricsResponse) GetJSON200() *[]Metric {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListMetricsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListMetricsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListMetricsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListMetricsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListMetricsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveMetricResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Metric
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SaveMetricResponse) GetJSON200() *Metric {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SaveMetricResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SaveMetricResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveMetricResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveMetricResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveMetricResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CompareMetricVersionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *MetricComparison
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CompareMetricVersionsResponse) GetJSON200() *MetricComparison {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r CompareMetricVersionsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CompareMetricVersionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CompareMetricVersionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CompareMetricVersionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CompareMetricVersionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ExplainMetricResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Explanation
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ExplainMetricResponse) GetJSON200() *Explanation {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ExplainMetricResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ExplainMetricResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ExplainMetricResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExplainMetricResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ExplainMetricResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetMetricValueResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *MetricValue
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetMetricValueResponse) GetJSON200() *MetricValue {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetMetricValueResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetMetricValueResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetMetricValueResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetMetricValueResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetMetricValueResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ClosePeriodResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ClosePeriodResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ClosePeriodResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ClosePeriodResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ClosePeriodResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ClosePeriodResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetPortfolioPnLResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PortfolioPnL
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetPortfolioPnLResponse) GetJSON200() *PortfolioPnL {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetPortfolioPnLResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetPortfolioPnLResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPortfolioPnLResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPortfolioPnLResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetPortfolioPnLResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetProductPnLResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PnL
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetProductPnLResponse) GetJSON200() *PnL {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetProductPnLResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetProductPnLResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProductPnLResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProductPnLResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetProductPnLResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetBranchCostsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]BranchCost
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetBranchCostsResponse) GetJSON200() *[]BranchCost {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetBranchCostsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetBranchCostsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetBranchCostsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetBranchCostsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetBranchCostsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetCertificationEconomicsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CertificationEconomics
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCertificationEconomicsResponse) GetJSON200() *CertificationEconomics {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetCertificationEconomicsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCertificationEconomicsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCertificationEconomicsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCertificationEconomicsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCertificationEconomicsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetFeatureEconomicsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *FeatureEconomics
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetFeatureEconomicsResponse) GetJSON200() *FeatureEconomics {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetFeatureEconomicsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetFeatureEconomicsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetFeatureEconomicsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetFeatureEconomicsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetFeatureEconomicsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListTeamsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Team
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListTeamsResponse) GetJSON200() *[]Team {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListTeamsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListTeamsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListTeamsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListTeamsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListTeamsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateTeamResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *Team
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateTeamResponse) GetJSON201() *Team {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r CreateTeamResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateTeamResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateTeamResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateTeamResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateTeamResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SetTeamSharesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SetTeamSharesResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SetTeamSharesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SetTeamSharesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetTeamSharesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SetTeamSharesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListImportTemplatesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]ImportTemplate
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListImportTemplatesResponse) GetJSON200() *[]ImportTemplate {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListImportTemplatesResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListImportTemplatesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListImportTemplatesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListImportTemplatesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListImportTemplatesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveImportTemplateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ImportTemplate
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SaveImportTemplateResponse) GetJSON200() *ImportTemplate {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SaveImportTemplateResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SaveImportTemplateResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveImportTemplateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveImportTemplateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveImportTemplateResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -16712,6 +23413,54 @@ func (r SetFeatureFlagsResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r SetFeatureFlagsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetFeatureForecastResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Forecast
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetFeatureForecastResponse) GetJSON200() *Forecast {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetFeatureForecastResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetFeatureForecastResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetFeatureForecastResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetFeatureForecastResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetFeatureForecastResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -17528,6 +24277,54 @@ func (r DeleteLinkResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r DeleteLinkResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetWinLossResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *WinLossReport
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetWinLossResponse) GetJSON200() *WinLossReport {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetWinLossResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetWinLossResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWinLossResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWinLossResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetWinLossResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -18830,6 +25627,54 @@ func (r CreateRoadmapItemResponse) ContentType() string {
 	return ""
 }
 
+type GetLaunchCalendarResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *LaunchCalendar
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetLaunchCalendarResponse) GetJSON200() *LaunchCalendar {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetLaunchCalendarResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetLaunchCalendarResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLaunchCalendarResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLaunchCalendarResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetLaunchCalendarResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetRoadmapNowNextLaterResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -19742,6 +26587,150 @@ func (r GetRoadmapItemHistoryResponse) ContentType() string {
 	return ""
 }
 
+type ListScenariosResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Scenario
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListScenariosResponse) GetJSON200() *[]Scenario {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListScenariosResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListScenariosResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListScenariosResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListScenariosResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListScenariosResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveScenarioResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Scenario
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SaveScenarioResponse) GetJSON200() *Scenario {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SaveScenarioResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SaveScenarioResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveScenarioResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveScenarioResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveScenarioResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type RunScenarioResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ScenarioResult
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RunScenarioResponse) GetJSON200() *ScenarioResult {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r RunScenarioResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r RunScenarioResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RunScenarioResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RunScenarioResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RunScenarioResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListScoringModelsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -20599,6 +27588,54 @@ func (r CheckGateItemResponse) ContentType() string {
 	return ""
 }
 
+type CollectPipelineEvidenceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PipelineCollectResult
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CollectPipelineEvidenceResponse) GetJSON200() *PipelineCollectResult {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r CollectPipelineEvidenceResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CollectPipelineEvidenceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CollectPipelineEvidenceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CollectPipelineEvidenceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CollectPipelineEvidenceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type FailGateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -20799,6 +27836,45 @@ func (c *ClientWithResponses) VerifyEvidenceLogWithResponse(ctx context.Context,
 	return ParseVerifyEvidenceLogResponse(rsp)
 }
 
+// GetLicenseStatusWithResponse Состояние лицензии поставки (AD-06)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /admin/license (the `GetLicenseStatus` operationId).
+func (c *ClientWithResponses) GetLicenseStatusWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetLicenseStatusResponse, error) {
+	rsp, err := c.GetLicenseStatus(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLicenseStatusResponse(rsp)
+}
+
+// InstallLicenseWithBodyWithResponse Установить лицензионный ключ (AD-06)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /admin/license (the `InstallLicense` operationId).
+func (c *ClientWithResponses) InstallLicenseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*InstallLicenseResponse, error) {
+	rsp, err := c.InstallLicenseWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInstallLicenseResponse(rsp)
+}
+
+// InstallLicenseWithResponse Установить лицензионный ключ (AD-06)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /admin/license (the `InstallLicense` operationId).
+func (c *ClientWithResponses) InstallLicenseWithResponse(ctx context.Context, body InstallLicenseJSONRequestBody, reqEditors ...RequestEditorFn) (*InstallLicenseResponse, error) {
+	rsp, err := c.InstallLicense(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInstallLicenseResponse(rsp)
+}
+
 // ListRequirementSetsWithResponse Каталог наборов требований (CM-01)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -20994,6 +28070,32 @@ func (c *ClientWithResponses) SaveTrackTemplateWithResponse(ctx context.Context,
 	return ParseSaveTrackTemplateResponse(rsp)
 }
 
+// SetBaselineComponentsWithBodyWithResponse Состав компонентов сертифицированной версии (CM-08)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /baselines/{baselineId}/components (the `SetBaselineComponents` operationId).
+func (c *ClientWithResponses) SetBaselineComponentsWithBodyWithResponse(ctx context.Context, baselineId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetBaselineComponentsResponse, error) {
+	rsp, err := c.SetBaselineComponentsWithBody(ctx, baselineId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetBaselineComponentsResponse(rsp)
+}
+
+// SetBaselineComponentsWithResponse Состав компонентов сертифицированной версии (CM-08)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /baselines/{baselineId}/components (the `SetBaselineComponents` operationId).
+func (c *ClientWithResponses) SetBaselineComponentsWithResponse(ctx context.Context, baselineId openapi_types.UUID, body SetBaselineComponentsJSONRequestBody, reqEditors ...RequestEditorFn) (*SetBaselineComponentsResponse, error) {
+	rsp, err := c.SetBaselineComponents(ctx, baselineId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetBaselineComponentsResponse(rsp)
+}
+
 // AcknowledgeCommitmentAlertWithResponse Подтвердить алерт
 //
 // Returns a wrapper object for the known response body format(s).
@@ -21098,6 +28200,32 @@ func (c *ClientWithResponses) FulfilCommitmentWithResponse(ctx context.Context, 
 	return ParseFulfilCommitmentResponse(rsp)
 }
 
+// ReportVulnerableComponentWithBodyWithResponse Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /compliance/vulnerabilities (the `ReportVulnerableComponent` operationId).
+func (c *ClientWithResponses) ReportVulnerableComponentWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReportVulnerableComponentResponse, error) {
+	rsp, err := c.ReportVulnerableComponentWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReportVulnerableComponentResponse(rsp)
+}
+
+// ReportVulnerableComponentWithResponse Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /compliance/vulnerabilities (the `ReportVulnerableComponent` operationId).
+func (c *ClientWithResponses) ReportVulnerableComponentWithResponse(ctx context.Context, body ReportVulnerableComponentJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportVulnerableComponentResponse, error) {
+	rsp, err := c.ReportVulnerableComponent(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReportVulnerableComponentResponse(rsp)
+}
+
 // ListContractsWithResponse Интеграционные контракты (PG-04)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -21176,6 +28304,84 @@ func (c *ClientWithResponses) UpdateContractWithResponse(ctx context.Context, co
 	return ParseUpdateContractResponse(rsp)
 }
 
+// ListDashboardsWithResponse Дашборды конструктора (DA-05)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /dashboards (the `ListDashboards` operationId).
+func (c *ClientWithResponses) ListDashboardsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDashboardsResponse, error) {
+	rsp, err := c.ListDashboards(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDashboardsResponse(rsp)
+}
+
+// SaveDashboardWithBodyWithResponse Создать или изменить дашборд (DA-05)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /dashboards (the `SaveDashboard` operationId).
+func (c *ClientWithResponses) SaveDashboardWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveDashboardResponse, error) {
+	rsp, err := c.SaveDashboardWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveDashboardResponse(rsp)
+}
+
+// SaveDashboardWithResponse Создать или изменить дашборд (DA-05)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /dashboards (the `SaveDashboard` operationId).
+func (c *ClientWithResponses) SaveDashboardWithResponse(ctx context.Context, body SaveDashboardJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveDashboardResponse, error) {
+	rsp, err := c.SaveDashboard(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveDashboardResponse(rsp)
+}
+
+// ListDashboardSourcesWithResponse Срезы данных, доступные панелям (DA-05)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /dashboards/sources (the `ListDashboardSources` operationId).
+func (c *ClientWithResponses) ListDashboardSourcesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDashboardSourcesResponse, error) {
+	rsp, err := c.ListDashboardSources(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDashboardSourcesResponse(rsp)
+}
+
+// DeleteDashboardWithResponse Удалить дашборд (DA-05)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /dashboards/{dashboardId} (the `DeleteDashboard` operationId).
+func (c *ClientWithResponses) DeleteDashboardWithResponse(ctx context.Context, dashboardId DashboardId, reqEditors ...RequestEditorFn) (*DeleteDashboardResponse, error) {
+	rsp, err := c.DeleteDashboard(ctx, dashboardId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteDashboardResponse(rsp)
+}
+
+// GetDashboardWithResponse Дашборд (DA-05)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /dashboards/{dashboardId} (the `GetDashboard` operationId).
+func (c *ClientWithResponses) GetDashboardWithResponse(ctx context.Context, dashboardId DashboardId, reqEditors ...RequestEditorFn) (*GetDashboardResponse, error) {
+	rsp, err := c.GetDashboard(ctx, dashboardId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDashboardResponse(rsp)
+}
+
 // ListDecisionsWithResponse Решения продукта; без productId — портфельные (DA-01)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -21213,6 +28419,19 @@ func (c *ClientWithResponses) CreateDecisionWithResponse(ctx context.Context, bo
 		return nil, err
 	}
 	return ParseCreateDecisionResponse(rsp)
+}
+
+// ListDecisionsDueForReviewWithResponse Решения, которым пора ревизию (DA-06)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /decisions/due (the `ListDecisionsDueForReview` operationId).
+func (c *ClientWithResponses) ListDecisionsDueForReviewWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDecisionsDueForReviewResponse, error) {
+	rsp, err := c.ListDecisionsDueForReview(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDecisionsDueForReviewResponse(rsp)
 }
 
 // ListDecisionsForWithResponse Решения, связанные с сущностью (DS-04)
@@ -21319,6 +28538,32 @@ func (c *ClientWithResponses) RequestDecisionPageWithResponse(ctx context.Contex
 	return ParseRequestDecisionPageResponse(rsp)
 }
 
+// ReviewDecisionWithBodyWithResponse Ревизия решения: ожидание против факта (DA-06)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /decisions/{decisionId}/review (the `ReviewDecision` operationId).
+func (c *ClientWithResponses) ReviewDecisionWithBodyWithResponse(ctx context.Context, decisionId DecisionId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReviewDecisionResponse, error) {
+	rsp, err := c.ReviewDecisionWithBody(ctx, decisionId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReviewDecisionResponse(rsp)
+}
+
+// ReviewDecisionWithResponse Ревизия решения: ожидание против факта (DA-06)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /decisions/{decisionId}/review (the `ReviewDecision` operationId).
+func (c *ClientWithResponses) ReviewDecisionWithResponse(ctx context.Context, decisionId DecisionId, body ReviewDecisionJSONRequestBody, reqEditors ...RequestEditorFn) (*ReviewDecisionResponse, error) {
+	rsp, err := c.ReviewDecision(ctx, decisionId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReviewDecisionResponse(rsp)
+}
+
 // SupersedeDecisionWithBodyWithResponse Заменить другим решением
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -21343,6 +28588,435 @@ func (c *ClientWithResponses) SupersedeDecisionWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseSupersedeDecisionResponse(rsp)
+}
+
+// GetWorklogCostBaseWithResponse Списания времени как база распределения затрат (DL-05)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /delivery/worklog-cost-base (the `GetWorklogCostBase` operationId).
+func (c *ClientWithResponses) GetWorklogCostBaseWithResponse(ctx context.Context, params *GetWorklogCostBaseParams, reqEditors ...RequestEditorFn) (*GetWorklogCostBaseResponse, error) {
+	rsp, err := c.GetWorklogCostBase(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWorklogCostBaseResponse(rsp)
+}
+
+// ListAllocationRulesWithResponse Правила аллокации затрат хаба (EC-02)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/allocation-rules (the `ListAllocationRules` operationId).
+func (c *ClientWithResponses) ListAllocationRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAllocationRulesResponse, error) {
+	rsp, err := c.ListAllocationRules(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAllocationRulesResponse(rsp)
+}
+
+// SaveAllocationRuleWithBodyWithResponse Новая версия правила аллокации (EC-02)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/allocation-rules (the `SaveAllocationRule` operationId).
+func (c *ClientWithResponses) SaveAllocationRuleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveAllocationRuleResponse, error) {
+	rsp, err := c.SaveAllocationRuleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveAllocationRuleResponse(rsp)
+}
+
+// SaveAllocationRuleWithResponse Новая версия правила аллокации (EC-02)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/allocation-rules (the `SaveAllocationRule` operationId).
+func (c *ClientWithResponses) SaveAllocationRuleWithResponse(ctx context.Context, body SaveAllocationRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveAllocationRuleResponse, error) {
+	rsp, err := c.SaveAllocationRule(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveAllocationRuleResponse(rsp)
+}
+
+// ListBundleRulesWithResponse Правила атрибуции выручки бандлов (EC-04)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/bundle-rules (the `ListBundleRules` operationId).
+func (c *ClientWithResponses) ListBundleRulesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListBundleRulesResponse, error) {
+	rsp, err := c.ListBundleRules(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListBundleRulesResponse(rsp)
+}
+
+// SaveBundleRuleWithBodyWithResponse Новая версия правила атрибуции бандла (EC-04)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/bundle-rules (the `SaveBundleRule` operationId).
+func (c *ClientWithResponses) SaveBundleRuleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveBundleRuleResponse, error) {
+	rsp, err := c.SaveBundleRuleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveBundleRuleResponse(rsp)
+}
+
+// SaveBundleRuleWithResponse Новая версия правила атрибуции бандла (EC-04)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/bundle-rules (the `SaveBundleRule` operationId).
+func (c *ClientWithResponses) SaveBundleRuleWithResponse(ctx context.Context, body SaveBundleRuleJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveBundleRuleResponse, error) {
+	rsp, err := c.SaveBundleRule(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveBundleRuleResponse(rsp)
+}
+
+// ListFinancialFieldsWithResponse Настраиваемые финансовые поля (EC-08)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/fields (the `ListFinancialFields` operationId).
+func (c *ClientWithResponses) ListFinancialFieldsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListFinancialFieldsResponse, error) {
+	rsp, err := c.ListFinancialFields(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListFinancialFieldsResponse(rsp)
+}
+
+// SaveFinancialFieldWithBodyWithResponse Создать поле или новую версию его описания (EC-08, EC-11)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
+func (c *ClientWithResponses) SaveFinancialFieldWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveFinancialFieldResponse, error) {
+	rsp, err := c.SaveFinancialFieldWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveFinancialFieldResponse(rsp)
+}
+
+// SaveFinancialFieldWithResponse Создать поле или новую версию его описания (EC-08, EC-11)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
+func (c *ClientWithResponses) SaveFinancialFieldWithResponse(ctx context.Context, body SaveFinancialFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveFinancialFieldResponse, error) {
+	rsp, err := c.SaveFinancialField(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveFinancialFieldResponse(rsp)
+}
+
+// ListImportBatchesWithResponse История загрузок финансовых данных (EC-07)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/imports (the `ListImportBatches` operationId).
+func (c *ClientWithResponses) ListImportBatchesWithResponse(ctx context.Context, params *ListImportBatchesParams, reqEditors ...RequestEditorFn) (*ListImportBatchesResponse, error) {
+	rsp, err := c.ListImportBatches(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListImportBatchesResponse(rsp)
+}
+
+// ImportFinanceFileWithBodyWithResponse Загрузить XLSX с финансовыми данными (EC-01, EC-07)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/imports (the `ImportFinanceFile` operationId).
+func (c *ClientWithResponses) ImportFinanceFileWithBodyWithResponse(ctx context.Context, params *ImportFinanceFileParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportFinanceFileResponse, error) {
+	rsp, err := c.ImportFinanceFileWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseImportFinanceFileResponse(rsp)
+}
+
+// GetTeamProductMatrixWithResponse Матрица «команда × продукт» (EC-12)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/matrix (the `GetTeamProductMatrix` operationId).
+func (c *ClientWithResponses) GetTeamProductMatrixWithResponse(ctx context.Context, params *GetTeamProductMatrixParams, reqEditors ...RequestEditorFn) (*GetTeamProductMatrixResponse, error) {
+	rsp, err := c.GetTeamProductMatrix(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetTeamProductMatrixResponse(rsp)
+}
+
+// ListMetricsWithResponse Расчётные показатели (EC-09)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/metrics (the `ListMetrics` operationId).
+func (c *ClientWithResponses) ListMetricsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListMetricsResponse, error) {
+	rsp, err := c.ListMetrics(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListMetricsResponse(rsp)
+}
+
+// SaveMetricWithBodyWithResponse Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/metrics (the `SaveMetric` operationId).
+func (c *ClientWithResponses) SaveMetricWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveMetricResponse, error) {
+	rsp, err := c.SaveMetricWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveMetricResponse(rsp)
+}
+
+// SaveMetricWithResponse Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/metrics (the `SaveMetric` operationId).
+func (c *ClientWithResponses) SaveMetricWithResponse(ctx context.Context, body SaveMetricJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveMetricResponse, error) {
+	rsp, err := c.SaveMetric(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveMetricResponse(rsp)
+}
+
+// CompareMetricVersionsWithResponse Сравнение результатов двух версий формулы (EC-11)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/metrics/{metricKey}/compare (the `CompareMetricVersions` operationId).
+func (c *ClientWithResponses) CompareMetricVersionsWithResponse(ctx context.Context, metricKey MetricKey, params *CompareMetricVersionsParams, reqEditors ...RequestEditorFn) (*CompareMetricVersionsResponse, error) {
+	rsp, err := c.CompareMetricVersions(ctx, metricKey, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCompareMetricVersionsResponse(rsp)
+}
+
+// ExplainMetricWithResponse Объяснение значения до формулы и строк импорта (EC-10)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/metrics/{metricKey}/explain (the `ExplainMetric` operationId).
+func (c *ClientWithResponses) ExplainMetricWithResponse(ctx context.Context, metricKey MetricKey, params *ExplainMetricParams, reqEditors ...RequestEditorFn) (*ExplainMetricResponse, error) {
+	rsp, err := c.ExplainMetric(ctx, metricKey, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExplainMetricResponse(rsp)
+}
+
+// GetMetricValueWithResponse Значение показателя в срезе (EC-09)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/metrics/{metricKey}/value (the `GetMetricValue` operationId).
+func (c *ClientWithResponses) GetMetricValueWithResponse(ctx context.Context, metricKey MetricKey, params *GetMetricValueParams, reqEditors ...RequestEditorFn) (*GetMetricValueResponse, error) {
+	rsp, err := c.GetMetricValue(ctx, metricKey, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMetricValueResponse(rsp)
+}
+
+// ClosePeriodWithResponse Закрыть период (EC-11)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/periods/{period}/close (the `ClosePeriod` operationId).
+func (c *ClientWithResponses) ClosePeriodWithResponse(ctx context.Context, period string, reqEditors ...RequestEditorFn) (*ClosePeriodResponse, error) {
+	rsp, err := c.ClosePeriod(ctx, period, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseClosePeriodResponse(rsp)
+}
+
+// GetPortfolioPnLWithResponse P&L портфеля (EC-03)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/pnl/portfolio (the `GetPortfolioPnL` operationId).
+func (c *ClientWithResponses) GetPortfolioPnLWithResponse(ctx context.Context, params *GetPortfolioPnLParams, reqEditors ...RequestEditorFn) (*GetPortfolioPnLResponse, error) {
+	rsp, err := c.GetPortfolioPnL(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPortfolioPnLResponse(rsp)
+}
+
+// GetProductPnLWithResponse P&L продукта: прямой и с нагрузкой хаба (EC-03)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/pnl/products/{productId} (the `GetProductPnL` operationId).
+func (c *ClientWithResponses) GetProductPnLWithResponse(ctx context.Context, productId ProductId, params *GetProductPnLParams, reqEditors ...RequestEditorFn) (*GetProductPnLResponse, error) {
+	rsp, err := c.GetProductPnL(ctx, productId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProductPnLResponse(rsp)
+}
+
+// GetBranchCostsWithResponse Стоимость поддержки веток версий (EC-05)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/products/{productId}/branches (the `GetBranchCosts` operationId).
+func (c *ClientWithResponses) GetBranchCostsWithResponse(ctx context.Context, productId ProductId, params *GetBranchCostsParams, reqEditors ...RequestEditorFn) (*GetBranchCostsResponse, error) {
+	rsp, err := c.GetBranchCosts(ctx, productId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetBranchCostsResponse(rsp)
+}
+
+// GetCertificationEconomicsWithResponse Экономика сертификации (EC-06)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/products/{productId}/certification (the `GetCertificationEconomics` operationId).
+func (c *ClientWithResponses) GetCertificationEconomicsWithResponse(ctx context.Context, productId ProductId, params *GetCertificationEconomicsParams, reqEditors ...RequestEditorFn) (*GetCertificationEconomicsResponse, error) {
+	rsp, err := c.GetCertificationEconomics(ctx, productId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCertificationEconomicsResponse(rsp)
+}
+
+// GetFeatureEconomicsWithResponse Инвестиции в фичу против привязанной выручки (EC-05)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/products/{productId}/features/{featureId} (the `GetFeatureEconomics` operationId).
+func (c *ClientWithResponses) GetFeatureEconomicsWithResponse(ctx context.Context, productId ProductId, featureId FeatureId, params *GetFeatureEconomicsParams, reqEditors ...RequestEditorFn) (*GetFeatureEconomicsResponse, error) {
+	rsp, err := c.GetFeatureEconomics(ctx, productId, featureId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetFeatureEconomicsResponse(rsp)
+}
+
+// ListTeamsWithResponse Команды — вторая ось детализации (EC-12)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/teams (the `ListTeams` operationId).
+func (c *ClientWithResponses) ListTeamsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListTeamsResponse, error) {
+	rsp, err := c.ListTeams(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListTeamsResponse(rsp)
+}
+
+// CreateTeamWithBodyWithResponse Завести команду (EC-12)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/teams (the `CreateTeam` operationId).
+func (c *ClientWithResponses) CreateTeamWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateTeamResponse, error) {
+	rsp, err := c.CreateTeamWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateTeamResponse(rsp)
+}
+
+// CreateTeamWithResponse Завести команду (EC-12)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/teams (the `CreateTeam` operationId).
+func (c *ClientWithResponses) CreateTeamWithResponse(ctx context.Context, body CreateTeamJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateTeamResponse, error) {
+	rsp, err := c.CreateTeam(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateTeamResponse(rsp)
+}
+
+// SetTeamSharesWithBodyWithResponse Доли команды по продуктам за период (EC-12)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /economics/teams/{teamId}/shares (the `SetTeamShares` operationId).
+func (c *ClientWithResponses) SetTeamSharesWithBodyWithResponse(ctx context.Context, teamId TeamId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetTeamSharesResponse, error) {
+	rsp, err := c.SetTeamSharesWithBody(ctx, teamId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetTeamSharesResponse(rsp)
+}
+
+// SetTeamSharesWithResponse Доли команды по продуктам за период (EC-12)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /economics/teams/{teamId}/shares (the `SetTeamShares` operationId).
+func (c *ClientWithResponses) SetTeamSharesWithResponse(ctx context.Context, teamId TeamId, body SetTeamSharesJSONRequestBody, reqEditors ...RequestEditorFn) (*SetTeamSharesResponse, error) {
+	rsp, err := c.SetTeamShares(ctx, teamId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetTeamSharesResponse(rsp)
+}
+
+// ListImportTemplatesWithResponse Шаблоны импорта XLSX (EC-07)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /economics/templates (the `ListImportTemplates` operationId).
+func (c *ClientWithResponses) ListImportTemplatesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListImportTemplatesResponse, error) {
+	rsp, err := c.ListImportTemplates(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListImportTemplatesResponse(rsp)
+}
+
+// SaveImportTemplateWithBodyWithResponse Создать или изменить шаблон импорта (EC-07)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/templates (the `SaveImportTemplate` operationId).
+func (c *ClientWithResponses) SaveImportTemplateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveImportTemplateResponse, error) {
+	rsp, err := c.SaveImportTemplateWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveImportTemplateResponse(rsp)
+}
+
+// SaveImportTemplateWithResponse Создать или изменить шаблон импорта (EC-07)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/templates (the `SaveImportTemplate` operationId).
+func (c *ClientWithResponses) SaveImportTemplateWithResponse(ctx context.Context, body SaveImportTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveImportTemplateResponse, error) {
+	rsp, err := c.SaveImportTemplate(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveImportTemplateResponse(rsp)
 }
 
 // SetEvidenceItemStatusWithBodyWithResponse Принять или отклонить доказательство — новая запись журнала (CM-04)
@@ -21538,6 +29212,19 @@ func (c *ClientWithResponses) SetFeatureFlagsWithResponse(ctx context.Context, f
 		return nil, err
 	}
 	return ParseSetFeatureFlagsResponse(rsp)
+}
+
+// GetFeatureForecastWithResponse Прогноз даты фичи методом Монте-Карло (DL-04)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /features/{featureId}/forecast (the `GetFeatureForecast` operationId).
+func (c *ClientWithResponses) GetFeatureForecastWithResponse(ctx context.Context, featureId FeatureId, params *GetFeatureForecastParams, reqEditors ...RequestEditorFn) (*GetFeatureForecastResponse, error) {
+	rsp, err := c.GetFeatureForecast(ctx, featureId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetFeatureForecastResponse(rsp)
 }
 
 // GetFeatureImpactWithResponse Действующий класс влияния фичи (CM-06)
@@ -21863,6 +29550,19 @@ func (c *ClientWithResponses) DeleteLinkWithResponse(ctx context.Context, linkId
 		return nil, err
 	}
 	return ParseDeleteLinkResponse(rsp)
+}
+
+// GetWinLossWithResponse Win/loss, фичи выигранных сделок, attach rate (DA-04)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /marketing/win-loss (the `GetWinLoss` operationId).
+func (c *ClientWithResponses) GetWinLossWithResponse(ctx context.Context, params *GetWinLossParams, reqEditors ...RequestEditorFn) (*GetWinLossResponse, error) {
+	rsp, err := c.GetWinLoss(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWinLossResponse(rsp)
 }
 
 // GetMeWithResponse Область доступа текущего субъекта
@@ -22359,6 +30059,19 @@ func (c *ClientWithResponses) CreateRoadmapItemWithResponse(ctx context.Context,
 	return ParseCreateRoadmapItemResponse(rsp)
 }
 
+// GetLaunchCalendarWithResponse Календарь запусков (RM-06)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /products/{productId}/roadmap/launch-calendar (the `GetLaunchCalendar` operationId).
+func (c *ClientWithResponses) GetLaunchCalendarWithResponse(ctx context.Context, productId ProductId, params *GetLaunchCalendarParams, reqEditors ...RequestEditorFn) (*GetLaunchCalendarResponse, error) {
+	rsp, err := c.GetLaunchCalendar(ctx, productId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLaunchCalendarResponse(rsp)
+}
+
 // GetRoadmapNowNextLaterWithResponse Now/Next/Later (RM-01)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -22723,6 +30436,71 @@ func (c *ClientWithResponses) GetRoadmapItemHistoryWithResponse(ctx context.Cont
 	return ParseGetRoadmapItemHistoryResponse(rsp)
 }
 
+// ListScenariosWithResponse Сценарии «что если» (DA-02)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /scenarios (the `ListScenarios` operationId).
+func (c *ClientWithResponses) ListScenariosWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListScenariosResponse, error) {
+	rsp, err := c.ListScenarios(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListScenariosResponse(rsp)
+}
+
+// SaveScenarioWithBodyWithResponse Создать или изменить сценарий (DA-02, EC-13)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /scenarios (the `SaveScenario` operationId).
+func (c *ClientWithResponses) SaveScenarioWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveScenarioResponse, error) {
+	rsp, err := c.SaveScenarioWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveScenarioResponse(rsp)
+}
+
+// SaveScenarioWithResponse Создать или изменить сценарий (DA-02, EC-13)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /scenarios (the `SaveScenario` operationId).
+func (c *ClientWithResponses) SaveScenarioWithResponse(ctx context.Context, body SaveScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveScenarioResponse, error) {
+	rsp, err := c.SaveScenario(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveScenarioResponse(rsp)
+}
+
+// RunScenarioWithBodyWithResponse Посчитать сценарий и влияние на обязательства и треки (DA-02)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /scenarios/{scenarioId}/run (the `RunScenario` operationId).
+func (c *ClientWithResponses) RunScenarioWithBodyWithResponse(ctx context.Context, scenarioId ScenarioId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RunScenarioResponse, error) {
+	rsp, err := c.RunScenarioWithBody(ctx, scenarioId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRunScenarioResponse(rsp)
+}
+
+// RunScenarioWithResponse Посчитать сценарий и влияние на обязательства и треки (DA-02)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /scenarios/{scenarioId}/run (the `RunScenario` operationId).
+func (c *ClientWithResponses) RunScenarioWithResponse(ctx context.Context, scenarioId ScenarioId, body RunScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*RunScenarioResponse, error) {
+	rsp, err := c.RunScenario(ctx, scenarioId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRunScenarioResponse(rsp)
+}
+
 // ListScoringModelsWithResponse Модели оценки (PR-01)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -23074,6 +30852,32 @@ func (c *ClientWithResponses) CheckGateItemWithResponse(ctx context.Context, tra
 	return ParseCheckGateItemResponse(rsp)
 }
 
+// CollectPipelineEvidenceWithBodyWithResponse Автосбор доказательств из пайплайна безопасности (CM-09)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /tracks/{trackId}/gates/{gateId}/collect-evidence (the `CollectPipelineEvidence` operationId).
+func (c *ClientWithResponses) CollectPipelineEvidenceWithBodyWithResponse(ctx context.Context, trackId TrackId, gateId GateId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CollectPipelineEvidenceResponse, error) {
+	rsp, err := c.CollectPipelineEvidenceWithBody(ctx, trackId, gateId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCollectPipelineEvidenceResponse(rsp)
+}
+
+// CollectPipelineEvidenceWithResponse Автосбор доказательств из пайплайна безопасности (CM-09)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /tracks/{trackId}/gates/{gateId}/collect-evidence (the `CollectPipelineEvidence` operationId).
+func (c *ClientWithResponses) CollectPipelineEvidenceWithResponse(ctx context.Context, trackId TrackId, gateId GateId, body CollectPipelineEvidenceJSONRequestBody, reqEditors ...RequestEditorFn) (*CollectPipelineEvidenceResponse, error) {
+	rsp, err := c.CollectPipelineEvidence(ctx, trackId, gateId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCollectPipelineEvidenceResponse(rsp)
+}
+
 // FailGateWithBodyWithResponse Провалить гейт с причиной (CM-03)
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -23294,6 +31098,72 @@ func ParseVerifyEvidenceLogResponse(rsp *http.Response) (*VerifyEvidenceLogRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest AuditVerifyResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetLicenseStatusResponse parses an HTTP response from a GetLicenseStatusWithResponse call
+func ParseGetLicenseStatusResponse(rsp *http.Response) (*GetLicenseStatusResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLicenseStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LicenseStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseInstallLicenseResponse parses an HTTP response from a InstallLicenseWithResponse call
+func ParseInstallLicenseResponse(rsp *http.Response) (*InstallLicenseResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &InstallLicenseResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LicenseStatus
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -23637,6 +31507,39 @@ func ParseSaveTrackTemplateResponse(rsp *http.Response) (*SaveTrackTemplateRespo
 	return response, nil
 }
 
+// ParseSetBaselineComponentsResponse parses an HTTP response from a SetBaselineComponentsWithResponse call
+func ParseSetBaselineComponentsResponse(rsp *http.Response) (*SetBaselineComponentsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetBaselineComponentsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CertifiedBaseline
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseAcknowledgeCommitmentAlertResponse parses an HTTP response from a AcknowledgeCommitmentAlertWithResponse call
 func ParseAcknowledgeCommitmentAlertResponse(rsp *http.Response) (*AcknowledgeCommitmentAlertResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -23835,6 +31738,39 @@ func ParseFulfilCommitmentResponse(rsp *http.Response) (*FulfilCommitmentRespons
 	return response, nil
 }
 
+// ParseReportVulnerableComponentResponse parses an HTTP response from a ReportVulnerableComponentWithResponse call
+func ParseReportVulnerableComponentResponse(rsp *http.Response) (*ReportVulnerableComponentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReportVulnerableComponentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VulnerabilityImpact
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListContractsResponse parses an HTTP response from a ListContractsWithResponse call
 func ParseListContractsResponse(rsp *http.Response) (*ListContractsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -23974,6 +31910,167 @@ func ParseUpdateContractResponse(rsp *http.Response) (*UpdateContractResponse, e
 	return response, nil
 }
 
+// ParseListDashboardsResponse parses an HTTP response from a ListDashboardsWithResponse call
+func ParseListDashboardsResponse(rsp *http.Response) (*ListDashboardsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDashboardsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Dashboard
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveDashboardResponse parses an HTTP response from a SaveDashboardWithResponse call
+func ParseSaveDashboardResponse(rsp *http.Response) (*SaveDashboardResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveDashboardResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Dashboard
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListDashboardSourcesResponse parses an HTTP response from a ListDashboardSourcesWithResponse call
+func ParseListDashboardSourcesResponse(rsp *http.Response) (*ListDashboardSourcesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDashboardSourcesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteDashboardResponse parses an HTTP response from a DeleteDashboardWithResponse call
+func ParseDeleteDashboardResponse(rsp *http.Response) (*DeleteDashboardResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteDashboardResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDashboardResponse parses an HTTP response from a GetDashboardWithResponse call
+func ParseGetDashboardResponse(rsp *http.Response) (*GetDashboardResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDashboardResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Dashboard
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListDecisionsResponse parses an HTTP response from a ListDecisionsWithResponse call
 func ParseListDecisionsResponse(rsp *http.Response) (*ListDecisionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -24027,6 +32124,39 @@ func ParseCreateDecisionResponse(rsp *http.Response) (*CreateDecisionResponse, e
 			return nil, err
 		}
 		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListDecisionsDueForReviewResponse parses an HTTP response from a ListDecisionsDueForReviewWithResponse call
+func ParseListDecisionsDueForReviewResponse(rsp *http.Response) (*ListDecisionsDueForReviewResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDecisionsDueForReviewResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Decision
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Problem
@@ -24234,6 +32364,39 @@ func ParseRequestDecisionPageResponse(rsp *http.Response) (*RequestDecisionPageR
 	return response, nil
 }
 
+// ParseReviewDecisionResponse parses an HTTP response from a ReviewDecisionWithResponse call
+func ParseReviewDecisionResponse(rsp *http.Response) (*ReviewDecisionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReviewDecisionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Decision
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseSupersedeDecisionResponse parses an HTTP response from a SupersedeDecisionWithResponse call
 func ParseSupersedeDecisionResponse(rsp *http.Response) (*SupersedeDecisionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -24250,6 +32413,856 @@ func ParseSupersedeDecisionResponse(rsp *http.Response) (*SupersedeDecisionRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Decision
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetWorklogCostBaseResponse parses an HTTP response from a GetWorklogCostBaseWithResponse call
+func ParseGetWorklogCostBaseResponse(rsp *http.Response) (*GetWorklogCostBaseResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWorklogCostBaseResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorklogReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListAllocationRulesResponse parses an HTTP response from a ListAllocationRulesWithResponse call
+func ParseListAllocationRulesResponse(rsp *http.Response) (*ListAllocationRulesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAllocationRulesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []AllocationRule
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveAllocationRuleResponse parses an HTTP response from a SaveAllocationRuleWithResponse call
+func ParseSaveAllocationRuleResponse(rsp *http.Response) (*SaveAllocationRuleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveAllocationRuleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest AllocationRule
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListBundleRulesResponse parses an HTTP response from a ListBundleRulesWithResponse call
+func ParseListBundleRulesResponse(rsp *http.Response) (*ListBundleRulesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListBundleRulesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []BundleRule
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveBundleRuleResponse parses an HTTP response from a SaveBundleRuleWithResponse call
+func ParseSaveBundleRuleResponse(rsp *http.Response) (*SaveBundleRuleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveBundleRuleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest BundleRule
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListFinancialFieldsResponse parses an HTTP response from a ListFinancialFieldsWithResponse call
+func ParseListFinancialFieldsResponse(rsp *http.Response) (*ListFinancialFieldsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListFinancialFieldsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []FinancialField
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveFinancialFieldResponse parses an HTTP response from a SaveFinancialFieldWithResponse call
+func ParseSaveFinancialFieldResponse(rsp *http.Response) (*SaveFinancialFieldResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveFinancialFieldResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FinancialField
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListImportBatchesResponse parses an HTTP response from a ListImportBatchesWithResponse call
+func ParseListImportBatchesResponse(rsp *http.Response) (*ListImportBatchesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListImportBatchesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ImportBatch
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseImportFinanceFileResponse parses an HTTP response from a ImportFinanceFileWithResponse call
+func ParseImportFinanceFileResponse(rsp *http.Response) (*ImportFinanceFileResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ImportFinanceFileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FinanceImportResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetTeamProductMatrixResponse parses an HTTP response from a GetTeamProductMatrixWithResponse call
+func ParseGetTeamProductMatrixResponse(rsp *http.Response) (*GetTeamProductMatrixResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetTeamProductMatrixResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TeamProductMatrix
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListMetricsResponse parses an HTTP response from a ListMetricsWithResponse call
+func ParseListMetricsResponse(rsp *http.Response) (*ListMetricsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListMetricsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Metric
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveMetricResponse parses an HTTP response from a SaveMetricWithResponse call
+func ParseSaveMetricResponse(rsp *http.Response) (*SaveMetricResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveMetricResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Metric
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCompareMetricVersionsResponse parses an HTTP response from a CompareMetricVersionsWithResponse call
+func ParseCompareMetricVersionsResponse(rsp *http.Response) (*CompareMetricVersionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CompareMetricVersionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MetricComparison
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseExplainMetricResponse parses an HTTP response from a ExplainMetricWithResponse call
+func ParseExplainMetricResponse(rsp *http.Response) (*ExplainMetricResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExplainMetricResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Explanation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetMetricValueResponse parses an HTTP response from a GetMetricValueWithResponse call
+func ParseGetMetricValueResponse(rsp *http.Response) (*GetMetricValueResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMetricValueResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest MetricValue
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseClosePeriodResponse parses an HTTP response from a ClosePeriodWithResponse call
+func ParseClosePeriodResponse(rsp *http.Response) (*ClosePeriodResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ClosePeriodResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPortfolioPnLResponse parses an HTTP response from a GetPortfolioPnLWithResponse call
+func ParseGetPortfolioPnLResponse(rsp *http.Response) (*GetPortfolioPnLResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPortfolioPnLResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PortfolioPnL
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetProductPnLResponse parses an HTTP response from a GetProductPnLWithResponse call
+func ParseGetProductPnLResponse(rsp *http.Response) (*GetProductPnLResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProductPnLResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PnL
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetBranchCostsResponse parses an HTTP response from a GetBranchCostsWithResponse call
+func ParseGetBranchCostsResponse(rsp *http.Response) (*GetBranchCostsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetBranchCostsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []BranchCost
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCertificationEconomicsResponse parses an HTTP response from a GetCertificationEconomicsWithResponse call
+func ParseGetCertificationEconomicsResponse(rsp *http.Response) (*GetCertificationEconomicsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCertificationEconomicsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CertificationEconomics
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetFeatureEconomicsResponse parses an HTTP response from a GetFeatureEconomicsWithResponse call
+func ParseGetFeatureEconomicsResponse(rsp *http.Response) (*GetFeatureEconomicsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetFeatureEconomicsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FeatureEconomics
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListTeamsResponse parses an HTTP response from a ListTeamsWithResponse call
+func ParseListTeamsResponse(rsp *http.Response) (*ListTeamsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListTeamsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Team
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateTeamResponse parses an HTTP response from a CreateTeamWithResponse call
+func ParseCreateTeamResponse(rsp *http.Response) (*CreateTeamResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateTeamResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Team
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSetTeamSharesResponse parses an HTTP response from a SetTeamSharesWithResponse call
+func ParseSetTeamSharesResponse(rsp *http.Response) (*SetTeamSharesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetTeamSharesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListImportTemplatesResponse parses an HTTP response from a ListImportTemplatesWithResponse call
+func ParseListImportTemplatesResponse(rsp *http.Response) (*ListImportTemplatesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListImportTemplatesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ImportTemplate
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveImportTemplateResponse parses an HTTP response from a SaveImportTemplateWithResponse call
+func ParseSaveImportTemplateResponse(rsp *http.Response) (*SaveImportTemplateResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveImportTemplateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ImportTemplate
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -24580,6 +33593,39 @@ func ParseSetFeatureFlagsResponse(rsp *http.Response) (*SetFeatureFlagsResponse,
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest FeatureFlags
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetFeatureForecastResponse parses an HTTP response from a GetFeatureForecastWithResponse call
+func ParseGetFeatureForecastResponse(rsp *http.Response) (*GetFeatureForecastResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetFeatureForecastResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Forecast
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -25148,6 +34194,39 @@ func ParseDeleteLinkResponse(rsp *http.Response) (*DeleteLinkResponse, error) {
 	switch {
 	case rsp.StatusCode == 204:
 		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetWinLossResponse parses an HTTP response from a GetWinLossWithResponse call
+func ParseGetWinLossResponse(rsp *http.Response) (*GetWinLossResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWinLossResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WinLossReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Problem
@@ -26055,6 +35134,39 @@ func ParseCreateRoadmapItemResponse(rsp *http.Response) (*CreateRoadmapItemRespo
 	return response, nil
 }
 
+// ParseGetLaunchCalendarResponse parses an HTTP response from a GetLaunchCalendarWithResponse call
+func ParseGetLaunchCalendarResponse(rsp *http.Response) (*GetLaunchCalendarResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLaunchCalendarResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LaunchCalendar
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetRoadmapNowNextLaterResponse parses an HTTP response from a GetRoadmapNowNextLaterWithResponse call
 func ParseGetRoadmapNowNextLaterResponse(rsp *http.Response) (*GetRoadmapNowNextLaterResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -26682,6 +35794,105 @@ func ParseGetRoadmapItemHistoryResponse(rsp *http.Response) (*GetRoadmapItemHist
 	return response, nil
 }
 
+// ParseListScenariosResponse parses an HTTP response from a ListScenariosWithResponse call
+func ParseListScenariosResponse(rsp *http.Response) (*ListScenariosResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListScenariosResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Scenario
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveScenarioResponse parses an HTTP response from a SaveScenarioWithResponse call
+func ParseSaveScenarioResponse(rsp *http.Response) (*SaveScenarioResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveScenarioResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Scenario
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRunScenarioResponse parses an HTTP response from a RunScenarioWithResponse call
+func ParseRunScenarioResponse(rsp *http.Response) (*RunScenarioResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RunScenarioResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ScenarioResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListScoringModelsResponse parses an HTTP response from a ListScoringModelsWithResponse call
 func ParseListScoringModelsResponse(rsp *http.Response) (*ListScoringModelsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -27255,6 +36466,39 @@ func ParseCheckGateItemResponse(rsp *http.Response) (*CheckGateItemResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Track
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCollectPipelineEvidenceResponse parses an HTTP response from a CollectPipelineEvidenceWithResponse call
+func ParseCollectPipelineEvidenceResponse(rsp *http.Response) (*CollectPipelineEvidenceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CollectPipelineEvidenceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PipelineCollectResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

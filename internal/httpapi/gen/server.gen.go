@@ -36,6 +36,27 @@ func (e AffectedBaselineProcedure) Valid() bool {
 	}
 }
 
+// Defines values for AllocationRuleInputBasis.
+const (
+	AllocationRuleInputBasisManual   AllocationRuleInputBasis = "manual"
+	AllocationRuleInputBasisRevenue  AllocationRuleInputBasis = "revenue"
+	AllocationRuleInputBasisWorklogs AllocationRuleInputBasis = "worklogs"
+)
+
+// Valid indicates whether the value is a known member of the AllocationRuleInputBasis enum.
+func (e AllocationRuleInputBasis) Valid() bool {
+	switch e {
+	case AllocationRuleInputBasisManual:
+		return true
+	case AllocationRuleInputBasisRevenue:
+		return true
+	case AllocationRuleInputBasisWorklogs:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CommitmentKind.
 const (
 	CommitmentKindCustomer   CommitmentKind = "customer"
@@ -348,6 +369,30 @@ func (e CustomStatusDefEntity) Valid() bool {
 	}
 }
 
+// Defines values for DashboardPanelKind.
+const (
+	Bar   DashboardPanelKind = "bar"
+	Line  DashboardPanelKind = "line"
+	Stat  DashboardPanelKind = "stat"
+	Table DashboardPanelKind = "table"
+)
+
+// Valid indicates whether the value is a known member of the DashboardPanelKind enum.
+func (e DashboardPanelKind) Valid() bool {
+	switch e {
+	case Bar:
+		return true
+	case Line:
+		return true
+	case Stat:
+		return true
+	case Table:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DecisionStatus.
 const (
 	DecisionStatusAccepted   DecisionStatus = "accepted"
@@ -396,6 +441,27 @@ func (e DecisionLinkKind) Valid() bool {
 	case DecisionLinkKindSignal:
 		return true
 	case DecisionLinkKindTrack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DecisionReviewVerdict.
+const (
+	Confirmed DecisionReviewVerdict = "confirmed"
+	Missed    DecisionReviewVerdict = "missed"
+	Partial   DecisionReviewVerdict = "partial"
+)
+
+// Valid indicates whether the value is a known member of the DecisionReviewVerdict enum.
+func (e DecisionReviewVerdict) Valid() bool {
+	switch e {
+	case Confirmed:
+		return true
+	case Missed:
+		return true
+	case Partial:
 		return true
 	default:
 		return false
@@ -507,6 +573,24 @@ func (e EvidenceItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for ExplanationKind.
+const (
+	ExplanationKindField  ExplanationKind = "field"
+	ExplanationKindMetric ExplanationKind = "metric"
+)
+
+// Valid indicates whether the value is a known member of the ExplanationKind enum.
+func (e ExplanationKind) Valid() bool {
+	switch e {
+	case ExplanationKindField:
+		return true
+	case ExplanationKindMetric:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for FeatureStatus.
 const (
 	FeatureStatusDiscovery  FeatureStatus = "discovery"
@@ -561,6 +645,78 @@ func (e FeatureInputStatus) Valid() bool {
 	case FeatureInputStatusPlanned:
 		return true
 	case FeatureInputStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialFieldInputDimensions.
+const (
+	FinancialFieldInputDimensionsItem    FinancialFieldInputDimensions = "item"
+	FinancialFieldInputDimensionsPeriod  FinancialFieldInputDimensions = "period"
+	FinancialFieldInputDimensionsProduct FinancialFieldInputDimensions = "product"
+	FinancialFieldInputDimensionsTeam    FinancialFieldInputDimensions = "team"
+)
+
+// Valid indicates whether the value is a known member of the FinancialFieldInputDimensions enum.
+func (e FinancialFieldInputDimensions) Valid() bool {
+	switch e {
+	case FinancialFieldInputDimensionsItem:
+		return true
+	case FinancialFieldInputDimensionsPeriod:
+		return true
+	case FinancialFieldInputDimensionsProduct:
+		return true
+	case FinancialFieldInputDimensionsTeam:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialFieldInputSource.
+const (
+	FinancialFieldInputSourceCalculated FinancialFieldInputSource = "calculated"
+	FinancialFieldInputSourceImport     FinancialFieldInputSource = "import"
+	FinancialFieldInputSourceManual     FinancialFieldInputSource = "manual"
+)
+
+// Valid indicates whether the value is a known member of the FinancialFieldInputSource enum.
+func (e FinancialFieldInputSource) Valid() bool {
+	switch e {
+	case FinancialFieldInputSourceCalculated:
+		return true
+	case FinancialFieldInputSourceImport:
+		return true
+	case FinancialFieldInputSourceManual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FinancialFieldInputType.
+const (
+	FinancialFieldInputTypeDate      FinancialFieldInputType = "date"
+	FinancialFieldInputTypeMoney     FinancialFieldInputType = "money"
+	FinancialFieldInputTypeNumber    FinancialFieldInputType = "number"
+	FinancialFieldInputTypePercent   FinancialFieldInputType = "percent"
+	FinancialFieldInputTypeReference FinancialFieldInputType = "reference"
+)
+
+// Valid indicates whether the value is a known member of the FinancialFieldInputType enum.
+func (e FinancialFieldInputType) Valid() bool {
+	switch e {
+	case FinancialFieldInputTypeDate:
+		return true
+	case FinancialFieldInputTypeMoney:
+		return true
+	case FinancialFieldInputTypeNumber:
+		return true
+	case FinancialFieldInputTypePercent:
+		return true
+	case FinancialFieldInputTypeReference:
 		return true
 	default:
 		return false
@@ -681,6 +837,27 @@ func (e ImpactInputClass) Valid() bool {
 	}
 }
 
+// Defines values for ImportBatchStatus.
+const (
+	ImportBatchStatusApplied  ImportBatchStatus = "applied"
+	ImportBatchStatusPreview  ImportBatchStatus = "preview"
+	ImportBatchStatusRejected ImportBatchStatus = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ImportBatchStatus enum.
+func (e ImportBatchStatus) Valid() bool {
+	switch e {
+	case ImportBatchStatusApplied:
+		return true
+	case ImportBatchStatusPreview:
+		return true
+	case ImportBatchStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InsightConfidence.
 const (
 	InsightConfidenceHigh   InsightConfidence = "high"
@@ -717,6 +894,63 @@ func (e InsightInputConfidence) Valid() bool {
 	case InsightInputConfidenceLow:
 		return true
 	case InsightInputConfidenceMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LaunchCalendarAudience.
+const (
+	LaunchCalendarAudienceInternal  LaunchCalendarAudience = "internal"
+	LaunchCalendarAudienceSalesSafe LaunchCalendarAudience = "sales_safe"
+)
+
+// Valid indicates whether the value is a known member of the LaunchCalendarAudience enum.
+func (e LaunchCalendarAudience) Valid() bool {
+	switch e {
+	case LaunchCalendarAudienceInternal:
+		return true
+	case LaunchCalendarAudienceSalesSafe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LaunchEntryAudience.
+const (
+	LaunchEntryAudienceInternal  LaunchEntryAudience = "internal"
+	LaunchEntryAudienceSalesSafe LaunchEntryAudience = "sales_safe"
+)
+
+// Valid indicates whether the value is a known member of the LaunchEntryAudience enum.
+func (e LaunchEntryAudience) Valid() bool {
+	switch e {
+	case LaunchEntryAudienceInternal:
+		return true
+	case LaunchEntryAudienceSalesSafe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LaunchEntryTier.
+const (
+	LaunchEntryTierTier1 LaunchEntryTier = "tier1"
+	LaunchEntryTierTier2 LaunchEntryTier = "tier2"
+	LaunchEntryTierTier3 LaunchEntryTier = "tier3"
+)
+
+// Valid indicates whether the value is a known member of the LaunchEntryTier enum.
+func (e LaunchEntryTier) Valid() bool {
+	switch e {
+	case LaunchEntryTierTier1:
+		return true
+	case LaunchEntryTierTier2:
+		return true
+	case LaunchEntryTierTier3:
 		return true
 	default:
 		return false
@@ -1197,6 +1431,27 @@ func (e RoadmapItemKind) Valid() bool {
 	}
 }
 
+// Defines values for RoadmapItemLaunchTier.
+const (
+	RoadmapItemLaunchTierTier1 RoadmapItemLaunchTier = "tier1"
+	RoadmapItemLaunchTierTier2 RoadmapItemLaunchTier = "tier2"
+	RoadmapItemLaunchTierTier3 RoadmapItemLaunchTier = "tier3"
+)
+
+// Valid indicates whether the value is a known member of the RoadmapItemLaunchTier enum.
+func (e RoadmapItemLaunchTier) Valid() bool {
+	switch e {
+	case RoadmapItemLaunchTierTier1:
+		return true
+	case RoadmapItemLaunchTierTier2:
+		return true
+	case RoadmapItemLaunchTierTier3:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RoadmapItemStatus.
 const (
 	RoadmapItemStatusCancelled  RoadmapItemStatus = "cancelled"
@@ -1278,6 +1533,27 @@ func (e RoadmapItemInputKind) Valid() bool {
 	}
 }
 
+// Defines values for RoadmapItemInputLaunchTier.
+const (
+	RoadmapItemInputLaunchTierTier1 RoadmapItemInputLaunchTier = "tier1"
+	RoadmapItemInputLaunchTierTier2 RoadmapItemInputLaunchTier = "tier2"
+	RoadmapItemInputLaunchTierTier3 RoadmapItemInputLaunchTier = "tier3"
+)
+
+// Valid indicates whether the value is a known member of the RoadmapItemInputLaunchTier enum.
+func (e RoadmapItemInputLaunchTier) Valid() bool {
+	switch e {
+	case RoadmapItemInputLaunchTierTier1:
+		return true
+	case RoadmapItemInputLaunchTierTier2:
+		return true
+	case RoadmapItemInputLaunchTierTier3:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RoadmapItemInputStatus.
 const (
 	RoadmapItemInputStatusCancelled  RoadmapItemInputStatus = "cancelled"
@@ -1353,6 +1629,27 @@ func (e SalesSafeItemBucket) Valid() bool {
 	case SalesSafeItemBucketNext:
 		return true
 	case SalesSafeItemBucketNow:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SalesSafeItemLaunchTier.
+const (
+	SalesSafeItemLaunchTierTier1 SalesSafeItemLaunchTier = "tier1"
+	SalesSafeItemLaunchTierTier2 SalesSafeItemLaunchTier = "tier2"
+	SalesSafeItemLaunchTierTier3 SalesSafeItemLaunchTier = "tier3"
+)
+
+// Valid indicates whether the value is a known member of the SalesSafeItemLaunchTier enum.
+func (e SalesSafeItemLaunchTier) Valid() bool {
+	switch e {
+	case SalesSafeItemLaunchTierTier1:
+		return true
+	case SalesSafeItemLaunchTierTier2:
+		return true
+	case SalesSafeItemLaunchTierTier3:
 		return true
 	default:
 		return false
@@ -1518,6 +1815,24 @@ func (e SignalInputSource) Valid() bool {
 	}
 }
 
+// Defines values for TeamSharesInputSource.
+const (
+	TeamSharesInputSourceManual   TeamSharesInputSource = "manual"
+	TeamSharesInputSourceWorklogs TeamSharesInputSource = "worklogs"
+)
+
+// Valid indicates whether the value is a known member of the TeamSharesInputSource enum.
+func (e TeamSharesInputSource) Valid() bool {
+	switch e {
+	case TeamSharesInputSourceManual:
+		return true
+	case TeamSharesInputSourceWorklogs:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TraceNodeKind.
 const (
 	TraceNodeKindDecision   TraceNodeKind = "decision"
@@ -1635,6 +1950,30 @@ func (e TrackTemplateInputProductType) Valid() bool {
 	case TrackTemplateInputProductTypePlatform:
 		return true
 	case TrackTemplateInputProductTypeSecurity:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VulnerabilityInputSeverity.
+const (
+	VulnerabilityInputSeverityCritical VulnerabilityInputSeverity = "critical"
+	VulnerabilityInputSeverityHigh     VulnerabilityInputSeverity = "high"
+	VulnerabilityInputSeverityLow      VulnerabilityInputSeverity = "low"
+	VulnerabilityInputSeverityMedium   VulnerabilityInputSeverity = "medium"
+)
+
+// Valid indicates whether the value is a known member of the VulnerabilityInputSeverity enum.
+func (e VulnerabilityInputSeverity) Valid() bool {
+	switch e {
+	case VulnerabilityInputSeverityCritical:
+		return true
+	case VulnerabilityInputSeverityHigh:
+		return true
+	case VulnerabilityInputSeverityLow:
+		return true
+	case VulnerabilityInputSeverityMedium:
 		return true
 	default:
 		return false
@@ -1927,12 +2266,62 @@ type AffectedFeature struct {
 	ViaFeature  openapi_types.UUID  `json:"via_feature"`
 }
 
+// AllocationRule defines model for AllocationRule.
+type AllocationRule struct {
+	Actor         *string               `json:"actor,omitempty"`
+	At            *time.Time            `json:"at,omitempty"`
+	Basis         string                `json:"basis"`
+	Consumers     *[]openapi_types.UUID `json:"consumers,omitempty"`
+	EffectiveFrom *openapi_types.Date   `json:"effective_from,omitempty"`
+	HubProductId  openapi_types.UUID    `json:"hub_product_id"`
+	Id            openapi_types.UUID    `json:"id"`
+	Shares        *map[string]string    `json:"shares,omitempty"`
+	Version       int                   `json:"version"`
+}
+
+// AllocationRuleInput defines model for AllocationRuleInput.
+type AllocationRuleInput struct {
+	Basis         AllocationRuleInputBasis `json:"basis"`
+	Consumers     *[]openapi_types.UUID    `json:"consumers,omitempty"`
+	EffectiveFrom *openapi_types.Date      `json:"effective_from,omitempty"`
+	HubProductId  openapi_types.UUID       `json:"hub_product_id"`
+	Shares        *map[string]string       `json:"shares,omitempty"`
+}
+
+// AllocationRuleInputBasis defines model for AllocationRuleInput.Basis.
+type AllocationRuleInputBasis string
+
 // AuditVerifyResult defines model for AuditVerifyResult.
 type AuditVerifyResult struct {
 	BrokenSeq *int64  `json:"broken_seq,omitempty"`
 	Checked   int64   `json:"checked"`
 	Ok        bool    `json:"ok"`
 	Reason    *string `json:"reason,omitempty"`
+}
+
+// BranchCost defines model for BranchCost.
+type BranchCost struct {
+	Branch    string             `json:"branch"`
+	Cost      Money              `json:"cost"`
+	ProductId openapi_types.UUID `json:"product_id"`
+}
+
+// BundleRule defines model for BundleRule.
+type BundleRule struct {
+	Actor         *string             `json:"actor,omitempty"`
+	At            *time.Time          `json:"at,omitempty"`
+	BundleKey     string              `json:"bundle_key"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Id            openapi_types.UUID  `json:"id"`
+	Shares        map[string]string   `json:"shares"`
+	Version       int                 `json:"version"`
+}
+
+// BundleRuleInput defines model for BundleRuleInput.
+type BundleRuleInput struct {
+	BundleKey     string              `json:"bundle_key"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Shares        map[string]string   `json:"shares"`
 }
 
 // Capability defines model for Capability.
@@ -1942,10 +2331,22 @@ type Capability struct {
 	ProductId openapi_types.UUID `json:"product_id"`
 }
 
+// CertificationEconomics defines model for CertificationEconomics.
+type CertificationEconomics struct {
+	Balance          Money              `json:"balance"`
+	CertifiedRevenue Money              `json:"certified_revenue"`
+	Period           string             `json:"period"`
+	ProductId        openapi_types.UUID `json:"product_id"`
+	TrackCost        Money              `json:"track_cost"`
+}
+
 // CertifiedBaseline defines model for CertifiedBaseline.
 type CertifiedBaseline struct {
-	CertificateNo    string              `json:"certificate_no"`
-	CertifiedAt      openapi_types.Date  `json:"certified_at"`
+	CertificateNo string             `json:"certificate_no"`
+	CertifiedAt   openapi_types.Date `json:"certified_at"`
+
+	// Components Состав поставки для поиска по уязвимому компоненту (CM-08)
+	Components       *[]Component        `json:"components,omitempty"`
 	CreatedAt        time.Time           `json:"created_at"`
 	Eol              openapi_types.Date  `json:"eol"`
 	Id               openapi_types.UUID  `json:"id"`
@@ -2011,6 +2412,19 @@ type CommitmentAlert struct {
 // CommitmentAlertKind defines model for CommitmentAlert.Kind.
 type CommitmentAlertKind string
 
+// CommitmentImpact defines model for CommitmentImpact.
+type CommitmentImpact struct {
+	Breached   bool `json:"breached"`
+	Commitment struct {
+		DueDate    *openapi_types.Date `json:"due_date,omitempty"`
+		Id         *openapi_types.UUID `json:"id,omitempty"`
+		ProductId  *openapi_types.UUID `json:"product_id,omitempty"`
+		Regulatory *bool               `json:"regulatory,omitempty"`
+		Title      *string             `json:"title,omitempty"`
+	} `json:"commitment"`
+	Reason *string `json:"reason,omitempty"`
+}
+
 // CommitmentInput defines model for CommitmentInput.
 type CommitmentInput struct {
 	Basis        string                  `json:"basis"`
@@ -2054,6 +2468,13 @@ type ComplianceSettings struct {
 	// CertifiedProcessDiscount Доля 0…1 десятичной строкой
 	CertifiedProcessDiscount string           `json:"certified_process_discount"`
 	CostByClass              map[string]Money `json:"cost_by_class"`
+}
+
+// Component defines model for Component.
+type Component struct {
+	// Key Идентификатор компонента из SBOM (purl
+	Key     string  `json:"key"`
+	Version *string `json:"version,omitempty"`
 }
 
 // Contract defines model for Contract.
@@ -2157,6 +2578,40 @@ type CycleProblem struct {
 	Type   string               `json:"type"`
 }
 
+// Dashboard defines model for Dashboard.
+type Dashboard struct {
+	CreatedAt *time.Time          `json:"created_at,omitempty"`
+	Id        openapi_types.UUID  `json:"id"`
+	Name      string              `json:"name"`
+	Owner     string              `json:"owner"`
+	Panels    []DashboardPanel    `json:"panels"`
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
+	Shared    *bool               `json:"shared,omitempty"`
+	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
+}
+
+// DashboardInput defines model for DashboardInput.
+type DashboardInput struct {
+	Id        *openapi_types.UUID `json:"id,omitempty"`
+	Name      string              `json:"name"`
+	Panels    []DashboardPanel    `json:"panels"`
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
+	Shared    *bool               `json:"shared,omitempty"`
+}
+
+// DashboardPanel defines model for DashboardPanel.
+type DashboardPanel struct {
+	Key    string             `json:"key"`
+	Kind   DashboardPanelKind `json:"kind"`
+	Params *map[string]string `json:"params,omitempty"`
+	Source string             `json:"source"`
+	Title  string             `json:"title"`
+	Width  *int               `json:"width,omitempty"`
+}
+
+// DashboardPanelKind defines model for DashboardPanel.Kind.
+type DashboardPanelKind string
+
 // DateChange defines model for DateChange.
 type DateChange struct {
 	Actor     string              `json:"actor"`
@@ -2174,10 +2629,13 @@ type DateChange struct {
 
 // Decision defines model for Decision.
 type Decision struct {
-	Author         string             `json:"author"`
-	ChosenKey      *string            `json:"chosen_key,omitempty"`
-	Context        string             `json:"context"`
-	CreatedAt      time.Time          `json:"created_at"`
+	Author    string    `json:"author"`
+	ChosenKey *string   `json:"chosen_key,omitempty"`
+	Context   string    `json:"context"`
+	CreatedAt time.Time `json:"created_at"`
+
+	// Effect Измеримая часть ожидаемого эффекта решения (DA-06)
+	Effect         *DecisionEffect    `json:"effect,omitempty"`
 	ExpectedEffect *string            `json:"expected_effect,omitempty"`
 	Id             openapi_types.UUID `json:"id"`
 	Links          *[]DecisionLink    `json:"links,omitempty"`
@@ -2187,6 +2645,7 @@ type Decision struct {
 	// ProductId Пусто — портфельное решение
 	ProductId    *openapi_types.UUID     `json:"product_id,omitempty"`
 	Rationale    *string                 `json:"rationale,omitempty"`
+	Review       *DecisionReview         `json:"review,omitempty"`
 	ReviewDate   *openapi_types.Date     `json:"review_date,omitempty"`
 	Snapshot     *map[string]interface{} `json:"snapshot,omitempty"`
 	Status       DecisionStatus          `json:"status"`
@@ -2198,10 +2657,22 @@ type Decision struct {
 // DecisionStatus defines model for Decision.Status.
 type DecisionStatus string
 
+// DecisionEffect Измеримая часть ожидаемого эффекта решения (DA-06)
+type DecisionEffect struct {
+	MetricKey *string `json:"metric_key,omitempty"`
+	Period    *string `json:"period,omitempty"`
+
+	// Value Десятичное значение строкой
+	Value *string `json:"value,omitempty"`
+}
+
 // DecisionInput defines model for DecisionInput.
 type DecisionInput struct {
-	ChosenKey      *string           `json:"chosen_key,omitempty"`
-	Context        string            `json:"context"`
+	ChosenKey *string `json:"chosen_key,omitempty"`
+	Context   string  `json:"context"`
+
+	// Effect Измеримая часть ожидаемого эффекта решения (DA-06)
+	Effect         *DecisionEffect   `json:"effect,omitempty"`
 	ExpectedEffect *string           `json:"expected_effect,omitempty"`
 	Links          *[]DecisionLink   `json:"links,omitempty"`
 	Options        *[]DecisionOption `json:"options,omitempty"`
@@ -2235,6 +2706,20 @@ type DecisionRef struct {
 	Id    openapi_types.UUID `json:"id"`
 	Title string             `json:"title"`
 }
+
+// DecisionReview defines model for DecisionReview.
+type DecisionReview struct {
+	Actor    string                `json:"actor"`
+	Actual   string                `json:"actual"`
+	At       time.Time             `json:"at"`
+	Comment  *string               `json:"comment,omitempty"`
+	Delta    string                `json:"delta"`
+	Expected string                `json:"expected"`
+	Verdict  DecisionReviewVerdict `json:"verdict"`
+}
+
+// DecisionReviewVerdict defines model for DecisionReview.Verdict.
+type DecisionReviewVerdict string
 
 // Evidence defines model for Evidence.
 type Evidence struct {
@@ -2316,6 +2801,34 @@ type EvidenceItemInput struct {
 	Url    string `json:"url"`
 }
 
+// Explanation defines model for Explanation.
+type Explanation struct {
+	Expression *string         `json:"expression,omitempty"`
+	Inputs     *[]Explanation  `json:"inputs,omitempty"`
+	Key        string          `json:"key"`
+	Kind       ExplanationKind `json:"kind"`
+	Rows       *[]FactRow      `json:"rows,omitempty"`
+	Value      string          `json:"value"`
+}
+
+// ExplanationKind defines model for Explanation.Kind.
+type ExplanationKind string
+
+// FactRow defines model for FactRow.
+type FactRow struct {
+	BatchId     *openapi_types.UUID `json:"batch_id,omitempty"`
+	DataVersion *int                `json:"data_version,omitempty"`
+	FieldKey    string              `json:"field_key"`
+	Id          openapi_types.UUID  `json:"id"`
+	Item        *string             `json:"item,omitempty"`
+	Period      string              `json:"period"`
+	ProductId   *openapi_types.UUID `json:"product_id,omitempty"`
+	Row         *int                `json:"row,omitempty"`
+	Sheet       *string             `json:"sheet,omitempty"`
+	TeamId      *openapi_types.UUID `json:"team_id,omitempty"`
+	Value       string              `json:"value"`
+}
+
 // Feature defines model for Feature.
 type Feature struct {
 	Affected     bool                `json:"affected"`
@@ -2343,6 +2856,14 @@ type FeatureCost struct {
 	FeatureId        openapi_types.UUID `json:"feature_id"`
 	ProductId        openapi_types.UUID `json:"product_id"`
 	Total            Money              `json:"total"`
+}
+
+// FeatureEconomics defines model for FeatureEconomics.
+type FeatureEconomics struct {
+	Balance    Money              `json:"balance"`
+	FeatureId  openapi_types.UUID `json:"feature_id"`
+	Investment Money              `json:"investment"`
+	Revenue    Money              `json:"revenue"`
 }
 
 // FeatureFlags defines model for FeatureFlags.
@@ -2381,6 +2902,69 @@ type FeatureValue struct {
 	OwnValue     Money              `json:"own_value"`
 	ProductId    openapi_types.UUID `json:"product_id"`
 	TotalValue   Money              `json:"total_value"`
+}
+
+// FinanceImportResult defines model for FinanceImportResult.
+type FinanceImportResult struct {
+	Batch ImportBatch `json:"batch"`
+	Rows  *[]FactRow  `json:"rows,omitempty"`
+}
+
+// FinancialField defines model for FinancialField.
+type FinancialField struct {
+	Id       openapi_types.UUID      `json:"id"`
+	Key      string                  `json:"key"`
+	Versions []FinancialFieldVersion `json:"versions"`
+}
+
+// FinancialFieldInput defines model for FinancialFieldInput.
+type FinancialFieldInput struct {
+	Currency      *string                          `json:"currency,omitempty"`
+	Dimensions    *[]FinancialFieldInputDimensions `json:"dimensions,omitempty"`
+	EffectiveFrom *openapi_types.Date              `json:"effective_from,omitempty"`
+	Key           string                           `json:"key"`
+	Name          string                           `json:"name"`
+	Source        FinancialFieldInputSource        `json:"source"`
+	Type          FinancialFieldInputType          `json:"type"`
+}
+
+// FinancialFieldInputDimensions defines model for FinancialFieldInput.Dimensions.
+type FinancialFieldInputDimensions string
+
+// FinancialFieldInputSource defines model for FinancialFieldInput.Source.
+type FinancialFieldInputSource string
+
+// FinancialFieldInputType defines model for FinancialFieldInput.Type.
+type FinancialFieldInputType string
+
+// FinancialFieldVersion defines model for FinancialFieldVersion.
+type FinancialFieldVersion struct {
+	Actor         *string             `json:"actor,omitempty"`
+	At            *time.Time          `json:"at,omitempty"`
+	Currency      *string             `json:"currency,omitempty"`
+	Dimensions    *[]string           `json:"dimensions,omitempty"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Name          string              `json:"name"`
+	Source        string              `json:"source"`
+	Type          string              `json:"type"`
+	Version       int                 `json:"version"`
+}
+
+// Forecast defines model for Forecast.
+type Forecast struct {
+	EpicKey       *string             `json:"epic_key,omitempty"`
+	FeatureId     openapi_types.UUID  `json:"feature_id"`
+	From          *openapi_types.Date `json:"from,omitempty"`
+	IntervalHigh  *openapi_types.Date `json:"interval_high,omitempty"`
+	IntervalLow   *openapi_types.Date `json:"interval_low,omitempty"`
+	IterationDays *int                `json:"iteration_days,omitempty"`
+	P50           *openapi_types.Date `json:"p50"`
+	P85           *openapi_types.Date `json:"p85"`
+	P95           *openapi_types.Date `json:"p95"`
+	ProductId     openapi_types.UUID  `json:"product_id"`
+	Remaining     int                 `json:"remaining"`
+	Samples       *int                `json:"samples,omitempty"`
+	Throughput    *[]int              `json:"throughput,omitempty"`
 }
 
 // Gate defines model for Gate.
@@ -2491,10 +3075,63 @@ type ImpactInput struct {
 // ImpactInputClass defines model for ImpactInput.Class.
 type ImpactInputClass string
 
+// ImportBatch defines model for ImportBatch.
+type ImportBatch struct {
+	Actor       *string             `json:"actor,omitempty"`
+	At          *time.Time          `json:"at,omitempty"`
+	DataVersion *int                `json:"data_version,omitempty"`
+	Errors      *[]RowError         `json:"errors,omitempty"`
+	FileName    *string             `json:"file_name,omitempty"`
+	Id          openapi_types.UUID  `json:"id"`
+	Period      string              `json:"period"`
+	Rows        *int                `json:"rows,omitempty"`
+	Scheduled   *bool               `json:"scheduled,omitempty"`
+	Sha256      *string             `json:"sha256,omitempty"`
+	Status      ImportBatchStatus   `json:"status"`
+	TemplateId  *openapi_types.UUID `json:"template_id,omitempty"`
+}
+
+// ImportBatchStatus defines model for ImportBatch.Status.
+type ImportBatchStatus string
+
+// ImportColumn defines model for ImportColumn.
+type ImportColumn struct {
+	Column     string `json:"column"`
+	FieldKey   string `json:"field_key"`
+	MinorUnits *bool  `json:"minor_units,omitempty"`
+}
+
 // ImportResult defines model for ImportResult.
 type ImportResult struct {
 	Imported int               `json:"imported"`
 	Skipped  map[string]string `json:"skipped"`
+}
+
+// ImportSheet defines model for ImportSheet.
+type ImportSheet struct {
+	Columns       []ImportColumn `json:"columns"`
+	HeaderRow     *int           `json:"header_row,omitempty"`
+	ItemColumn    *string        `json:"item_column,omitempty"`
+	PeriodColumn  *string        `json:"period_column,omitempty"`
+	ProductColumn *string        `json:"product_column,omitempty"`
+	Sheet         string         `json:"sheet"`
+	TeamColumn    *string        `json:"team_column,omitempty"`
+}
+
+// ImportTemplate defines model for ImportTemplate.
+type ImportTemplate struct {
+	CreatedAt *time.Time         `json:"created_at,omitempty"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	Sheets    []ImportSheet      `json:"sheets"`
+	UpdatedAt *time.Time         `json:"updated_at,omitempty"`
+}
+
+// ImportTemplateInput defines model for ImportTemplateInput.
+type ImportTemplateInput struct {
+	Id     *openapi_types.UUID `json:"id,omitempty"`
+	Name   string              `json:"name"`
+	Sheets []ImportSheet       `json:"sheets"`
 }
 
 // Insight defines model for Insight.
@@ -2551,6 +3188,57 @@ type InterviewInput struct {
 	Segment       *string               `json:"segment,omitempty"`
 }
 
+// LaunchCalendar defines model for LaunchCalendar.
+type LaunchCalendar struct {
+	Audience LaunchCalendarAudience `json:"audience"`
+	Entries  []LaunchEntry          `json:"entries"`
+	From     *openapi_types.Date    `json:"from,omitempty"`
+	To       *openapi_types.Date    `json:"to,omitempty"`
+}
+
+// LaunchCalendarAudience defines model for LaunchCalendar.Audience.
+type LaunchCalendarAudience string
+
+// LaunchEntry defines model for LaunchEntry.
+type LaunchEntry struct {
+	Audience   *LaunchEntryAudience `json:"audience,omitempty"`
+	ItemId     openapi_types.UUID   `json:"item_id"`
+	LaunchDate *openapi_types.Date  `json:"launch_date"`
+	ProductId  openapi_types.UUID   `json:"product_id"`
+	ReleaseId  *openapi_types.UUID  `json:"release_id,omitempty"`
+	Tier       LaunchEntryTier      `json:"tier"`
+	Title      string               `json:"title"`
+}
+
+// LaunchEntryAudience defines model for LaunchEntry.Audience.
+type LaunchEntryAudience string
+
+// LaunchEntryTier defines model for LaunchEntry.Tier.
+type LaunchEntryTier string
+
+// LicenseStatus defines model for LicenseStatus.
+type LicenseStatus struct {
+	DaysLeft  *int  `json:"days_left,omitempty"`
+	Expired   *bool `json:"expired,omitempty"`
+	InGrace   *bool `json:"in_grace,omitempty"`
+	Installed bool  `json:"installed"`
+	License   *struct {
+		Customer *string             `json:"customer,omitempty"`
+		Edition  *string             `json:"edition,omitempty"`
+		Id       *string             `json:"id,omitempty"`
+		IssuedAt *openapi_types.Date `json:"issued_at,omitempty"`
+		Limits   *struct {
+			Products *int `json:"products,omitempty"`
+			Users    *int `json:"users,omitempty"`
+		} `json:"limits,omitempty"`
+		Modules   *[]string           `json:"modules,omitempty"`
+		NotAfter  *openapi_types.Date `json:"not_after,omitempty"`
+		NotBefore *openapi_types.Date `json:"not_before,omitempty"`
+	} `json:"license,omitempty"`
+	Reason *string `json:"reason,omitempty"`
+	Valid  bool    `json:"valid"`
+}
+
 // Link defines model for Link.
 type Link struct {
 	ContractId    *openapi_types.UUID `json:"contract_id,omitempty"`
@@ -2605,11 +3293,98 @@ type MeAudience string
 // MeProducts defines model for Me.Products.
 type MeProducts string
 
+// Metric defines model for Metric.
+type Metric struct {
+	Id       openapi_types.UUID `json:"id"`
+	Key      string             `json:"key"`
+	Versions []MetricVersion    `json:"versions"`
+}
+
+// MetricComparison defines model for MetricComparison.
+type MetricComparison struct {
+	A      int    `json:"a"`
+	B      int    `json:"b"`
+	Key    string `json:"key"`
+	ValueA string `json:"value_a"`
+	ValueB string `json:"value_b"`
+}
+
+// MetricInput defines model for MetricInput.
+type MetricInput struct {
+	Currency      *string             `json:"currency,omitempty"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Expression    string              `json:"expression"`
+	Key           string              `json:"key"`
+	Name          string              `json:"name"`
+}
+
+// MetricValue defines model for MetricValue.
+type MetricValue struct {
+	Key       string              `json:"key"`
+	Period    *string             `json:"period,omitempty"`
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
+
+	// Value Десятичное значение строкой
+	Value string `json:"value"`
+}
+
+// MetricVersion defines model for MetricVersion.
+type MetricVersion struct {
+	Actor         *string             `json:"actor,omitempty"`
+	At            *time.Time          `json:"at,omitempty"`
+	Currency      *string             `json:"currency,omitempty"`
+	EffectiveFrom *openapi_types.Date `json:"effective_from,omitempty"`
+	Expression    string              `json:"expression"`
+	Name          string              `json:"name"`
+	Refs          *[]struct {
+		Key  *string `json:"key,omitempty"`
+		Kind *string `json:"kind,omitempty"`
+	} `json:"refs,omitempty"`
+	Version int `json:"version"`
+}
+
 // Money defines model for Money.
 type Money struct {
 	// Amount Минорные единицы
 	Amount   int64  `json:"amount"`
 	Currency string `json:"currency"`
+}
+
+// PipelineCollectInput defines model for PipelineCollectInput.
+type PipelineCollectInput struct {
+	Project string     `json:"project"`
+	Since   *time.Time `json:"since,omitempty"`
+}
+
+// PipelineCollectResult defines model for PipelineCollectResult.
+type PipelineCollectResult struct {
+	Collected       *[]EvidenceItem    `json:"collected,omitempty"`
+	ComponentsSaved *int               `json:"components_saved,omitempty"`
+	GateId          openapi_types.UUID `json:"gate_id"`
+	Sbom            *[]Component       `json:"sbom,omitempty"`
+	Skipped         *int               `json:"skipped,omitempty"`
+	TrackId         openapi_types.UUID `json:"track_id"`
+}
+
+// PnL defines model for PnL.
+type PnL struct {
+	BundleRevenue *Money             `json:"bundle_revenue,omitempty"`
+	DirectCosts   Money              `json:"direct_costs"`
+	DirectProfit  Money              `json:"direct_profit"`
+	HubLoad       Money              `json:"hub_load"`
+	LoadedProfit  Money              `json:"loaded_profit"`
+	Period        string             `json:"period"`
+	ProductId     openapi_types.UUID `json:"product_id"`
+	Revenue       Money              `json:"revenue"`
+}
+
+// PortfolioPnL defines model for PortfolioPnL.
+type PortfolioPnL struct {
+	Costs    Money  `json:"costs"`
+	Period   string `json:"period"`
+	Products []PnL  `json:"products"`
+	Profit   Money  `json:"profit"`
+	Revenue  Money  `json:"revenue"`
 }
 
 // Problem defines model for Problem.
@@ -2798,18 +3573,20 @@ type RoadmapItem struct {
 	Bucket   RoadmapItemBucket   `json:"bucket"`
 
 	// CommitmentId Обязательство
-	CommitmentId *openapi_types.UUID `json:"commitment_id,omitempty"`
-	CreatedAt    time.Time           `json:"created_at"`
-	EndDate      *openapi_types.Date `json:"end_date,omitempty"`
-	FeatureId    *openapi_types.UUID `json:"feature_id,omitempty"`
-	Id           openapi_types.UUID  `json:"id"`
-	Kind         RoadmapItemKind     `json:"kind"`
-	ProductId    openapi_types.UUID  `json:"product_id"`
-	ReleaseId    *openapi_types.UUID `json:"release_id,omitempty"`
-	StartDate    *openapi_types.Date `json:"start_date,omitempty"`
-	Status       RoadmapItemStatus   `json:"status"`
-	Title        string              `json:"title"`
-	UpdatedAt    time.Time           `json:"updated_at"`
+	CommitmentId *openapi_types.UUID    `json:"commitment_id,omitempty"`
+	CreatedAt    time.Time              `json:"created_at"`
+	EndDate      *openapi_types.Date    `json:"end_date,omitempty"`
+	FeatureId    *openapi_types.UUID    `json:"feature_id,omitempty"`
+	Id           openapi_types.UUID     `json:"id"`
+	Kind         RoadmapItemKind        `json:"kind"`
+	LaunchDate   *openapi_types.Date    `json:"launch_date,omitempty"`
+	LaunchTier   *RoadmapItemLaunchTier `json:"launch_tier,omitempty"`
+	ProductId    openapi_types.UUID     `json:"product_id"`
+	ReleaseId    *openapi_types.UUID    `json:"release_id,omitempty"`
+	StartDate    *openapi_types.Date    `json:"start_date,omitempty"`
+	Status       RoadmapItemStatus      `json:"status"`
+	Title        string                 `json:"title"`
+	UpdatedAt    time.Time              `json:"updated_at"`
 }
 
 // RoadmapItemAudience defines model for RoadmapItem.Audience.
@@ -2820,6 +3597,9 @@ type RoadmapItemBucket string
 
 // RoadmapItemKind defines model for RoadmapItem.Kind.
 type RoadmapItemKind string
+
+// RoadmapItemLaunchTier defines model for RoadmapItem.LaunchTier.
+type RoadmapItemLaunchTier string
 
 // RoadmapItemStatus defines model for RoadmapItem.Status.
 type RoadmapItemStatus string
@@ -2832,11 +3612,13 @@ type RoadmapItemInput struct {
 	FeatureId *openapi_types.UUID       `json:"feature_id,omitempty"`
 
 	// Kind Вид элемента (RM-04); по умолчанию feature
-	Kind      *RoadmapItemInputKind   `json:"kind,omitempty"`
-	ReleaseId *openapi_types.UUID     `json:"release_id,omitempty"`
-	StartDate *openapi_types.Date     `json:"start_date,omitempty"`
-	Status    *RoadmapItemInputStatus `json:"status,omitempty"`
-	Title     *string                 `json:"title,omitempty"`
+	Kind       *RoadmapItemInputKind       `json:"kind,omitempty"`
+	LaunchDate *openapi_types.Date         `json:"launch_date,omitempty"`
+	LaunchTier *RoadmapItemInputLaunchTier `json:"launch_tier,omitempty"`
+	ReleaseId  *openapi_types.UUID         `json:"release_id,omitempty"`
+	StartDate  *openapi_types.Date         `json:"start_date,omitempty"`
+	Status     *RoadmapItemInputStatus     `json:"status,omitempty"`
+	Title      *string                     `json:"title,omitempty"`
 }
 
 // RoadmapItemInputAudience defines model for RoadmapItemInput.Audience.
@@ -2847,6 +3629,9 @@ type RoadmapItemInputBucket string
 
 // RoadmapItemInputKind Вид элемента (RM-04); по умолчанию feature
 type RoadmapItemInputKind string
+
+// RoadmapItemInputLaunchTier defines model for RoadmapItemInput.LaunchTier.
+type RoadmapItemInputLaunchTier string
 
 // RoadmapItemInputStatus defines model for RoadmapItemInput.Status.
 type RoadmapItemInputStatus string
@@ -2874,19 +3659,32 @@ type RoadmapTimeline struct {
 // RoadmapTimelineAudience defines model for RoadmapTimeline.Audience.
 type RoadmapTimelineAudience string
 
+// RowError defines model for RowError.
+type RowError struct {
+	Column  *string `json:"column,omitempty"`
+	Message string  `json:"message"`
+	Row     *int    `json:"row,omitempty"`
+	Sheet   *string `json:"sheet,omitempty"`
+}
+
 // SalesSafeItem defines model for SalesSafeItem.
 type SalesSafeItem struct {
-	Bucket    SalesSafeItemBucket `json:"bucket"`
-	EndDate   *openapi_types.Date `json:"end_date,omitempty"`
-	Id        openapi_types.UUID  `json:"id"`
-	ProductId openapi_types.UUID  `json:"product_id"`
-	ReleaseId *openapi_types.UUID `json:"release_id,omitempty"`
-	StartDate *openapi_types.Date `json:"start_date,omitempty"`
-	Title     string              `json:"title"`
+	Bucket     SalesSafeItemBucket      `json:"bucket"`
+	EndDate    *openapi_types.Date      `json:"end_date,omitempty"`
+	Id         openapi_types.UUID       `json:"id"`
+	LaunchDate *openapi_types.Date      `json:"launch_date,omitempty"`
+	LaunchTier *SalesSafeItemLaunchTier `json:"launch_tier,omitempty"`
+	ProductId  openapi_types.UUID       `json:"product_id"`
+	ReleaseId  *openapi_types.UUID      `json:"release_id,omitempty"`
+	StartDate  *openapi_types.Date      `json:"start_date,omitempty"`
+	Title      string                   `json:"title"`
 }
 
 // SalesSafeItemBucket defines model for SalesSafeItem.Bucket.
 type SalesSafeItemBucket string
+
+// SalesSafeItemLaunchTier defines model for SalesSafeItem.LaunchTier.
+type SalesSafeItemLaunchTier string
 
 // SalesSafeRelease defines model for SalesSafeRelease.
 type SalesSafeRelease struct {
@@ -2906,6 +3704,52 @@ type SalesSafeReleaseBranch string
 
 // SalesSafeReleaseStatus defines model for SalesSafeRelease.Status.
 type SalesSafeReleaseStatus string
+
+// Scenario defines model for Scenario.
+type Scenario struct {
+	Actor             *string               `json:"actor,omitempty"`
+	BudgetDelta       *Money                `json:"budget_delta,omitempty"`
+	CapacityShiftDays *int                  `json:"capacity_shift_days,omitempty"`
+	CreatedAt         *time.Time            `json:"created_at,omitempty"`
+	Description       *string               `json:"description,omitempty"`
+	Id                openapi_types.UUID    `json:"id"`
+	Name              string                `json:"name"`
+	Overrides         *[]ScenarioOverride   `json:"overrides,omitempty"`
+	Period            string                `json:"period"`
+	Products          *[]openapi_types.UUID `json:"products,omitempty"`
+	UpdatedAt         *time.Time            `json:"updated_at,omitempty"`
+}
+
+// ScenarioInput defines model for ScenarioInput.
+type ScenarioInput struct {
+	BudgetDelta       *Money                `json:"budget_delta,omitempty"`
+	CapacityShiftDays *int                  `json:"capacity_shift_days,omitempty"`
+	Description       *string               `json:"description,omitempty"`
+	Id                *openapi_types.UUID   `json:"id,omitempty"`
+	Name              string                `json:"name"`
+	Overrides         *[]ScenarioOverride   `json:"overrides,omitempty"`
+	Period            string                `json:"period"`
+	Products          *[]openapi_types.UUID `json:"products,omitempty"`
+}
+
+// ScenarioOverride defines model for ScenarioOverride.
+type ScenarioOverride struct {
+	FieldKey  string              `json:"field_key"`
+	Period    *string             `json:"period,omitempty"`
+	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
+	Value     string              `json:"value"`
+}
+
+// ScenarioResult defines model for ScenarioResult.
+type ScenarioResult struct {
+	BaseMetrics *map[string]string  `json:"base_metrics,omitempty"`
+	BasePnl     *[]PnL              `json:"base_pnl,omitempty"`
+	Commitments *[]CommitmentImpact `json:"commitments,omitempty"`
+	Metrics     *map[string]string  `json:"metrics,omitempty"`
+	Pnl         *[]PnL              `json:"pnl,omitempty"`
+	Scenario    Scenario            `json:"scenario"`
+	Tracks      *[]TrackImpact      `json:"tracks,omitempty"`
+}
 
 // ScoreComponent defines model for ScoreComponent.
 type ScoreComponent struct {
@@ -3039,6 +3883,37 @@ type StrategicSlice struct {
 	Product   Product            `json:"product"`
 }
 
+// Team defines model for Team.
+type Team struct {
+	Id   openapi_types.UUID `json:"id"`
+	Key  string             `json:"key"`
+	Name string             `json:"name"`
+}
+
+// TeamInput defines model for TeamInput.
+type TeamInput struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+}
+
+// TeamProductMatrix defines model for TeamProductMatrix.
+type TeamProductMatrix struct {
+	Cells    map[string]map[string]Money `json:"cells"`
+	Period   string                      `json:"period"`
+	Products []openapi_types.UUID        `json:"products"`
+	Teams    []openapi_types.UUID        `json:"teams"`
+}
+
+// TeamSharesInput defines model for TeamSharesInput.
+type TeamSharesInput struct {
+	Period string                 `json:"period"`
+	Shares map[string]string      `json:"shares"`
+	Source *TeamSharesInputSource `json:"source,omitempty"`
+}
+
+// TeamSharesInputSource defines model for TeamSharesInput.Source.
+type TeamSharesInputSource string
+
 // TraceEdge defines model for TraceEdge.
 type TraceEdge struct {
 	From TraceRef `json:"from"`
@@ -3090,6 +3965,20 @@ type Track struct {
 // TrackStatus defines model for Track.Status.
 type TrackStatus string
 
+// TrackImpact defines model for TrackImpact.
+type TrackImpact struct {
+	AtRisk   bool    `json:"at_risk"`
+	Reason   *string `json:"reason,omitempty"`
+	Shortage *Money  `json:"shortage,omitempty"`
+	Track    struct {
+		Deadline    *openapi_types.Date `json:"deadline,omitempty"`
+		Id          *openapi_types.UUID `json:"id,omitempty"`
+		Name        *string             `json:"name,omitempty"`
+		PlannedCost *Money              `json:"planned_cost,omitempty"`
+		ProductId   *openapi_types.UUID `json:"product_id,omitempty"`
+	} `json:"track"`
+}
+
 // TrackInput defines model for TrackInput.
 type TrackInput struct {
 	ReleaseId openapi_types.UUID `json:"release_id"`
@@ -3134,11 +4023,85 @@ type VersionPair struct {
 	ProviderVersion string `json:"provider_version"`
 }
 
+// VulnerabilityImpact defines model for VulnerabilityImpact.
+type VulnerabilityImpact struct {
+	Baselines *[]CertifiedBaseline `json:"baselines,omitempty"`
+	Component Component            `json:"component"`
+	Deadlines *[]struct {
+		BaselineId   *openapi_types.UUID `json:"baseline_id,omitempty"`
+		CommitmentId *openapi_types.UUID `json:"commitment_id,omitempty"`
+		DueDate      *openapi_types.Date `json:"due_date,omitempty"`
+		ProductId    *openapi_types.UUID `json:"product_id,omitempty"`
+		Version      *string             `json:"version,omitempty"`
+	} `json:"deadlines,omitempty"`
+	ReportedAt *openapi_types.Date `json:"reported_at,omitempty"`
+	Severity   string              `json:"severity"`
+}
+
+// VulnerabilityInput defines model for VulnerabilityInput.
+type VulnerabilityInput struct {
+	Component Component                  `json:"component"`
+	Severity  VulnerabilityInputSeverity `json:"severity"`
+}
+
+// VulnerabilityInputSeverity defines model for VulnerabilityInput.Severity.
+type VulnerabilityInputSeverity string
+
+// WinLossCounter defines model for WinLossCounter.
+type WinLossCounter struct {
+	Amount *Money `json:"amount,omitempty"`
+	Key    string `json:"key"`
+	Lost   int    `json:"lost"`
+	Won    int    `json:"won"`
+}
+
+// WinLossReport defines model for WinLossReport.
+type WinLossReport struct {
+	AttachRate *[]struct {
+		Deals      *int    `json:"deals,omitempty"`
+		ProductKey *string `json:"product_key,omitempty"`
+		Rate       *string `json:"rate,omitempty"`
+	} `json:"attach_rate,omitempty"`
+	ByReason  *[]WinLossCounter `json:"by_reason,omitempty"`
+	BySegment *[]WinLossCounter `json:"by_segment,omitempty"`
+	Features  *[]struct {
+		Amount  *Money  `json:"amount,omitempty"`
+		Deals   *int    `json:"deals,omitempty"`
+		Feature *string `json:"feature,omitempty"`
+	} `json:"features,omitempty"`
+	Lost       int     `json:"lost"`
+	LostAmount *Money  `json:"lost_amount,omitempty"`
+	ProductKey *string `json:"product_key,omitempty"`
+	Won        int     `json:"won"`
+	WonAmount  *Money  `json:"won_amount,omitempty"`
+}
+
+// WorklogReport defines model for WorklogReport.
+type WorklogReport struct {
+	ByFeature    *[]WorklogShare `json:"by_feature,omitempty"`
+	ByProduct    *[]WorklogShare `json:"by_product,omitempty"`
+	From         *time.Time      `json:"from,omitempty"`
+	To           *time.Time      `json:"to,omitempty"`
+	TotalSeconds int64           `json:"total_seconds"`
+}
+
+// WorklogShare defines model for WorklogShare.
+type WorklogShare struct {
+	EpicKey   *string             `json:"epic_key,omitempty"`
+	FeatureId *openapi_types.UUID `json:"feature_id,omitempty"`
+	ProductId openapi_types.UUID  `json:"product_id"`
+	Seconds   int64               `json:"seconds"`
+	Share     string              `json:"share"`
+}
+
 // AlertId defines model for alertId.
 type AlertId = openapi_types.UUID
 
 // CommitmentId defines model for commitmentId.
 type CommitmentId = openapi_types.UUID
+
+// DashboardId defines model for dashboardId.
+type DashboardId = openapi_types.UUID
 
 // DecisionId defines model for decisionId.
 type DecisionId = openapi_types.UUID
@@ -3167,20 +4130,35 @@ type InterviewId = openapi_types.UUID
 // ItemId defines model for itemId.
 type ItemId = openapi_types.UUID
 
+// MetricKey defines model for metricKey.
+type MetricKey = string
+
 // ModelId defines model for modelId.
 type ModelId = openapi_types.UUID
+
+// PeriodQuery defines model for periodQuery.
+type PeriodQuery = string
 
 // ProductId defines model for productId.
 type ProductId = openapi_types.UUID
 
+// ProductQuery defines model for productQuery.
+type ProductQuery = openapi_types.UUID
+
 // ReleaseId defines model for releaseId.
 type ReleaseId = openapi_types.UUID
+
+// ScenarioId defines model for scenarioId.
+type ScenarioId = openapi_types.UUID
 
 // SetId defines model for setId.
 type SetId = openapi_types.UUID
 
 // SignalId defines model for signalId.
 type SignalId = openapi_types.UUID
+
+// TeamId defines model for teamId.
+type TeamId = openapi_types.UUID
 
 // TrackId defines model for trackId.
 type TrackId = openapi_types.UUID
@@ -3201,6 +4179,11 @@ type ListCustomStatusesParams struct {
 // ListCustomStatusesParamsEntity defines parameters for ListCustomStatuses.
 type ListCustomStatusesParamsEntity string
 
+// InstallLicenseJSONBody defines parameters for InstallLicense.
+type InstallLicenseJSONBody struct {
+	Key string `json:"key"`
+}
+
 // ListRequirementSetsParams defines parameters for ListRequirementSets.
 type ListRequirementSetsParams struct {
 	Code *string `form:"code,omitempty" json:"code,omitempty"`
@@ -3213,6 +4196,11 @@ type ListTrackTemplatesParams struct {
 
 // ListTrackTemplatesParamsProductType defines parameters for ListTrackTemplates.
 type ListTrackTemplatesParamsProductType string
+
+// SetBaselineComponentsJSONBody defines parameters for SetBaselineComponents.
+type SetBaselineComponentsJSONBody struct {
+	Components []Component `json:"components"`
+}
 
 // EnsureRenewalsJSONBody defines parameters for EnsureRenewals.
 type EnsureRenewalsJSONBody struct {
@@ -3235,9 +4223,100 @@ type RequestDecisionPageJSONBody struct {
 	SpaceKey *string `json:"space_key,omitempty"`
 }
 
+// ReviewDecisionJSONBody defines parameters for ReviewDecision.
+type ReviewDecisionJSONBody struct {
+	Comment *string `json:"comment,omitempty"`
+}
+
 // SupersedeDecisionJSONBody defines parameters for SupersedeDecision.
 type SupersedeDecisionJSONBody struct {
 	By openapi_types.UUID `json:"by"`
+}
+
+// GetWorklogCostBaseParams defines parameters for GetWorklogCostBase.
+type GetWorklogCostBaseParams struct {
+	From *time.Time `form:"from,omitempty" json:"from,omitempty"`
+	To   *time.Time `form:"to,omitempty" json:"to,omitempty"`
+}
+
+// ListImportBatchesParams defines parameters for ListImportBatches.
+type ListImportBatchesParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// ImportFinanceFileParams defines parameters for ImportFinanceFile.
+type ImportFinanceFileParams struct {
+	TemplateId openapi_types.UUID `form:"templateId" json:"templateId"`
+
+	// Period Расчётный период в формате YYYY-MM
+	Period   *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+	FileName *string      `form:"fileName,omitempty" json:"fileName,omitempty"`
+
+	// Preview Только предпросмотр, без сохранения
+	Preview *bool `form:"preview,omitempty" json:"preview,omitempty"`
+
+	// Force Разрешить загрузку в закрытый период (EC-11)
+	Force *bool `form:"force,omitempty" json:"force,omitempty"`
+}
+
+// GetTeamProductMatrixParams defines parameters for GetTeamProductMatrix.
+type GetTeamProductMatrixParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// CompareMetricVersionsParams defines parameters for CompareMetricVersions.
+type CompareMetricVersionsParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period    *PeriodQuery  `form:"period,omitempty" json:"period,omitempty"`
+	ProductId *ProductQuery `form:"productId,omitempty" json:"productId,omitempty"`
+	A         int           `form:"a" json:"a"`
+	B         int           `form:"b" json:"b"`
+}
+
+// ExplainMetricParams defines parameters for ExplainMetric.
+type ExplainMetricParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period    *PeriodQuery  `form:"period,omitempty" json:"period,omitempty"`
+	ProductId *ProductQuery `form:"productId,omitempty" json:"productId,omitempty"`
+}
+
+// GetMetricValueParams defines parameters for GetMetricValue.
+type GetMetricValueParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period    *PeriodQuery  `form:"period,omitempty" json:"period,omitempty"`
+	ProductId *ProductQuery `form:"productId,omitempty" json:"productId,omitempty"`
+}
+
+// GetPortfolioPnLParams defines parameters for GetPortfolioPnL.
+type GetPortfolioPnLParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetProductPnLParams defines parameters for GetProductPnL.
+type GetProductPnLParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetBranchCostsParams defines parameters for GetBranchCosts.
+type GetBranchCostsParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetCertificationEconomicsParams defines parameters for GetCertificationEconomics.
+type GetCertificationEconomicsParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
+}
+
+// GetFeatureEconomicsParams defines parameters for GetFeatureEconomics.
+type GetFeatureEconomicsParams struct {
+	// Period Расчётный период в формате YYYY-MM
+	Period *PeriodQuery `form:"period,omitempty" json:"period,omitempty"`
 }
 
 // SetEvidenceItemStatusJSONBody defines parameters for SetEvidenceItemStatus.
@@ -3252,6 +4331,14 @@ type SetEvidenceItemStatusJSONBodyStatus string
 // SetFeatureDevCostJSONBody defines parameters for SetFeatureDevCost.
 type SetFeatureDevCostJSONBody struct {
 	DevCost Money `json:"dev_cost"`
+}
+
+// GetFeatureForecastParams defines parameters for GetFeatureForecast.
+type GetFeatureForecastParams struct {
+	Samples *int `form:"samples,omitempty" json:"samples,omitempty"`
+
+	// Seed Зерно генератора для воспроизводимого прогноза
+	Seed *string `form:"seed,omitempty" json:"seed,omitempty"`
 }
 
 // CreateRequirementJSONBody defines parameters for CreateRequirement.
@@ -3271,6 +4358,13 @@ type ChangeHypothesisStatusJSONBody struct {
 
 	// Status Встроенный или пользовательский статус
 	Status string `json:"status"`
+}
+
+// GetWinLossParams defines parameters for GetWinLoss.
+type GetWinLossParams struct {
+	ProductKey *string             `form:"productKey,omitempty" json:"productKey,omitempty"`
+	From       *openapi_types.Date `form:"from,omitempty" json:"from,omitempty"`
+	To         *openapi_types.Date `form:"to,omitempty" json:"to,omitempty"`
 }
 
 // CreateCapabilityJSONBody defines parameters for CreateCapability.
@@ -3319,6 +4413,12 @@ type ListInsightsParams struct {
 	SignalId     *openapi_types.UUID `form:"signalId,omitempty" json:"signalId,omitempty"`
 }
 
+// GetLaunchCalendarParams defines parameters for GetLaunchCalendar.
+type GetLaunchCalendarParams struct {
+	From *openapi_types.Date `form:"from,omitempty" json:"from,omitempty"`
+	To   *openapi_types.Date `form:"to,omitempty" json:"to,omitempty"`
+}
+
 // ListSignalsParams defines parameters for ListSignals.
 type ListSignalsParams struct {
 	Status    *[]ListSignalsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
@@ -3356,6 +4456,11 @@ type ChangeRoadmapItemDatesJSONBody struct {
 	EndDate   *openapi_types.Date `json:"end_date,omitempty"`
 	Reason    string              `json:"reason"`
 	StartDate *openapi_types.Date `json:"start_date,omitempty"`
+}
+
+// RunScenarioJSONBody defines parameters for RunScenario.
+type RunScenarioJSONBody struct {
+	Metrics *[]string `json:"metrics,omitempty"`
 }
 
 // SetFeatureScoreInputsJSONBody defines parameters for SetFeatureScoreInputs.
@@ -3408,6 +4513,9 @@ type DefineCustomFieldJSONRequestBody = CustomFieldDefInput
 // DefineCustomStatusJSONRequestBody defines body for DefineCustomStatus for application/json ContentType.
 type DefineCustomStatusJSONRequestBody = CustomStatusDef
 
+// InstallLicenseJSONRequestBody defines body for InstallLicense for application/json ContentType.
+type InstallLicenseJSONRequestBody InstallLicenseJSONBody
+
 // CreateRequirementSetJSONRequestBody defines body for CreateRequirementSet for application/json ContentType.
 type CreateRequirementSetJSONRequestBody = RequirementSetInput
 
@@ -3423,17 +4531,26 @@ type UpdateGraphSettingsJSONRequestBody = GraphSettings
 // SaveTrackTemplateJSONRequestBody defines body for SaveTrackTemplate for application/json ContentType.
 type SaveTrackTemplateJSONRequestBody = TrackTemplateInput
 
+// SetBaselineComponentsJSONRequestBody defines body for SetBaselineComponents for application/json ContentType.
+type SetBaselineComponentsJSONRequestBody SetBaselineComponentsJSONBody
+
 // EnsureRenewalsJSONRequestBody defines body for EnsureRenewals for application/json ContentType.
 type EnsureRenewalsJSONRequestBody EnsureRenewalsJSONBody
 
 // UpdateCommitmentJSONRequestBody defines body for UpdateCommitment for application/json ContentType.
 type UpdateCommitmentJSONRequestBody = CommitmentInput
 
+// ReportVulnerableComponentJSONRequestBody defines body for ReportVulnerableComponent for application/json ContentType.
+type ReportVulnerableComponentJSONRequestBody = VulnerabilityInput
+
 // CreateContractJSONRequestBody defines body for CreateContract for application/json ContentType.
 type CreateContractJSONRequestBody = ContractInput
 
 // UpdateContractJSONRequestBody defines body for UpdateContract for application/json ContentType.
 type UpdateContractJSONRequestBody = ContractInput
+
+// SaveDashboardJSONRequestBody defines body for SaveDashboard for application/json ContentType.
+type SaveDashboardJSONRequestBody = DashboardInput
 
 // CreateDecisionJSONRequestBody defines body for CreateDecision for application/json ContentType.
 type CreateDecisionJSONRequestBody = DecisionInput
@@ -3444,8 +4561,32 @@ type UpdateDecisionJSONRequestBody = DecisionInput
 // RequestDecisionPageJSONRequestBody defines body for RequestDecisionPage for application/json ContentType.
 type RequestDecisionPageJSONRequestBody RequestDecisionPageJSONBody
 
+// ReviewDecisionJSONRequestBody defines body for ReviewDecision for application/json ContentType.
+type ReviewDecisionJSONRequestBody ReviewDecisionJSONBody
+
 // SupersedeDecisionJSONRequestBody defines body for SupersedeDecision for application/json ContentType.
 type SupersedeDecisionJSONRequestBody SupersedeDecisionJSONBody
+
+// SaveAllocationRuleJSONRequestBody defines body for SaveAllocationRule for application/json ContentType.
+type SaveAllocationRuleJSONRequestBody = AllocationRuleInput
+
+// SaveBundleRuleJSONRequestBody defines body for SaveBundleRule for application/json ContentType.
+type SaveBundleRuleJSONRequestBody = BundleRuleInput
+
+// SaveFinancialFieldJSONRequestBody defines body for SaveFinancialField for application/json ContentType.
+type SaveFinancialFieldJSONRequestBody = FinancialFieldInput
+
+// SaveMetricJSONRequestBody defines body for SaveMetric for application/json ContentType.
+type SaveMetricJSONRequestBody = MetricInput
+
+// CreateTeamJSONRequestBody defines body for CreateTeam for application/json ContentType.
+type CreateTeamJSONRequestBody = TeamInput
+
+// SetTeamSharesJSONRequestBody defines body for SetTeamShares for application/json ContentType.
+type SetTeamSharesJSONRequestBody = TeamSharesInput
+
+// SaveImportTemplateJSONRequestBody defines body for SaveImportTemplate for application/json ContentType.
+type SaveImportTemplateJSONRequestBody = ImportTemplateInput
 
 // SetEvidenceItemStatusJSONRequestBody defines body for SetEvidenceItemStatus for application/json ContentType.
 type SetEvidenceItemStatusJSONRequestBody SetEvidenceItemStatusJSONBody
@@ -3546,6 +4687,12 @@ type UpdateRoadmapItemJSONRequestBody = RoadmapItemInput
 // ChangeRoadmapItemDatesJSONRequestBody defines body for ChangeRoadmapItemDates for application/json ContentType.
 type ChangeRoadmapItemDatesJSONRequestBody ChangeRoadmapItemDatesJSONBody
 
+// SaveScenarioJSONRequestBody defines body for SaveScenario for application/json ContentType.
+type SaveScenarioJSONRequestBody = ScenarioInput
+
+// RunScenarioJSONRequestBody defines body for RunScenario for application/json ContentType.
+type RunScenarioJSONRequestBody RunScenarioJSONBody
+
 // CreateScoringModelJSONRequestBody defines body for CreateScoringModel for application/json ContentType.
 type CreateScoringModelJSONRequestBody = ScoringModelInput
 
@@ -3573,6 +4720,9 @@ type UpdateGateJSONRequestBody = GateUpdate
 // CheckGateItemJSONRequestBody defines body for CheckGateItem for application/json ContentType.
 type CheckGateItemJSONRequestBody CheckGateItemJSONBody
 
+// CollectPipelineEvidenceJSONRequestBody defines body for CollectPipelineEvidence for application/json ContentType.
+type CollectPipelineEvidenceJSONRequestBody = PipelineCollectInput
+
 // FailGateJSONRequestBody defines body for FailGate for application/json ContentType.
 type FailGateJSONRequestBody FailGateJSONBody
 
@@ -3596,6 +4746,12 @@ type ServerInterface interface {
 	// VerifyEvidenceLog Проверить целостность журнала доказательств (CM-04)
 	// (POST /admin/evidence/verify)
 	VerifyEvidenceLog(w http.ResponseWriter, r *http.Request)
+	// GetLicenseStatus Состояние лицензии поставки (AD-06)
+	// (GET /admin/license)
+	GetLicenseStatus(w http.ResponseWriter, r *http.Request)
+	// InstallLicense Установить лицензионный ключ (AD-06)
+	// (POST /admin/license)
+	InstallLicense(w http.ResponseWriter, r *http.Request)
 	// ListRequirementSets Каталог наборов требований (CM-01)
 	// (GET /admin/requirement-sets)
 	ListRequirementSets(w http.ResponseWriter, r *http.Request, params ListRequirementSetsParams)
@@ -3626,6 +4782,9 @@ type ServerInterface interface {
 	// SaveTrackTemplate Создать или изменить шаблон трека (CM-02)
 	// (POST /admin/track-templates)
 	SaveTrackTemplate(w http.ResponseWriter, r *http.Request)
+	// SetBaselineComponents Состав компонентов сертифицированной версии (CM-08)
+	// (PUT /baselines/{baselineId}/components)
+	SetBaselineComponents(w http.ResponseWriter, r *http.Request, baselineId openapi_types.UUID)
 	// AcknowledgeCommitmentAlert Подтвердить алерт
 	// (POST /commitment-alerts/{alertId}/ack)
 	AcknowledgeCommitmentAlert(w http.ResponseWriter, r *http.Request, alertId AlertId)
@@ -3644,6 +4803,9 @@ type ServerInterface interface {
 	// FulfilCommitment Отметить исполненным
 	// (POST /commitments/{commitmentId}/fulfil)
 	FulfilCommitment(w http.ResponseWriter, r *http.Request, commitmentId CommitmentId)
+	// ReportVulnerableComponent Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+	// (POST /compliance/vulnerabilities)
+	ReportVulnerableComponent(w http.ResponseWriter, r *http.Request)
 	// ListContracts Интеграционные контракты (PG-04)
 	// (GET /contracts)
 	ListContracts(w http.ResponseWriter, r *http.Request)
@@ -3656,12 +4818,30 @@ type ServerInterface interface {
 	// UpdateContract Изменить контракт
 	// (PUT /contracts/{contractId})
 	UpdateContract(w http.ResponseWriter, r *http.Request, contractId openapi_types.UUID)
+	// ListDashboards Дашборды конструктора (DA-05)
+	// (GET /dashboards)
+	ListDashboards(w http.ResponseWriter, r *http.Request)
+	// SaveDashboard Создать или изменить дашборд (DA-05)
+	// (POST /dashboards)
+	SaveDashboard(w http.ResponseWriter, r *http.Request)
+	// ListDashboardSources Срезы данных, доступные панелям (DA-05)
+	// (GET /dashboards/sources)
+	ListDashboardSources(w http.ResponseWriter, r *http.Request)
+	// DeleteDashboard Удалить дашборд (DA-05)
+	// (DELETE /dashboards/{dashboardId})
+	DeleteDashboard(w http.ResponseWriter, r *http.Request, dashboardId DashboardId)
+	// GetDashboard Дашборд (DA-05)
+	// (GET /dashboards/{dashboardId})
+	GetDashboard(w http.ResponseWriter, r *http.Request, dashboardId DashboardId)
 	// ListDecisions Решения продукта; без productId — портфельные (DA-01)
 	// (GET /decisions)
 	ListDecisions(w http.ResponseWriter, r *http.Request, params ListDecisionsParams)
 	// CreateDecision Зафиксировать решение (DA-01)
 	// (POST /decisions)
 	CreateDecision(w http.ResponseWriter, r *http.Request)
+	// ListDecisionsDueForReview Решения, которым пора ревизию (DA-06)
+	// (GET /decisions/due)
+	ListDecisionsDueForReview(w http.ResponseWriter, r *http.Request)
 	// ListDecisionsFor Решения, связанные с сущностью (DS-04)
 	// (GET /decisions/for/{kind}/{id})
 	ListDecisionsFor(w http.ResponseWriter, r *http.Request, kind string, id openapi_types.UUID)
@@ -3680,9 +4860,90 @@ type ServerInterface interface {
 	// RequestDecisionPage Запросить страницу ADR в базе знаний через outbox (DA-01, ТЗ 4.3)
 	// (POST /decisions/{decisionId}/request-page)
 	RequestDecisionPage(w http.ResponseWriter, r *http.Request, decisionId DecisionId)
+	// ReviewDecision Ревизия решения: ожидание против факта (DA-06)
+	// (POST /decisions/{decisionId}/review)
+	ReviewDecision(w http.ResponseWriter, r *http.Request, decisionId DecisionId)
 	// SupersedeDecision Заменить другим решением
 	// (POST /decisions/{decisionId}/supersede)
 	SupersedeDecision(w http.ResponseWriter, r *http.Request, decisionId DecisionId)
+	// GetWorklogCostBase Списания времени как база распределения затрат (DL-05)
+	// (GET /delivery/worklog-cost-base)
+	GetWorklogCostBase(w http.ResponseWriter, r *http.Request, params GetWorklogCostBaseParams)
+	// ListAllocationRules Правила аллокации затрат хаба (EC-02)
+	// (GET /economics/allocation-rules)
+	ListAllocationRules(w http.ResponseWriter, r *http.Request)
+	// SaveAllocationRule Новая версия правила аллокации (EC-02)
+	// (POST /economics/allocation-rules)
+	SaveAllocationRule(w http.ResponseWriter, r *http.Request)
+	// ListBundleRules Правила атрибуции выручки бандлов (EC-04)
+	// (GET /economics/bundle-rules)
+	ListBundleRules(w http.ResponseWriter, r *http.Request)
+	// SaveBundleRule Новая версия правила атрибуции бандла (EC-04)
+	// (POST /economics/bundle-rules)
+	SaveBundleRule(w http.ResponseWriter, r *http.Request)
+	// ListFinancialFields Настраиваемые финансовые поля (EC-08)
+	// (GET /economics/fields)
+	ListFinancialFields(w http.ResponseWriter, r *http.Request)
+	// SaveFinancialField Создать поле или новую версию его описания (EC-08, EC-11)
+	// (POST /economics/fields)
+	SaveFinancialField(w http.ResponseWriter, r *http.Request)
+	// ListImportBatches История загрузок финансовых данных (EC-07)
+	// (GET /economics/imports)
+	ListImportBatches(w http.ResponseWriter, r *http.Request, params ListImportBatchesParams)
+	// ImportFinanceFile Загрузить XLSX с финансовыми данными (EC-01, EC-07)
+	// (POST /economics/imports)
+	ImportFinanceFile(w http.ResponseWriter, r *http.Request, params ImportFinanceFileParams)
+	// GetTeamProductMatrix Матрица «команда × продукт» (EC-12)
+	// (GET /economics/matrix)
+	GetTeamProductMatrix(w http.ResponseWriter, r *http.Request, params GetTeamProductMatrixParams)
+	// ListMetrics Расчётные показатели (EC-09)
+	// (GET /economics/metrics)
+	ListMetrics(w http.ResponseWriter, r *http.Request)
+	// SaveMetric Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+	// (POST /economics/metrics)
+	SaveMetric(w http.ResponseWriter, r *http.Request)
+	// CompareMetricVersions Сравнение результатов двух версий формулы (EC-11)
+	// (GET /economics/metrics/{metricKey}/compare)
+	CompareMetricVersions(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params CompareMetricVersionsParams)
+	// ExplainMetric Объяснение значения до формулы и строк импорта (EC-10)
+	// (GET /economics/metrics/{metricKey}/explain)
+	ExplainMetric(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params ExplainMetricParams)
+	// GetMetricValue Значение показателя в срезе (EC-09)
+	// (GET /economics/metrics/{metricKey}/value)
+	GetMetricValue(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params GetMetricValueParams)
+	// ClosePeriod Закрыть период (EC-11)
+	// (POST /economics/periods/{period}/close)
+	ClosePeriod(w http.ResponseWriter, r *http.Request, period string)
+	// GetPortfolioPnL P&L портфеля (EC-03)
+	// (GET /economics/pnl/portfolio)
+	GetPortfolioPnL(w http.ResponseWriter, r *http.Request, params GetPortfolioPnLParams)
+	// GetProductPnL P&L продукта: прямой и с нагрузкой хаба (EC-03)
+	// (GET /economics/pnl/products/{productId})
+	GetProductPnL(w http.ResponseWriter, r *http.Request, productId ProductId, params GetProductPnLParams)
+	// GetBranchCosts Стоимость поддержки веток версий (EC-05)
+	// (GET /economics/products/{productId}/branches)
+	GetBranchCosts(w http.ResponseWriter, r *http.Request, productId ProductId, params GetBranchCostsParams)
+	// GetCertificationEconomics Экономика сертификации (EC-06)
+	// (GET /economics/products/{productId}/certification)
+	GetCertificationEconomics(w http.ResponseWriter, r *http.Request, productId ProductId, params GetCertificationEconomicsParams)
+	// GetFeatureEconomics Инвестиции в фичу против привязанной выручки (EC-05)
+	// (GET /economics/products/{productId}/features/{featureId})
+	GetFeatureEconomics(w http.ResponseWriter, r *http.Request, productId ProductId, featureId FeatureId, params GetFeatureEconomicsParams)
+	// ListTeams Команды — вторая ось детализации (EC-12)
+	// (GET /economics/teams)
+	ListTeams(w http.ResponseWriter, r *http.Request)
+	// CreateTeam Завести команду (EC-12)
+	// (POST /economics/teams)
+	CreateTeam(w http.ResponseWriter, r *http.Request)
+	// SetTeamShares Доли команды по продуктам за период (EC-12)
+	// (PUT /economics/teams/{teamId}/shares)
+	SetTeamShares(w http.ResponseWriter, r *http.Request, teamId TeamId)
+	// ListImportTemplates Шаблоны импорта XLSX (EC-07)
+	// (GET /economics/templates)
+	ListImportTemplates(w http.ResponseWriter, r *http.Request)
+	// SaveImportTemplate Создать или изменить шаблон импорта (EC-07)
+	// (POST /economics/templates)
+	SaveImportTemplate(w http.ResponseWriter, r *http.Request)
 	// SetEvidenceItemStatus Принять или отклонить доказательство — новая запись журнала (CM-04)
 	// (POST /evidence-items/{evidenceId}/status)
 	SetEvidenceItemStatus(w http.ResponseWriter, r *http.Request, evidenceId EvidenceId)
@@ -3713,6 +4974,9 @@ type ServerInterface interface {
 	// SetFeatureFlags Пометить фичу регуляторно обязательной (PR-04)
 	// (PUT /features/{featureId}/flags)
 	SetFeatureFlags(w http.ResponseWriter, r *http.Request, featureId FeatureId)
+	// GetFeatureForecast Прогноз даты фичи методом Монте-Карло (DL-04)
+	// (GET /features/{featureId}/forecast)
+	GetFeatureForecast(w http.ResponseWriter, r *http.Request, featureId FeatureId, params GetFeatureForecastParams)
 	// GetFeatureImpact Действующий класс влияния фичи (CM-06)
 	// (GET /features/{featureId}/impact)
 	GetFeatureImpact(w http.ResponseWriter, r *http.Request, featureId FeatureId)
@@ -3764,6 +5028,9 @@ type ServerInterface interface {
 	// DeleteLink Удалить связь
 	// (DELETE /links/{linkId})
 	DeleteLink(w http.ResponseWriter, r *http.Request, linkId openapi_types.UUID)
+	// GetWinLoss Win/loss, фичи выигранных сделок, attach rate (DA-04)
+	// (GET /marketing/win-loss)
+	GetWinLoss(w http.ResponseWriter, r *http.Request, params GetWinLossParams)
 	// GetMe Область доступа текущего субъекта
 	// (GET /me)
 	GetMe(w http.ResponseWriter, r *http.Request)
@@ -3845,6 +5112,9 @@ type ServerInterface interface {
 	// CreateRoadmapItem Создать элемент roadmap
 	// (POST /products/{productId}/roadmap/items)
 	CreateRoadmapItem(w http.ResponseWriter, r *http.Request, productId ProductId)
+	// GetLaunchCalendar Календарь запусков (RM-06)
+	// (GET /products/{productId}/roadmap/launch-calendar)
+	GetLaunchCalendar(w http.ResponseWriter, r *http.Request, productId ProductId, params GetLaunchCalendarParams)
 	// GetRoadmapNowNextLater Now/Next/Later (RM-01)
 	// (GET /products/{productId}/roadmap/now-next-later)
 	GetRoadmapNowNextLater(w http.ResponseWriter, r *http.Request, productId ProductId)
@@ -3902,6 +5172,15 @@ type ServerInterface interface {
 	// GetRoadmapItemHistory История изменений дат (RM-03)
 	// (GET /roadmap/items/{itemId}/history)
 	GetRoadmapItemHistory(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// ListScenarios Сценарии «что если» (DA-02)
+	// (GET /scenarios)
+	ListScenarios(w http.ResponseWriter, r *http.Request)
+	// SaveScenario Создать или изменить сценарий (DA-02, EC-13)
+	// (POST /scenarios)
+	SaveScenario(w http.ResponseWriter, r *http.Request)
+	// RunScenario Посчитать сценарий и влияние на обязательства и треки (DA-02)
+	// (POST /scenarios/{scenarioId}/run)
+	RunScenario(w http.ResponseWriter, r *http.Request, scenarioId ScenarioId)
 	// ListScoringModels Модели оценки (PR-01)
 	// (GET /scoring-models)
 	ListScoringModels(w http.ResponseWriter, r *http.Request)
@@ -3956,6 +5235,9 @@ type ServerInterface interface {
 	// CheckGateItem Закрыть пункт чек-листа доказательством (CM-03, CM-04)
 	// (POST /tracks/{trackId}/gates/{gateId}/check)
 	CheckGateItem(w http.ResponseWriter, r *http.Request, trackId TrackId, gateId GateId)
+	// CollectPipelineEvidence Автосбор доказательств из пайплайна безопасности (CM-09)
+	// (POST /tracks/{trackId}/gates/{gateId}/collect-evidence)
+	CollectPipelineEvidence(w http.ResponseWriter, r *http.Request, trackId TrackId, gateId GateId)
 	// FailGate Провалить гейт с причиной (CM-03)
 	// (POST /tracks/{trackId}/gates/{gateId}/fail)
 	FailGate(w http.ResponseWriter, r *http.Request, trackId TrackId, gateId GateId)
@@ -4001,6 +5283,18 @@ func (_ Unimplemented) DefineCustomStatus(w http.ResponseWriter, r *http.Request
 // VerifyEvidenceLog Проверить целостность журнала доказательств (CM-04)
 // (POST /admin/evidence/verify)
 func (_ Unimplemented) VerifyEvidenceLog(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetLicenseStatus Состояние лицензии поставки (AD-06)
+// (GET /admin/license)
+func (_ Unimplemented) GetLicenseStatus(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// InstallLicense Установить лицензионный ключ (AD-06)
+// (POST /admin/license)
+func (_ Unimplemented) InstallLicense(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4064,6 +5358,12 @@ func (_ Unimplemented) SaveTrackTemplate(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// SetBaselineComponents Состав компонентов сертифицированной версии (CM-08)
+// (PUT /baselines/{baselineId}/components)
+func (_ Unimplemented) SetBaselineComponents(w http.ResponseWriter, r *http.Request, baselineId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // AcknowledgeCommitmentAlert Подтвердить алерт
 // (POST /commitment-alerts/{alertId}/ack)
 func (_ Unimplemented) AcknowledgeCommitmentAlert(w http.ResponseWriter, r *http.Request, alertId AlertId) {
@@ -4100,6 +5400,12 @@ func (_ Unimplemented) FulfilCommitment(w http.ResponseWriter, r *http.Request, 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ReportVulnerableComponent Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+// (POST /compliance/vulnerabilities)
+func (_ Unimplemented) ReportVulnerableComponent(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListContracts Интеграционные контракты (PG-04)
 // (GET /contracts)
 func (_ Unimplemented) ListContracts(w http.ResponseWriter, r *http.Request) {
@@ -4124,6 +5430,36 @@ func (_ Unimplemented) UpdateContract(w http.ResponseWriter, r *http.Request, co
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListDashboards Дашборды конструктора (DA-05)
+// (GET /dashboards)
+func (_ Unimplemented) ListDashboards(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SaveDashboard Создать или изменить дашборд (DA-05)
+// (POST /dashboards)
+func (_ Unimplemented) SaveDashboard(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListDashboardSources Срезы данных, доступные панелям (DA-05)
+// (GET /dashboards/sources)
+func (_ Unimplemented) ListDashboardSources(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteDashboard Удалить дашборд (DA-05)
+// (DELETE /dashboards/{dashboardId})
+func (_ Unimplemented) DeleteDashboard(w http.ResponseWriter, r *http.Request, dashboardId DashboardId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDashboard Дашборд (DA-05)
+// (GET /dashboards/{dashboardId})
+func (_ Unimplemented) GetDashboard(w http.ResponseWriter, r *http.Request, dashboardId DashboardId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListDecisions Решения продукта; без productId — портфельные (DA-01)
 // (GET /decisions)
 func (_ Unimplemented) ListDecisions(w http.ResponseWriter, r *http.Request, params ListDecisionsParams) {
@@ -4133,6 +5469,12 @@ func (_ Unimplemented) ListDecisions(w http.ResponseWriter, r *http.Request, par
 // CreateDecision Зафиксировать решение (DA-01)
 // (POST /decisions)
 func (_ Unimplemented) CreateDecision(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListDecisionsDueForReview Решения, которым пора ревизию (DA-06)
+// (GET /decisions/due)
+func (_ Unimplemented) ListDecisionsDueForReview(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4172,9 +5514,171 @@ func (_ Unimplemented) RequestDecisionPage(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ReviewDecision Ревизия решения: ожидание против факта (DA-06)
+// (POST /decisions/{decisionId}/review)
+func (_ Unimplemented) ReviewDecision(w http.ResponseWriter, r *http.Request, decisionId DecisionId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // SupersedeDecision Заменить другим решением
 // (POST /decisions/{decisionId}/supersede)
 func (_ Unimplemented) SupersedeDecision(w http.ResponseWriter, r *http.Request, decisionId DecisionId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetWorklogCostBase Списания времени как база распределения затрат (DL-05)
+// (GET /delivery/worklog-cost-base)
+func (_ Unimplemented) GetWorklogCostBase(w http.ResponseWriter, r *http.Request, params GetWorklogCostBaseParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAllocationRules Правила аллокации затрат хаба (EC-02)
+// (GET /economics/allocation-rules)
+func (_ Unimplemented) ListAllocationRules(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SaveAllocationRule Новая версия правила аллокации (EC-02)
+// (POST /economics/allocation-rules)
+func (_ Unimplemented) SaveAllocationRule(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListBundleRules Правила атрибуции выручки бандлов (EC-04)
+// (GET /economics/bundle-rules)
+func (_ Unimplemented) ListBundleRules(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SaveBundleRule Новая версия правила атрибуции бандла (EC-04)
+// (POST /economics/bundle-rules)
+func (_ Unimplemented) SaveBundleRule(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListFinancialFields Настраиваемые финансовые поля (EC-08)
+// (GET /economics/fields)
+func (_ Unimplemented) ListFinancialFields(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SaveFinancialField Создать поле или новую версию его описания (EC-08, EC-11)
+// (POST /economics/fields)
+func (_ Unimplemented) SaveFinancialField(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListImportBatches История загрузок финансовых данных (EC-07)
+// (GET /economics/imports)
+func (_ Unimplemented) ListImportBatches(w http.ResponseWriter, r *http.Request, params ListImportBatchesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ImportFinanceFile Загрузить XLSX с финансовыми данными (EC-01, EC-07)
+// (POST /economics/imports)
+func (_ Unimplemented) ImportFinanceFile(w http.ResponseWriter, r *http.Request, params ImportFinanceFileParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTeamProductMatrix Матрица «команда × продукт» (EC-12)
+// (GET /economics/matrix)
+func (_ Unimplemented) GetTeamProductMatrix(w http.ResponseWriter, r *http.Request, params GetTeamProductMatrixParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListMetrics Расчётные показатели (EC-09)
+// (GET /economics/metrics)
+func (_ Unimplemented) ListMetrics(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SaveMetric Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+// (POST /economics/metrics)
+func (_ Unimplemented) SaveMetric(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CompareMetricVersions Сравнение результатов двух версий формулы (EC-11)
+// (GET /economics/metrics/{metricKey}/compare)
+func (_ Unimplemented) CompareMetricVersions(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params CompareMetricVersionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ExplainMetric Объяснение значения до формулы и строк импорта (EC-10)
+// (GET /economics/metrics/{metricKey}/explain)
+func (_ Unimplemented) ExplainMetric(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params ExplainMetricParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetMetricValue Значение показателя в срезе (EC-09)
+// (GET /economics/metrics/{metricKey}/value)
+func (_ Unimplemented) GetMetricValue(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params GetMetricValueParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ClosePeriod Закрыть период (EC-11)
+// (POST /economics/periods/{period}/close)
+func (_ Unimplemented) ClosePeriod(w http.ResponseWriter, r *http.Request, period string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPortfolioPnL P&L портфеля (EC-03)
+// (GET /economics/pnl/portfolio)
+func (_ Unimplemented) GetPortfolioPnL(w http.ResponseWriter, r *http.Request, params GetPortfolioPnLParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetProductPnL P&L продукта: прямой и с нагрузкой хаба (EC-03)
+// (GET /economics/pnl/products/{productId})
+func (_ Unimplemented) GetProductPnL(w http.ResponseWriter, r *http.Request, productId ProductId, params GetProductPnLParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetBranchCosts Стоимость поддержки веток версий (EC-05)
+// (GET /economics/products/{productId}/branches)
+func (_ Unimplemented) GetBranchCosts(w http.ResponseWriter, r *http.Request, productId ProductId, params GetBranchCostsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCertificationEconomics Экономика сертификации (EC-06)
+// (GET /economics/products/{productId}/certification)
+func (_ Unimplemented) GetCertificationEconomics(w http.ResponseWriter, r *http.Request, productId ProductId, params GetCertificationEconomicsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetFeatureEconomics Инвестиции в фичу против привязанной выручки (EC-05)
+// (GET /economics/products/{productId}/features/{featureId})
+func (_ Unimplemented) GetFeatureEconomics(w http.ResponseWriter, r *http.Request, productId ProductId, featureId FeatureId, params GetFeatureEconomicsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTeams Команды — вторая ось детализации (EC-12)
+// (GET /economics/teams)
+func (_ Unimplemented) ListTeams(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTeam Завести команду (EC-12)
+// (POST /economics/teams)
+func (_ Unimplemented) CreateTeam(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetTeamShares Доли команды по продуктам за период (EC-12)
+// (PUT /economics/teams/{teamId}/shares)
+func (_ Unimplemented) SetTeamShares(w http.ResponseWriter, r *http.Request, teamId TeamId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListImportTemplates Шаблоны импорта XLSX (EC-07)
+// (GET /economics/templates)
+func (_ Unimplemented) ListImportTemplates(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SaveImportTemplate Создать или изменить шаблон импорта (EC-07)
+// (POST /economics/templates)
+func (_ Unimplemented) SaveImportTemplate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4235,6 +5739,12 @@ func (_ Unimplemented) GetFeatureFlags(w http.ResponseWriter, r *http.Request, f
 // SetFeatureFlags Пометить фичу регуляторно обязательной (PR-04)
 // (PUT /features/{featureId}/flags)
 func (_ Unimplemented) SetFeatureFlags(w http.ResponseWriter, r *http.Request, featureId FeatureId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetFeatureForecast Прогноз даты фичи методом Монте-Карло (DL-04)
+// (GET /features/{featureId}/forecast)
+func (_ Unimplemented) GetFeatureForecast(w http.ResponseWriter, r *http.Request, featureId FeatureId, params GetFeatureForecastParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4337,6 +5847,12 @@ func (_ Unimplemented) CreateLink(w http.ResponseWriter, r *http.Request) {
 // DeleteLink Удалить связь
 // (DELETE /links/{linkId})
 func (_ Unimplemented) DeleteLink(w http.ResponseWriter, r *http.Request, linkId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetWinLoss Win/loss, фичи выигранных сделок, attach rate (DA-04)
+// (GET /marketing/win-loss)
+func (_ Unimplemented) GetWinLoss(w http.ResponseWriter, r *http.Request, params GetWinLossParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4502,6 +6018,12 @@ func (_ Unimplemented) CreateRoadmapItem(w http.ResponseWriter, r *http.Request,
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetLaunchCalendar Календарь запусков (RM-06)
+// (GET /products/{productId}/roadmap/launch-calendar)
+func (_ Unimplemented) GetLaunchCalendar(w http.ResponseWriter, r *http.Request, productId ProductId, params GetLaunchCalendarParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetRoadmapNowNextLater Now/Next/Later (RM-01)
 // (GET /products/{productId}/roadmap/now-next-later)
 func (_ Unimplemented) GetRoadmapNowNextLater(w http.ResponseWriter, r *http.Request, productId ProductId) {
@@ -4616,6 +6138,24 @@ func (_ Unimplemented) GetRoadmapItemHistory(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListScenarios Сценарии «что если» (DA-02)
+// (GET /scenarios)
+func (_ Unimplemented) ListScenarios(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SaveScenario Создать или изменить сценарий (DA-02, EC-13)
+// (POST /scenarios)
+func (_ Unimplemented) SaveScenario(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RunScenario Посчитать сценарий и влияние на обязательства и треки (DA-02)
+// (POST /scenarios/{scenarioId}/run)
+func (_ Unimplemented) RunScenario(w http.ResponseWriter, r *http.Request, scenarioId ScenarioId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListScoringModels Модели оценки (PR-01)
 // (GET /scoring-models)
 func (_ Unimplemented) ListScoringModels(w http.ResponseWriter, r *http.Request) {
@@ -4721,6 +6261,12 @@ func (_ Unimplemented) UpdateGate(w http.ResponseWriter, r *http.Request, trackI
 // CheckGateItem Закрыть пункт чек-листа доказательством (CM-03, CM-04)
 // (POST /tracks/{trackId}/gates/{gateId}/check)
 func (_ Unimplemented) CheckGateItem(w http.ResponseWriter, r *http.Request, trackId TrackId, gateId GateId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CollectPipelineEvidence Автосбор доказательств из пайплайна безопасности (CM-09)
+// (POST /tracks/{trackId}/gates/{gateId}/collect-evidence)
+func (_ Unimplemented) CollectPipelineEvidence(w http.ResponseWriter, r *http.Request, trackId TrackId, gateId GateId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4858,6 +6404,34 @@ func (siw *ServerInterfaceWrapper) VerifyEvidenceLog(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.VerifyEvidenceLog(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLicenseStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetLicenseStatus(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLicenseStatus(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// InstallLicense operation middleware
+func (siw *ServerInterfaceWrapper) InstallLicense(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.InstallLicense(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5045,6 +6619,32 @@ func (siw *ServerInterfaceWrapper) SaveTrackTemplate(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// SetBaselineComponents operation middleware
+func (siw *ServerInterfaceWrapper) SetBaselineComponents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "baselineId" -------------
+	var baselineId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "baselineId", chi.URLParam(r, "baselineId"), &baselineId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "baselineId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetBaselineComponents(w, r, baselineId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // AcknowledgeCommitmentAlert operation middleware
 func (siw *ServerInterfaceWrapper) AcknowledgeCommitmentAlert(w http.ResponseWriter, r *http.Request) {
 
@@ -5189,6 +6789,20 @@ func (siw *ServerInterfaceWrapper) FulfilCommitment(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// ReportVulnerableComponent operation middleware
+func (siw *ServerInterfaceWrapper) ReportVulnerableComponent(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReportVulnerableComponent(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListContracts operation middleware
 func (siw *ServerInterfaceWrapper) ListContracts(w http.ResponseWriter, r *http.Request) {
 
@@ -5269,6 +6883,100 @@ func (siw *ServerInterfaceWrapper) UpdateContract(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListDashboards operation middleware
+func (siw *ServerInterfaceWrapper) ListDashboards(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDashboards(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveDashboard operation middleware
+func (siw *ServerInterfaceWrapper) SaveDashboard(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveDashboard(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDashboardSources operation middleware
+func (siw *ServerInterfaceWrapper) ListDashboardSources(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDashboardSources(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDashboard operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId DashboardId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", chi.URLParam(r, "dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDashboard(w, r, dashboardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDashboard operation middleware
+func (siw *ServerInterfaceWrapper) GetDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId DashboardId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", chi.URLParam(r, "dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDashboard(w, r, dashboardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListDecisions operation middleware
 func (siw *ServerInterfaceWrapper) ListDecisions(w http.ResponseWriter, r *http.Request) {
 
@@ -5320,6 +7028,20 @@ func (siw *ServerInterfaceWrapper) CreateDecision(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateDecision(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDecisionsDueForReview operation middleware
+func (siw *ServerInterfaceWrapper) ListDecisionsDueForReview(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDecisionsDueForReview(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5494,6 +7216,32 @@ func (siw *ServerInterfaceWrapper) RequestDecisionPage(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// ReviewDecision operation middleware
+func (siw *ServerInterfaceWrapper) ReviewDecision(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "decisionId" -------------
+	var decisionId DecisionId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "decisionId", chi.URLParam(r, "decisionId"), &decisionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "decisionId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReviewDecision(w, r, decisionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // SupersedeDecision operation middleware
 func (siw *ServerInterfaceWrapper) SupersedeDecision(w http.ResponseWriter, r *http.Request) {
 
@@ -5511,6 +7259,824 @@ func (siw *ServerInterfaceWrapper) SupersedeDecision(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SupersedeDecision(w, r, decisionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorklogCostBase operation middleware
+func (siw *ServerInterfaceWrapper) GetWorklogCostBase(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetWorklogCostBaseParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "to", r.URL.Query(), &params.To, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorklogCostBase(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAllocationRules operation middleware
+func (siw *ServerInterfaceWrapper) ListAllocationRules(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAllocationRules(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveAllocationRule operation middleware
+func (siw *ServerInterfaceWrapper) SaveAllocationRule(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveAllocationRule(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListBundleRules operation middleware
+func (siw *ServerInterfaceWrapper) ListBundleRules(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListBundleRules(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveBundleRule operation middleware
+func (siw *ServerInterfaceWrapper) SaveBundleRule(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveBundleRule(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFinancialFields operation middleware
+func (siw *ServerInterfaceWrapper) ListFinancialFields(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFinancialFields(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveFinancialField operation middleware
+func (siw *ServerInterfaceWrapper) SaveFinancialField(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveFinancialField(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListImportBatches operation middleware
+func (siw *ServerInterfaceWrapper) ListImportBatches(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListImportBatchesParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListImportBatches(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImportFinanceFile operation middleware
+func (siw *ServerInterfaceWrapper) ImportFinanceFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImportFinanceFileParams
+
+	// ------------- Required query parameter "templateId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "templateId", r.URL.Query(), &params.TemplateId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "templateId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "templateId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "fileName" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "fileName", r.URL.Query(), &params.FileName, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "fileName"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fileName", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "preview" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "preview", r.URL.Query(), &params.Preview, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "preview"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "preview", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "force" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "force", r.URL.Query(), &params.Force, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "force"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "force", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportFinanceFile(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTeamProductMatrix operation middleware
+func (siw *ServerInterfaceWrapper) GetTeamProductMatrix(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetTeamProductMatrixParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTeamProductMatrix(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMetrics operation middleware
+func (siw *ServerInterfaceWrapper) ListMetrics(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMetrics(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveMetric operation middleware
+func (siw *ServerInterfaceWrapper) SaveMetric(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveMetric(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CompareMetricVersions operation middleware
+func (siw *ServerInterfaceWrapper) CompareMetricVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "metricKey" -------------
+	var metricKey MetricKey
+
+	err = runtime.BindStyledParameterWithOptions("simple", "metricKey", chi.URLParam(r, "metricKey"), &metricKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "metricKey", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CompareMetricVersionsParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "productId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "productId", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "productId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "a" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "a", r.URL.Query(), &params.A, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "a"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "a", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "b" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "b", r.URL.Query(), &params.B, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "b"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "b", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CompareMetricVersions(w, r, metricKey, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExplainMetric operation middleware
+func (siw *ServerInterfaceWrapper) ExplainMetric(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "metricKey" -------------
+	var metricKey MetricKey
+
+	err = runtime.BindStyledParameterWithOptions("simple", "metricKey", chi.URLParam(r, "metricKey"), &metricKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "metricKey", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ExplainMetricParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "productId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "productId", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "productId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExplainMetric(w, r, metricKey, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMetricValue operation middleware
+func (siw *ServerInterfaceWrapper) GetMetricValue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "metricKey" -------------
+	var metricKey MetricKey
+
+	err = runtime.BindStyledParameterWithOptions("simple", "metricKey", chi.URLParam(r, "metricKey"), &metricKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "metricKey", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMetricValueParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "productId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "productId", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "productId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMetricValue(w, r, metricKey, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ClosePeriod operation middleware
+func (siw *ServerInterfaceWrapper) ClosePeriod(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "period" -------------
+	var period string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "period", chi.URLParam(r, "period"), &period, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ClosePeriod(w, r, period)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPortfolioPnL operation middleware
+func (siw *ServerInterfaceWrapper) GetPortfolioPnL(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPortfolioPnLParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPortfolioPnL(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProductPnL operation middleware
+func (siw *ServerInterfaceWrapper) GetProductPnL(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetProductPnLParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProductPnL(w, r, productId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBranchCosts operation middleware
+func (siw *ServerInterfaceWrapper) GetBranchCosts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetBranchCostsParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBranchCosts(w, r, productId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCertificationEconomics operation middleware
+func (siw *ServerInterfaceWrapper) GetCertificationEconomics(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCertificationEconomicsParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCertificationEconomics(w, r, productId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFeatureEconomics operation middleware
+func (siw *ServerInterfaceWrapper) GetFeatureEconomics(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "featureId" -------------
+	var featureId FeatureId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "featureId", chi.URLParam(r, "featureId"), &featureId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "featureId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetFeatureEconomicsParams
+
+	// ------------- Optional query parameter "period" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "period", r.URL.Query(), &params.Period, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "period"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFeatureEconomics(w, r, productId, featureId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTeams operation middleware
+func (siw *ServerInterfaceWrapper) ListTeams(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTeams(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTeam operation middleware
+func (siw *ServerInterfaceWrapper) CreateTeam(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTeam(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetTeamShares operation middleware
+func (siw *ServerInterfaceWrapper) SetTeamShares(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "teamId" -------------
+	var teamId TeamId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "teamId", chi.URLParam(r, "teamId"), &teamId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "teamId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetTeamShares(w, r, teamId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListImportTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListImportTemplates(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListImportTemplates(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveImportTemplate operation middleware
+func (siw *ServerInterfaceWrapper) SaveImportTemplate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveImportTemplate(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5771,6 +8337,61 @@ func (siw *ServerInterfaceWrapper) SetFeatureFlags(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SetFeatureFlags(w, r, featureId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFeatureForecast operation middleware
+func (siw *ServerInterfaceWrapper) GetFeatureForecast(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "featureId" -------------
+	var featureId FeatureId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "featureId", chi.URLParam(r, "featureId"), &featureId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "featureId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetFeatureForecastParams
+
+	// ------------- Optional query parameter "samples" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "samples", r.URL.Query(), &params.Samples, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "samples"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "samples", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "seed" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "seed", r.URL.Query(), &params.Seed, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "seed"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "seed", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFeatureForecast(w, r, featureId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6177,6 +8798,65 @@ func (siw *ServerInterfaceWrapper) DeleteLink(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteLink(w, r, linkId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWinLoss operation middleware
+func (siw *ServerInterfaceWrapper) GetWinLoss(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetWinLossParams
+
+	// ------------- Optional query parameter "productKey" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "productKey", r.URL.Query(), &params.ProductKey, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "productKey"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productKey", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "to", r.URL.Query(), &params.To, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWinLoss(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7023,6 +9703,61 @@ func (siw *ServerInterfaceWrapper) CreateRoadmapItem(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// GetLaunchCalendar operation middleware
+func (siw *ServerInterfaceWrapper) GetLaunchCalendar(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetLaunchCalendarParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "to", r.URL.Query(), &params.To, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLaunchCalendar(w, r, productId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetRoadmapNowNextLater operation middleware
 func (siw *ServerInterfaceWrapper) GetRoadmapNowNextLater(w http.ResponseWriter, r *http.Request) {
 
@@ -7546,6 +10281,60 @@ func (siw *ServerInterfaceWrapper) GetRoadmapItemHistory(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
+// ListScenarios operation middleware
+func (siw *ServerInterfaceWrapper) ListScenarios(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListScenarios(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveScenario operation middleware
+func (siw *ServerInterfaceWrapper) SaveScenario(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveScenario(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RunScenario operation middleware
+func (siw *ServerInterfaceWrapper) RunScenario(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "scenarioId" -------------
+	var scenarioId ScenarioId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "scenarioId", chi.URLParam(r, "scenarioId"), &scenarioId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scenarioId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RunScenario(w, r, scenarioId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListScoringModels operation middleware
 func (siw *ServerInterfaceWrapper) ListScoringModels(w http.ResponseWriter, r *http.Request) {
 
@@ -8039,6 +10828,41 @@ func (siw *ServerInterfaceWrapper) CheckGateItem(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CheckGateItem(w, r, trackId, gateId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CollectPipelineEvidence operation middleware
+func (siw *ServerInterfaceWrapper) CollectPipelineEvidence(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "trackId" -------------
+	var trackId TrackId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "trackId", chi.URLParam(r, "trackId"), &trackId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "trackId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "gateId" -------------
+	var gateId GateId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "gateId", chi.URLParam(r, "gateId"), &gateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "gateId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CollectPipelineEvidence(w, r, trackId, gateId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8615,6 +11439,138 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/decisions/{decisionId}/request-page", wrapper.RequestDecisionPage)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/fields", wrapper.ListFinancialFields)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/fields", wrapper.SaveFinancialField)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/metrics", wrapper.ListMetrics)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/metrics", wrapper.SaveMetric)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/metrics/{metricKey}/value", wrapper.GetMetricValue)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/metrics/{metricKey}/explain", wrapper.ExplainMetric)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/metrics/{metricKey}/compare", wrapper.CompareMetricVersions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/templates", wrapper.ListImportTemplates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/templates", wrapper.SaveImportTemplate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/imports", wrapper.ListImportBatches)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/imports", wrapper.ImportFinanceFile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/allocation-rules", wrapper.ListAllocationRules)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/allocation-rules", wrapper.SaveAllocationRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/bundle-rules", wrapper.ListBundleRules)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/bundle-rules", wrapper.SaveBundleRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/teams", wrapper.ListTeams)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/teams", wrapper.CreateTeam)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/economics/teams/{teamId}/shares", wrapper.SetTeamShares)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/pnl/portfolio", wrapper.GetPortfolioPnL)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/pnl/products/{productId}", wrapper.GetProductPnL)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/matrix", wrapper.GetTeamProductMatrix)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/products/{productId}/certification", wrapper.GetCertificationEconomics)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/products/{productId}/branches", wrapper.GetBranchCosts)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/economics/products/{productId}/features/{featureId}", wrapper.GetFeatureEconomics)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/periods/{period}/close", wrapper.ClosePeriod)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/scenarios", wrapper.ListScenarios)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/scenarios", wrapper.SaveScenario)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/scenarios/{scenarioId}/run", wrapper.RunScenario)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/marketing/win-loss", wrapper.GetWinLoss)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/compliance/vulnerabilities", wrapper.ReportVulnerableComponent)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/decisions/due", wrapper.ListDecisionsDueForReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/decisions/{decisionId}/review", wrapper.ReviewDecision)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/products/{productId}/roadmap/launch-calendar", wrapper.GetLaunchCalendar)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/features/{featureId}/forecast", wrapper.GetFeatureForecast)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/delivery/worklog-cost-base", wrapper.GetWorklogCostBase)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/dashboards", wrapper.ListDashboards)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/dashboards", wrapper.SaveDashboard)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/dashboards/sources", wrapper.ListDashboardSources)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/dashboards/{dashboardId}", wrapper.DeleteDashboard)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/dashboards/{dashboardId}", wrapper.GetDashboard)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/license", wrapper.GetLicenseStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/license", wrapper.InstallLicense)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/tracks/{trackId}/gates/{gateId}/collect-evidence", wrapper.CollectPipelineEvidence)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/baselines/{baselineId}/components", wrapper.SetBaselineComponents)
+	})
 
 	return r
 }
@@ -8842,6 +11798,83 @@ type VerifyEvidenceLogdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response VerifyEvidenceLogdefaultApplicationProblemPlusJSONResponse) VisitVerifyEvidenceLogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetLicenseStatusRequestObject struct {
+}
+
+type GetLicenseStatusResponseObject interface {
+	VisitGetLicenseStatusResponse(w http.ResponseWriter) error
+}
+
+type GetLicenseStatus200JSONResponse LicenseStatus
+
+func (response GetLicenseStatus200JSONResponse) VisitGetLicenseStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetLicenseStatusdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetLicenseStatusdefaultApplicationProblemPlusJSONResponse) VisitGetLicenseStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallLicenseRequestObject struct {
+	Body *InstallLicenseJSONRequestBody
+}
+
+type InstallLicenseResponseObject interface {
+	VisitInstallLicenseResponse(w http.ResponseWriter) error
+}
+
+type InstallLicense200JSONResponse LicenseStatus
+
+func (response InstallLicense200JSONResponse) VisitInstallLicenseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallLicensedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response InstallLicensedefaultApplicationProblemPlusJSONResponse) VisitInstallLicenseResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -9234,6 +12267,46 @@ func (response SaveTrackTemplatedefaultApplicationProblemPlusJSONResponse) Visit
 	return err
 }
 
+type SetBaselineComponentsRequestObject struct {
+	BaselineId openapi_types.UUID `json:"baselineId"`
+	Body       *SetBaselineComponentsJSONRequestBody
+}
+
+type SetBaselineComponentsResponseObject interface {
+	VisitSetBaselineComponentsResponse(w http.ResponseWriter) error
+}
+
+type SetBaselineComponents200JSONResponse CertifiedBaseline
+
+func (response SetBaselineComponents200JSONResponse) VisitSetBaselineComponentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetBaselineComponentsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetBaselineComponentsdefaultApplicationProblemPlusJSONResponse) VisitSetBaselineComponentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type AcknowledgeCommitmentAlertRequestObject struct {
 	AlertId AlertId `json:"alertId"`
 }
@@ -9469,6 +12542,45 @@ func (response FulfilCommitmentdefaultApplicationProblemPlusJSONResponse) VisitF
 	return err
 }
 
+type ReportVulnerableComponentRequestObject struct {
+	Body *ReportVulnerableComponentJSONRequestBody
+}
+
+type ReportVulnerableComponentResponseObject interface {
+	VisitReportVulnerableComponentResponse(w http.ResponseWriter) error
+}
+
+type ReportVulnerableComponent200JSONResponse VulnerabilityImpact
+
+func (response ReportVulnerableComponent200JSONResponse) VisitReportVulnerableComponentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReportVulnerableComponentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ReportVulnerableComponentdefaultApplicationProblemPlusJSONResponse) VisitReportVulnerableComponentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListContractsRequestObject struct {
 }
 
@@ -9639,6 +12751,193 @@ func (response UpdateContractdefaultApplicationProblemPlusJSONResponse) VisitUpd
 	return err
 }
 
+type ListDashboardsRequestObject struct {
+}
+
+type ListDashboardsResponseObject interface {
+	VisitListDashboardsResponse(w http.ResponseWriter) error
+}
+
+type ListDashboards200JSONResponse []Dashboard
+
+func (response ListDashboards200JSONResponse) VisitListDashboardsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDashboardsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListDashboardsdefaultApplicationProblemPlusJSONResponse) VisitListDashboardsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveDashboardRequestObject struct {
+	Body *SaveDashboardJSONRequestBody
+}
+
+type SaveDashboardResponseObject interface {
+	VisitSaveDashboardResponse(w http.ResponseWriter) error
+}
+
+type SaveDashboard200JSONResponse Dashboard
+
+func (response SaveDashboard200JSONResponse) VisitSaveDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveDashboarddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SaveDashboarddefaultApplicationProblemPlusJSONResponse) VisitSaveDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDashboardSourcesRequestObject struct {
+}
+
+type ListDashboardSourcesResponseObject interface {
+	VisitListDashboardSourcesResponse(w http.ResponseWriter) error
+}
+
+type ListDashboardSources200JSONResponse []string
+
+func (response ListDashboardSources200JSONResponse) VisitListDashboardSourcesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDashboardSourcesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListDashboardSourcesdefaultApplicationProblemPlusJSONResponse) VisitListDashboardSourcesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardRequestObject struct {
+	DashboardId DashboardId `json:"dashboardId"`
+}
+
+type DeleteDashboardResponseObject interface {
+	VisitDeleteDashboardResponse(w http.ResponseWriter) error
+}
+
+type DeleteDashboard204Response struct {
+}
+
+func (response DeleteDashboard204Response) VisitDeleteDashboardResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteDashboarddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteDashboarddefaultApplicationProblemPlusJSONResponse) VisitDeleteDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardRequestObject struct {
+	DashboardId DashboardId `json:"dashboardId"`
+}
+
+type GetDashboardResponseObject interface {
+	VisitGetDashboardResponse(w http.ResponseWriter) error
+}
+
+type GetDashboard200JSONResponse Dashboard
+
+func (response GetDashboard200JSONResponse) VisitGetDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboarddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetDashboarddefaultApplicationProblemPlusJSONResponse) VisitGetDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListDecisionsRequestObject struct {
 	Params ListDecisionsParams
 }
@@ -9706,6 +13005,44 @@ type CreateDecisiondefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response CreateDecisiondefaultApplicationProblemPlusJSONResponse) VisitCreateDecisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDecisionsDueForReviewRequestObject struct {
+}
+
+type ListDecisionsDueForReviewResponseObject interface {
+	VisitListDecisionsDueForReviewResponse(w http.ResponseWriter) error
+}
+
+type ListDecisionsDueForReview200JSONResponse []Decision
+
+func (response ListDecisionsDueForReview200JSONResponse) VisitListDecisionsDueForReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDecisionsDueForReviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListDecisionsDueForReviewdefaultApplicationProblemPlusJSONResponse) VisitListDecisionsDueForReviewResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -9948,6 +13285,46 @@ func (response RequestDecisionPagedefaultApplicationProblemPlusJSONResponse) Vis
 	return err
 }
 
+type ReviewDecisionRequestObject struct {
+	DecisionId DecisionId `json:"decisionId"`
+	Body       *ReviewDecisionJSONRequestBody
+}
+
+type ReviewDecisionResponseObject interface {
+	VisitReviewDecisionResponse(w http.ResponseWriter) error
+}
+
+type ReviewDecision200JSONResponse Decision
+
+func (response ReviewDecision200JSONResponse) VisitReviewDecisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewDecisiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ReviewDecisiondefaultApplicationProblemPlusJSONResponse) VisitReviewDecisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type SupersedeDecisionRequestObject struct {
 	DecisionId DecisionId `json:"decisionId"`
 	Body       *SupersedeDecisionJSONRequestBody
@@ -9977,6 +13354,1012 @@ type SupersedeDecisiondefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response SupersedeDecisiondefaultApplicationProblemPlusJSONResponse) VisitSupersedeDecisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorklogCostBaseRequestObject struct {
+	Params GetWorklogCostBaseParams
+}
+
+type GetWorklogCostBaseResponseObject interface {
+	VisitGetWorklogCostBaseResponse(w http.ResponseWriter) error
+}
+
+type GetWorklogCostBase200JSONResponse WorklogReport
+
+func (response GetWorklogCostBase200JSONResponse) VisitGetWorklogCostBaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorklogCostBasedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetWorklogCostBasedefaultApplicationProblemPlusJSONResponse) VisitGetWorklogCostBaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAllocationRulesRequestObject struct {
+}
+
+type ListAllocationRulesResponseObject interface {
+	VisitListAllocationRulesResponse(w http.ResponseWriter) error
+}
+
+type ListAllocationRules200JSONResponse []AllocationRule
+
+func (response ListAllocationRules200JSONResponse) VisitListAllocationRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAllocationRulesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAllocationRulesdefaultApplicationProblemPlusJSONResponse) VisitListAllocationRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveAllocationRuleRequestObject struct {
+	Body *SaveAllocationRuleJSONRequestBody
+}
+
+type SaveAllocationRuleResponseObject interface {
+	VisitSaveAllocationRuleResponse(w http.ResponseWriter) error
+}
+
+type SaveAllocationRule201JSONResponse AllocationRule
+
+func (response SaveAllocationRule201JSONResponse) VisitSaveAllocationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveAllocationRuledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SaveAllocationRuledefaultApplicationProblemPlusJSONResponse) VisitSaveAllocationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBundleRulesRequestObject struct {
+}
+
+type ListBundleRulesResponseObject interface {
+	VisitListBundleRulesResponse(w http.ResponseWriter) error
+}
+
+type ListBundleRules200JSONResponse []BundleRule
+
+func (response ListBundleRules200JSONResponse) VisitListBundleRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBundleRulesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListBundleRulesdefaultApplicationProblemPlusJSONResponse) VisitListBundleRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveBundleRuleRequestObject struct {
+	Body *SaveBundleRuleJSONRequestBody
+}
+
+type SaveBundleRuleResponseObject interface {
+	VisitSaveBundleRuleResponse(w http.ResponseWriter) error
+}
+
+type SaveBundleRule201JSONResponse BundleRule
+
+func (response SaveBundleRule201JSONResponse) VisitSaveBundleRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveBundleRuledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SaveBundleRuledefaultApplicationProblemPlusJSONResponse) VisitSaveBundleRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFinancialFieldsRequestObject struct {
+}
+
+type ListFinancialFieldsResponseObject interface {
+	VisitListFinancialFieldsResponse(w http.ResponseWriter) error
+}
+
+type ListFinancialFields200JSONResponse []FinancialField
+
+func (response ListFinancialFields200JSONResponse) VisitListFinancialFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFinancialFieldsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListFinancialFieldsdefaultApplicationProblemPlusJSONResponse) VisitListFinancialFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveFinancialFieldRequestObject struct {
+	Body *SaveFinancialFieldJSONRequestBody
+}
+
+type SaveFinancialFieldResponseObject interface {
+	VisitSaveFinancialFieldResponse(w http.ResponseWriter) error
+}
+
+type SaveFinancialField200JSONResponse FinancialField
+
+func (response SaveFinancialField200JSONResponse) VisitSaveFinancialFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveFinancialFielddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SaveFinancialFielddefaultApplicationProblemPlusJSONResponse) VisitSaveFinancialFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListImportBatchesRequestObject struct {
+	Params ListImportBatchesParams
+}
+
+type ListImportBatchesResponseObject interface {
+	VisitListImportBatchesResponse(w http.ResponseWriter) error
+}
+
+type ListImportBatches200JSONResponse []ImportBatch
+
+func (response ListImportBatches200JSONResponse) VisitListImportBatchesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListImportBatchesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListImportBatchesdefaultApplicationProblemPlusJSONResponse) VisitListImportBatchesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportFinanceFileRequestObject struct {
+	Params ImportFinanceFileParams
+	Body   io.Reader
+}
+
+type ImportFinanceFileResponseObject interface {
+	VisitImportFinanceFileResponse(w http.ResponseWriter) error
+}
+
+type ImportFinanceFile200JSONResponse FinanceImportResult
+
+func (response ImportFinanceFile200JSONResponse) VisitImportFinanceFileResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportFinanceFiledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ImportFinanceFiledefaultApplicationProblemPlusJSONResponse) VisitImportFinanceFileResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTeamProductMatrixRequestObject struct {
+	Params GetTeamProductMatrixParams
+}
+
+type GetTeamProductMatrixResponseObject interface {
+	VisitGetTeamProductMatrixResponse(w http.ResponseWriter) error
+}
+
+type GetTeamProductMatrix200JSONResponse TeamProductMatrix
+
+func (response GetTeamProductMatrix200JSONResponse) VisitGetTeamProductMatrixResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTeamProductMatrixdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetTeamProductMatrixdefaultApplicationProblemPlusJSONResponse) VisitGetTeamProductMatrixResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMetricsRequestObject struct {
+}
+
+type ListMetricsResponseObject interface {
+	VisitListMetricsResponse(w http.ResponseWriter) error
+}
+
+type ListMetrics200JSONResponse []Metric
+
+func (response ListMetrics200JSONResponse) VisitListMetricsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMetricsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListMetricsdefaultApplicationProblemPlusJSONResponse) VisitListMetricsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveMetricRequestObject struct {
+	Body *SaveMetricJSONRequestBody
+}
+
+type SaveMetricResponseObject interface {
+	VisitSaveMetricResponse(w http.ResponseWriter) error
+}
+
+type SaveMetric200JSONResponse Metric
+
+func (response SaveMetric200JSONResponse) VisitSaveMetricResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveMetricdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SaveMetricdefaultApplicationProblemPlusJSONResponse) VisitSaveMetricResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CompareMetricVersionsRequestObject struct {
+	MetricKey MetricKey `json:"metricKey"`
+	Params    CompareMetricVersionsParams
+}
+
+type CompareMetricVersionsResponseObject interface {
+	VisitCompareMetricVersionsResponse(w http.ResponseWriter) error
+}
+
+type CompareMetricVersions200JSONResponse MetricComparison
+
+func (response CompareMetricVersions200JSONResponse) VisitCompareMetricVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CompareMetricVersionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CompareMetricVersionsdefaultApplicationProblemPlusJSONResponse) VisitCompareMetricVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExplainMetricRequestObject struct {
+	MetricKey MetricKey `json:"metricKey"`
+	Params    ExplainMetricParams
+}
+
+type ExplainMetricResponseObject interface {
+	VisitExplainMetricResponse(w http.ResponseWriter) error
+}
+
+type ExplainMetric200JSONResponse Explanation
+
+func (response ExplainMetric200JSONResponse) VisitExplainMetricResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExplainMetricdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ExplainMetricdefaultApplicationProblemPlusJSONResponse) VisitExplainMetricResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMetricValueRequestObject struct {
+	MetricKey MetricKey `json:"metricKey"`
+	Params    GetMetricValueParams
+}
+
+type GetMetricValueResponseObject interface {
+	VisitGetMetricValueResponse(w http.ResponseWriter) error
+}
+
+type GetMetricValue200JSONResponse MetricValue
+
+func (response GetMetricValue200JSONResponse) VisitGetMetricValueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMetricValuedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetMetricValuedefaultApplicationProblemPlusJSONResponse) VisitGetMetricValueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ClosePeriodRequestObject struct {
+	Period string `json:"period"`
+}
+
+type ClosePeriodResponseObject interface {
+	VisitClosePeriodResponse(w http.ResponseWriter) error
+}
+
+type ClosePeriod204Response struct {
+}
+
+func (response ClosePeriod204Response) VisitClosePeriodResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ClosePerioddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ClosePerioddefaultApplicationProblemPlusJSONResponse) VisitClosePeriodResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPortfolioPnLRequestObject struct {
+	Params GetPortfolioPnLParams
+}
+
+type GetPortfolioPnLResponseObject interface {
+	VisitGetPortfolioPnLResponse(w http.ResponseWriter) error
+}
+
+type GetPortfolioPnL200JSONResponse PortfolioPnL
+
+func (response GetPortfolioPnL200JSONResponse) VisitGetPortfolioPnLResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPortfolioPnLdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetPortfolioPnLdefaultApplicationProblemPlusJSONResponse) VisitGetPortfolioPnLResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetProductPnLRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Params    GetProductPnLParams
+}
+
+type GetProductPnLResponseObject interface {
+	VisitGetProductPnLResponse(w http.ResponseWriter) error
+}
+
+type GetProductPnL200JSONResponse PnL
+
+func (response GetProductPnL200JSONResponse) VisitGetProductPnLResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetProductPnLdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetProductPnLdefaultApplicationProblemPlusJSONResponse) VisitGetProductPnLResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBranchCostsRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Params    GetBranchCostsParams
+}
+
+type GetBranchCostsResponseObject interface {
+	VisitGetBranchCostsResponse(w http.ResponseWriter) error
+}
+
+type GetBranchCosts200JSONResponse []BranchCost
+
+func (response GetBranchCosts200JSONResponse) VisitGetBranchCostsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBranchCostsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetBranchCostsdefaultApplicationProblemPlusJSONResponse) VisitGetBranchCostsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCertificationEconomicsRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Params    GetCertificationEconomicsParams
+}
+
+type GetCertificationEconomicsResponseObject interface {
+	VisitGetCertificationEconomicsResponse(w http.ResponseWriter) error
+}
+
+type GetCertificationEconomics200JSONResponse CertificationEconomics
+
+func (response GetCertificationEconomics200JSONResponse) VisitGetCertificationEconomicsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCertificationEconomicsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetCertificationEconomicsdefaultApplicationProblemPlusJSONResponse) VisitGetCertificationEconomicsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFeatureEconomicsRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	FeatureId FeatureId `json:"featureId"`
+	Params    GetFeatureEconomicsParams
+}
+
+type GetFeatureEconomicsResponseObject interface {
+	VisitGetFeatureEconomicsResponse(w http.ResponseWriter) error
+}
+
+type GetFeatureEconomics200JSONResponse FeatureEconomics
+
+func (response GetFeatureEconomics200JSONResponse) VisitGetFeatureEconomicsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFeatureEconomicsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetFeatureEconomicsdefaultApplicationProblemPlusJSONResponse) VisitGetFeatureEconomicsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTeamsRequestObject struct {
+}
+
+type ListTeamsResponseObject interface {
+	VisitListTeamsResponse(w http.ResponseWriter) error
+}
+
+type ListTeams200JSONResponse []Team
+
+func (response ListTeams200JSONResponse) VisitListTeamsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTeamsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListTeamsdefaultApplicationProblemPlusJSONResponse) VisitListTeamsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTeamRequestObject struct {
+	Body *CreateTeamJSONRequestBody
+}
+
+type CreateTeamResponseObject interface {
+	VisitCreateTeamResponse(w http.ResponseWriter) error
+}
+
+type CreateTeam201JSONResponse Team
+
+func (response CreateTeam201JSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTeamdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateTeamdefaultApplicationProblemPlusJSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetTeamSharesRequestObject struct {
+	TeamId TeamId `json:"teamId"`
+	Body   *SetTeamSharesJSONRequestBody
+}
+
+type SetTeamSharesResponseObject interface {
+	VisitSetTeamSharesResponse(w http.ResponseWriter) error
+}
+
+type SetTeamShares204Response struct {
+}
+
+func (response SetTeamShares204Response) VisitSetTeamSharesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SetTeamSharesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetTeamSharesdefaultApplicationProblemPlusJSONResponse) VisitSetTeamSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListImportTemplatesRequestObject struct {
+}
+
+type ListImportTemplatesResponseObject interface {
+	VisitListImportTemplatesResponse(w http.ResponseWriter) error
+}
+
+type ListImportTemplates200JSONResponse []ImportTemplate
+
+func (response ListImportTemplates200JSONResponse) VisitListImportTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListImportTemplatesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListImportTemplatesdefaultApplicationProblemPlusJSONResponse) VisitListImportTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveImportTemplateRequestObject struct {
+	Body *SaveImportTemplateJSONRequestBody
+}
+
+type SaveImportTemplateResponseObject interface {
+	VisitSaveImportTemplateResponse(w http.ResponseWriter) error
+}
+
+type SaveImportTemplate200JSONResponse ImportTemplate
+
+func (response SaveImportTemplate200JSONResponse) VisitSaveImportTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveImportTemplatedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SaveImportTemplatedefaultApplicationProblemPlusJSONResponse) VisitSaveImportTemplateResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -10372,6 +14755,46 @@ type SetFeatureFlagsdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response SetFeatureFlagsdefaultApplicationProblemPlusJSONResponse) VisitSetFeatureFlagsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFeatureForecastRequestObject struct {
+	FeatureId FeatureId `json:"featureId"`
+	Params    GetFeatureForecastParams
+}
+
+type GetFeatureForecastResponseObject interface {
+	VisitGetFeatureForecastResponse(w http.ResponseWriter) error
+}
+
+type GetFeatureForecast200JSONResponse Forecast
+
+func (response GetFeatureForecast200JSONResponse) VisitGetFeatureForecastResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFeatureForecastdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetFeatureForecastdefaultApplicationProblemPlusJSONResponse) VisitGetFeatureForecastResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -11048,6 +15471,45 @@ type DeleteLinkdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response DeleteLinkdefaultApplicationProblemPlusJSONResponse) VisitDeleteLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWinLossRequestObject struct {
+	Params GetWinLossParams
+}
+
+type GetWinLossResponseObject interface {
+	VisitGetWinLossResponse(w http.ResponseWriter) error
+}
+
+type GetWinLoss200JSONResponse WinLossReport
+
+func (response GetWinLoss200JSONResponse) VisitGetWinLossResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWinLossdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetWinLossdefaultApplicationProblemPlusJSONResponse) VisitGetWinLossResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -12133,6 +16595,46 @@ func (response CreateRoadmapItemdefaultApplicationProblemPlusJSONResponse) Visit
 	return err
 }
 
+type GetLaunchCalendarRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Params    GetLaunchCalendarParams
+}
+
+type GetLaunchCalendarResponseObject interface {
+	VisitGetLaunchCalendarResponse(w http.ResponseWriter) error
+}
+
+type GetLaunchCalendar200JSONResponse LaunchCalendar
+
+func (response GetLaunchCalendar200JSONResponse) VisitGetLaunchCalendarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetLaunchCalendardefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetLaunchCalendardefaultApplicationProblemPlusJSONResponse) VisitGetLaunchCalendarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetRoadmapNowNextLaterRequestObject struct {
 	ProductId ProductId `json:"productId"`
 }
@@ -12884,6 +17386,123 @@ func (response GetRoadmapItemHistorydefaultApplicationProblemPlusJSONResponse) V
 	return err
 }
 
+type ListScenariosRequestObject struct {
+}
+
+type ListScenariosResponseObject interface {
+	VisitListScenariosResponse(w http.ResponseWriter) error
+}
+
+type ListScenarios200JSONResponse []Scenario
+
+func (response ListScenarios200JSONResponse) VisitListScenariosResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListScenariosdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListScenariosdefaultApplicationProblemPlusJSONResponse) VisitListScenariosResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveScenarioRequestObject struct {
+	Body *SaveScenarioJSONRequestBody
+}
+
+type SaveScenarioResponseObject interface {
+	VisitSaveScenarioResponse(w http.ResponseWriter) error
+}
+
+type SaveScenario200JSONResponse Scenario
+
+func (response SaveScenario200JSONResponse) VisitSaveScenarioResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveScenariodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SaveScenariodefaultApplicationProblemPlusJSONResponse) VisitSaveScenarioResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunScenarioRequestObject struct {
+	ScenarioId ScenarioId `json:"scenarioId"`
+	Body       *RunScenarioJSONRequestBody
+}
+
+type RunScenarioResponseObject interface {
+	VisitRunScenarioResponse(w http.ResponseWriter) error
+}
+
+type RunScenario200JSONResponse ScenarioResult
+
+func (response RunScenario200JSONResponse) VisitRunScenarioResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunScenariodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RunScenariodefaultApplicationProblemPlusJSONResponse) VisitRunScenarioResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListScoringModelsRequestObject struct {
 }
 
@@ -13593,6 +18212,47 @@ func (response CheckGateItemdefaultApplicationProblemPlusJSONResponse) VisitChec
 	return err
 }
 
+type CollectPipelineEvidenceRequestObject struct {
+	TrackId TrackId `json:"trackId"`
+	GateId  GateId  `json:"gateId"`
+	Body    *CollectPipelineEvidenceJSONRequestBody
+}
+
+type CollectPipelineEvidenceResponseObject interface {
+	VisitCollectPipelineEvidenceResponse(w http.ResponseWriter) error
+}
+
+type CollectPipelineEvidence200JSONResponse PipelineCollectResult
+
+func (response CollectPipelineEvidence200JSONResponse) VisitCollectPipelineEvidenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CollectPipelineEvidencedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CollectPipelineEvidencedefaultApplicationProblemPlusJSONResponse) VisitCollectPipelineEvidenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type FailGateRequestObject struct {
 	TrackId TrackId `json:"trackId"`
 	GateId  GateId  `json:"gateId"`
@@ -13694,6 +18354,12 @@ type StrictServerInterface interface {
 	// VerifyEvidenceLog Проверить целостность журнала доказательств (CM-04)
 	// (POST /admin/evidence/verify)
 	VerifyEvidenceLog(ctx context.Context, request VerifyEvidenceLogRequestObject) (VerifyEvidenceLogResponseObject, error)
+	// GetLicenseStatus Состояние лицензии поставки (AD-06)
+	// (GET /admin/license)
+	GetLicenseStatus(ctx context.Context, request GetLicenseStatusRequestObject) (GetLicenseStatusResponseObject, error)
+	// InstallLicense Установить лицензионный ключ (AD-06)
+	// (POST /admin/license)
+	InstallLicense(ctx context.Context, request InstallLicenseRequestObject) (InstallLicenseResponseObject, error)
 	// ListRequirementSets Каталог наборов требований (CM-01)
 	// (GET /admin/requirement-sets)
 	ListRequirementSets(ctx context.Context, request ListRequirementSetsRequestObject) (ListRequirementSetsResponseObject, error)
@@ -13724,6 +18390,9 @@ type StrictServerInterface interface {
 	// SaveTrackTemplate Создать или изменить шаблон трека (CM-02)
 	// (POST /admin/track-templates)
 	SaveTrackTemplate(ctx context.Context, request SaveTrackTemplateRequestObject) (SaveTrackTemplateResponseObject, error)
+	// SetBaselineComponents Состав компонентов сертифицированной версии (CM-08)
+	// (PUT /baselines/{baselineId}/components)
+	SetBaselineComponents(ctx context.Context, request SetBaselineComponentsRequestObject) (SetBaselineComponentsResponseObject, error)
 	// AcknowledgeCommitmentAlert Подтвердить алерт
 	// (POST /commitment-alerts/{alertId}/ack)
 	AcknowledgeCommitmentAlert(ctx context.Context, request AcknowledgeCommitmentAlertRequestObject) (AcknowledgeCommitmentAlertResponseObject, error)
@@ -13742,6 +18411,9 @@ type StrictServerInterface interface {
 	// FulfilCommitment Отметить исполненным
 	// (POST /commitments/{commitmentId}/fulfil)
 	FulfilCommitment(ctx context.Context, request FulfilCommitmentRequestObject) (FulfilCommitmentResponseObject, error)
+	// ReportVulnerableComponent Уязвимый компонент — затронутые версии и запуск сроков (CM-08)
+	// (POST /compliance/vulnerabilities)
+	ReportVulnerableComponent(ctx context.Context, request ReportVulnerableComponentRequestObject) (ReportVulnerableComponentResponseObject, error)
 	// ListContracts Интеграционные контракты (PG-04)
 	// (GET /contracts)
 	ListContracts(ctx context.Context, request ListContractsRequestObject) (ListContractsResponseObject, error)
@@ -13754,12 +18426,30 @@ type StrictServerInterface interface {
 	// UpdateContract Изменить контракт
 	// (PUT /contracts/{contractId})
 	UpdateContract(ctx context.Context, request UpdateContractRequestObject) (UpdateContractResponseObject, error)
+	// ListDashboards Дашборды конструктора (DA-05)
+	// (GET /dashboards)
+	ListDashboards(ctx context.Context, request ListDashboardsRequestObject) (ListDashboardsResponseObject, error)
+	// SaveDashboard Создать или изменить дашборд (DA-05)
+	// (POST /dashboards)
+	SaveDashboard(ctx context.Context, request SaveDashboardRequestObject) (SaveDashboardResponseObject, error)
+	// ListDashboardSources Срезы данных, доступные панелям (DA-05)
+	// (GET /dashboards/sources)
+	ListDashboardSources(ctx context.Context, request ListDashboardSourcesRequestObject) (ListDashboardSourcesResponseObject, error)
+	// DeleteDashboard Удалить дашборд (DA-05)
+	// (DELETE /dashboards/{dashboardId})
+	DeleteDashboard(ctx context.Context, request DeleteDashboardRequestObject) (DeleteDashboardResponseObject, error)
+	// GetDashboard Дашборд (DA-05)
+	// (GET /dashboards/{dashboardId})
+	GetDashboard(ctx context.Context, request GetDashboardRequestObject) (GetDashboardResponseObject, error)
 	// ListDecisions Решения продукта; без productId — портфельные (DA-01)
 	// (GET /decisions)
 	ListDecisions(ctx context.Context, request ListDecisionsRequestObject) (ListDecisionsResponseObject, error)
 	// CreateDecision Зафиксировать решение (DA-01)
 	// (POST /decisions)
 	CreateDecision(ctx context.Context, request CreateDecisionRequestObject) (CreateDecisionResponseObject, error)
+	// ListDecisionsDueForReview Решения, которым пора ревизию (DA-06)
+	// (GET /decisions/due)
+	ListDecisionsDueForReview(ctx context.Context, request ListDecisionsDueForReviewRequestObject) (ListDecisionsDueForReviewResponseObject, error)
 	// ListDecisionsFor Решения, связанные с сущностью (DS-04)
 	// (GET /decisions/for/{kind}/{id})
 	ListDecisionsFor(ctx context.Context, request ListDecisionsForRequestObject) (ListDecisionsForResponseObject, error)
@@ -13778,9 +18468,90 @@ type StrictServerInterface interface {
 	// RequestDecisionPage Запросить страницу ADR в базе знаний через outbox (DA-01, ТЗ 4.3)
 	// (POST /decisions/{decisionId}/request-page)
 	RequestDecisionPage(ctx context.Context, request RequestDecisionPageRequestObject) (RequestDecisionPageResponseObject, error)
+	// ReviewDecision Ревизия решения: ожидание против факта (DA-06)
+	// (POST /decisions/{decisionId}/review)
+	ReviewDecision(ctx context.Context, request ReviewDecisionRequestObject) (ReviewDecisionResponseObject, error)
 	// SupersedeDecision Заменить другим решением
 	// (POST /decisions/{decisionId}/supersede)
 	SupersedeDecision(ctx context.Context, request SupersedeDecisionRequestObject) (SupersedeDecisionResponseObject, error)
+	// GetWorklogCostBase Списания времени как база распределения затрат (DL-05)
+	// (GET /delivery/worklog-cost-base)
+	GetWorklogCostBase(ctx context.Context, request GetWorklogCostBaseRequestObject) (GetWorklogCostBaseResponseObject, error)
+	// ListAllocationRules Правила аллокации затрат хаба (EC-02)
+	// (GET /economics/allocation-rules)
+	ListAllocationRules(ctx context.Context, request ListAllocationRulesRequestObject) (ListAllocationRulesResponseObject, error)
+	// SaveAllocationRule Новая версия правила аллокации (EC-02)
+	// (POST /economics/allocation-rules)
+	SaveAllocationRule(ctx context.Context, request SaveAllocationRuleRequestObject) (SaveAllocationRuleResponseObject, error)
+	// ListBundleRules Правила атрибуции выручки бандлов (EC-04)
+	// (GET /economics/bundle-rules)
+	ListBundleRules(ctx context.Context, request ListBundleRulesRequestObject) (ListBundleRulesResponseObject, error)
+	// SaveBundleRule Новая версия правила атрибуции бандла (EC-04)
+	// (POST /economics/bundle-rules)
+	SaveBundleRule(ctx context.Context, request SaveBundleRuleRequestObject) (SaveBundleRuleResponseObject, error)
+	// ListFinancialFields Настраиваемые финансовые поля (EC-08)
+	// (GET /economics/fields)
+	ListFinancialFields(ctx context.Context, request ListFinancialFieldsRequestObject) (ListFinancialFieldsResponseObject, error)
+	// SaveFinancialField Создать поле или новую версию его описания (EC-08, EC-11)
+	// (POST /economics/fields)
+	SaveFinancialField(ctx context.Context, request SaveFinancialFieldRequestObject) (SaveFinancialFieldResponseObject, error)
+	// ListImportBatches История загрузок финансовых данных (EC-07)
+	// (GET /economics/imports)
+	ListImportBatches(ctx context.Context, request ListImportBatchesRequestObject) (ListImportBatchesResponseObject, error)
+	// ImportFinanceFile Загрузить XLSX с финансовыми данными (EC-01, EC-07)
+	// (POST /economics/imports)
+	ImportFinanceFile(ctx context.Context, request ImportFinanceFileRequestObject) (ImportFinanceFileResponseObject, error)
+	// GetTeamProductMatrix Матрица «команда × продукт» (EC-12)
+	// (GET /economics/matrix)
+	GetTeamProductMatrix(ctx context.Context, request GetTeamProductMatrixRequestObject) (GetTeamProductMatrixResponseObject, error)
+	// ListMetrics Расчётные показатели (EC-09)
+	// (GET /economics/metrics)
+	ListMetrics(ctx context.Context, request ListMetricsRequestObject) (ListMetricsResponseObject, error)
+	// SaveMetric Создать показатель или версию формулы (EC-09, EC-10, EC-11)
+	// (POST /economics/metrics)
+	SaveMetric(ctx context.Context, request SaveMetricRequestObject) (SaveMetricResponseObject, error)
+	// CompareMetricVersions Сравнение результатов двух версий формулы (EC-11)
+	// (GET /economics/metrics/{metricKey}/compare)
+	CompareMetricVersions(ctx context.Context, request CompareMetricVersionsRequestObject) (CompareMetricVersionsResponseObject, error)
+	// ExplainMetric Объяснение значения до формулы и строк импорта (EC-10)
+	// (GET /economics/metrics/{metricKey}/explain)
+	ExplainMetric(ctx context.Context, request ExplainMetricRequestObject) (ExplainMetricResponseObject, error)
+	// GetMetricValue Значение показателя в срезе (EC-09)
+	// (GET /economics/metrics/{metricKey}/value)
+	GetMetricValue(ctx context.Context, request GetMetricValueRequestObject) (GetMetricValueResponseObject, error)
+	// ClosePeriod Закрыть период (EC-11)
+	// (POST /economics/periods/{period}/close)
+	ClosePeriod(ctx context.Context, request ClosePeriodRequestObject) (ClosePeriodResponseObject, error)
+	// GetPortfolioPnL P&L портфеля (EC-03)
+	// (GET /economics/pnl/portfolio)
+	GetPortfolioPnL(ctx context.Context, request GetPortfolioPnLRequestObject) (GetPortfolioPnLResponseObject, error)
+	// GetProductPnL P&L продукта: прямой и с нагрузкой хаба (EC-03)
+	// (GET /economics/pnl/products/{productId})
+	GetProductPnL(ctx context.Context, request GetProductPnLRequestObject) (GetProductPnLResponseObject, error)
+	// GetBranchCosts Стоимость поддержки веток версий (EC-05)
+	// (GET /economics/products/{productId}/branches)
+	GetBranchCosts(ctx context.Context, request GetBranchCostsRequestObject) (GetBranchCostsResponseObject, error)
+	// GetCertificationEconomics Экономика сертификации (EC-06)
+	// (GET /economics/products/{productId}/certification)
+	GetCertificationEconomics(ctx context.Context, request GetCertificationEconomicsRequestObject) (GetCertificationEconomicsResponseObject, error)
+	// GetFeatureEconomics Инвестиции в фичу против привязанной выручки (EC-05)
+	// (GET /economics/products/{productId}/features/{featureId})
+	GetFeatureEconomics(ctx context.Context, request GetFeatureEconomicsRequestObject) (GetFeatureEconomicsResponseObject, error)
+	// ListTeams Команды — вторая ось детализации (EC-12)
+	// (GET /economics/teams)
+	ListTeams(ctx context.Context, request ListTeamsRequestObject) (ListTeamsResponseObject, error)
+	// CreateTeam Завести команду (EC-12)
+	// (POST /economics/teams)
+	CreateTeam(ctx context.Context, request CreateTeamRequestObject) (CreateTeamResponseObject, error)
+	// SetTeamShares Доли команды по продуктам за период (EC-12)
+	// (PUT /economics/teams/{teamId}/shares)
+	SetTeamShares(ctx context.Context, request SetTeamSharesRequestObject) (SetTeamSharesResponseObject, error)
+	// ListImportTemplates Шаблоны импорта XLSX (EC-07)
+	// (GET /economics/templates)
+	ListImportTemplates(ctx context.Context, request ListImportTemplatesRequestObject) (ListImportTemplatesResponseObject, error)
+	// SaveImportTemplate Создать или изменить шаблон импорта (EC-07)
+	// (POST /economics/templates)
+	SaveImportTemplate(ctx context.Context, request SaveImportTemplateRequestObject) (SaveImportTemplateResponseObject, error)
 	// SetEvidenceItemStatus Принять или отклонить доказательство — новая запись журнала (CM-04)
 	// (POST /evidence-items/{evidenceId}/status)
 	SetEvidenceItemStatus(ctx context.Context, request SetEvidenceItemStatusRequestObject) (SetEvidenceItemStatusResponseObject, error)
@@ -13811,6 +18582,9 @@ type StrictServerInterface interface {
 	// SetFeatureFlags Пометить фичу регуляторно обязательной (PR-04)
 	// (PUT /features/{featureId}/flags)
 	SetFeatureFlags(ctx context.Context, request SetFeatureFlagsRequestObject) (SetFeatureFlagsResponseObject, error)
+	// GetFeatureForecast Прогноз даты фичи методом Монте-Карло (DL-04)
+	// (GET /features/{featureId}/forecast)
+	GetFeatureForecast(ctx context.Context, request GetFeatureForecastRequestObject) (GetFeatureForecastResponseObject, error)
 	// GetFeatureImpact Действующий класс влияния фичи (CM-06)
 	// (GET /features/{featureId}/impact)
 	GetFeatureImpact(ctx context.Context, request GetFeatureImpactRequestObject) (GetFeatureImpactResponseObject, error)
@@ -13862,6 +18636,9 @@ type StrictServerInterface interface {
 	// DeleteLink Удалить связь
 	// (DELETE /links/{linkId})
 	DeleteLink(ctx context.Context, request DeleteLinkRequestObject) (DeleteLinkResponseObject, error)
+	// GetWinLoss Win/loss, фичи выигранных сделок, attach rate (DA-04)
+	// (GET /marketing/win-loss)
+	GetWinLoss(ctx context.Context, request GetWinLossRequestObject) (GetWinLossResponseObject, error)
 	// GetMe Область доступа текущего субъекта
 	// (GET /me)
 	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
@@ -13943,6 +18720,9 @@ type StrictServerInterface interface {
 	// CreateRoadmapItem Создать элемент roadmap
 	// (POST /products/{productId}/roadmap/items)
 	CreateRoadmapItem(ctx context.Context, request CreateRoadmapItemRequestObject) (CreateRoadmapItemResponseObject, error)
+	// GetLaunchCalendar Календарь запусков (RM-06)
+	// (GET /products/{productId}/roadmap/launch-calendar)
+	GetLaunchCalendar(ctx context.Context, request GetLaunchCalendarRequestObject) (GetLaunchCalendarResponseObject, error)
 	// GetRoadmapNowNextLater Now/Next/Later (RM-01)
 	// (GET /products/{productId}/roadmap/now-next-later)
 	GetRoadmapNowNextLater(ctx context.Context, request GetRoadmapNowNextLaterRequestObject) (GetRoadmapNowNextLaterResponseObject, error)
@@ -14000,6 +18780,15 @@ type StrictServerInterface interface {
 	// GetRoadmapItemHistory История изменений дат (RM-03)
 	// (GET /roadmap/items/{itemId}/history)
 	GetRoadmapItemHistory(ctx context.Context, request GetRoadmapItemHistoryRequestObject) (GetRoadmapItemHistoryResponseObject, error)
+	// ListScenarios Сценарии «что если» (DA-02)
+	// (GET /scenarios)
+	ListScenarios(ctx context.Context, request ListScenariosRequestObject) (ListScenariosResponseObject, error)
+	// SaveScenario Создать или изменить сценарий (DA-02, EC-13)
+	// (POST /scenarios)
+	SaveScenario(ctx context.Context, request SaveScenarioRequestObject) (SaveScenarioResponseObject, error)
+	// RunScenario Посчитать сценарий и влияние на обязательства и треки (DA-02)
+	// (POST /scenarios/{scenarioId}/run)
+	RunScenario(ctx context.Context, request RunScenarioRequestObject) (RunScenarioResponseObject, error)
 	// ListScoringModels Модели оценки (PR-01)
 	// (GET /scoring-models)
 	ListScoringModels(ctx context.Context, request ListScoringModelsRequestObject) (ListScoringModelsResponseObject, error)
@@ -14054,6 +18843,9 @@ type StrictServerInterface interface {
 	// CheckGateItem Закрыть пункт чек-листа доказательством (CM-03, CM-04)
 	// (POST /tracks/{trackId}/gates/{gateId}/check)
 	CheckGateItem(ctx context.Context, request CheckGateItemRequestObject) (CheckGateItemResponseObject, error)
+	// CollectPipelineEvidence Автосбор доказательств из пайплайна безопасности (CM-09)
+	// (POST /tracks/{trackId}/gates/{gateId}/collect-evidence)
+	CollectPipelineEvidence(ctx context.Context, request CollectPipelineEvidenceRequestObject) (CollectPipelineEvidenceResponseObject, error)
 	// FailGate Провалить гейт с причиной (CM-03)
 	// (POST /tracks/{trackId}/gates/{gateId}/fail)
 	FailGate(ctx context.Context, request FailGateRequestObject) (FailGateResponseObject, error)
@@ -14256,6 +19048,61 @@ func (sh *strictHandler) VerifyEvidenceLog(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(VerifyEvidenceLogResponseObject); ok {
 		if err := validResponse.VisitVerifyEvidenceLogResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetLicenseStatus operation middleware
+func (sh *strictHandler) GetLicenseStatus(w http.ResponseWriter, r *http.Request) {
+	var request GetLicenseStatusRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetLicenseStatus(ctx, request.(GetLicenseStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetLicenseStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetLicenseStatusResponseObject); ok {
+		if err := validResponse.VisitGetLicenseStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// InstallLicense operation middleware
+func (sh *strictHandler) InstallLicense(w http.ResponseWriter, r *http.Request) {
+	var request InstallLicenseRequestObject
+
+	var body InstallLicenseJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.InstallLicense(ctx, request.(InstallLicenseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "InstallLicense")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(InstallLicenseResponseObject); ok {
+		if err := validResponse.VisitInstallLicenseResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -14542,6 +19389,39 @@ func (sh *strictHandler) SaveTrackTemplate(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// SetBaselineComponents operation middleware
+func (sh *strictHandler) SetBaselineComponents(w http.ResponseWriter, r *http.Request, baselineId openapi_types.UUID) {
+	var request SetBaselineComponentsRequestObject
+
+	request.BaselineId = baselineId
+
+	var body SetBaselineComponentsJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetBaselineComponents(ctx, request.(SetBaselineComponentsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetBaselineComponents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetBaselineComponentsResponseObject); ok {
+		if err := validResponse.VisitSetBaselineComponentsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // AcknowledgeCommitmentAlert operation middleware
 func (sh *strictHandler) AcknowledgeCommitmentAlert(w http.ResponseWriter, r *http.Request, alertId AlertId) {
 	var request AcknowledgeCommitmentAlertRequestObject
@@ -14713,6 +19593,37 @@ func (sh *strictHandler) FulfilCommitment(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// ReportVulnerableComponent operation middleware
+func (sh *strictHandler) ReportVulnerableComponent(w http.ResponseWriter, r *http.Request) {
+	var request ReportVulnerableComponentRequestObject
+
+	var body ReportVulnerableComponentJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReportVulnerableComponent(ctx, request.(ReportVulnerableComponentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReportVulnerableComponent")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReportVulnerableComponentResponseObject); ok {
+		if err := validResponse.VisitReportVulnerableComponentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListContracts operation middleware
 func (sh *strictHandler) ListContracts(w http.ResponseWriter, r *http.Request) {
 	var request ListContractsRequestObject
@@ -14827,6 +19738,137 @@ func (sh *strictHandler) UpdateContract(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
+// ListDashboards operation middleware
+func (sh *strictHandler) ListDashboards(w http.ResponseWriter, r *http.Request) {
+	var request ListDashboardsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDashboards(ctx, request.(ListDashboardsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDashboards")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListDashboardsResponseObject); ok {
+		if err := validResponse.VisitListDashboardsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveDashboard operation middleware
+func (sh *strictHandler) SaveDashboard(w http.ResponseWriter, r *http.Request) {
+	var request SaveDashboardRequestObject
+
+	var body SaveDashboardJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveDashboard(ctx, request.(SaveDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveDashboardResponseObject); ok {
+		if err := validResponse.VisitSaveDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListDashboardSources operation middleware
+func (sh *strictHandler) ListDashboardSources(w http.ResponseWriter, r *http.Request) {
+	var request ListDashboardSourcesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDashboardSources(ctx, request.(ListDashboardSourcesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDashboardSources")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListDashboardSourcesResponseObject); ok {
+		if err := validResponse.VisitListDashboardSourcesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteDashboard operation middleware
+func (sh *strictHandler) DeleteDashboard(w http.ResponseWriter, r *http.Request, dashboardId DashboardId) {
+	var request DeleteDashboardRequestObject
+
+	request.DashboardId = dashboardId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteDashboard(ctx, request.(DeleteDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteDashboardResponseObject); ok {
+		if err := validResponse.VisitDeleteDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDashboard operation middleware
+func (sh *strictHandler) GetDashboard(w http.ResponseWriter, r *http.Request, dashboardId DashboardId) {
+	var request GetDashboardRequestObject
+
+	request.DashboardId = dashboardId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDashboard(ctx, request.(GetDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetDashboardResponseObject); ok {
+		if err := validResponse.VisitGetDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListDecisions operation middleware
 func (sh *strictHandler) ListDecisions(w http.ResponseWriter, r *http.Request, params ListDecisionsParams) {
 	var request ListDecisionsRequestObject
@@ -14877,6 +19919,30 @@ func (sh *strictHandler) CreateDecision(w http.ResponseWriter, r *http.Request) 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateDecisionResponseObject); ok {
 		if err := validResponse.VisitCreateDecisionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListDecisionsDueForReview operation middleware
+func (sh *strictHandler) ListDecisionsDueForReview(w http.ResponseWriter, r *http.Request) {
+	var request ListDecisionsDueForReviewRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDecisionsDueForReview(ctx, request.(ListDecisionsDueForReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDecisionsDueForReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListDecisionsDueForReviewResponseObject); ok {
+		if err := validResponse.VisitListDecisionsDueForReviewResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -15058,6 +20124,42 @@ func (sh *strictHandler) RequestDecisionPage(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// ReviewDecision operation middleware
+func (sh *strictHandler) ReviewDecision(w http.ResponseWriter, r *http.Request, decisionId DecisionId) {
+	var request ReviewDecisionRequestObject
+
+	request.DecisionId = decisionId
+
+	var body ReviewDecisionJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReviewDecision(ctx, request.(ReviewDecisionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReviewDecision")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReviewDecisionResponseObject); ok {
+		if err := validResponse.VisitReviewDecisionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // SupersedeDecision operation middleware
 func (sh *strictHandler) SupersedeDecision(w http.ResponseWriter, r *http.Request, decisionId DecisionId) {
 	var request SupersedeDecisionRequestObject
@@ -15084,6 +20186,717 @@ func (sh *strictHandler) SupersedeDecision(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SupersedeDecisionResponseObject); ok {
 		if err := validResponse.VisitSupersedeDecisionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorklogCostBase operation middleware
+func (sh *strictHandler) GetWorklogCostBase(w http.ResponseWriter, r *http.Request, params GetWorklogCostBaseParams) {
+	var request GetWorklogCostBaseRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorklogCostBase(ctx, request.(GetWorklogCostBaseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorklogCostBase")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorklogCostBaseResponseObject); ok {
+		if err := validResponse.VisitGetWorklogCostBaseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAllocationRules operation middleware
+func (sh *strictHandler) ListAllocationRules(w http.ResponseWriter, r *http.Request) {
+	var request ListAllocationRulesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAllocationRules(ctx, request.(ListAllocationRulesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAllocationRules")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAllocationRulesResponseObject); ok {
+		if err := validResponse.VisitListAllocationRulesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveAllocationRule operation middleware
+func (sh *strictHandler) SaveAllocationRule(w http.ResponseWriter, r *http.Request) {
+	var request SaveAllocationRuleRequestObject
+
+	var body SaveAllocationRuleJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveAllocationRule(ctx, request.(SaveAllocationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveAllocationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveAllocationRuleResponseObject); ok {
+		if err := validResponse.VisitSaveAllocationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListBundleRules operation middleware
+func (sh *strictHandler) ListBundleRules(w http.ResponseWriter, r *http.Request) {
+	var request ListBundleRulesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListBundleRules(ctx, request.(ListBundleRulesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListBundleRules")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListBundleRulesResponseObject); ok {
+		if err := validResponse.VisitListBundleRulesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveBundleRule operation middleware
+func (sh *strictHandler) SaveBundleRule(w http.ResponseWriter, r *http.Request) {
+	var request SaveBundleRuleRequestObject
+
+	var body SaveBundleRuleJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveBundleRule(ctx, request.(SaveBundleRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveBundleRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveBundleRuleResponseObject); ok {
+		if err := validResponse.VisitSaveBundleRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListFinancialFields operation middleware
+func (sh *strictHandler) ListFinancialFields(w http.ResponseWriter, r *http.Request) {
+	var request ListFinancialFieldsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListFinancialFields(ctx, request.(ListFinancialFieldsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListFinancialFields")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFinancialFieldsResponseObject); ok {
+		if err := validResponse.VisitListFinancialFieldsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveFinancialField operation middleware
+func (sh *strictHandler) SaveFinancialField(w http.ResponseWriter, r *http.Request) {
+	var request SaveFinancialFieldRequestObject
+
+	var body SaveFinancialFieldJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveFinancialField(ctx, request.(SaveFinancialFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveFinancialField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveFinancialFieldResponseObject); ok {
+		if err := validResponse.VisitSaveFinancialFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListImportBatches operation middleware
+func (sh *strictHandler) ListImportBatches(w http.ResponseWriter, r *http.Request, params ListImportBatchesParams) {
+	var request ListImportBatchesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListImportBatches(ctx, request.(ListImportBatchesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListImportBatches")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListImportBatchesResponseObject); ok {
+		if err := validResponse.VisitListImportBatchesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImportFinanceFile operation middleware
+func (sh *strictHandler) ImportFinanceFile(w http.ResponseWriter, r *http.Request, params ImportFinanceFileParams) {
+	var request ImportFinanceFileRequestObject
+
+	request.Params = params
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImportFinanceFile(ctx, request.(ImportFinanceFileRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImportFinanceFile")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImportFinanceFileResponseObject); ok {
+		if err := validResponse.VisitImportFinanceFileResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetTeamProductMatrix operation middleware
+func (sh *strictHandler) GetTeamProductMatrix(w http.ResponseWriter, r *http.Request, params GetTeamProductMatrixParams) {
+	var request GetTeamProductMatrixRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetTeamProductMatrix(ctx, request.(GetTeamProductMatrixRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTeamProductMatrix")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTeamProductMatrixResponseObject); ok {
+		if err := validResponse.VisitGetTeamProductMatrixResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListMetrics operation middleware
+func (sh *strictHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
+	var request ListMetricsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMetrics(ctx, request.(ListMetricsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMetrics")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMetricsResponseObject); ok {
+		if err := validResponse.VisitListMetricsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveMetric operation middleware
+func (sh *strictHandler) SaveMetric(w http.ResponseWriter, r *http.Request) {
+	var request SaveMetricRequestObject
+
+	var body SaveMetricJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveMetric(ctx, request.(SaveMetricRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveMetric")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveMetricResponseObject); ok {
+		if err := validResponse.VisitSaveMetricResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CompareMetricVersions operation middleware
+func (sh *strictHandler) CompareMetricVersions(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params CompareMetricVersionsParams) {
+	var request CompareMetricVersionsRequestObject
+
+	request.MetricKey = metricKey
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CompareMetricVersions(ctx, request.(CompareMetricVersionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CompareMetricVersions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CompareMetricVersionsResponseObject); ok {
+		if err := validResponse.VisitCompareMetricVersionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExplainMetric operation middleware
+func (sh *strictHandler) ExplainMetric(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params ExplainMetricParams) {
+	var request ExplainMetricRequestObject
+
+	request.MetricKey = metricKey
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ExplainMetric(ctx, request.(ExplainMetricRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExplainMetric")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ExplainMetricResponseObject); ok {
+		if err := validResponse.VisitExplainMetricResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMetricValue operation middleware
+func (sh *strictHandler) GetMetricValue(w http.ResponseWriter, r *http.Request, metricKey MetricKey, params GetMetricValueParams) {
+	var request GetMetricValueRequestObject
+
+	request.MetricKey = metricKey
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMetricValue(ctx, request.(GetMetricValueRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMetricValue")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMetricValueResponseObject); ok {
+		if err := validResponse.VisitGetMetricValueResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ClosePeriod operation middleware
+func (sh *strictHandler) ClosePeriod(w http.ResponseWriter, r *http.Request, period string) {
+	var request ClosePeriodRequestObject
+
+	request.Period = period
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ClosePeriod(ctx, request.(ClosePeriodRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ClosePeriod")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ClosePeriodResponseObject); ok {
+		if err := validResponse.VisitClosePeriodResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPortfolioPnL operation middleware
+func (sh *strictHandler) GetPortfolioPnL(w http.ResponseWriter, r *http.Request, params GetPortfolioPnLParams) {
+	var request GetPortfolioPnLRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPortfolioPnL(ctx, request.(GetPortfolioPnLRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPortfolioPnL")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPortfolioPnLResponseObject); ok {
+		if err := validResponse.VisitGetPortfolioPnLResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetProductPnL operation middleware
+func (sh *strictHandler) GetProductPnL(w http.ResponseWriter, r *http.Request, productId ProductId, params GetProductPnLParams) {
+	var request GetProductPnLRequestObject
+
+	request.ProductId = productId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetProductPnL(ctx, request.(GetProductPnLRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetProductPnL")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetProductPnLResponseObject); ok {
+		if err := validResponse.VisitGetProductPnLResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetBranchCosts operation middleware
+func (sh *strictHandler) GetBranchCosts(w http.ResponseWriter, r *http.Request, productId ProductId, params GetBranchCostsParams) {
+	var request GetBranchCostsRequestObject
+
+	request.ProductId = productId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetBranchCosts(ctx, request.(GetBranchCostsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBranchCosts")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetBranchCostsResponseObject); ok {
+		if err := validResponse.VisitGetBranchCostsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCertificationEconomics operation middleware
+func (sh *strictHandler) GetCertificationEconomics(w http.ResponseWriter, r *http.Request, productId ProductId, params GetCertificationEconomicsParams) {
+	var request GetCertificationEconomicsRequestObject
+
+	request.ProductId = productId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCertificationEconomics(ctx, request.(GetCertificationEconomicsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCertificationEconomics")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCertificationEconomicsResponseObject); ok {
+		if err := validResponse.VisitGetCertificationEconomicsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetFeatureEconomics operation middleware
+func (sh *strictHandler) GetFeatureEconomics(w http.ResponseWriter, r *http.Request, productId ProductId, featureId FeatureId, params GetFeatureEconomicsParams) {
+	var request GetFeatureEconomicsRequestObject
+
+	request.ProductId = productId
+	request.FeatureId = featureId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetFeatureEconomics(ctx, request.(GetFeatureEconomicsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetFeatureEconomics")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetFeatureEconomicsResponseObject); ok {
+		if err := validResponse.VisitGetFeatureEconomicsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTeams operation middleware
+func (sh *strictHandler) ListTeams(w http.ResponseWriter, r *http.Request) {
+	var request ListTeamsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTeams(ctx, request.(ListTeamsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTeams")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTeamsResponseObject); ok {
+		if err := validResponse.VisitListTeamsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateTeam operation middleware
+func (sh *strictHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
+	var request CreateTeamRequestObject
+
+	var body CreateTeamJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateTeam(ctx, request.(CreateTeamRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateTeam")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateTeamResponseObject); ok {
+		if err := validResponse.VisitCreateTeamResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetTeamShares operation middleware
+func (sh *strictHandler) SetTeamShares(w http.ResponseWriter, r *http.Request, teamId TeamId) {
+	var request SetTeamSharesRequestObject
+
+	request.TeamId = teamId
+
+	var body SetTeamSharesJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetTeamShares(ctx, request.(SetTeamSharesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetTeamShares")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetTeamSharesResponseObject); ok {
+		if err := validResponse.VisitSetTeamSharesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListImportTemplates operation middleware
+func (sh *strictHandler) ListImportTemplates(w http.ResponseWriter, r *http.Request) {
+	var request ListImportTemplatesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListImportTemplates(ctx, request.(ListImportTemplatesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListImportTemplates")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListImportTemplatesResponseObject); ok {
+		if err := validResponse.VisitListImportTemplatesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveImportTemplate operation middleware
+func (sh *strictHandler) SaveImportTemplate(w http.ResponseWriter, r *http.Request) {
+	var request SaveImportTemplateRequestObject
+
+	var body SaveImportTemplateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveImportTemplate(ctx, request.(SaveImportTemplateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveImportTemplate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveImportTemplateResponseObject); ok {
+		if err := validResponse.VisitSaveImportTemplateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -15379,6 +21192,33 @@ func (sh *strictHandler) SetFeatureFlags(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SetFeatureFlagsResponseObject); ok {
 		if err := validResponse.VisitSetFeatureFlagsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetFeatureForecast operation middleware
+func (sh *strictHandler) GetFeatureForecast(w http.ResponseWriter, r *http.Request, featureId FeatureId, params GetFeatureForecastParams) {
+	var request GetFeatureForecastRequestObject
+
+	request.FeatureId = featureId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetFeatureForecast(ctx, request.(GetFeatureForecastRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetFeatureForecast")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetFeatureForecastResponseObject); ok {
+		if err := validResponse.VisitGetFeatureForecastResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -15871,6 +21711,32 @@ func (sh *strictHandler) DeleteLink(w http.ResponseWriter, r *http.Request, link
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DeleteLinkResponseObject); ok {
 		if err := validResponse.VisitDeleteLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWinLoss operation middleware
+func (sh *strictHandler) GetWinLoss(w http.ResponseWriter, r *http.Request, params GetWinLossParams) {
+	var request GetWinLossRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWinLoss(ctx, request.(GetWinLossRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWinLoss")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWinLossResponseObject); ok {
+		if err := validResponse.VisitGetWinLossResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -16656,6 +22522,33 @@ func (sh *strictHandler) CreateRoadmapItem(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// GetLaunchCalendar operation middleware
+func (sh *strictHandler) GetLaunchCalendar(w http.ResponseWriter, r *http.Request, productId ProductId, params GetLaunchCalendarParams) {
+	var request GetLaunchCalendarRequestObject
+
+	request.ProductId = productId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetLaunchCalendar(ctx, request.(GetLaunchCalendarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetLaunchCalendar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetLaunchCalendarResponseObject); ok {
+		if err := validResponse.VisitGetLaunchCalendarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetRoadmapNowNextLater operation middleware
 func (sh *strictHandler) GetRoadmapNowNextLater(w http.ResponseWriter, r *http.Request, productId ProductId) {
 	var request GetRoadmapNowNextLaterRequestObject
@@ -17214,6 +23107,97 @@ func (sh *strictHandler) GetRoadmapItemHistory(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// ListScenarios operation middleware
+func (sh *strictHandler) ListScenarios(w http.ResponseWriter, r *http.Request) {
+	var request ListScenariosRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListScenarios(ctx, request.(ListScenariosRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListScenarios")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListScenariosResponseObject); ok {
+		if err := validResponse.VisitListScenariosResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveScenario operation middleware
+func (sh *strictHandler) SaveScenario(w http.ResponseWriter, r *http.Request) {
+	var request SaveScenarioRequestObject
+
+	var body SaveScenarioJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveScenario(ctx, request.(SaveScenarioRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveScenario")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveScenarioResponseObject); ok {
+		if err := validResponse.VisitSaveScenarioResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RunScenario operation middleware
+func (sh *strictHandler) RunScenario(w http.ResponseWriter, r *http.Request, scenarioId ScenarioId) {
+	var request RunScenarioRequestObject
+
+	request.ScenarioId = scenarioId
+
+	var body RunScenarioJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RunScenario(ctx, request.(RunScenarioRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RunScenario")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RunScenarioResponseObject); ok {
+		if err := validResponse.VisitRunScenarioResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListScoringModels operation middleware
 func (sh *strictHandler) ListScoringModels(w http.ResponseWriter, r *http.Request) {
 	var request ListScoringModelsRequestObject
@@ -17739,6 +23723,40 @@ func (sh *strictHandler) CheckGateItem(w http.ResponseWriter, r *http.Request, t
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CheckGateItemResponseObject); ok {
 		if err := validResponse.VisitCheckGateItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CollectPipelineEvidence operation middleware
+func (sh *strictHandler) CollectPipelineEvidence(w http.ResponseWriter, r *http.Request, trackId TrackId, gateId GateId) {
+	var request CollectPipelineEvidenceRequestObject
+
+	request.TrackId = trackId
+	request.GateId = gateId
+
+	var body CollectPipelineEvidenceJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CollectPipelineEvidence(ctx, request.(CollectPipelineEvidenceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CollectPipelineEvidence")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CollectPipelineEvidenceResponseObject); ok {
+		if err := validResponse.VisitCollectPipelineEvidenceResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

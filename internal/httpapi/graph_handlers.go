@@ -11,6 +11,7 @@ import (
 	"github.com/onixus/metis/internal/httpapi/gen"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
+	"github.com/onixus/metis/internal/licensing"
 	pg "github.com/onixus/metis/internal/portfoliograph"
 )
 
@@ -200,6 +201,9 @@ func (s *Server) ListProducts(ctx context.Context, _ gen.ListProductsRequestObje
 
 // CreateProduct — PG-01.
 func (s *Server) CreateProduct(ctx context.Context, req gen.CreateProductRequestObject) (gen.CreateProductResponseObject, error) {
+	if err := s.checkProductLimit(ctx); err != nil {
+		return nil, err
+	}
 	p, err := s.d.Portfolio.CreateProduct(ctx, scope(ctx), toProductInput(*req.Body))
 	if err != nil {
 		return nil, err
@@ -524,4 +528,17 @@ func (s *Server) auditGraph(ctx context.Context, objectType string, id, product 
 		return
 	}
 	_, _ = s.d.Audit.Append(ctx, audit.Entry{Actor: scope(ctx).Subject(), Action: audit.ActionGraphChange, ObjectType: objectType, ObjectID: id.String(), ProductID: product, Details: map[string]any{"op": op, "at": time.Now().UTC().Format(time.RFC3339)}})
+}
+
+// checkProductLimit проверяет лимит лицензии поставки на число продуктов (AD-06).
+// Без установленного ключа ограничений нет: в разработке и на стенде лицензия не требуется.
+func (s *Server) checkProductLimit(ctx context.Context) error {
+	if s.d.Licensing == nil {
+		return nil
+	}
+	existing, err := s.d.Portfolio.Products(ctx, scope(ctx))
+	if err != nil {
+		return err
+	}
+	return s.d.Licensing.CheckLimit(ctx, scope(ctx).Subject(), licensing.ResourceProducts, len(existing))
 }

@@ -43,10 +43,17 @@ INSERT INTO compliance.impact_assessments (id, feature_id, product_id, class, ju
 SELECT * FROM compliance.impact_assessments WHERE feature_id = $1 ORDER BY seq;
 
 -- name: UpsertBaseline :exec
-INSERT INTO compliance.baselines (id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO compliance.baselines (id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at, components)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, track_id = EXCLUDED.track_id, version = EXCLUDED.version,
-  requirement_set_id = EXCLUDED.requirement_set_id, certificate_no = EXCLUDED.certificate_no, certified_at = EXCLUDED.certified_at, eol = EXCLUDED.eol;
+  requirement_set_id = EXCLUDED.requirement_set_id, certificate_no = EXCLUDED.certificate_no, certified_at = EXCLUDED.certified_at,
+  eol = EXCLUDED.eol, components = EXCLUDED.components;
+
+-- name: ListBaselinesWithComponent :many
+-- CM-08: сертифицированные версии, содержащие компонент с указанным ключом.
+SELECT * FROM compliance.baselines
+WHERE components @> jsonb_build_array(jsonb_build_object('key', sqlc.arg('component_key')::text))
+ORDER BY created_at, id;
 
 -- name: GetBaseline :one
 SELECT * FROM compliance.baselines WHERE id = $1;

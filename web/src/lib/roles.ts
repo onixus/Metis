@@ -38,6 +38,11 @@ export function canReadPortfolioDecisions(me: Me | undefined): boolean {
   return hasRole(me, 'cpo', 'admin', 'service')
 }
 
+/** Портфель и P&L: финансовый уровень доступа выдаётся IdP (NF-S02), роли — финансы, CPO, администратор. */
+export function canSeeFinance(me: Me | undefined): boolean {
+  return hasRole(me, 'finance', 'cpo', 'admin')
+}
+
 /** Compliance-дашборд: руководитель РБПО, CPO и администратор. */
 export function canSeeCompliance(me: Me | undefined): boolean {
   return hasRole(me, 'compliance', 'cpo', 'admin')

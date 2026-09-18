@@ -35,7 +35,27 @@ type Deal struct {
 	Notes             string   `json:"notes"`
 	// BlocksOnFeatures — сделка не закроется без запрошенных фич.
 	BlocksOnFeatures bool `json:"blocks_on_features"`
+	// Outcome — исход сделки: won, lost или пусто для открытых (DA-04).
+	Outcome DealOutcome `json:"outcome"`
+	// Reason — причина выигрыша или проигрыша по классификатору CRM (DA-04).
+	Reason string `json:"reason"`
+	// ClosedDate — дата закрытия сделки.
+	ClosedDate kernel.Date `json:"closed_date"`
+	// Products — ключи всех продуктов сделки; первый — основной (для attach rate, DA-04).
+	Products []string `json:"products"`
+	// Features — фичи, вошедшие в выигранную сделку (DA-04).
+	Features []string `json:"features"`
 }
+
+// DealOutcome — исход сделки (DA-04).
+type DealOutcome string
+
+// Исходы сделки.
+const (
+	DealOpen DealOutcome = ""
+	DealWon  DealOutcome = "won"
+	DealLost DealOutcome = "lost"
+)
 
 // CRM — порт чтения CRM (ТЗ 4.1). Платформа в CRM ничего не пишет.
 type CRM interface {

@@ -165,3 +165,8 @@ ul { margin: 0; padding-left: 18px; }
 .btn-danger { border-color: #d9534f; color: #b91c1c; }
 .btn-danger:hover { background: #fdecec; }
 .page-head .row { display: flex; gap: 8px; }
+
+/* Этап 3: страница портфеля и P&L */
+.text-danger {
+  color: var(--danger);
+}

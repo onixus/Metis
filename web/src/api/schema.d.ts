@@ -1743,6 +1743,658 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/economics/fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Настраиваемые финансовые поля (EC-08) */
+        get: operations["listFinancialFields"];
+        put?: never;
+        /** Создать поле или новую версию его описания (EC-08, EC-11) */
+        post: operations["saveFinancialField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Расчётные показатели (EC-09) */
+        get: operations["listMetrics"];
+        put?: never;
+        /** Создать показатель или версию формулы (EC-09, EC-10, EC-11) */
+        post: operations["saveMetric"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/metrics/{metricKey}/value": {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+                productId?: components["parameters"]["productQuery"];
+            };
+            header?: never;
+            path: {
+                metricKey: components["parameters"]["metricKey"];
+            };
+            cookie?: never;
+        };
+        /** Значение показателя в срезе (EC-09) */
+        get: operations["getMetricValue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/metrics/{metricKey}/explain": {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+                productId?: components["parameters"]["productQuery"];
+            };
+            header?: never;
+            path: {
+                metricKey: components["parameters"]["metricKey"];
+            };
+            cookie?: never;
+        };
+        /** Объяснение значения до формулы и строк импорта (EC-10) */
+        get: operations["explainMetric"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/metrics/{metricKey}/compare": {
+        parameters: {
+            query: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+                productId?: components["parameters"]["productQuery"];
+                a: number;
+                b: number;
+            };
+            header?: never;
+            path: {
+                metricKey: components["parameters"]["metricKey"];
+            };
+            cookie?: never;
+        };
+        /** Сравнение результатов двух версий формулы (EC-11) */
+        get: operations["compareMetricVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Шаблоны импорта XLSX (EC-07) */
+        get: operations["listImportTemplates"];
+        put?: never;
+        /** Создать или изменить шаблон импорта (EC-07) */
+        post: operations["saveImportTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** История загрузок финансовых данных (EC-07) */
+        get: operations["listImportBatches"];
+        put?: never;
+        /** Загрузить XLSX с финансовыми данными (EC-01, EC-07) */
+        post: operations["importFinanceFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/allocation-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Правила аллокации затрат хаба (EC-02) */
+        get: operations["listAllocationRules"];
+        put?: never;
+        /** Новая версия правила аллокации (EC-02) */
+        post: operations["saveAllocationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/bundle-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Правила атрибуции выручки бандлов (EC-04) */
+        get: operations["listBundleRules"];
+        put?: never;
+        /** Новая версия правила атрибуции бандла (EC-04) */
+        post: operations["saveBundleRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Команды — вторая ось детализации (EC-12) */
+        get: operations["listTeams"];
+        put?: never;
+        /** Завести команду (EC-12) */
+        post: operations["createTeam"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/teams/{teamId}/shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: components["parameters"]["teamId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Доли команды по продуктам за период (EC-12) */
+        put: operations["setTeamShares"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/pnl/portfolio": {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** P&L портфеля (EC-03) */
+        get: operations["getPortfolioPnL"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/pnl/products/{productId}": {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** P&L продукта: прямой и с нагрузкой хаба (EC-03) */
+        get: operations["getProductPnL"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/matrix": {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Матрица «команда × продукт» (EC-12) */
+        get: operations["getTeamProductMatrix"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/products/{productId}/certification": {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Экономика сертификации (EC-06) */
+        get: operations["getCertificationEconomics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/products/{productId}/branches": {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Стоимость поддержки веток версий (EC-05) */
+        get: operations["getBranchCosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/products/{productId}/features/{featureId}": {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        /** Инвестиции в фичу против привязанной выручки (EC-05) */
+        get: operations["getFeatureEconomics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/periods/{period}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                period: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Закрыть период (EC-11) */
+        post: operations["closePeriod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Сценарии «что если» (DA-02) */
+        get: operations["listScenarios"];
+        put?: never;
+        /** Создать или изменить сценарий (DA-02, EC-13) */
+        post: operations["saveScenario"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/scenarios/{scenarioId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenarioId: components["parameters"]["scenarioId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Посчитать сценарий и влияние на обязательства и треки (DA-02) */
+        post: operations["runScenario"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/marketing/win-loss": {
+        parameters: {
+            query?: {
+                productKey?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Win/loss, фичи выигранных сделок, attach rate (DA-04) */
+        get: operations["getWinLoss"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/compliance/vulnerabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Уязвимый компонент — затронутые версии и запуск сроков (CM-08) */
+        post: operations["reportVulnerableComponent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions/due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Решения, которым пора ревизию (DA-06) */
+        get: operations["listDecisionsDueForReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/decisions/{decisionId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ревизия решения: ожидание против факта (DA-06) */
+        post: operations["reviewDecision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/roadmap/launch-calendar": {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        /** Календарь запусков (RM-06) */
+        get: operations["getLaunchCalendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/features/{featureId}/forecast": {
+        parameters: {
+            query?: {
+                samples?: number;
+                /** @description Зерно генератора для воспроизводимого прогноза */
+                seed?: string;
+            };
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        /** Прогноз даты фичи методом Монте-Карло (DL-04) */
+        get: operations["getFeatureForecast"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/delivery/worklog-cost-base": {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Списания времени как база распределения затрат (DL-05) */
+        get: operations["getWorklogCostBase"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Дашборды конструктора (DA-05) */
+        get: operations["listDashboards"];
+        put?: never;
+        /** Создать или изменить дашборд (DA-05) */
+        post: operations["saveDashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboards/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Срезы данных, доступные панелям (DA-05) */
+        get: operations["listDashboardSources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboards/{dashboardId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: components["parameters"]["dashboardId"];
+            };
+            cookie?: never;
+        };
+        /** Дашборд (DA-05) */
+        get: operations["getDashboard"];
+        put?: never;
+        post?: never;
+        /** Удалить дашборд (DA-05) */
+        delete: operations["deleteDashboard"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/license": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Состояние лицензии поставки (AD-06) */
+        get: operations["getLicenseStatus"];
+        put?: never;
+        /** Установить лицензионный ключ (AD-06) */
+        post: operations["installLicense"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tracks/{trackId}/gates/{gateId}/collect-evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Автосбор доказательств из пайплайна безопасности (CM-09) */
+        post: operations["collectPipelineEvidence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/baselines/{baselineId}/components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                baselineId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Состав компонентов сертифицированной версии (CM-08) */
+        put: operations["setBaselineComponents"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2087,6 +2739,10 @@ export interface components {
             audience?: "internal" | "sales_safe";
             /** @enum {string} */
             status?: "planned" | "in_progress" | "done" | "cancelled";
+            /** @enum {string} */
+            launch_tier?: "tier1" | "tier2" | "tier3";
+            /** Format: date */
+            launch_date?: string;
             /**
              * @description Вид элемента (RM-04); по умолчанию feature
              * @enum {string}
@@ -2114,6 +2770,10 @@ export interface components {
             /** @enum {string} */
             status: "planned" | "in_progress" | "done" | "cancelled";
             /** @enum {string} */
+            launch_tier?: "tier1" | "tier2" | "tier3";
+            /** Format: date */
+            launch_date?: string;
+            /** @enum {string} */
             kind: "feature" | "fix";
             /**
              * Format: uuid
@@ -2139,6 +2799,10 @@ export interface components {
             end_date?: string | null;
             /** Format: uuid */
             release_id?: string;
+            /** @enum {string} */
+            launch_tier?: "tier1" | "tier2" | "tier3";
+            /** Format: date */
+            launch_date?: string | null;
         };
         RoadmapGroup: {
             items?: components["schemas"]["RoadmapItem"][];
@@ -2692,6 +3356,8 @@ export interface components {
             certified_at: string;
             /** Format: date */
             eol: string;
+            /** @description Состав поставки для поиска по уязвимому компоненту (CM-08) */
+            components?: components["schemas"]["Component"][];
             /** Format: date-time */
             created_at: string;
         };
@@ -2736,6 +3402,7 @@ export interface components {
             chosen_key?: string;
             rationale?: string;
             expected_effect?: string;
+            effect?: components["schemas"]["DecisionEffect"];
             /** Format: date */
             review_date?: string;
             links?: components["schemas"]["DecisionLink"][];
@@ -2748,6 +3415,7 @@ export interface components {
             /** Format: uuid */
             superseded_by?: string;
             page_id?: string;
+            review?: components["schemas"]["DecisionReview"];
             author: string;
             /** Format: date-time */
             created_at: string;
@@ -2758,6 +3426,570 @@ export interface components {
             /** Format: uuid */
             id: string;
             title: string;
+        };
+        FinancialFieldInput: {
+            key: string;
+            name: string;
+            /** @enum {string} */
+            type: "money" | "number" | "percent" | "date" | "reference";
+            currency?: string;
+            /** @enum {string} */
+            source: "import" | "manual" | "calculated";
+            dimensions?: ("product" | "team" | "period" | "item")[];
+            /** Format: date */
+            effective_from?: string | null;
+        };
+        FinancialFieldVersion: {
+            version: number;
+            /** Format: date */
+            effective_from?: string | null;
+            name: string;
+            type: string;
+            currency?: string;
+            source: string;
+            dimensions?: string[];
+            actor?: string;
+            /** Format: date-time */
+            at?: string;
+        };
+        FinancialField: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            versions: components["schemas"]["FinancialFieldVersion"][];
+        };
+        MetricInput: {
+            key: string;
+            name: string;
+            expression: string;
+            currency?: string;
+            /** Format: date */
+            effective_from?: string | null;
+        };
+        MetricVersion: {
+            version: number;
+            /** Format: date */
+            effective_from?: string | null;
+            name: string;
+            expression: string;
+            refs?: {
+                kind?: string;
+                key?: string;
+            }[];
+            currency?: string;
+            actor?: string;
+            /** Format: date-time */
+            at?: string;
+        };
+        Metric: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            versions: components["schemas"]["MetricVersion"][];
+        };
+        MetricValue: {
+            key: string;
+            /** @description Десятичное значение строкой */
+            value: string;
+            period?: string;
+            /** Format: uuid */
+            product_id?: string;
+        };
+        MetricComparison: {
+            key: string;
+            a: number;
+            b: number;
+            value_a: string;
+            value_b: string;
+        };
+        FactRow: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            batch_id?: string;
+            field_key: string;
+            /** Format: uuid */
+            product_id?: string;
+            /** Format: uuid */
+            team_id?: string;
+            period: string;
+            item?: string;
+            value: string;
+            data_version?: number;
+            sheet?: string;
+            row?: number;
+        };
+        Explanation: {
+            key: string;
+            /** @enum {string} */
+            kind: "field" | "metric";
+            expression?: string;
+            value: string;
+            inputs?: components["schemas"]["Explanation"][];
+            rows?: components["schemas"]["FactRow"][];
+        };
+        ImportColumn: {
+            column: string;
+            field_key: string;
+            minor_units?: boolean;
+        };
+        ImportSheet: {
+            sheet: string;
+            header_row?: number;
+            product_column?: string;
+            team_column?: string;
+            period_column?: string;
+            item_column?: string;
+            columns: components["schemas"]["ImportColumn"][];
+        };
+        ImportTemplateInput: {
+            /** Format: uuid */
+            id?: string;
+            name: string;
+            sheets: components["schemas"]["ImportSheet"][];
+        };
+        ImportTemplate: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            sheets: components["schemas"]["ImportSheet"][];
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        RowError: {
+            sheet?: string;
+            row?: number;
+            column?: string;
+            message: string;
+        };
+        ImportBatch: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            template_id?: string;
+            period: string;
+            data_version?: number;
+            /** @enum {string} */
+            status: "preview" | "applied" | "rejected";
+            file_name?: string;
+            sha256?: string;
+            rows?: number;
+            errors?: components["schemas"]["RowError"][];
+            actor?: string;
+            /** Format: date-time */
+            at?: string;
+            scheduled?: boolean;
+        };
+        AllocationRuleInput: {
+            /** Format: uuid */
+            hub_product_id: string;
+            /** @enum {string} */
+            basis: "manual" | "revenue" | "worklogs";
+            shares?: {
+                [key: string]: string;
+            };
+            consumers?: string[];
+            /** Format: date */
+            effective_from?: string | null;
+        };
+        AllocationRule: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            hub_product_id: string;
+            basis: string;
+            shares?: {
+                [key: string]: string;
+            };
+            consumers?: string[];
+            version: number;
+            /** Format: date */
+            effective_from?: string | null;
+            actor?: string;
+            /** Format: date-time */
+            at?: string;
+        };
+        BundleRuleInput: {
+            bundle_key: string;
+            shares: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            effective_from?: string | null;
+        };
+        BundleRule: {
+            /** Format: uuid */
+            id: string;
+            bundle_key: string;
+            shares: {
+                [key: string]: string;
+            };
+            version: number;
+            /** Format: date */
+            effective_from?: string | null;
+            actor?: string;
+            /** Format: date-time */
+            at?: string;
+        };
+        TeamInput: {
+            key: string;
+            name: string;
+        };
+        Team: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            name: string;
+        };
+        TeamSharesInput: {
+            period: string;
+            shares: {
+                [key: string]: string;
+            };
+            /** @enum {string} */
+            source?: "manual" | "worklogs";
+        };
+        PnL: {
+            /** Format: uuid */
+            product_id: string;
+            period: string;
+            revenue: components["schemas"]["Money"];
+            bundle_revenue?: components["schemas"]["Money"];
+            direct_costs: components["schemas"]["Money"];
+            hub_load: components["schemas"]["Money"];
+            direct_profit: components["schemas"]["Money"];
+            loaded_profit: components["schemas"]["Money"];
+        };
+        PortfolioPnL: {
+            period: string;
+            products: components["schemas"]["PnL"][];
+            revenue: components["schemas"]["Money"];
+            costs: components["schemas"]["Money"];
+            profit: components["schemas"]["Money"];
+        };
+        TeamProductMatrix: {
+            period: string;
+            teams: string[];
+            products: string[];
+            cells: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["Money"];
+                };
+            };
+        };
+        CertificationEconomics: {
+            /** Format: uuid */
+            product_id: string;
+            period: string;
+            track_cost: components["schemas"]["Money"];
+            certified_revenue: components["schemas"]["Money"];
+            balance: components["schemas"]["Money"];
+        };
+        BranchCost: {
+            /** Format: uuid */
+            product_id: string;
+            branch: string;
+            cost: components["schemas"]["Money"];
+        };
+        FeatureEconomics: {
+            /** Format: uuid */
+            feature_id: string;
+            investment: components["schemas"]["Money"];
+            revenue: components["schemas"]["Money"];
+            balance: components["schemas"]["Money"];
+        };
+        ScenarioOverride: {
+            field_key: string;
+            /** Format: uuid */
+            product_id?: string;
+            period?: string;
+            value: string;
+        };
+        ScenarioInput: {
+            /** Format: uuid */
+            id?: string;
+            name: string;
+            description?: string;
+            period: string;
+            products?: string[];
+            overrides?: components["schemas"]["ScenarioOverride"][];
+            capacity_shift_days?: number;
+            budget_delta?: components["schemas"]["Money"];
+        };
+        Scenario: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description?: string;
+            period: string;
+            products?: string[];
+            overrides?: components["schemas"]["ScenarioOverride"][];
+            capacity_shift_days?: number;
+            budget_delta?: components["schemas"]["Money"];
+            actor?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        CommitmentImpact: {
+            commitment: {
+                /** Format: uuid */
+                id?: string;
+                /** Format: uuid */
+                product_id?: string;
+                title?: string;
+                /** Format: date */
+                due_date?: string | null;
+                regulatory?: boolean;
+            };
+            breached: boolean;
+            reason?: string;
+        };
+        TrackImpact: {
+            track: {
+                /** Format: uuid */
+                id?: string;
+                /** Format: uuid */
+                product_id?: string;
+                name?: string;
+                planned_cost?: components["schemas"]["Money"];
+                /** Format: date */
+                deadline?: string | null;
+            };
+            at_risk: boolean;
+            shortage?: components["schemas"]["Money"];
+            reason?: string;
+        };
+        ScenarioResult: {
+            scenario: components["schemas"]["Scenario"];
+            metrics?: {
+                [key: string]: string;
+            };
+            base_metrics?: {
+                [key: string]: string;
+            };
+            pnl?: components["schemas"]["PnL"][];
+            base_pnl?: components["schemas"]["PnL"][];
+            commitments?: components["schemas"]["CommitmentImpact"][];
+            tracks?: components["schemas"]["TrackImpact"][];
+        };
+        WinLossCounter: {
+            key: string;
+            won: number;
+            lost: number;
+            amount?: components["schemas"]["Money"];
+        };
+        WinLossReport: {
+            product_key?: string;
+            won: number;
+            lost: number;
+            won_amount?: components["schemas"]["Money"];
+            lost_amount?: components["schemas"]["Money"];
+            by_reason?: components["schemas"]["WinLossCounter"][];
+            by_segment?: components["schemas"]["WinLossCounter"][];
+            features?: {
+                feature?: string;
+                deals?: number;
+                amount?: components["schemas"]["Money"];
+            }[];
+            attach_rate?: {
+                product_key?: string;
+                deals?: number;
+                rate?: string;
+            }[];
+        };
+        VulnerabilityInput: {
+            component: components["schemas"]["Component"];
+            /** @enum {string} */
+            severity: "critical" | "high" | "medium" | "low";
+        };
+        VulnerabilityImpact: {
+            component: components["schemas"]["Component"];
+            severity: string;
+            baselines?: components["schemas"]["CertifiedBaseline"][];
+            deadlines?: {
+                /** Format: uuid */
+                product_id?: string;
+                /** Format: uuid */
+                baseline_id?: string;
+                version?: string;
+                /** Format: uuid */
+                commitment_id?: string;
+                /** Format: date */
+                due_date?: string | null;
+            }[];
+            /** Format: date */
+            reported_at?: string | null;
+        };
+        LaunchEntry: {
+            /** Format: uuid */
+            item_id: string;
+            /** Format: uuid */
+            product_id: string;
+            title: string;
+            /** @enum {string} */
+            tier: "tier1" | "tier2" | "tier3";
+            /** Format: date */
+            launch_date: string | null;
+            /** Format: uuid */
+            release_id?: string;
+            /** @enum {string} */
+            audience?: "internal" | "sales_safe";
+        };
+        LaunchCalendar: {
+            /** Format: date */
+            from?: string | null;
+            /** Format: date */
+            to?: string | null;
+            /** @enum {string} */
+            audience: "internal" | "sales_safe";
+            entries: components["schemas"]["LaunchEntry"][];
+        };
+        Forecast: {
+            /** Format: uuid */
+            feature_id: string;
+            /** Format: uuid */
+            product_id: string;
+            epic_key?: string;
+            remaining: number;
+            throughput?: number[];
+            iteration_days?: number;
+            samples?: number;
+            /** Format: date */
+            from?: string | null;
+            /** Format: date */
+            p50: string | null;
+            /** Format: date */
+            p85: string | null;
+            /** Format: date */
+            p95: string | null;
+            /** Format: date */
+            interval_low?: string | null;
+            /** Format: date */
+            interval_high?: string | null;
+        };
+        WorklogShare: {
+            /** Format: uuid */
+            product_id: string;
+            /** Format: uuid */
+            feature_id?: string;
+            epic_key?: string;
+            /** Format: int64 */
+            seconds: number;
+            share: string;
+        };
+        WorklogReport: {
+            /** Format: date-time */
+            from?: string;
+            /** Format: date-time */
+            to?: string;
+            /** Format: int64 */
+            total_seconds: number;
+            by_product?: components["schemas"]["WorklogShare"][];
+            by_feature?: components["schemas"]["WorklogShare"][];
+        };
+        DashboardPanel: {
+            key: string;
+            title: string;
+            source: string;
+            /** @enum {string} */
+            kind: "table" | "bar" | "line" | "stat";
+            params?: {
+                [key: string]: string;
+            };
+            width?: number;
+        };
+        DashboardInput: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            product_id?: string;
+            name: string;
+            shared?: boolean;
+            panels: components["schemas"]["DashboardPanel"][];
+        };
+        Dashboard: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id?: string;
+            name: string;
+            owner: string;
+            shared?: boolean;
+            panels: components["schemas"]["DashboardPanel"][];
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        LicenseStatus: {
+            installed: boolean;
+            valid: boolean;
+            expired?: boolean;
+            in_grace?: boolean;
+            days_left?: number;
+            reason?: string;
+            license?: {
+                id?: string;
+                customer?: string;
+                edition?: string;
+                /** Format: date */
+                issued_at?: string | null;
+                /** Format: date */
+                not_before?: string | null;
+                /** Format: date */
+                not_after?: string | null;
+                limits?: {
+                    products?: number;
+                    users?: number;
+                };
+                modules?: string[];
+            };
+        };
+        FinanceImportResult: {
+            batch: components["schemas"]["ImportBatch"];
+            rows?: components["schemas"]["FactRow"][];
+        };
+        Component: {
+            /** @description Идентификатор компонента из SBOM (purl */
+            key: string;
+            version?: string;
+        };
+        PipelineCollectInput: {
+            project: string;
+            /** Format: date-time */
+            since?: string;
+        };
+        PipelineCollectResult: {
+            /** Format: uuid */
+            track_id: string;
+            /** Format: uuid */
+            gate_id: string;
+            collected?: components["schemas"]["EvidenceItem"][];
+            skipped?: number;
+            components_saved?: number;
+            sbom?: components["schemas"]["Component"][];
+        };
+        /** @description Измеримая часть ожидаемого эффекта решения (DA-06) */
+        DecisionEffect: {
+            metric_key?: string;
+            /** @description Десятичное значение строкой */
+            value?: string;
+            period?: string;
+        };
+        DecisionReview: {
+            /** Format: date-time */
+            at: string;
+            actor: string;
+            expected: string;
+            actual: string;
+            delta: string;
+            /** @enum {string} */
+            verdict: "confirmed" | "partial" | "missed";
+            comment?: string;
         };
     };
     responses: {
@@ -2789,6 +4021,13 @@ export interface components {
         gateId: string;
         decisionId: string;
         entity: "feature" | "signal" | "hypothesis";
+        teamId: string;
+        scenarioId: string;
+        dashboardId: string;
+        metricKey: string;
+        /** @description Расчётный период в формате YYYY-MM */
+        periodQuery: string;
+        productQuery: string;
     };
     requestBodies: never;
     headers: never;
@@ -6040,6 +7279,1090 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listFinancialFields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialField"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveFinancialField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinancialFieldInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancialField"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Metric"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveMetric: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MetricInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Metric"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getMetricValue: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+                productId?: components["parameters"]["productQuery"];
+            };
+            header?: never;
+            path: {
+                metricKey: components["parameters"]["metricKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricValue"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    explainMetric: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+                productId?: components["parameters"]["productQuery"];
+            };
+            header?: never;
+            path: {
+                metricKey: components["parameters"]["metricKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Explanation"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    compareMetricVersions: {
+        parameters: {
+            query: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+                productId?: components["parameters"]["productQuery"];
+                a: number;
+                b: number;
+            };
+            header?: never;
+            path: {
+                metricKey: components["parameters"]["metricKey"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricComparison"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listImportTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportTemplate"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveImportTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportTemplateInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportTemplate"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listImportBatches: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportBatch"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    importFinanceFile: {
+        parameters: {
+            query: {
+                templateId: string;
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+                fileName?: string;
+                /** @description Только предпросмотр, без сохранения */
+                preview?: boolean;
+                /** @description Разрешить загрузку в закрытый период (EC-11) */
+                force?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceImportResult"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listAllocationRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllocationRule"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveAllocationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AllocationRuleInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllocationRule"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listBundleRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleRule"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveBundleRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BundleRuleInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleRule"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listTeams: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Team"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createTeam: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TeamInput"];
+            };
+        };
+        responses: {
+            /** @description Создано */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Team"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setTeamShares: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                teamId: components["parameters"]["teamId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TeamSharesInput"];
+            };
+        };
+        responses: {
+            /** @description Сохранено */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getPortfolioPnL: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioPnL"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getProductPnL: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PnL"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getTeamProductMatrix: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamProductMatrix"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getCertificationEconomics: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertificationEconomics"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getBranchCosts: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchCost"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getFeatureEconomics: {
+        parameters: {
+            query?: {
+                /** @description Расчётный период в формате YYYY-MM */
+                period?: components["parameters"]["periodQuery"];
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeatureEconomics"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    closePeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Закрыт */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listScenarios: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scenario"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveScenario: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scenario"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    runScenario: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenarioId: components["parameters"]["scenarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    metrics?: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioResult"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getWinLoss: {
+        parameters: {
+            query?: {
+                productKey?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WinLossReport"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    reportVulnerableComponent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VulnerabilityInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VulnerabilityImpact"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listDecisionsDueForReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    reviewDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisionId: components["parameters"]["decisionId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    comment?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Decision"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getLaunchCalendar: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LaunchCalendar"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getFeatureForecast: {
+        parameters: {
+            query?: {
+                samples?: number;
+                /** @description Зерно генератора для воспроизводимого прогноза */
+                seed?: string;
+            };
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Forecast"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getWorklogCostBase: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorklogReport"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listDashboards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listDashboardSources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: components["parameters"]["dashboardId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: components["parameters"]["dashboardId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Удалён */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getLicenseStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LicenseStatus"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    installLicense: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    key: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LicenseStatus"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    collectPipelineEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trackId: components["parameters"]["trackId"];
+                gateId: components["parameters"]["gateId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PipelineCollectInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineCollectResult"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setBaselineComponents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                baselineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    components: components["schemas"]["Component"][];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertifiedBaseline"];
+                };
             };
             default: components["responses"]["Problem"];
         };

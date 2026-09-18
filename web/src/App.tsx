@@ -17,6 +17,7 @@ import { TracePage } from './pages/TracePage'
 import { DeliveryPage } from './pages/DeliveryPage'
 import { HubPage } from './pages/HubPage'
 import { LoginPage } from './pages/LoginPage'
+import { PortfolioPage } from './pages/PortfolioPage'
 import { ProductBuilderPage } from './pages/ProductBuilderPage'
 import { ProductPage } from './pages/ProductPage'
 import { ProductsPage } from './pages/ProductsPage'
@@ -77,6 +78,7 @@ export default function App() {
                 <Route path="/trace/:kind/:id" element={<TracePage />} />
                 <Route path="/hub" element={<HubPage />} />
                 <Route path="/delivery" element={<DeliveryPage />} />
+                <Route path="/portfolio" element={<PortfolioPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="*" element={<NotFound />} />
               </Route>

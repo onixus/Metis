@@ -67,6 +67,9 @@ type ItemInput struct {
 	Audience  authz.Audience
 	Status    ItemStatus
 	Kind      ItemKind // по умолчанию feature (RM-04)
+	// LaunchTier и LaunchDate — уровень и дата запуска для маркетинга (RM-06).
+	LaunchTier LaunchTier
+	LaunchDate kernel.Date
 }
 
 func validateDates(start, end kernel.Date) error {
@@ -94,6 +97,12 @@ func (s *Service) validateItem(ctx context.Context, productID kernel.ID, in Item
 	}
 	if err := validateDates(in.StartDate, in.EndDate); err != nil {
 		return err
+	}
+	if !ValidLaunchTier(in.LaunchTier) {
+		return kernel.Invalid("launch_tier", "допустимы tier1, tier2, tier3 или пусто")
+	}
+	if in.LaunchTier != LaunchNone && in.LaunchDate.IsZero() {
+		return kernel.Invalid("launch_date", "для уровня запуска нужна дата запуска")
 	}
 	if in.ReleaseID != kernel.NilID {
 		r, err := s.store.Release(ctx, in.ReleaseID)
@@ -132,7 +141,7 @@ func (s *Service) CreateItem(ctx context.Context, sc authz.Scope, productID kern
 	it := RoadmapItem{
 		ID: kernel.NewID(), ProductID: productID, FeatureID: in.FeatureID, Title: in.Title, Bucket: in.Bucket,
 		StartDate: in.StartDate, EndDate: in.EndDate, ReleaseID: in.ReleaseID, Audience: in.Audience, Status: in.Status,
-		Kind: in.Kind, CreatedAt: now, UpdatedAt: now,
+		Kind: in.Kind, LaunchTier: in.LaunchTier, LaunchDate: in.LaunchDate, CreatedAt: now, UpdatedAt: now,
 	}
 	if err := s.store.SaveItem(ctx, it); err != nil {
 		return RoadmapItem{}, fmt.Errorf("save item: %w", err)
@@ -166,6 +175,7 @@ func (s *Service) UpdateItem(ctx context.Context, sc authz.Scope, id kernel.ID, 
 	}
 	it.FeatureID, it.Title, it.Bucket, it.ReleaseID, it.Audience, it.Status, it.Kind =
 		in.FeatureID, in.Title, in.Bucket, in.ReleaseID, in.Audience, in.Status, in.Kind
+	it.LaunchTier, it.LaunchDate = in.LaunchTier, in.LaunchDate
 	it.UpdatedAt = s.clock.Now()
 	if err := s.store.SaveItem(ctx, it); err != nil {
 		return RoadmapItem{}, fmt.Errorf("save item: %w", err)
@@ -857,4 +867,40 @@ func sortReleases(rels []Release) {
 		}
 		return a.ID.String() < b.ID.String()
 	})
+}
+
+// ---- Уровни запуска и календарь (RM-06) ----
+
+// LaunchCalendar собирает календарь запусков продукта за период. Аудитория берётся из Scope:
+// sales-safe видит только элементы своего среза (RM-02).
+func (s *Service) LaunchCalendar(ctx context.Context, sc authz.Scope, productID kernel.ID, from, to kernel.Date) (LaunchCalendar, error) {
+	items, err := s.visibleItems(ctx, sc, productID)
+	if err != nil {
+		return LaunchCalendar{}, err
+	}
+	cal := LaunchCalendar{From: from, To: to, Audience: sc.Audience(), Entries: make([]LaunchEntry, 0)}
+	for _, it := range items {
+		if it.LaunchTier == LaunchNone || it.LaunchDate.IsZero() {
+			continue
+		}
+		if !from.IsZero() && it.LaunchDate.Before(from) {
+			continue
+		}
+		if !to.IsZero() && it.LaunchDate.After(to) {
+			continue
+		}
+		cal.Entries = append(cal.Entries, LaunchEntry{ItemID: it.ID, ProductID: it.ProductID, Title: it.Title,
+			Tier: it.LaunchTier, LaunchDate: it.LaunchDate, ReleaseID: it.ReleaseID, Audience: it.Audience})
+	}
+	sort.SliceStable(cal.Entries, func(i, j int) bool {
+		a, b := cal.Entries[i], cal.Entries[j]
+		if a.LaunchDate != b.LaunchDate {
+			return a.LaunchDate.Before(b.LaunchDate)
+		}
+		if a.Tier != b.Tier {
+			return a.Tier < b.Tier
+		}
+		return a.Title < b.Title
+	})
+	return cal, nil
 }

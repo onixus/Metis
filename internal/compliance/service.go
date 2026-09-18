@@ -13,6 +13,7 @@ import (
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/portfoliograph"
+	"github.com/onixus/metis/internal/ports"
 )
 
 // GraphReader — нужная compliance часть публичного интерфейса portfoliograph (инвариант 1).
@@ -46,6 +47,9 @@ type Service struct {
 	releases ReleaseReader
 	pub      kernel.Publisher
 	clock    kernel.Clock
+	// Этап 3: запуск регуляторных сроков (CM-08) и автосбор доказательств (CM-09).
+	deadlines DeadlineRegistrar
+	pipeline  ports.SecurityPipeline
 
 	mu       sync.RWMutex
 	settings Settings

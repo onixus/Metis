@@ -21,6 +21,7 @@ type ComplianceBaseline struct {
 	CertifiedAt      pgtype.Date
 	Eol              pgtype.Date
 	CreatedAt        time.Time
+	Components       []byte
 }
 
 type ComplianceEvidenceLog struct {

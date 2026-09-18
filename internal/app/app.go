@@ -18,7 +18,10 @@ import (
 
 	"github.com/onixus/metis/internal/adapters/confluence"
 	"github.com/onixus/metis/internal/adapters/crmfile"
+	"github.com/onixus/metis/internal/adapters/financexlsx"
 	"github.com/onixus/metis/internal/adapters/jira"
+	"github.com/onixus/metis/internal/adapters/securityfile"
+	"github.com/onixus/metis/internal/analytics"
 	"github.com/onixus/metis/internal/audit"
 	auditpg "github.com/onixus/metis/internal/audit/pgstore"
 	"github.com/onixus/metis/internal/commitments"
@@ -31,6 +34,7 @@ import (
 	deliverypg "github.com/onixus/metis/internal/delivery/pgstore"
 	"github.com/onixus/metis/internal/discovery"
 	discoverypg "github.com/onixus/metis/internal/discovery/pgstore"
+	"github.com/onixus/metis/internal/economics"
 	"github.com/onixus/metis/internal/httpapi"
 	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
@@ -38,6 +42,8 @@ import (
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/outbox"
 	"github.com/onixus/metis/internal/kernel/pgdb"
+	"github.com/onixus/metis/internal/licensing"
+	"github.com/onixus/metis/internal/marketing"
 	"github.com/onixus/metis/internal/observability"
 	"github.com/onixus/metis/internal/portfoliograph"
 	graphpg "github.com/onixus/metis/internal/portfoliograph/pgstore"
@@ -68,11 +74,18 @@ type Config struct {
 	ConfluenceBaseURL string // METIS_CONFLUENCE_BASE_URL
 	ConfluenceToken   string // METIS_CONFLUENCE_TOKEN
 	ConfluenceSpace   string // METIS_CONFLUENCE_SPACE (пространство страниц ADR по умолчанию)
-	CRMDir            string // METIS_CRM_DIR (каталог CSV-выгрузок)
-	Seed              bool   // METIS_SEED: загрузить референсные портфели
-	OTelExport        string // METIS_OTEL_EXPORTER: stdout | otlp | none
-	LogLevel          string // METIS_LOG_LEVEL
-	Version           string
+	CRMDir            string
+	// Этап 3.
+	SecurityDir     string        // METIS_SECURITY_DIR (манифесты пайплайна безопасности, CM-09)
+	LicenseKey      string        // METIS_LICENSE_KEY (ключ поставки, AD-06)
+	LicensePubKey   string        // METIS_LICENSE_PUBKEY (публичный ключ поставщика, base64)
+	FinanceDir      string        // METIS_FINANCE_DIR (каталог книг XLSX для загрузки по расписанию, EC-01)
+	FinanceTemplate string        // METIS_FINANCE_TEMPLATE (название шаблона импорта)
+	FinanceInterval time.Duration // METIS_FINANCE_INTERVAL (интервал загрузки, по умолчанию 1h) // METIS_CRM_DIR (каталог CSV-выгрузок)
+	Seed            bool          // METIS_SEED: загрузить референсные портфели
+	OTelExport      string        // METIS_OTEL_EXPORTER: stdout | otlp | none
+	LogLevel        string        // METIS_LOG_LEVEL
+	Version         string
 }
 
 // FromEnv читает конфигурацию из окружения.
@@ -92,11 +105,19 @@ func FromEnv() (Config, error) {
 		ConfluenceToken:   os.Getenv("METIS_CONFLUENCE_TOKEN"),
 		ConfluenceSpace:   envOr("METIS_CONFLUENCE_SPACE", "METIS"),
 		CRMDir:            os.Getenv("METIS_CRM_DIR"),
+		SecurityDir:       os.Getenv("METIS_SECURITY_DIR"),
+		LicenseKey:        os.Getenv("METIS_LICENSE_KEY"),
+		LicensePubKey:     os.Getenv("METIS_LICENSE_PUBKEY"),
+		FinanceDir:        os.Getenv("METIS_FINANCE_DIR"),
+		FinanceTemplate:   os.Getenv("METIS_FINANCE_TEMPLATE"),
 		OTelExport:        envOr("METIS_OTEL_EXPORTER", "none"),
 		LogLevel:          envOr("METIS_LOG_LEVEL", "info"),
 		Version:           envOr("METIS_VERSION", "0.1.0"),
 	}
 	var err error
+	if c.FinanceInterval, err = envDuration("METIS_FINANCE_INTERVAL", time.Hour); err != nil {
+		return c, err
+	}
 	if c.Migrate, err = envBool("METIS_MIGRATE"); err != nil {
 		return c, err
 	}
@@ -142,6 +163,10 @@ type App struct {
 	Commitments    *commitments.Service
 	Compliance     *compliance.Service
 	Decisions      *decisions.Service
+	Economics      *economics.Service
+	Marketing      *marketing.Service
+	Analytics      *analytics.Service
+	Licensing      *licensing.Service
 	// Index — индекс похожести сигналов (SG-04); в памяти до появления pgvector-хранилища.
 	Index         *discovery.MemIndex
 	Audit         *audit.Logger
@@ -232,6 +257,29 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		discovery.WithSignals(a.Signals), discovery.WithSignalMerger(a.Signals), discovery.WithSignalLinker(a.Signals),
 		discovery.WithFeatures(a.Portfolio), discovery.WithDecisions(decisionLinks{a.Decisions}), discovery.WithIndex(index))
 
+	// Этап 3: экономика, маркетинг, конструктор дашбордов, лицензия поставки.
+	// compliance получает реестр сроков (CM-08 → CT-02) и пайплайн безопасности (CM-09).
+	a.Compliance = a.Compliance.WithDeadlines(deadlineAdapter{svc: a.Commitments})
+	if cfg.SecurityDir != "" {
+		a.Compliance = a.Compliance.WithPipeline(securityfile.New(cfg.SecurityDir))
+	}
+	econ, err := economics.NewService(economics.NewMemStore(), pub, clock, economics.DefaultConfig())
+	if err != nil {
+		return nil, fmt.Errorf("экономика: %w", err)
+	}
+	a.Economics = econ.
+		WithImport(financexlsx.New(), a.Portfolio).
+		WithAuditor(financeAuditor{a.Audit}).
+		WithTrackCosts(a.Compliance).
+		WithCommitments(commitmentsAdapter{svc: a.Commitments}).
+		WithTracks(tracksAdapter{svc: a.Compliance})
+	a.Decisions = a.Decisions.WithMetrics(metricsAdapter{svc: a.Economics})
+	a.Analytics = analytics.NewService(analytics.NewMemStore(), clock)
+	a.Licensing, err = buildLicensing(cfg, clock, a.Audit, log)
+	if err != nil {
+		return nil, err
+	}
+
 	// Delivery: адаптер Jira подключается только при заданном URL; ядро работает без него (NF-L03).
 	var tracker ports.DeliveryTracker
 	if cfg.JiraBaseURL != "" {
@@ -303,6 +351,22 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		}, identityaccess.ServiceScope("seed")); err != nil {
 			return nil, fmt.Errorf("seed этапа 2: %w", err)
 		}
+		// Этап 3: финансовые поля, показатели, шаблон импорта и правило аллокации затрат хаба SOAR.
+		soar, err := a.Portfolio.ProductIDByKey(ctx, "soar")
+		if err != nil {
+			return nil, fmt.Errorf("seed этапа 3: продукт soar: %w", err)
+		}
+		shares := map[kernel.ID]string{}
+		for key, share := range map[string]string{"edr": "0.4", "vm": "0.3", "deception": "0.3"} {
+			id, err := a.Portfolio.ProductIDByKey(ctx, key)
+			if err != nil {
+				return nil, fmt.Errorf("seed этапа 3: продукт %s: %w", key, err)
+			}
+			shares[id] = share
+		}
+		if _, err := seed.Economics(ctx, a.Economics, identityaccess.FinanceServiceScope("seed"), soar, shares); err != nil {
+			return nil, fmt.Errorf("seed этапа 3: %w", err)
+		}
 	}
 
 	shutdown, err := observability.Tracing(ctx, "metis-api", cfg.Version, cfg.OTelExport)
@@ -317,6 +381,8 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		Portfolio: a.Portfolio, AuditStore: auditStore, Audit: a.Audit,
 		Signals: a.Signals, Prioritization: a.Prioritization, Roadmap: a.Roadmap, CRM: crm,
 		Discovery: a.Discovery, Commitments: a.Commitments, Compliance: a.Compliance, Decisions: a.Decisions,
+		Economics: a.Economics, Analytics: a.Analytics, Licensing: a.Licensing, Delivery: a.Delivery,
+		Marketing:      marketing.NewService(crm).WithProducts(a.Portfolio),
 		KnowledgeSpace: knowledgeSpace(cfg),
 		Ready:          a.ready,
 		Metrics:        metrics.Handler(),

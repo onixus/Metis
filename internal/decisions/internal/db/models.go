@@ -34,4 +34,8 @@ type DecisionsRecord struct {
 	Author         string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	EffectMetric   string
+	EffectValue    string
+	EffectPeriod   string
+	Review         []byte
 }

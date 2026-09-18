@@ -106,8 +106,13 @@ func newEnv(t *testing.T) *env {
 }
 
 func (e *env) client(subject string, roles, products []string) *client.ClientWithResponses {
+	return e.clientFinance(subject, roles, products, "")
+}
+
+// clientFinance — клиент с заданным уровнем доступа к финансовым данным (NF-S02).
+func (e *env) clientFinance(subject string, roles, products []string, finance string) *client.ClientWithResponses {
 	e.t.Helper()
-	tok, err := identityaccess.MintHS256([]byte(secret), issuer, subject, roles, products, "", time.Hour, kernel.SystemClock{})
+	tok, err := identityaccess.MintHS256([]byte(secret), issuer, subject, roles, products, finance, time.Hour, kernel.SystemClock{})
 	if err != nil {
 		e.t.Fatal(err)
 	}

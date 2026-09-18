@@ -10,12 +10,17 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/onixus/metis/api"
+	"github.com/onixus/metis/internal/analytics"
 	"github.com/onixus/metis/internal/audit"
 	"github.com/onixus/metis/internal/commitments"
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/decisions"
+	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/discovery"
+	"github.com/onixus/metis/internal/economics"
 	"github.com/onixus/metis/internal/httpapi/gen"
+	"github.com/onixus/metis/internal/licensing"
+	"github.com/onixus/metis/internal/marketing"
 	"github.com/onixus/metis/internal/portfoliograph"
 	"github.com/onixus/metis/internal/ports"
 	"github.com/onixus/metis/internal/prioritization"
@@ -39,6 +44,12 @@ type Deps struct {
 	Commitments    *commitments.Service
 	Compliance     *compliance.Service
 	Decisions      *decisions.Service
+	// Модули этапа 3.
+	Economics *economics.Service
+	Marketing *marketing.Service
+	Analytics *analytics.Service
+	Licensing *licensing.Service
+	Delivery  *delivery.Service
 	// KnowledgeSpace — пространство базы знаний по умолчанию для страниц ADR (METIS_CONFLUENCE_SPACE).
 	KnowledgeSpace string
 	// Ready сообщает о готовности зависимостей (БД, миграции) для /readyz.

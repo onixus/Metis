@@ -1,10 +1,10 @@
 -- name: UpsertItem :exec
-INSERT INTO roadmap.items (id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+INSERT INTO roadmap.items (id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at, launch_tier, launch_date)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, feature_id = EXCLUDED.feature_id, title = EXCLUDED.title,
   bucket = EXCLUDED.bucket, start_date = EXCLUDED.start_date, end_date = EXCLUDED.end_date, release_id = EXCLUDED.release_id,
   audience = EXCLUDED.audience, status = EXCLUDED.status, kind = EXCLUDED.kind, commitment_id = EXCLUDED.commitment_id,
-  updated_at = EXCLUDED.updated_at;
+  updated_at = EXCLUDED.updated_at, launch_tier = EXCLUDED.launch_tier, launch_date = EXCLUDED.launch_date;
 
 -- name: GetItem :one
 SELECT * FROM roadmap.items WHERE id = $1;

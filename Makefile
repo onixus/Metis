@@ -37,8 +37,9 @@ build:
 	go build -trimpath -ldflags="-s -w" -o bin/api ./cmd/api
 	go build -trimpath -ldflags="-s -w" -o bin/worker ./cmd/worker
 
+# Исключения уязвимостей перечислены в scripts/govulncheck.sh и обоснованы в ADR-0005.
 vuln:
-	govulncheck ./...
+	./scripts/govulncheck.sh
 
 licenses:
 	go-licenses check --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,Zlib,MPL-2.0 ./...

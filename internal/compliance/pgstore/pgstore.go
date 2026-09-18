@@ -317,7 +317,8 @@ func unmarshalComponents(raw []byte) []compliance.Component {
 		return nil
 	}
 	var out []compliance.Component
-	if err := json.Unmarshal(raw, &out); err != nil {
+	if err := json.Unmarshal(raw, &out); err != nil || len(out) == 0 {
+		// Пустой состав хранится как «[]»: в домене это отсутствие состава, а не пустой срез.
 		return nil
 	}
 	return out

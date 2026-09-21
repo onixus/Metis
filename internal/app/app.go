@@ -83,6 +83,7 @@ type Config struct {
 	FinanceTemplate string        // METIS_FINANCE_TEMPLATE (название шаблона импорта)
 	FinanceInterval time.Duration // METIS_FINANCE_INTERVAL (интервал загрузки, по умолчанию 1h) // METIS_CRM_DIR (каталог CSV-выгрузок)
 	Seed            bool          // METIS_SEED: загрузить референсные портфели
+	SeedAPEX        bool          // METIS_SEED_APEX: загрузить канонический портфель APEX
 	OTelExport      string        // METIS_OTEL_EXPORTER: stdout | otlp | none
 	LogLevel        string        // METIS_LOG_LEVEL
 	Version         string
@@ -122,6 +123,9 @@ func FromEnv() (Config, error) {
 		return c, err
 	}
 	if c.Seed, err = envBool("METIS_SEED"); err != nil {
+		return c, err
+	}
+	if c.SeedAPEX, err = envBool("METIS_SEED_APEX"); err != nil {
 		return c, err
 	}
 	if c.Storage == "postgres" && c.DatabaseURL == "" {
@@ -346,9 +350,6 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		if _, err := seed.Infrastructure(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
 			return nil, fmt.Errorf("seed: %w", err)
 		}
-		if _, err := seed.APEX(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
-			return nil, fmt.Errorf("seed APEX: %w", err)
-		}
 		if err := seed.Stage2(ctx, seed.Stage2Deps{
 			Portfolio: a.Portfolio, Roadmap: a.Roadmap, Compliance: a.Compliance, Commitments: a.Commitments, Discovery: a.Discovery, Decisions: a.Decisions,
 		}, identityaccess.ServiceScope("seed")); err != nil {
@@ -369,6 +370,11 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		}
 		if _, err := seed.Economics(ctx, a.Economics, identityaccess.FinanceServiceScope("seed"), soar, shares); err != nil {
 			return nil, fmt.Errorf("seed этапа 3: %w", err)
+		}
+	}
+	if cfg.SeedAPEX {
+		if _, err := seed.APEX(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
+			return nil, fmt.Errorf("seed APEX: %w", err)
 		}
 	}
 

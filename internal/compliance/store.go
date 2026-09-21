@@ -27,6 +27,10 @@ func (f TrackFilter) matches(t Track) bool {
 // Store — хранилище каталога, треков, оценок влияния и baseline. Авторизация — в Service.
 // Журнал доказательств — отдельный EvidenceStore (только INSERT).
 type Store interface {
+	// Settings возвращает сохранённые настройки модуля. Пустое хранилище возвращает DefaultSettings.
+	Settings(ctx context.Context) (Settings, error)
+	SaveSettings(ctx context.Context, st Settings) error
+
 	SaveRequirementSet(ctx context.Context, rs RequirementSet) error
 	RequirementSet(ctx context.Context, id kernel.ID) (RequirementSet, error)
 	// RequirementSets возвращает наборы по коду (пустой код — все) по возрастанию версии.
@@ -63,10 +67,39 @@ type MemStore struct {
 	tracks    []Track
 	impacts   []ImpactAssessment
 	baselines []CertifiedBaseline
+	settings  Settings
 }
 
-// NewMemStore создаёт пустое хранилище.
-func NewMemStore() *MemStore { return &MemStore{} }
+// NewMemStore создаёт пустое хранилище с настройками по умолчанию.
+func NewMemStore() *MemStore { return &MemStore{settings: cloneSettings(DefaultSettings())} }
+
+func cloneSettings(st Settings) Settings {
+	out := st
+	out.CostByClass = make(map[ImpactClass]kernel.Money, len(st.CostByClass))
+	for k, v := range st.CostByClass {
+		out.CostByClass[k] = v
+	}
+	out.VulnerabilityFixDays = make(map[Severity]int, len(st.VulnerabilityFixDays))
+	for k, v := range st.VulnerabilityFixDays {
+		out.VulnerabilityFixDays[k] = v
+	}
+	return out
+}
+
+// Settings возвращает копию настроек.
+func (m *MemStore) Settings(_ context.Context) (Settings, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return cloneSettings(m.settings), nil
+}
+
+// SaveSettings сохраняет копию настроек.
+func (m *MemStore) SaveSettings(_ context.Context, st Settings) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.settings = cloneSettings(st)
+	return nil
+}
 
 // SaveRequirementSet создаёт или обновляет набор.
 func (m *MemStore) SaveRequirementSet(_ context.Context, rs RequirementSet) error {

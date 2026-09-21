@@ -35,13 +35,44 @@ func openTestDB(t *testing.T) *pgdb.DB {
 	}
 	// TRUNCATE не проходит через триггер строк; журналы тестовой БД чистятся от владельца.
 	if _, err := db.Pool().Exec(ctx, `TRUNCATE compliance.requirement_sets, compliance.track_templates, compliance.tracks,
-		compliance.impact_assessments, compliance.baselines, compliance.evidence_log`); err != nil {
+		compliance.impact_assessments, compliance.baselines, compliance.evidence_log, compliance.settings`); err != nil {
 		t.Fatal(err)
 	}
 	return db
 }
 
 var now = time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
+
+func TestCM03_PGStoreSettingsPersist(t *testing.T) {
+	db := openTestDB(t)
+	ctx := context.Background()
+	store := pgstore.New(db)
+
+	defaults, err := store.Settings(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(defaults, compliance.DefaultSettings()) {
+		t.Fatalf("defaults:\n got %+v\nwant %+v", defaults, compliance.DefaultSettings())
+	}
+
+	want := compliance.DefaultSettings()
+	want.BaselineLifetimeYears = 7
+	want.VulnerabilityFixDays[compliance.SeverityCritical] = 21
+	want.CostByClass[compliance.ImpactSecurityFunctions] = kernel.RUB(420_000_00)
+	if err := store.SaveSettings(ctx, want); err != nil {
+		t.Fatal(err)
+	}
+
+	// Новый Store моделирует пересоздание API после рестарта процесса.
+	got, err := pgstore.New(db).Settings(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("settings after restart:\n got %+v\nwant %+v", got, want)
+	}
+}
 
 func TestCM01_PGStoreRequirementSets(t *testing.T) {
 	db := openTestDB(t)

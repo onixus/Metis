@@ -164,7 +164,11 @@ func (s *Service) ReportVulnerableComponent(ctx context.Context, sc authz.Scope,
 		}
 		return impact, nil
 	}
-	due := today.AddDays(s.vulnerabilityDays(ctx, severity))
+	days, err := s.vulnerabilityDays(ctx, severity)
+	if err != nil {
+		return VulnerabilityImpact{}, err
+	}
+	due := today.AddDays(days)
 	for _, b := range impact.Baselines {
 		if err := sc.Require(authz.ActionWriteCommitments, b.ProductID); err != nil {
 			return VulnerabilityImpact{}, err
@@ -201,22 +205,26 @@ func vulnerabilityBasis(c Component, baselineID kernel.ID) string {
 
 // vulnerabilityDays — регуляторный срок устранения по критичности (TODO(question-31):
 // значения не заданы ТЗ, уточняются у compliance-офицера).
-func (s *Service) vulnerabilityDays(ctx context.Context, severity Severity) int {
+func (s *Service) vulnerabilityDays(ctx context.Context, severity Severity) (int, error) {
 	st, err := s.Settings(ctx)
-	if err == nil {
-		if days, ok := st.VulnerabilityFixDays[severity]; ok && days > 0 {
-			return days
-		}
+	if err != nil {
+		// После персистирования Settings ошибка чтения означает, что мы не знаем
+		// настроенный регуляторный SLA. Молчаливый fallback мог бы создать
+		// обязательство с неверной юридически значимой датой.
+		return 0, fmt.Errorf("настройки срока устранения уязвимости: %w", err)
+	}
+	if days, ok := st.VulnerabilityFixDays[severity]; ok && days > 0 {
+		return days, nil
 	}
 	switch severity {
 	case SeverityCritical:
-		return 30
+		return 30, nil
 	case SeverityHigh:
-		return 60
+		return 60, nil
 	case SeverityMedium:
-		return 90
+		return 90, nil
 	default:
-		return 180
+		return 180, nil
 	}
 }
 

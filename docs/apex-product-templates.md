@@ -4,8 +4,10 @@
 
 Этот набор связывает Metis с каноническим реестром APEX, не смешивая его с
 демонстрационными портфелями EDR/SOAR/VM и Infrastructure. При
-`METIS_SEED=true` Metis создаёт восемь участников APEX и четыре ключевых
-workstream-фичи для каждого.
+`METIS_SEED_APEX=true` Metis создаёт восемь участников APEX и четыре ключевых
+workstream-фичи для каждого. `METIS_SEED=true` оставлен только для стабильных
+reference/acceptance fixtures: APEX seed отделён намеренно, чтобы не менять
+их outbox и сценарную семантику.
 
 ## Как считаются цифры
 

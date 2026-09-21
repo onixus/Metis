@@ -72,6 +72,26 @@ func TestCM03_PGStoreSettingsPersist(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("settings after restart:\n got %+v\nwant %+v", got, want)
 	}
+
+	// Store обязан участвовать в транзакции из context, как остальные PG-хранилища.
+	rolledBack := compliance.DefaultSettings()
+	rolledBack.BaselineLifetimeYears = 99
+	rollbackErr := errors.New("rollback settings")
+	if err := db.Transact(ctx, func(txCtx context.Context) error {
+		if err := store.SaveSettings(txCtx, rolledBack); err != nil {
+			return err
+		}
+		return rollbackErr
+	}); !errors.Is(err, rollbackErr) {
+		t.Fatalf("rollback transaction: %v", err)
+	}
+	got, err = store.Settings(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("settings escaped rolled back transaction:\n got %+v\nwant %+v", got, want)
+	}
 }
 
 func TestCM01_PGStoreRequirementSets(t *testing.T) {

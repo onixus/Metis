@@ -32,14 +32,16 @@ func (s *Store) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(
 // Settings возвращает сохранённые настройки. До первой записи используются доменные значения по умолчанию.
 func (s *Store) Settings(ctx context.Context) (compliance.Settings, error) {
 	var raw []byte
-	err := s.db.Pool().QueryRow(ctx, `SELECT value FROM compliance.settings WHERE id = 1`).Scan(&raw)
+	err := pgdb.Querier(ctx, s.db).QueryRow(ctx, `SELECT value FROM compliance.settings WHERE id = 1`).Scan(&raw)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return compliance.DefaultSettings(), nil
 	}
 	if err != nil {
 		return compliance.Settings{}, fmt.Errorf("compliance settings: %w", pgdb.MapError(err))
 	}
-	var st compliance.Settings
+	// Начинаем с доменных defaults: при добавлении нового поля старые JSON-записи
+	// получают безопасное значение, а не Go zero value.
+	st := compliance.DefaultSettings()
 	if err := json.Unmarshal(raw, &st); err != nil {
 		return compliance.Settings{}, fmt.Errorf("compliance settings: decode: %w", err)
 	}
@@ -52,7 +54,7 @@ func (s *Store) SaveSettings(ctx context.Context, st compliance.Settings) error 
 	if err != nil {
 		return fmt.Errorf("compliance settings: encode: %w", err)
 	}
-	_, err = s.db.Pool().Exec(ctx, `
+	_, err = pgdb.Querier(ctx, s.db).Exec(ctx, `
 		INSERT INTO compliance.settings (id, value, updated_at)
 		VALUES (1, $1, now())
 		ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at

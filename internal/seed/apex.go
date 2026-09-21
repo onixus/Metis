@@ -30,12 +30,12 @@ func APEXStatusWeight(s pg.FeatureStatus) int {
 // APEXFeatureTemplate is one evidence-backed workstream in a product template.
 // EffortPoints are relative engineering points used only for portfolio planning.
 type APEXFeatureTemplate struct {
-	Name             string
-	Status           pg.FeatureStatus
-	PlannedDate      kernel.Date
-	EffortPoints     int
-	ConfidencePct    int
-	Evidence         string
+	Name          string
+	Status        pg.FeatureStatus
+	PlannedDate   kernel.Date
+	EffortPoints  int
+	ConfidencePct int
+	Evidence      string
 }
 
 // APEXProductTemplate is the seed template for one canonical APEX participant.

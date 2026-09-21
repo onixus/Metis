@@ -5,7 +5,10 @@ package pgstore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/compliance/internal/db"
@@ -25,6 +28,40 @@ var _ compliance.Store = (*Store)(nil)
 func New(d *pgdb.DB) *Store { return &Store{db: d} }
 
 func (s *Store) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
+
+// Settings возвращает сохранённые настройки. До первой записи используются доменные значения по умолчанию.
+func (s *Store) Settings(ctx context.Context) (compliance.Settings, error) {
+	var raw []byte
+	err := s.db.Pool().QueryRow(ctx, `SELECT value FROM compliance.settings WHERE id = 1`).Scan(&raw)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return compliance.DefaultSettings(), nil
+	}
+	if err != nil {
+		return compliance.Settings{}, fmt.Errorf("compliance settings: %w", pgdb.MapError(err))
+	}
+	var st compliance.Settings
+	if err := json.Unmarshal(raw, &st); err != nil {
+		return compliance.Settings{}, fmt.Errorf("compliance settings: decode: %w", err)
+	}
+	return st, nil
+}
+
+// SaveSettings сохраняет singleton-настройки модуля.
+func (s *Store) SaveSettings(ctx context.Context, st compliance.Settings) error {
+	raw, err := json.Marshal(st)
+	if err != nil {
+		return fmt.Errorf("compliance settings: encode: %w", err)
+	}
+	_, err = s.db.Pool().Exec(ctx, `
+		INSERT INTO compliance.settings (id, value, updated_at)
+		VALUES (1, $1, now())
+		ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
+	`, raw)
+	if err != nil {
+		return fmt.Errorf("compliance settings: %w", pgdb.MapError(err))
+	}
+	return nil
+}
 
 // SaveRequirementSet создаёт или обновляет набор требований.
 func (s *Store) SaveRequirementSet(ctx context.Context, rs compliance.RequirementSet) error {

@@ -34,7 +34,8 @@ cd web && npm ci && npm run dev
 | `METIS_STORAGE` | `postgres` (по умолчанию) или `memory` |
 | `METIS_DATABASE_URL` | строка подключения PostgreSQL |
 | `METIS_MIGRATE` | применить миграции при старте |
-| `METIS_SEED` | загрузить референсные портфели |
+| `METIS_SEED` | загрузить референсные портфели acceptance-сценариев |
+| `METIS_SEED_APEX` | загрузить канонический портфель APEX; не меняет acceptance fixtures |
 | `METIS_AUTH_MODE` | `oidc` (по умолчанию) или `hmac` (только стенд/e2e) |
 | `METIS_OIDC_ISSUER`, `METIS_OIDC_CLIENT_ID` | параметры IdP |
 | `METIS_HMAC_SECRET`, `METIS_HMAC_ISSUER` | секрет и издатель токенов стенда |
@@ -52,9 +53,13 @@ cd web && npm ci && npm run dev
 
 ## APEX product templates
 
-При `METIS_SEED=true` вместе с референсными сценариями загружается канонический
-портфель APEX: Gateway, Shapoclyack, Lariska, Ferrum, BSDM-Proxy, Oko-Ra, Pulse
-и Asmodeus. Для каждого продукта seed создаёт рассчитанный delivery baseline,
+APEX-шаблоны загружаются отдельным флагом `METIS_SEED_APEX=true`. Он намеренно
+отделён от `METIS_SEED=true`, который сохраняет стабильный набор данных
+acceptance-сценариев. Так добавление продуктовых шаблонов не меняет семантику
+старых e2e fixtures и не засоряет их outbox.
+
+APEX seed создаёт Gateway, Shapoclyack, Lariska, Ferrum, BSDM-Proxy, Oko-Ra,
+Pulse и Asmodeus. Для каждого продукта создаются рассчитанный delivery baseline,
 четыре ключевых workstream-фичи, effort/confidence и плановые даты.
 
 Методика и текущие цифры: [docs/apex-product-templates.md](docs/apex-product-templates.md).

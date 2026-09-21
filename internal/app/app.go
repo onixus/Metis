@@ -346,6 +346,9 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		if _, err := seed.Infrastructure(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
 			return nil, fmt.Errorf("seed: %w", err)
 		}
+		if _, err := seed.APEX(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
+			return nil, fmt.Errorf("seed APEX: %w", err)
+		}
 		if err := seed.Stage2(ctx, seed.Stage2Deps{
 			Portfolio: a.Portfolio, Roadmap: a.Roadmap, Compliance: a.Compliance, Commitments: a.Commitments, Discovery: a.Discovery, Decisions: a.Decisions,
 		}, identityaccess.ServiceScope("seed")); err != nil {

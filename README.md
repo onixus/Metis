@@ -50,6 +50,15 @@ cd web && npm ci && npm run dev
 
 Секреты передаются только через окружение или Secret Kubernetes (см. `deploy/helm/metis`).
 
+## APEX product templates
+
+При `METIS_SEED=true` вместе с референсными сценариями загружается канонический
+портфель APEX: Gateway, Shapoclyack, Lariska, Ferrum, BSDM-Proxy, Oko-Ra, Pulse
+и Asmodeus. Для каждого продукта seed создаёт рассчитанный delivery baseline,
+четыре ключевых workstream-фичи, effort/confidence и плановые даты.
+
+Методика и текущие цифры: [docs/apex-product-templates.md](docs/apex-product-templates.md).
+
 ## Структура
 
 См. [AGENTS.md](AGENTS.md#структура-репозитория). Открытые вопросы — [docs/questions.md](docs/questions.md), решения — [docs/adr](docs/adr), планы итераций — [docs/plans](docs/plans).

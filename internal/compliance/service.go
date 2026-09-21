@@ -657,9 +657,11 @@ func (s *Service) newBaseline(ctx context.Context, sc authz.Scope, t Track, g Ga
 	if err != nil {
 		return CertifiedBaseline{}, err
 	}
-	s.mu.RLock()
-	years := s.settings.BaselineLifetimeYears
-	s.mu.RUnlock()
+	st, err := s.Settings(ctx)
+	if err != nil {
+		return CertifiedBaseline{}, err
+	}
+	years := st.BaselineLifetimeYears
 	now := s.clock.Now()
 	today := kernel.DateFromTime(now)
 	id := kernel.NewID()
@@ -1028,9 +1030,10 @@ func (s *Service) ConfirmationCost(ctx context.Context, sc authz.Scope, featureI
 	if err != nil {
 		return kernel.Money{}, fmt.Errorf("product: %w", err)
 	}
-	s.mu.RLock()
-	st := s.settings
-	s.mu.RUnlock()
+	st, err := s.Settings(ctx)
+	if err != nil {
+		return kernel.Money{}, err
+	}
 	cost := st.CostByClass[class]
 	if product.SSDLCCertified {
 		cost = cost.MulCoef(decimal.NewFromInt(1).Sub(st.CertifiedProcessDiscount))

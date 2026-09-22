@@ -1,0 +1,15 @@
+.git
+.codex
+.agents
+**/node_modules
+**/dist
+bin
+coverage.*
+*.out
+*.test
+.env
+.env.*
+**/.env
+**/.env.*
+sbom.*.json
+.DS_Store

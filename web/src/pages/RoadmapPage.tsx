@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import {
   accessLevel,
@@ -10,10 +10,10 @@ import {
   useRoadmapByRelease,
   useRoadmapNnl,
   useRoadmapTimeline,
-  useUpdateRoadmapItemKind,
   type RoadmapView,
 } from '../api/hooks'
 import type { RoadmapItem, SalesSafeItem } from '../api/types'
+import { RoadmapEditor } from '../components/RoadmapEditor'
 import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { ru } from '../i18n/ru'
 import { daysBetween, fmtDate, fmtDateTime, pick } from '../lib/format'
@@ -39,6 +39,7 @@ interface Row {
   audience?: RoadmapItem['audience']
   kind?: RoadmapItem['kind']
   internal: boolean
+  item?: RoadmapItem
 }
 
 function rows(audience: 'internal' | 'sales_safe', items?: RoadmapItem[], safe?: SalesSafeItem[]): Row[] {
@@ -62,12 +63,16 @@ function rows(audience: 'internal' | 'sales_safe', items?: RoadmapItem[], safe?:
     audience: i.audience,
     kind: i.kind,
     internal: true,
+    item: i,
   }))
 }
 
 export function RoadmapPage() {
   const { id = '' } = useParams()
-  const [view, setView] = useState<View>('timeline')
+  const [view, setView] = useState<View>('now-next-later')
+  const [search, setSearch] = useSearchParams()
+  const [creating, setCreating] = useState(search.has('feature'))
+  const [saved, setSaved] = useState(false)
   const me = useMe()
   const product = useProduct(id)
   const canWrite = canWriteRoadmap(me.data, accessLevel(me.data, id))
@@ -102,6 +107,9 @@ export function RoadmapPage() {
           ))}
         </div>
       </div>
+      {canWrite && <div><button type="button" className="btn btn-primary" onClick={() => { setCreating(!creating); setSaved(false) }}>{ru.workflow.createItem}</button></div>}
+      {canWrite && creating && <RoadmapEditor productId={id} featureId={search.get('feature') ?? undefined} onDone={(success) => { setCreating(false); setSearch({}, { replace: true }); if (success) { setSaved(true); setView('now-next-later') } }} />}
+      {saved && <div className="alert alert-ok" role="status">{ru.workflow.itemSaved}</div>}
       {audience === 'sales_safe' && <div className="alert alert-warn">{ru.roadmap.salesSafeBanner}</div>}
       {view !== 'releases' && active.isPending && <Loading />}
       {view !== 'releases' && active.isError && <ErrorBox error={active.error} onRetry={() => void active.refetch()} />}
@@ -226,23 +234,14 @@ function ItemHeader({ row }: { row: Row }) {
 }
 
 function ItemActions({ productId, canWrite, row }: { productId: string; canWrite: boolean; row: Row }) {
-  const [open, setOpen] = useState<'none' | 'edit' | 'history'>('none')
-  const setKind = useUpdateRoadmapItemKind(productId)
+  const [open, setOpen] = useState<'none' | 'edit' | 'details' | 'history'>('none')
   if (!row.internal) return null
   return (
     <div className="stack">
       <div className="row">
         {canWrite && (
           <>
-            <select
-              aria-label={ru.release.itemKind}
-              value={row.kind ?? 'feature'}
-              disabled={setKind.isPending}
-              onChange={(e) => setKind.mutate({ itemId: row.id, kind: e.target.value as 'feature' | 'fix' })}
-            >
-              <option value="feature">{ru.release.itemKinds.feature}</option>
-              <option value="fix">{ru.release.itemKinds.fix}</option>
-            </select>
+            <button type="button" className="btn btn-sm" onClick={() => setOpen(open === 'details' ? 'none' : 'details')}>{ru.workflow.edit}</button>
             <button type="button" className="btn btn-sm" onClick={() => setOpen(open === 'edit' ? 'none' : 'edit')}>
               {ru.roadmap.changeDates}
             </button>
@@ -252,7 +251,7 @@ function ItemActions({ productId, canWrite, row }: { productId: string; canWrite
           {ru.roadmap.history}
         </button>
       </div>
-      {setKind.isError && <div className="alert alert-error">{errorMessage(setKind.error)}</div>}
+      {canWrite && open === 'details' && row.item && <RoadmapEditor productId={productId} item={row.item} onDone={() => setOpen('none')} />}
       {canWrite && open === 'edit' && <ChangeDatesForm key={row.id} productId={productId} row={row} onDone={() => setOpen('history')} />}
       {open === 'history' && <History itemId={row.id} />}
     </div>
@@ -269,6 +268,7 @@ function ChangeDatesForm({ productId, row, onDone }: { productId: string; row: R
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!reason.trim()) return setValidation(ru.feature.reasonRequired)
+    if (start && end && end < start) return setValidation(ru.workflow.datesInvalid)
     setValidation(null)
     change.mutate(
       { itemId: row.id, start_date: start || undefined, end_date: end || undefined, reason: reason.trim() },

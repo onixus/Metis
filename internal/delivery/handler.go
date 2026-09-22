@@ -31,13 +31,6 @@ func (h *CreateEpicHandler) Handle(ctx context.Context, ev kernel.Event) error {
 	if ev.Type != EventEpicCreateRequested {
 		return nil
 	}
-	fresh, err := h.svc.store.MarkProcessed(ctx, "event:"+ev.ID.String())
-	if err != nil {
-		return fmt.Errorf("mark processed: %w", err)
-	}
-	if !fresh {
-		return nil
-	}
 	var req EpicCreateRequest
 	if err := json.Unmarshal(ev.Payload, &req); err != nil {
 		return fmt.Errorf("%w: payload %s: %w", kernel.ErrValidation, ev.Type, err)
@@ -59,6 +52,11 @@ func (h *CreateEpicHandler) Handle(ctx context.Context, ev kernel.Event) error {
 	}
 	if _, err := h.svc.MapFeature(ctx, h.sc, req.FeatureID, key, req.Project); err != nil {
 		return fmt.Errorf("map feature: %w", err)
+	}
+	// Запоминаем успешную обработку после внешнего вызова. Иначе временный
+	// отказ трекера оставит marker в memory store и поглотит следующий повтор.
+	if _, err := h.svc.store.MarkProcessed(ctx, "event:"+ev.ID.String()); err != nil {
+		return fmt.Errorf("mark processed: %w", err)
 	}
 	return nil
 }

@@ -1,19 +1,23 @@
-import { Navigate, NavLink, Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, Outlet } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useMe } from '../api/hooks'
 import { useAuth } from '../auth/useAuth'
 import { ru } from '../i18n/ru'
 import { canReadPortfolioDecisions, canSeeCompliance, isAdmin } from '../lib/roles'
-import { Badge } from './Status'
+import { Badge, Loading } from './Status'
 
 export function Layout() {
-  const { logout } = useAuth()
+  const { logout, expireSession } = useAuth()
   const me = useMe()
   const admin = isAdmin(me.data?.roles)
+  const unauthorized = me.isError && me.error instanceof ApiError && me.error.status === 401
 
-  if (me.isError && me.error instanceof ApiError && me.error.status === 401) {
-    return <Navigate to="/login" replace />
-  }
+  useEffect(() => {
+    if (unauthorized) void expireSession().catch(() => undefined)
+  }, [unauthorized, expireSession])
+
+  if (unauthorized) return <Loading />
 
   return (
     <div className="app">

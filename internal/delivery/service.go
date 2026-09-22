@@ -267,6 +267,9 @@ func (s *Service) syncState(ctx context.Context) (SyncState, error) {
 // Sync — сверка по расписанию через порт (ТЗ 4.2): обновляет проекции эпиков и спринтов.
 // При недоступности трекера проекция сохраняется, а состояние получает ошибку (NF-R05).
 func (s *Service) Sync(ctx context.Context) error {
+	if s.tracker == nil {
+		return fmt.Errorf("%w: адаптер delivery выключен", kernel.ErrUnavailable)
+	}
 	now := s.clock.Now()
 	st, err := s.store.SyncState(ctx)
 	if err != nil {
@@ -283,6 +286,30 @@ func (s *Service) Sync(ctx context.Context) error {
 	st.LastSuccessAt, st.LastError = now, ""
 	if err := s.store.SaveSyncState(ctx, st); err != nil {
 		return fmt.Errorf("save sync state: %w", err)
+	}
+	return nil
+}
+
+// RecordSyncFailure сохраняет состояние неудачной сверки после отката её
+// транзакции. Runtime вызывает отдельно: частичная проекция не фиксируется,
+// но администратор видит время попытки и ошибку (NF-R05, AD-05).
+func (s *Service) RecordSyncFailure(ctx context.Context, attemptedAt time.Time, cause error) error {
+	if !s.cfg.ServiceScope.Valid() || !s.cfg.ServiceScope.HasRole(authz.RoleService) {
+		return kernel.ErrForbidden
+	}
+	if cause == nil || attemptedAt.IsZero() {
+		return kernel.Invalid("cause", "ошибка и время сверки обязательны")
+	}
+	st, err := s.store.SyncState(ctx)
+	if err != nil {
+		return fmt.Errorf("sync state: %w", err)
+	}
+	if st.LastAttemptAt.After(attemptedAt) {
+		return nil // другой воркер уже выполнил более новую сверку
+	}
+	st.LastAttemptAt, st.LastError = attemptedAt.UTC(), cause.Error()
+	if err := s.store.SaveSyncState(ctx, st); err != nil {
+		return fmt.Errorf("save failed sync state: %w", err)
 	}
 	return nil
 }

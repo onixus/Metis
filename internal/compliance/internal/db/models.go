@@ -63,6 +63,11 @@ type ComplianceRequirementSet struct {
 	UpdatedAt   time.Time
 }
 
+type ComplianceSetting struct {
+	Singleton bool
+	Value     []byte
+}
+
 type ComplianceTrack struct {
 	ID         uuid.UUID
 	ProductID  uuid.UUID

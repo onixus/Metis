@@ -9,6 +9,7 @@ import (
 
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/compliance/internal/db"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/pgdb"
 	"github.com/onixus/metis/internal/portfoliograph"
@@ -25,6 +26,37 @@ var _ compliance.Store = (*Store)(nil)
 func New(d *pgdb.DB) *Store { return &Store{db: d} }
 
 func (s *Store) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
+
+// Settings reads shared configuration. Missing rows preserve service defaults.
+func (s *Store) Settings(ctx context.Context, sc authz.Scope) (compliance.Settings, error) {
+	if !sc.Valid() {
+		return compliance.Settings{}, kernel.ErrForbidden
+	}
+	raw, err := s.q(ctx).GetSettings(ctx)
+	if err != nil {
+		return compliance.Settings{}, fmt.Errorf("compliance settings: %w", pgdb.MapError(err))
+	}
+	var settings compliance.Settings
+	if err := json.Unmarshal(raw, &settings); err != nil {
+		return compliance.Settings{}, fmt.Errorf("decode compliance settings: %w", err)
+	}
+	return settings, nil
+}
+
+// SaveSettings changes configuration for every process using this database.
+func (s *Store) SaveSettings(ctx context.Context, sc authz.Scope, settings compliance.Settings) error {
+	if err := sc.Require(authz.ActionAdminSettings, kernel.NilID); err != nil {
+		return err
+	}
+	raw, err := json.Marshal(settings)
+	if err != nil {
+		return fmt.Errorf("encode compliance settings: %w", err)
+	}
+	if err := s.q(ctx).SaveSettings(ctx, raw); err != nil {
+		return fmt.Errorf("save compliance settings: %w", pgdb.MapError(err))
+	}
+	return nil
+}
 
 // SaveRequirementSet создаёт или обновляет набор требований.
 func (s *Store) SaveRequirementSet(ctx context.Context, rs compliance.RequirementSet) error {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
+
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/portfoliograph"
 )
@@ -27,6 +29,9 @@ func (f TrackFilter) matches(t Track) bool {
 // Store — хранилище каталога, треков, оценок влияния и baseline. Авторизация — в Service.
 // Журнал доказательств — отдельный EvidenceStore (только INSERT).
 type Store interface {
+	Settings(ctx context.Context, sc authz.Scope) (Settings, error)
+	SaveSettings(ctx context.Context, sc authz.Scope, settings Settings) error
+
 	SaveRequirementSet(ctx context.Context, rs RequirementSet) error
 	RequirementSet(ctx context.Context, id kernel.ID) (RequirementSet, error)
 	// RequirementSets возвращает наборы по коду (пустой код — все) по возрастанию версии.
@@ -55,6 +60,7 @@ type Store interface {
 // MemStore — хранилище в памяти для тестов и стендов без БД.
 type MemStore struct {
 	mu        sync.RWMutex
+	settings  *Settings
 	sets      []RequirementSet
 	templates []TrackTemplate
 	tracks    []Track
@@ -64,6 +70,43 @@ type MemStore struct {
 
 // NewMemStore создаёт пустое хранилище.
 func NewMemStore() *MemStore { return &MemStore{} }
+
+// Settings returns a detached copy; absence is resolved by the service defaults.
+func (m *MemStore) Settings(_ context.Context, sc authz.Scope) (Settings, error) {
+	if !sc.Valid() {
+		return Settings{}, kernel.ErrForbidden
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.settings == nil {
+		return Settings{}, kernel.ErrNotFound
+	}
+	return cloneSettings(*m.settings), nil
+}
+
+// SaveSettings persists validated module settings without retaining caller-owned maps.
+func (m *MemStore) SaveSettings(_ context.Context, sc authz.Scope, st Settings) error {
+	if err := sc.Require(authz.ActionAdminSettings, kernel.NilID); err != nil {
+		return err
+	}
+	if err := st.validate(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copy := cloneSettings(st)
+	m.settings = &copy
+	return nil
+}
+
+func cloneSettings(st Settings) Settings {
+	costs := make(map[ImpactClass]kernel.Money, len(st.CostByClass))
+	for class, cost := range st.CostByClass {
+		costs[class] = cost
+	}
+	st.CostByClass = costs
+	return st
+}
 
 // SaveRequirementSet создаёт или обновляет набор.
 func (m *MemStore) SaveRequirementSet(_ context.Context, rs RequirementSet) error {

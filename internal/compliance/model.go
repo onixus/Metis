@@ -8,6 +8,7 @@
 package compliance
 
 import (
+	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -333,12 +334,20 @@ func (s Settings) validate() error {
 	if s.BaselineLifetimeYears <= 0 {
 		return kernel.Invalid("baseline_lifetime_years", "должен быть положительным")
 	}
+	for _, class := range []ImpactClass{ImpactNone, ImpactAnalysisRequired, ImpactSecurityFunctions} {
+		if _, ok := s.CostByClass[class]; !ok {
+			return kernel.Invalid("cost_by_class", "обязательна стоимость класса "+string(class))
+		}
+	}
 	for c, m := range s.CostByClass {
 		if !ValidImpactClass(c) {
 			return kernel.Invalid("cost_by_class", "неизвестный класс "+string(c))
 		}
 		if m.Amount < 0 {
 			return kernel.Invalid("cost_by_class", "отрицательная сумма")
+		}
+		if len(m.Currency) != 3 || strings.IndexFunc(m.Currency, func(r rune) bool { return r < 'A' || r > 'Z' }) >= 0 {
+			return kernel.Invalid("cost_by_class", "валюта должна быть трёхбуквенным кодом")
 		}
 	}
 	return nil

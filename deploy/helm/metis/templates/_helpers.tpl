@@ -9,6 +9,8 @@ app.kubernetes.io/version: {{ .Chart.AppVersion }}
   value: postgres
 - name: METIS_DATABASE_URL
   valueFrom: { secretKeyRef: { name: {{ .Values.secrets.existingSecret }}, key: databaseUrl } }
+- name: METIS_MIGRATE
+  value: {{ .Values.config.migrateOnStart | quote }}
 - name: METIS_JIRA_BASE_URL
   value: {{ .Values.config.jiraBaseURL | quote }}
 - name: METIS_JIRA_TOKEN
@@ -25,4 +27,8 @@ app.kubernetes.io/version: {{ .Chart.AppVersion }}
   value: {{ .Values.config.logLevel | quote }}
 - name: METIS_VERSION
   value: {{ .Chart.AppVersion | quote }}
+- name: METIS_DELIVERY_SYNC_INTERVAL
+  value: {{ .Values.config.deliverySyncInterval | quote }}
+- name: METIS_RENEWAL_INTERVAL
+  value: {{ .Values.config.renewalInterval | quote }}
 {{- end -}}

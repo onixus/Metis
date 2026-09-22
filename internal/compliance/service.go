@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/shopspring/decimal"
 
@@ -46,14 +45,11 @@ type Service struct {
 	releases ReleaseReader
 	pub      kernel.Publisher
 	clock    kernel.Clock
-
-	mu       sync.RWMutex
-	settings Settings
 }
 
-// NewService создаёт сервис с настройками по умолчанию.
+// NewService создаёт сервис; настройки читаются из Store, до первой записи используются defaults.
 func NewService(store Store, evidence EvidenceStore, graph GraphReader, pub kernel.Publisher, clock kernel.Clock) *Service {
-	return &Service{store: store, evidence: evidence, graph: graph, pub: pub, clock: clock, settings: DefaultSettings()}
+	return &Service{store: store, evidence: evidence, graph: graph, pub: pub, clock: clock}
 }
 
 // WithReleases подключает порт релизов roadmap: StartTrack проверяет, что релиз принадлежит
@@ -90,10 +86,21 @@ func requireCatalog(sc authz.Scope) error {
 // ---------- Настройки ----------
 
 // Settings возвращает настройки модуля.
-func (s *Service) Settings(ctx context.Context) (Settings, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.settings, nil
+func (s *Service) Settings(ctx context.Context, sc authz.Scope) (Settings, error) {
+	if !sc.Valid() {
+		return Settings{}, kernel.ErrForbidden
+	}
+	st, err := s.store.Settings(ctx, sc)
+	if errors.Is(err, kernel.ErrNotFound) {
+		return DefaultSettings(), nil
+	}
+	if err != nil {
+		return Settings{}, fmt.Errorf("compliance settings: %w", err)
+	}
+	if err := st.validate(); err != nil {
+		return Settings{}, fmt.Errorf("stored compliance settings: %w", err)
+	}
+	return st, nil
 }
 
 // UpdateSettings меняет настройки. Право: администрирование настроек.
@@ -104,9 +111,9 @@ func (s *Service) UpdateSettings(ctx context.Context, sc authz.Scope, st Setting
 	if err := st.validate(); err != nil {
 		return err
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.settings = st
+	if err := s.store.SaveSettings(ctx, sc, st); err != nil {
+		return fmt.Errorf("save compliance settings: %w", err)
+	}
 	return nil
 }
 
@@ -655,9 +662,11 @@ func (s *Service) newBaseline(ctx context.Context, sc authz.Scope, t Track, g Ga
 	if err != nil {
 		return CertifiedBaseline{}, err
 	}
-	s.mu.RLock()
-	years := s.settings.BaselineLifetimeYears
-	s.mu.RUnlock()
+	st, err := s.Settings(ctx, sc)
+	if err != nil {
+		return CertifiedBaseline{}, err
+	}
+	years := st.BaselineLifetimeYears
 	now := s.clock.Now()
 	today := kernel.DateFromTime(now)
 	id := kernel.NewID()
@@ -1026,9 +1035,10 @@ func (s *Service) ConfirmationCost(ctx context.Context, sc authz.Scope, featureI
 	if err != nil {
 		return kernel.Money{}, fmt.Errorf("product: %w", err)
 	}
-	s.mu.RLock()
-	st := s.settings
-	s.mu.RUnlock()
+	st, err := s.Settings(ctx, sc)
+	if err != nil {
+		return kernel.Money{}, err
+	}
 	cost := st.CostByClass[class]
 	if product.SSDLCCertified {
 		cost = cost.MulCoef(decimal.NewFromInt(1).Sub(st.CertifiedProcessDiscount))

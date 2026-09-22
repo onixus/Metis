@@ -6,11 +6,25 @@ import { AuthCtx, type AuthState } from './context'
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
+  const [sessionVersion, setSessionVersion] = useState(0)
+
+  const expireSession = useCallback(async () => {
+    setAuthenticated(false)
+    setSessionVersion((version) => version + 1)
+    // An API rejection should lead to the local sign-in screen, not an OIDC redirect loop.
+    if (auth.mode === 'token') await auth.logout()
+  }, [])
 
   const refresh = useCallback(async () => {
-    const token = await auth.getAccessToken()
-    setAuthenticated(token !== null)
-    setReady(true)
+    setAuthenticated(false)
+    setReady(false)
+    try {
+      const token = await auth.getAccessToken()
+      setSessionVersion((version) => version + 1)
+      setAuthenticated(token !== null)
+    } finally {
+      setReady(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -35,17 +49,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mode: auth.mode,
       ready,
       authenticated,
+      sessionVersion,
+      expireSession,
       login: async (token) => {
+        setAuthenticated(false)
+        setSessionVersion((version) => version + 1)
         await auth.login(token)
         await refresh()
       },
       logout: async () => {
-        await auth.logout()
         setAuthenticated(false)
+        setSessionVersion((version) => version + 1)
+        await auth.logout()
       },
       refresh,
     }),
-    [ready, authenticated, refresh],
+    [ready, authenticated, sessionVersion, refresh, expireSession],
   )
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>

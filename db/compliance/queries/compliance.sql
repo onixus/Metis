@@ -63,3 +63,10 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
 
 -- name: EvidenceAfter :many
 SELECT * FROM compliance.evidence_log WHERE seq > $1 ORDER BY seq LIMIT @lim::bigint;
+
+-- name: GetSettings :one
+SELECT value FROM compliance.settings WHERE singleton = true;
+
+-- name: SaveSettings :exec
+INSERT INTO compliance.settings (singleton, value) VALUES (true, $1)
+ON CONFLICT (singleton) DO UPDATE SET value = EXCLUDED.value;

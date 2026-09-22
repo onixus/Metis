@@ -13,6 +13,7 @@ import (
 
 	"github.com/onixus/metis/internal/app"
 	"github.com/onixus/metis/internal/observability"
+	"github.com/onixus/metis/internal/webui"
 )
 
 func main() {
@@ -42,8 +43,22 @@ func run(log *slog.Logger) error {
 		}
 	}()
 
+	handler := a.Handler
+	if dir := os.Getenv("METIS_WEB_DIR"); dir != "" {
+		mode := "oidc"
+		if cfg.AuthMode == "hmac" {
+			mode = "token"
+		}
+		handler, err = webui.New(os.DirFS(dir), handler, webui.Config{
+			AuthMode: mode, OIDCIssuer: cfg.OIDCIssuer, OIDCClientID: cfg.OIDCClient,
+			OIDCScope: "openid profile email",
+		})
+		if err != nil {
+			return err
+		}
+	}
 	srv := &http.Server{
-		Addr: cfg.HTTPAddr, Handler: a.Handler,
+		Addr: cfg.HTTPAddr, Handler: handler,
 		ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 60 * time.Second, IdleTimeout: 120 * time.Second,
 	}
 	errCh := make(chan error, 1)
@@ -56,7 +71,7 @@ func run(log *slog.Logger) error {
 	// Воркер outbox внутри api нужен только для стенда в памяти; в поставке события обрабатывает cmd/worker.
 	if cfg.Storage == "memory" {
 		go func() {
-			if err := a.Worker.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			if err := a.RunWorker(ctx); err != nil && !errors.Is(err, context.Canceled) {
 				log.Error("воркер outbox", "err", err)
 			}
 		}()

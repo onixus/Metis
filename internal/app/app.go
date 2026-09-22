@@ -4,7 +4,9 @@ package app
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -13,8 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/go-chi/chi/v5"
 
 	"github.com/onixus/metis/internal/adapters/confluence"
 	"github.com/onixus/metis/internal/adapters/crmfile"
@@ -53,17 +53,21 @@ import (
 
 // Config — конфигурация приложения.
 type Config struct {
-	HTTPAddr    string // METIS_HTTP_ADDR
-	Storage     string // METIS_STORAGE: memory | postgres
-	DatabaseURL string // METIS_DATABASE_URL
-	Migrate     bool   // METIS_MIGRATE
-	AuthMode    string // METIS_AUTH_MODE: oidc | hmac
-	OIDCIssuer  string // METIS_OIDC_ISSUER
-	OIDCClient  string // METIS_OIDC_CLIENT_ID
-	HMACSecret  string // METIS_HMAC_SECRET (только стенд и e2e)
-	HMACIssuer  string // METIS_HMAC_ISSUER
-	JiraBaseURL string // METIS_JIRA_BASE_URL (пусто — адаптер выключен, NF-L03)
-	JiraToken   string // METIS_JIRA_TOKEN
+	HTTPAddr             string // METIS_HTTP_ADDR
+	Storage              string // METIS_STORAGE: memory | postgres
+	DatabaseURL          string // METIS_DATABASE_URL
+	Migrate              bool   // METIS_MIGRATE
+	AuthMode             string // METIS_AUTH_MODE: oidc | hmac
+	OIDCIssuer           string // METIS_OIDC_ISSUER
+	OIDCClient           string // METIS_OIDC_CLIENT_ID
+	HMACSecret           string // METIS_HMAC_SECRET (только стенд и e2e)
+	HMACIssuer           string // METIS_HMAC_ISSUER
+	JiraBaseURL          string // METIS_JIRA_BASE_URL (пусто — адаптер выключен, NF-L03)
+	JiraToken            string // METIS_JIRA_TOKEN
+	WebhookToken         string // METIS_WEBHOOK_TOKEN
+	OutboxConfig         outbox.Config
+	DeliverySyncInterval time.Duration // METIS_DELIVERY_SYNC_INTERVAL; по умолчанию час
+	RenewalInterval      time.Duration // METIS_RENEWAL_INTERVAL; по умолчанию сутки
 	// Адаптер Confluence (порт KnowledgeBase): пусто — выключен, ядро работает без него (NF-L03).
 	ConfluenceBaseURL string // METIS_CONFLUENCE_BASE_URL
 	ConfluenceToken   string // METIS_CONFLUENCE_TOKEN
@@ -88,6 +92,7 @@ func FromEnv() (Config, error) {
 		HMACIssuer:        envOr("METIS_HMAC_ISSUER", "metis-stand"),
 		JiraBaseURL:       os.Getenv("METIS_JIRA_BASE_URL"),
 		JiraToken:         os.Getenv("METIS_JIRA_TOKEN"),
+		WebhookToken:      os.Getenv("METIS_WEBHOOK_TOKEN"),
 		ConfluenceBaseURL: os.Getenv("METIS_CONFLUENCE_BASE_URL"),
 		ConfluenceToken:   os.Getenv("METIS_CONFLUENCE_TOKEN"),
 		ConfluenceSpace:   envOr("METIS_CONFLUENCE_SPACE", "METIS"),
@@ -101,6 +106,18 @@ func FromEnv() (Config, error) {
 		return c, err
 	}
 	if c.Seed, err = envBool("METIS_SEED"); err != nil {
+		return c, err
+	}
+	if c.OutboxConfig.BatchSize, err = envPositiveInt("METIS_OUTBOX_BATCH", 100); err != nil {
+		return c, err
+	}
+	if c.OutboxConfig.MaxAttempts, err = envPositiveInt("METIS_OUTBOX_MAX_ATTEMPTS", 10); err != nil {
+		return c, err
+	}
+	if c.DeliverySyncInterval, err = envPositiveDuration("METIS_DELIVERY_SYNC_INTERVAL", time.Hour); err != nil {
+		return c, err
+	}
+	if c.RenewalInterval, err = envPositiveDuration("METIS_RENEWAL_INTERVAL", 24*time.Hour); err != nil {
 		return c, err
 	}
 	if c.Storage == "postgres" && c.DatabaseURL == "" {
@@ -153,14 +170,32 @@ type App struct {
 	ServiceScope  authz.Scope
 	db            *pgdb.DB
 	shutdownTrace func(context.Context) error
+	operationGate chan struct{}
 }
 
 // Build собирает приложение по конфигурации.
 func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
+	return build(ctx, cfg, log, true)
+}
+
+// BuildWorker собирает те же домены и обработчики без OIDC, HTTP и загрузки seed.
+func BuildWorker(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
+	cfg.Seed = false
+	return build(ctx, cfg, log, false)
+}
+
+func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ *App, buildErr error) {
 	if log == nil {
 		log = observability.Logger(parseLevel(cfg.LogLevel))
 	}
-	a := &App{Cfg: cfg, Log: log, ServiceScope: identityaccess.ServiceScope("api")}
+	a := &App{Cfg: cfg, Log: log, ServiceScope: identityaccess.ServiceScope("api"), operationGate: make(chan struct{}, 1)}
+	defer func() {
+		if buildErr != nil {
+			if err := a.Close(context.Background()); err != nil {
+				log.Error("освобождение ресурсов после ошибки сборки", "err", err)
+			}
+		}
+	}()
 	clock := kernel.SystemClock{}
 
 	var (
@@ -244,7 +279,8 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 	a.Delivery = delivery.NewService(deliveryStore, tracker, a.Portfolio, pub, clock, delivery.Config{Name: "jira", ServiceScope: identityaccess.ServiceScope("delivery")})
 
 	// Воркер outbox: обработчики модулей.
-	a.Worker = outbox.NewWorker(obStore, clock, outbox.Config{}, log)
+	a.Worker = outbox.NewWorker(operationStore{Store: obStore, app: a}, clock, cfg.OutboxConfig, log)
+	a.registerNotifications()
 	a.Worker.Register(portfoliograph.EventDateShifted, roadmap.NewShiftHandler(a.Roadmap, identityaccess.ServiceScope("roadmap")))
 	if tracker != nil {
 		a.Worker.Register(delivery.EventEpicCreateRequested, delivery.NewCreateEpicHandler(tracker, a.Delivery, a.Portfolio, identityaccess.ServiceScope("delivery")))
@@ -264,6 +300,18 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		a.Worker.Register(decisions.EventPageRequested, decisions.NewPublishPageHandler(a.Decisions, cc, identityaccess.ServiceScope("decisions")))
 	}
 	a.Delivery = a.Delivery.WithDLQ(dlqAdapter{a.Worker})
+	serviceName := "metis-api"
+	if !withHTTP {
+		serviceName = "metis-worker"
+	}
+	shutdown, err := observability.Tracing(ctx, serviceName, cfg.Version, cfg.OTelExport)
+	if err != nil {
+		return nil, err
+	}
+	a.shutdownTrace = shutdown
+	if !withHTTP {
+		return a, nil
+	}
 
 	// Аутентификация.
 	var verifier identityaccess.TokenVerifier
@@ -292,24 +340,24 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 	}
 
 	if cfg.Seed {
-		if _, err := seed.Security(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
-			return nil, fmt.Errorf("seed: %w", err)
-		}
-		if _, err := seed.Infrastructure(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
-			return nil, fmt.Errorf("seed: %w", err)
-		}
-		if err := seed.Stage2(ctx, seed.Stage2Deps{
-			Portfolio: a.Portfolio, Roadmap: a.Roadmap, Compliance: a.Compliance, Commitments: a.Commitments, Discovery: a.Discovery, Decisions: a.Decisions,
-		}, identityaccess.ServiceScope("seed")); err != nil {
-			return nil, fmt.Errorf("seed этапа 2: %w", err)
+		if err := a.runOperation(ctx, func(ctx context.Context) error {
+			if _, err := seed.Security(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
+				return fmt.Errorf("seed: %w", err)
+			}
+			if _, err := seed.Infrastructure(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
+				return fmt.Errorf("seed: %w", err)
+			}
+			if err := seed.Stage2(ctx, seed.Stage2Deps{
+				Portfolio: a.Portfolio, Roadmap: a.Roadmap, Compliance: a.Compliance, Commitments: a.Commitments, Discovery: a.Discovery, Decisions: a.Decisions,
+			}, identityaccess.ServiceScope("seed")); err != nil {
+				return fmt.Errorf("seed этапа 2: %w", err)
+			}
+			return nil
+		}); err != nil {
+			return nil, err
 		}
 	}
 
-	shutdown, err := observability.Tracing(ctx, "metis-api", cfg.Version, cfg.OTelExport)
-	if err != nil {
-		return nil, err
-	}
-	a.shutdownTrace = shutdown
 	metrics := observability.NewMetrics("metis")
 
 	srv := httpapi.NewServer(httpapi.Deps{
@@ -321,9 +369,8 @@ func Build(ctx context.Context, cfg Config, log *slog.Logger) (*App, error) {
 		Ready:          a.ready,
 		Metrics:        metrics.Handler(),
 		Instrument:     func(h http.Handler) http.Handler { return observability.Instrument(h, "metis-api") },
-		Extra:          a.extraRoutes,
 	})
-	a.Handler = srv.Handler()
+	a.Handler = a.withWebhook(a.withConsistency(srv.Handler()))
 	return a, nil
 }
 
@@ -334,22 +381,24 @@ func (a *App) ready(ctx context.Context) error {
 	return nil
 }
 
-// extraRoutes — маршруты, не входящие в OpenAPI: webhook трекера (входящий, идемпотентный).
-// Webhook защищён общим секретом в заголовке X-Metis-Webhook-Token (METIS_WEBHOOK_TOKEN); без него маршрут выключен.
-func (a *App) extraRoutes(r chi.Router) {
-	token := os.Getenv("METIS_WEBHOOK_TOKEN")
+// withWebhook монтирует входящий webhook вне пользовательской OIDC-группы.
+// Машинный запрос аутентифицируется отдельным секретом; без него маршрут выключен.
+func (a *App) withWebhook(next http.Handler) http.Handler {
+	token := a.Cfg.WebhookToken
 	if a.Jira == nil || token == "" {
-		return
+		return next
 	}
-	r.With(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			if req.Header.Get("X-Metis-Webhook-Token") != token {
-				http.Error(w, "forbidden", http.StatusForbidden)
-				return
-			}
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path != "/api/v1/webhooks/jira" || req.Method != http.MethodPost {
 			next.ServeHTTP(w, req)
-		})
-	}).Post("/webhooks/jira", a.jiraWebhook)
+			return
+		}
+		if subtle.ConstantTimeCompare([]byte(req.Header.Get("X-Metis-Webhook-Token")), []byte(token)) != 1 {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		a.jiraWebhook(w, req)
+	})
 }
 
 // WebhookHandler — обработчик webhook без проверки токена (для e2e и внутренних вызовов).
@@ -360,18 +409,29 @@ func (a *App) jiraWebhook(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "адаптер трекера выключен", http.StatusServiceUnavailable)
 		return
 	}
-	body, err := io.ReadAll(io.LimitReader(req.Body, 1<<20))
+	body, err := io.ReadAll(http.MaxBytesReader(w, req.Body, 1<<20))
 	if err != nil {
-		http.Error(w, "body", http.StatusBadRequest)
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			http.Error(w, "body exceeds limit", http.StatusRequestEntityTooLarge)
+		} else {
+			http.Error(w, "body cannot be read", http.StatusBadRequest)
+		}
 		return
 	}
 	ev, err := a.Jira.ParseWebhook(body)
 	if err != nil {
+		if !errors.Is(err, jira.ErrNotEpicEvent) {
+			http.Error(w, "invalid webhook payload", http.StatusBadRequest)
+			return
+		}
 		w.WriteHeader(http.StatusAccepted)
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ignored"})
 		return
 	}
-	if err := a.Delivery.HandleWebhook(req.Context(), ev); err != nil {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+	if err := a.runOperation(ctx, func(ctx context.Context) error { return a.Delivery.HandleWebhook(ctx, ev) }); err != nil {
 		a.Log.ErrorContext(req.Context(), "webhook", "err", err)
 		http.Error(w, "обработка", http.StatusInternalServerError)
 		return

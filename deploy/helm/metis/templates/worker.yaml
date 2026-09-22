@@ -21,6 +21,4 @@ spec:
           securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
           env:
             {{- include "metis.env" . | nindent 12 }}
-            - name: METIS_MIGRATE
-              value: {{ .Values.config.migrateOnStart | quote }}
           resources: {{- toYaml .Values.worker.resources | nindent 12 }}

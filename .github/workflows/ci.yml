@@ -41,6 +41,15 @@ jobs:
           CGO_ENABLED: "1"
           METIS_TEST_DATABASE_URL: postgres://metis:metis-dev-only@localhost:5432/metis_test?sslmode=disable
         run: go test -race -count=1 -tags integration ./...
+      - name: prepare isolated runtime database and application role
+        run: |
+          docker exec '${{ job.services.postgres.id }}' psql -U metis -d metis_test -v ON_ERROR_STOP=1 -c "CREATE ROLE metis_app LOGIN PASSWORD 'metis-dev-only' NOSUPERUSER NOCREATEDB NOCREATEROLE"
+          docker exec '${{ job.services.postgres.id }}' psql -U metis -d metis_test -v ON_ERROR_STOP=1 -c "CREATE DATABASE metis_runtime_test OWNER metis"
+      - name: runtime transactions and separate worker
+        env:
+          CGO_ENABLED: "1"
+          METIS_RUNTIME_TEST_DATABASE_URL: postgres://metis:metis-dev-only@localhost:5432/metis_runtime_test?sslmode=disable
+        run: go test -race -count=1 -tags integration ./internal/app
       - name: govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
       - name: go-licenses
@@ -69,11 +78,28 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+        with: { node-version: 24, cache: npm, cache-dependency-path: web/package-lock.json }
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm test
       - run: npm run build
+      - name: generated TypeScript matches OpenAPI
+        run: npm run generate && git diff --exit-code -- src/api/schema.d.ts
       # Проверяются поставляемые зависимости (NF-L02); dev-инструменты в дистрибутив не входят.
       - name: npm licenses
         run: npx license-checker-rseidelsohn --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;Zlib;MPL-2.0;CC0-1.0;Unlicense;Python-2.0;BlueOak-1.0.0" --excludePrivatePackages
+  generated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with: { go-version-file: go.mod }
+      - run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.8.0
+      - run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+      - name: generated Go matches OpenAPI and SQL
+        run: |
+          oapi-codegen -config api/oapi-server.yaml api/openapi.yaml
+          oapi-codegen -config api/oapi-types.yaml api/openapi.yaml
+          sqlc generate
+          git diff --exit-code -- internal/httpapi/gen tests/e2e/client internal/*/internal/db

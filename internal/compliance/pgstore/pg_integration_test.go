@@ -12,6 +12,7 @@ import (
 
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/compliance/pgstore"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/pgdb"
@@ -35,13 +36,47 @@ func openTestDB(t *testing.T) *pgdb.DB {
 	}
 	// TRUNCATE не проходит через триггер строк; журналы тестовой БД чистятся от владельца.
 	if _, err := db.Pool().Exec(ctx, `TRUNCATE compliance.requirement_sets, compliance.track_templates, compliance.tracks,
-		compliance.impact_assessments, compliance.baselines, compliance.evidence_log`); err != nil {
+		compliance.impact_assessments, compliance.baselines, compliance.evidence_log, compliance.settings`); err != nil {
 		t.Fatal(err)
 	}
 	return db
 }
 
 var now = time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
+
+func TestCM03_PR05_PGSettingsPersistAcrossServicesAndScopes(t *testing.T) {
+	db := openTestDB(t)
+	ctx := context.Background()
+	sc := authz.New(authz.Params{Subject: "settings-admin", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate})
+	first := compliance.NewService(pgstore.New(db), nil, nil, nil, kernel.SystemClock{})
+	settings, err := first.Settings(ctx, sc)
+	if err != nil || settings.BaselineLifetimeYears != 5 {
+		t.Fatalf("default settings: %+v %v", settings, err)
+	}
+	settings.BaselineLifetimeYears = 3
+	settings.CostByClass[compliance.ImpactSecurityFunctions] = kernel.RUB(75_000_00)
+	if err := first.UpdateSettings(ctx, sc, settings); err != nil {
+		t.Fatal(err)
+	}
+	// A separate connection/pool simulates a second API or worker process.
+	otherDB, err := pgdb.Open(ctx, os.Getenv("METIS_TEST_DATABASE_URL"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer otherDB.Close()
+	store := pgstore.New(otherDB)
+	second := compliance.NewService(store, nil, nil, nil, kernel.SystemClock{})
+	got, err := second.Settings(ctx, sc)
+	if err != nil || !reflect.DeepEqual(got, settings) {
+		t.Fatalf("settings changed after restart: %+v %v", got, err)
+	}
+	if _, err := store.Settings(ctx, authz.Scope{}); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("zero scope read: %v", err)
+	}
+	if err := store.SaveSettings(ctx, authz.Scope{}, settings); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("zero scope write: %v", err)
+	}
+}
 
 func TestCM01_PGStoreRequirementSets(t *testing.T) {
 	db := openTestDB(t)

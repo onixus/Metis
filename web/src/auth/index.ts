@@ -1,11 +1,12 @@
 import { oidcAuth } from './oidc'
 import { tokenAuth } from './token'
 import type { AuthMode, AuthProvider } from './types'
+import { runtimeConfig } from './runtime'
 
 export type { AuthMode, AuthProvider } from './types'
 
 export function resolveAuthMode(): AuthMode {
-  return import.meta.env.VITE_AUTH_MODE === 'oidc' ? 'oidc' : 'token'
+  return runtimeConfig().authMode
 }
 
 export const auth: AuthProvider = resolveAuthMode() === 'oidc' ? oidcAuth : tokenAuth

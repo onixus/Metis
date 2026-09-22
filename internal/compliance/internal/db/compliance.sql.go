@@ -99,6 +99,17 @@ func (q *Queries) GetRequirementSet(ctx context.Context, id uuid.UUID) (Complian
 	return i, err
 }
 
+const getSettings = `-- name: GetSettings :one
+SELECT value FROM compliance.settings WHERE singleton = true
+`
+
+func (q *Queries) GetSettings(ctx context.Context) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getSettings)
+	var value []byte
+	err := row.Scan(&value)
+	return value, err
+}
+
 const getTemplate = `-- name: GetTemplate :one
 SELECT id, product_type, name, gates, created_at, updated_at FROM compliance.track_templates WHERE id = $1
 `
@@ -409,6 +420,16 @@ func (q *Queries) ListTracks(ctx context.Context, arg ListTracksParams) ([]Compl
 		return nil, err
 	}
 	return items, nil
+}
+
+const saveSettings = `-- name: SaveSettings :exec
+INSERT INTO compliance.settings (singleton, value) VALUES (true, $1)
+ON CONFLICT (singleton) DO UPDATE SET value = EXCLUDED.value
+`
+
+func (q *Queries) SaveSettings(ctx context.Context, value []byte) error {
+	_, err := q.db.Exec(ctx, saveSettings, value)
+	return err
 }
 
 const upsertBaseline = `-- name: UpsertBaseline :exec

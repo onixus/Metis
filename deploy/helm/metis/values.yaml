@@ -4,7 +4,7 @@ image:
   tag: "0.1.0"
   pullPolicy: IfNotPresent
 api:
-  replicas: 2
+  replicas: 1 # Пилот: увеличение требует проверки согласованности графа между процессами.
   port: 8081
   resources:
     requests: { cpu: 200m, memory: 256Mi }
@@ -18,15 +18,18 @@ config:
   authMode: oidc
   oidcIssuer: https://idp.example.internal/realms/metis
   oidcClientId: metis-web
+  hmacIssuer: metis-stand # Только локальный стенд; при authMode=hmac нужен Secret hmacSecret.
   jiraBaseURL: ""      # пусто — адаптер Jira выключен (NF-L03)
   confluenceBaseURL: ""  # пусто — адаптер Confluence выключен (NF-L03)
   confluenceSpace: METIS # пространство страниц ADR
   crmDir: /data/crm
-  otelExporter: otlp
+  otelExporter: none # Для otlp предварительно настройте доступный коллектор.
   logLevel: info
-  migrateOnStart: true
+  migrateOnStart: false # Сначала отдельный образ migrate с owner URL, runtime databaseUrl — metis_app.
+  deliverySyncInterval: 1h
+  renewalInterval: 24h
 secrets:
-  existingSecret: metis-secrets   # ключи: databaseUrl, jiraToken, webhookToken, confluenceToken
+  existingSecret: metis-secrets   # databaseUrl (metis_app), jiraToken, webhookToken, confluenceToken
 ingress:
   enabled: false
   className: nginx

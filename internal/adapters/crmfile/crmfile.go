@@ -71,7 +71,8 @@ func (a *Adapter) Accounts(ctx context.Context) ([]ports.Account, error) {
 }
 
 // Deals читает deals.csv. Колонки: id, account_id, name, stage, amount, currency, product_key,
-// regulatory, version, expected_date, requested_features (через «;»), blocks_on_features, notes.
+// regulatory, version, expected_date, requested_features (через «;»), blocks_on_features, notes,
+// outcome (won|lost), reason, closed_date, products (через «;»), features (через «;»).
 func (a *Adapter) Deals(ctx context.Context) ([]ports.Deal, error) {
 	rows, err := a.read(ctx, "deals.csv", []string{"id", "account_id", "product_key"})
 	if err != nil {
@@ -90,6 +91,20 @@ func (a *Adapter) Deals(ctx context.Context) ([]ports.Deal, error) {
 				return nil, fmt.Errorf("deals.csv строка %d: %w", line, err)
 			}
 		}
+		var closed kernel.Date
+		if s := strings.TrimSpace(r["closed_date"]); s != "" {
+			if closed, err = kernel.ParseDate(s); err != nil {
+				return nil, fmt.Errorf("deals.csv строка %d: %w", line, err)
+			}
+		}
+		outcome, err := parseOutcome(r["outcome"])
+		if err != nil {
+			return nil, fmt.Errorf("deals.csv строка %d: %w", line, err)
+		}
+		products := splitList(r["products"])
+		if len(products) == 0 && strings.TrimSpace(r["product_key"]) != "" {
+			products = []string{r["product_key"]}
+		}
 		out = append(out, ports.Deal{
 			ExternalID:        r["id"],
 			AccountID:         r["account_id"],
@@ -103,6 +118,11 @@ func (a *Adapter) Deals(ctx context.Context) ([]ports.Deal, error) {
 			RequestedFeatures: splitList(r["requested_features"]),
 			BlocksOnFeatures:  parseBool(r["blocks_on_features"]),
 			Notes:             r["notes"],
+			Outcome:           outcome,
+			Reason:            r["reason"],
+			ClosedDate:        closed,
+			Products:          products,
+			Features:          splitList(r["features"]),
 		})
 	}
 	return out, nil
@@ -208,4 +228,17 @@ func parseBool(s string) bool {
 		return true
 	}
 	return false
+}
+
+// parseOutcome разбирает исход сделки; пустое значение — открытая сделка.
+func parseOutcome(raw string) (ports.DealOutcome, error) {
+	switch ports.DealOutcome(strings.ToLower(strings.TrimSpace(raw))) {
+	case ports.DealOpen:
+		return ports.DealOpen, nil
+	case ports.DealWon:
+		return ports.DealWon, nil
+	case ports.DealLost:
+		return ports.DealLost, nil
+	}
+	return ports.DealOpen, fmt.Errorf("%w: исход сделки %q: допустимы won, lost или пусто", kernel.ErrValidation, raw)
 }

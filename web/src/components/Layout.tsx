@@ -4,7 +4,7 @@ import { ApiError } from '../api/client'
 import { useMe } from '../api/hooks'
 import { useAuth } from '../auth/useAuth'
 import { ru } from '../i18n/ru'
-import { canReadPortfolioDecisions, canSeeCompliance, isAdmin } from '../lib/roles'
+import { canReadPortfolioDecisions, canSeeFinance, canSeeCompliance, isAdmin } from '../lib/roles'
 import { Badge, Loading } from './Status'
 
 export function Layout() {
@@ -32,6 +32,7 @@ export function Layout() {
           <NavLink to="/hub">{ru.nav.hub}</NavLink>
           <NavLink to="/delivery">{ru.nav.delivery}</NavLink>
           {me.data?.roles.includes('finance') && me.data.finance === 'full' && <NavLink to="/economics">Экономика</NavLink>}
+          {canSeeFinance(me.data) && <NavLink to="/portfolio">{ru.nav2.portfolio}</NavLink>}
           {canReadPortfolioDecisions(me.data) && <NavLink to="/decisions">{ru.nav2.decisions}</NavLink>}
           {canSeeCompliance(me.data) && <NavLink to="/compliance">{ru.nav2.compliance}</NavLink>}
           {admin && <NavLink to="/admin">{ru.nav.admin}</NavLink>}

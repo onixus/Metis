@@ -12,6 +12,7 @@ import (
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/portfoliograph"
+	"github.com/onixus/metis/internal/ports"
 )
 
 // GraphReader — нужная compliance часть публичного интерфейса portfoliograph (инвариант 1).
@@ -39,12 +40,14 @@ const writeAttempts = 5
 
 // Service — публичный интерфейс модуля compliance.
 type Service struct {
-	store    Store
-	evidence EvidenceStore
-	graph    GraphReader
-	releases ReleaseReader
-	pub      kernel.Publisher
-	clock    kernel.Clock
+	deadlines DeadlineRegistrar
+	pipeline  ports.SecurityPipeline
+	store     Store
+	evidence  EvidenceStore
+	graph     GraphReader
+	releases  ReleaseReader
+	pub       kernel.Publisher
+	clock     kernel.Clock
 }
 
 // NewService создаёт сервис; настройки читаются из Store, до первой записи используются defaults.

@@ -37,6 +37,11 @@ linters:
             - "**/internal/compliance/*.go"
             - "**/internal/decisions/*.go"
             - "**/internal/economics/*.go"
+            - "**/internal/economics/modeling/*.go"
+            - "**/internal/economics/modeling/formula/*.go"
+            - "**/internal/marketing/*.go"
+            - "**/internal/analytics/*.go"
+            - "**/internal/licensing/*.go"
             - "**/internal/ports/**"
           deny:
             - pkg: "github.com/go-chi/chi"

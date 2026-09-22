@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/onixus/metis/api"
+	"github.com/onixus/metis/internal/analytics"
 	"github.com/onixus/metis/internal/audit"
 	"github.com/onixus/metis/internal/commitments"
 	"github.com/onixus/metis/internal/compliance"
@@ -17,9 +18,12 @@ import (
 	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/discovery"
 	"github.com/onixus/metis/internal/economics"
+	modeling "github.com/onixus/metis/internal/economics/modeling"
 	"github.com/onixus/metis/internal/httpapi/gen"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
+	"github.com/onixus/metis/internal/licensing"
+	"github.com/onixus/metis/internal/marketing"
 	"github.com/onixus/metis/internal/portfoliograph"
 	"github.com/onixus/metis/internal/ports"
 	"github.com/onixus/metis/internal/prioritization"
@@ -29,6 +33,10 @@ import (
 
 // Deps — зависимости HTTP-сервера. Модули подключаются через публичные интерфейсы.
 type Deps struct {
+	Modeling   *modeling.Service
+	Marketing  *marketing.Service
+	Analytics  *analytics.Service
+	Licensing  *licensing.Service
 	Log        *slog.Logger
 	Auth       *Authenticator
 	Portfolio  *portfoliograph.Service

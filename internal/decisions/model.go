@@ -81,10 +81,14 @@ type DecisionRecord struct {
 	ChosenKey      string         `json:"chosen_key,omitempty"`
 	Rationale      string         `json:"rationale,omitempty"`
 	ExpectedEffect string         `json:"expected_effect,omitempty"`
-	ReviewDate     kernel.Date    `json:"review_date"` // дата ревизии без времени (инвариант 7)
-	Status         Status         `json:"status"`
-	SupersededBy   kernel.ID      `json:"superseded_by,omitempty"`
-	Links          []Link         `json:"links,omitempty"`
+	// Effect — измеримая часть ожидаемого эффекта: показатель, целевое значение, период (DA-06).
+	Effect       MeasurableEffect `json:"effect,omitempty"`
+	ReviewDate   kernel.Date      `json:"review_date"` // дата ревизии без времени (инвариант 7)
+	Status       Status           `json:"status"`
+	SupersededBy kernel.ID        `json:"superseded_by,omitempty"`
+	Links        []Link           `json:"links,omitempty"`
+	// Review — результат ревизии на дату ревизии; nil, пока ревизии не было (DA-06).
+	Review *Review `json:"review,omitempty"`
 	// PageID — страница ADR в базе знаний; заполняется обработчиком outbox после создания страницы.
 	PageID    string    `json:"page_id,omitempty"`
 	Author    string    `json:"author"`

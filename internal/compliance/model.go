@@ -273,6 +273,14 @@ type ImpactAssessment struct {
 	At            time.Time   `json:"at"`
 }
 
+// Component — компонент поставки в составе сертифицированного baseline (CM-08).
+// Ключ — идентификатор из SBOM (purl, имя пакета); состав приходит из пайплайна
+// безопасности или заводится вручную.
+type Component struct {
+	Key     string `json:"key"`
+	Version string `json:"version,omitempty"`
+}
+
 // CertifiedBaseline — сертифицированная конфигурация версии продукта (CM-07).
 type CertifiedBaseline struct {
 	ID               kernel.ID   `json:"id"`
@@ -283,7 +291,20 @@ type CertifiedBaseline struct {
 	CertificateNo    string      `json:"certificate_no"` // синтетический номер
 	CertifiedAt      kernel.Date `json:"certified_at"`
 	EOL              kernel.Date `json:"eol"`
-	CreatedAt        time.Time   `json:"created_at"`
+	// Components — состав поставки для поиска по уязвимому компоненту (CM-08).
+	Components []Component `json:"components,omitempty"`
+	CreatedAt  time.Time   `json:"created_at"`
+}
+
+// HasComponent сообщает, входит ли компонент в состав baseline. Пустая версия в запросе
+// означает «любая версия компонента».
+func (b CertifiedBaseline) HasComponent(c Component) bool {
+	for _, have := range b.Components {
+		if have.Key == c.Key && (c.Version == "" || have.Version == c.Version) {
+			return true
+		}
+	}
+	return false
 }
 
 // Procedure — процедура подтверждения изменений затронутого baseline (ТЗ 2.5).
@@ -311,6 +332,8 @@ type Settings struct {
 	CertifiedProcessDiscount decimal.Decimal `json:"certified_process_discount"`
 	// BaselineLifetimeYears — срок действия сертификата для EOL baseline.
 	BaselineLifetimeYears int `json:"baseline_lifetime_years"`
+	// VulnerabilityFixDays — регуляторный срок устранения уязвимости по критичности, в днях (CM-08 → CT-02).
+	VulnerabilityFixDays map[Severity]int `json:"vulnerability_fix_days"`
 }
 
 // DefaultSettings — значения по умолчанию.
@@ -324,6 +347,10 @@ func DefaultSettings() Settings {
 		},
 		CertifiedProcessDiscount: decimal.RequireFromString("0.5"),
 		BaselineLifetimeYears:    5,
+		// TODO(question-31): сроки устранения уязвимостей не заданы ТЗ.
+		VulnerabilityFixDays: map[Severity]int{
+			SeverityCritical: 30, SeverityHigh: 60, SeverityMedium: 90, SeverityLow: 180,
+		},
 	}
 }
 

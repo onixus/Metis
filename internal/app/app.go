@@ -16,6 +16,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/onixus/metis/internal/adapters/financexlsx"
+	"github.com/onixus/metis/internal/adapters/securityfile"
+	"github.com/onixus/metis/internal/analytics"
 	"github.com/onixus/metis/internal/audit"
 	auditpg "github.com/onixus/metis/internal/audit/pgstore"
 	"github.com/onixus/metis/internal/commitments"
@@ -29,6 +32,7 @@ import (
 	"github.com/onixus/metis/internal/discovery"
 	discoverypg "github.com/onixus/metis/internal/discovery/pgstore"
 	"github.com/onixus/metis/internal/economics"
+	modeling "github.com/onixus/metis/internal/economics/modeling"
 	"github.com/onixus/metis/internal/httpapi"
 	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
@@ -36,6 +40,8 @@ import (
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/outbox"
 	"github.com/onixus/metis/internal/kernel/pgdb"
+	"github.com/onixus/metis/internal/licensing"
+	"github.com/onixus/metis/internal/marketing"
 	"github.com/onixus/metis/internal/observability"
 	"github.com/onixus/metis/internal/portfoliograph"
 	graphpg "github.com/onixus/metis/internal/portfoliograph/pgstore"
@@ -81,11 +87,19 @@ type Config struct {
 	ConfluenceBaseURL string // METIS_CONFLUENCE_BASE_URL
 	ConfluenceToken   string // METIS_CONFLUENCE_TOKEN
 	ConfluenceSpace   string // METIS_CONFLUENCE_SPACE (пространство страниц ADR по умолчанию)
-	CRMDir            string // METIS_CRM_DIR (каталог CSV-выгрузок)
-	Seed              bool   // METIS_SEED: загрузить референсные портфели
-	OTelExport        string // METIS_OTEL_EXPORTER: stdout | otlp | none
-	LogLevel          string // METIS_LOG_LEVEL
-	Version           string
+	CRMDir            string
+	// Этап 3.
+	SecurityDir     string        // METIS_SECURITY_DIR (манифесты пайплайна безопасности, CM-09)
+	LicenseKey      string        // METIS_LICENSE_KEY (ключ поставки, AD-06)
+	LicensePubKey   string        // METIS_LICENSE_PUBKEY (публичный ключ поставщика, base64)
+	FinanceDir      string        // METIS_FINANCE_DIR (каталог книг XLSX для загрузки по расписанию, EC-01)
+	FinanceTemplate string        // METIS_FINANCE_TEMPLATE (название шаблона импорта)
+	FinanceInterval time.Duration // METIS_FINANCE_INTERVAL (интервал загрузки, по умолчанию 1h)
+	Seed            bool          // METIS_SEED: загрузить референсные портфели
+	SeedAPEX        bool          // METIS_SEED_APEX: загрузить канонический портфель APEX
+	OTelExport      string        // METIS_OTEL_EXPORTER: stdout | otlp | none
+	LogLevel        string        // METIS_LOG_LEVEL
+	Version         string
 }
 
 // FromEnv читает конфигурацию из окружения.
@@ -114,12 +128,20 @@ func FromEnv() (Config, error) {
 		ConfluenceBaseURL:  os.Getenv("METIS_CONFLUENCE_BASE_URL"),
 		ConfluenceToken:    os.Getenv("METIS_CONFLUENCE_TOKEN"),
 		ConfluenceSpace:    envOr("METIS_CONFLUENCE_SPACE", "METIS"),
+		SecurityDir:        os.Getenv("METIS_SECURITY_DIR"),
+		LicenseKey:         os.Getenv("METIS_LICENSE_KEY"),
+		LicensePubKey:      os.Getenv("METIS_LICENSE_PUBKEY"),
+		FinanceDir:         os.Getenv("METIS_FINANCE_DIR"),
+		FinanceTemplate:    os.Getenv("METIS_FINANCE_TEMPLATE"),
 		CRMDir:             os.Getenv("METIS_CRM_DIR"),
 		OTelExport:         envOr("METIS_OTEL_EXPORTER", "none"),
 		LogLevel:           envOr("METIS_LOG_LEVEL", "info"),
 		Version:            envOr("METIS_VERSION", "0.1.0"),
 	}
 	var err error
+	if c.FinanceInterval, err = envPositiveDuration("METIS_FINANCE_INTERVAL", time.Hour); err != nil {
+		return c, err
+	}
 	if c.FinanceSyncInterval, err = envPositiveDuration("METIS_FINANCE_SYNC_INTERVAL", 24*time.Hour); err != nil {
 		return c, err
 	}
@@ -127,6 +149,9 @@ func FromEnv() (Config, error) {
 		return c, err
 	}
 	if c.Seed, err = envBool("METIS_SEED"); err != nil {
+		return c, err
+	}
+	if c.SeedAPEX, err = envBool("METIS_SEED_APEX"); err != nil {
 		return c, err
 	}
 	if c.OutboxConfig.BatchSize, err = envPositiveInt("METIS_OUTBOX_BATCH", 100); err != nil {
@@ -187,6 +212,10 @@ type App struct {
 	Commitments    *commitments.Service
 	Compliance     *compliance.Service
 	Decisions      *decisions.Service
+	Modeling       *modeling.Service
+	Marketing      *marketing.Service
+	Analytics      *analytics.Service
+	Licensing      *licensing.Service
 	// Index — индекс похожести сигналов (SG-04); в памяти до появления pgvector-хранилища.
 	Index         *discovery.MemIndex
 	Audit         *audit.Logger
@@ -298,6 +327,30 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 		discovery.WithFeatures(a.Portfolio), discovery.WithDecisions(decisionLinks{a.Decisions}), discovery.WithIndex(index))
 	if err := a.buildEconomics(ctx); err != nil {
 		return nil, err
+
+	}
+
+	// Этап 3: экономика, маркетинг, конструктор дашбордов, лицензия поставки.
+	// compliance получает реестр сроков (CM-08 → CT-02) и пайплайн безопасности (CM-09).
+	a.Compliance = a.Compliance.WithDeadlines(deadlineAdapter{svc: a.Commitments})
+	if cfg.SecurityDir != "" {
+		a.Compliance = a.Compliance.WithPipeline(securityfile.New(cfg.SecurityDir))
+	}
+	econ, err := modeling.NewService(modeling.NewMemStore(), pub, clock, modeling.DefaultConfig())
+	if err != nil {
+		return nil, fmt.Errorf("экономика: %w", err)
+	}
+	a.Modeling = econ.
+		WithImport(financexlsx.New(), a.Portfolio).
+		WithAuditor(financeAuditor{a.Audit}).
+		WithTrackCosts(a.Compliance).
+		WithCommitments(commitmentsAdapter{svc: a.Commitments}).
+		WithTracks(tracksAdapter{svc: a.Compliance})
+	a.Decisions = a.Decisions.WithMetrics(metricsAdapter{svc: a.Modeling})
+	a.Analytics = analytics.NewService(analytics.NewMemStore(), clock)
+	a.Licensing, err = buildLicensing(cfg, clock, a.Audit, log)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := a.configureConnectors(); err != nil {
@@ -373,6 +426,27 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 		}); err != nil {
 			return nil, err
 		}
+		// Этап 3: финансовые поля, показатели, шаблон импорта и правило аллокации затрат хаба SOAR.
+		soar, err := a.Portfolio.ProductIDByKey(ctx, "soar")
+		if err != nil {
+			return nil, fmt.Errorf("seed этапа 3: продукт soar: %w", err)
+		}
+		shares := map[kernel.ID]string{}
+		for key, share := range map[string]string{"edr": "0.4", "vm": "0.3", "deception": "0.3"} {
+			id, err := a.Portfolio.ProductIDByKey(ctx, key)
+			if err != nil {
+				return nil, fmt.Errorf("seed этапа 3: продукт %s: %w", key, err)
+			}
+			shares[id] = share
+		}
+		if _, err := seed.Economics(ctx, a.Modeling, identityaccess.FinanceServiceScope("seed"), soar, shares); err != nil {
+			return nil, fmt.Errorf("seed этапа 3: %w", err)
+		}
+	}
+	if cfg.SeedAPEX {
+		if _, err := seed.APEX(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
+			return nil, fmt.Errorf("seed APEX: %w", err)
+		}
 	}
 
 	metrics := observability.NewMetrics("metis")
@@ -385,9 +459,12 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 		Economics: a.Economics, Finance: a.Finance, FinanceWorklogs: a.ApplyFinanceWorklogs,
 		Discovery: a.Discovery, Commitments: a.Commitments, Compliance: a.Compliance, Decisions: a.Decisions,
 		KnowledgeSpace: a.knowledgeSpace(),
-		Ready:          a.ready,
-		Metrics:        metrics.Handler(),
-		Instrument:     func(h http.Handler) http.Handler { return observability.Instrument(h, "metis-api") },
+
+		Modeling: a.Modeling, Analytics: a.Analytics, Licensing: a.Licensing,
+		Marketing:  marketing.NewService(a.CRM).WithProducts(a.Portfolio),
+		Ready:      a.ready,
+		Metrics:    metrics.Handler(),
+		Instrument: func(h http.Handler) http.Handler { return observability.Instrument(h, "metis-api") },
 	})
 	a.Handler = a.withWebhook(a.withConsistency(srv.Handler()))
 	return a, nil

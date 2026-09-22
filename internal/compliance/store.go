@@ -55,6 +55,9 @@ type Store interface {
 	Baseline(ctx context.Context, id kernel.ID) (CertifiedBaseline, error)
 	// Baselines возвращает baseline продукта (NilID — все) в порядке сохранения.
 	Baselines(ctx context.Context, productID kernel.ID) ([]CertifiedBaseline, error)
+	// BaselinesWithComponent возвращает baseline, в составе которых есть компонент с таким
+	// ключом; версия компонента проверяется вызывающим (CM-08).
+	BaselinesWithComponent(ctx context.Context, componentKey string) ([]CertifiedBaseline, error)
 }
 
 // MemStore — хранилище в памяти для тестов и стендов без БД.
@@ -68,7 +71,6 @@ type MemStore struct {
 	baselines []CertifiedBaseline
 }
 
-// NewMemStore создаёт пустое хранилище.
 func NewMemStore() *MemStore { return &MemStore{} }
 
 // Settings returns a detached copy; absence is resolved by the service defaults.
@@ -100,12 +102,16 @@ func (m *MemStore) SaveSettings(_ context.Context, sc authz.Scope, st Settings) 
 }
 
 func cloneSettings(st Settings) Settings {
-	costs := make(map[ImpactClass]kernel.Money, len(st.CostByClass))
-	for class, cost := range st.CostByClass {
-		costs[class] = cost
+	out := st
+	out.CostByClass = make(map[ImpactClass]kernel.Money, len(st.CostByClass))
+	for k, v := range st.CostByClass {
+		out.CostByClass[k] = v
 	}
-	st.CostByClass = costs
-	return st
+	out.VulnerabilityFixDays = make(map[Severity]int, len(st.VulnerabilityFixDays))
+	for k, v := range st.VulnerabilityFixDays {
+		out.VulnerabilityFixDays[k] = v
+	}
+	return out
 }
 
 // SaveRequirementSet создаёт или обновляет набор.
@@ -307,6 +313,19 @@ func (m *MemStore) Baselines(_ context.Context, productID kernel.ID) ([]Certifie
 	out := make([]CertifiedBaseline, 0, len(m.baselines))
 	for _, b := range m.baselines {
 		if productID == kernel.NilID || b.ProductID == productID {
+			out = append(out, b)
+		}
+	}
+	return out, nil
+}
+
+// BaselinesWithComponent возвращает baseline, содержащие компонент с таким ключом (CM-08).
+func (m *MemStore) BaselinesWithComponent(_ context.Context, componentKey string) ([]CertifiedBaseline, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]CertifiedBaseline, 0)
+	for _, b := range m.baselines {
+		if b.HasComponent(Component{Key: componentKey}) {
 			out = append(out, b)
 		}
 	}

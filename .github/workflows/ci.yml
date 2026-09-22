@@ -51,7 +51,7 @@ jobs:
           METIS_RUNTIME_TEST_DATABASE_URL: postgres://metis:metis-dev-only@localhost:5432/metis_runtime_test?sslmode=disable
         run: go test -race -count=1 -tags integration ./internal/app
       - name: govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+        run: ./scripts/govulncheck.sh
       - name: go-licenses
         run: |
           go install github.com/google/go-licenses/v2@latest

@@ -25,7 +25,7 @@ func (q *Queries) EventProcessed(ctx context.Context, eventID uuid.UUID) (bool, 
 }
 
 const getRecord = `-- name: GetRecord :one
-SELECT id, product_id, title, context, snapshot, options, chosen_key, rationale, expected_effect, review_date, status, superseded_by, links, page_id, author, created_at, updated_at FROM decisions.records WHERE id = $1
+SELECT id, product_id, title, context, snapshot, options, chosen_key, rationale, expected_effect, review_date, status, superseded_by, links, page_id, author, created_at, updated_at, effect_metric, effect_value, effect_period, review FROM decisions.records WHERE id = $1
 `
 
 func (q *Queries) GetRecord(ctx context.Context, id uuid.UUID) (DecisionsRecord, error) {
@@ -49,12 +49,16 @@ func (q *Queries) GetRecord(ctx context.Context, id uuid.UUID) (DecisionsRecord,
 		&i.Author,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EffectMetric,
+		&i.EffectValue,
+		&i.EffectPeriod,
+		&i.Review,
 	)
 	return i, err
 }
 
 const listRecords = `-- name: ListRecords :many
-SELECT id, product_id, title, context, snapshot, options, chosen_key, rationale, expected_effect, review_date, status, superseded_by, links, page_id, author, created_at, updated_at FROM decisions.records
+SELECT id, product_id, title, context, snapshot, options, chosen_key, rationale, expected_effect, review_date, status, superseded_by, links, page_id, author, created_at, updated_at, effect_metric, effect_value, effect_period, review FROM decisions.records
 WHERE (NOT $1::bool OR product_id IS NOT DISTINCT FROM $2::uuid)
   AND ($3::text = '' OR status = $3::text)
   AND ($4::jsonb IS NULL OR links @> $4::jsonb)
@@ -100,6 +104,60 @@ func (q *Queries) ListRecords(ctx context.Context, arg ListRecordsParams) ([]Dec
 			&i.Author,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EffectMetric,
+			&i.EffectValue,
+			&i.EffectPeriod,
+			&i.Review,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecordsDueForReview = `-- name: ListRecordsDueForReview :many
+SELECT id, product_id, title, context, snapshot, options, chosen_key, rationale, expected_effect, review_date, status, superseded_by, links, page_id, author, created_at, updated_at, effect_metric, effect_value, effect_period, review FROM decisions.records
+WHERE review IS NULL AND review_date IS NOT NULL AND review_date <= $1::date
+  AND status = 'accepted'
+ORDER BY review_date, id
+`
+
+// DA-06: решения с наступившей датой ревизии, по которым ревизии ещё не было.
+func (q *Queries) ListRecordsDueForReview(ctx context.Context, on pgtype.Date) ([]DecisionsRecord, error) {
+	rows, err := q.db.Query(ctx, listRecordsDueForReview, on)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DecisionsRecord
+	for rows.Next() {
+		var i DecisionsRecord
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.Title,
+			&i.Context,
+			&i.Snapshot,
+			&i.Options,
+			&i.ChosenKey,
+			&i.Rationale,
+			&i.ExpectedEffect,
+			&i.ReviewDate,
+			&i.Status,
+			&i.SupersededBy,
+			&i.Links,
+			&i.PageID,
+			&i.Author,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.EffectMetric,
+			&i.EffectValue,
+			&i.EffectPeriod,
+			&i.Review,
 		); err != nil {
 			return nil, err
 		}
@@ -121,13 +179,14 @@ func (q *Queries) MarkEventProcessed(ctx context.Context, eventID uuid.UUID) err
 }
 
 const upsertRecord = `-- name: UpsertRecord :exec
-INSERT INTO decisions.records (id, product_id, title, context, snapshot, options, chosen_key, rationale, expected_effect, review_date, status, superseded_by, links, page_id, author, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+INSERT INTO decisions.records (id, product_id, title, context, snapshot, options, chosen_key, rationale, expected_effect, review_date, status, superseded_by, links, page_id, author, created_at, updated_at, effect_metric, effect_value, effect_period, review)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, title = EXCLUDED.title, context = EXCLUDED.context,
   snapshot = EXCLUDED.snapshot, options = EXCLUDED.options, chosen_key = EXCLUDED.chosen_key, rationale = EXCLUDED.rationale,
   expected_effect = EXCLUDED.expected_effect, review_date = EXCLUDED.review_date, status = EXCLUDED.status,
   superseded_by = EXCLUDED.superseded_by, links = EXCLUDED.links, page_id = EXCLUDED.page_id, author = EXCLUDED.author,
-  updated_at = EXCLUDED.updated_at
+  updated_at = EXCLUDED.updated_at, effect_metric = EXCLUDED.effect_metric, effect_value = EXCLUDED.effect_value,
+  effect_period = EXCLUDED.effect_period, review = EXCLUDED.review
 `
 
 type UpsertRecordParams struct {
@@ -148,6 +207,10 @@ type UpsertRecordParams struct {
 	Author         string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	EffectMetric   string
+	EffectValue    string
+	EffectPeriod   string
+	Review         []byte
 }
 
 func (q *Queries) UpsertRecord(ctx context.Context, arg UpsertRecordParams) error {
@@ -169,6 +232,10 @@ func (q *Queries) UpsertRecord(ctx context.Context, arg UpsertRecordParams) erro
 		arg.Author,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.EffectMetric,
+		arg.EffectValue,
+		arg.EffectPeriod,
+		arg.Review,
 	)
 	return err
 }

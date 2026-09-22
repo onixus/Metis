@@ -232,6 +232,52 @@ func TestCM07_PGStoreBaselines(t *testing.T) {
 	}
 }
 
+// TestCM08_PGStoreBaselineComponents: состав поставки сохраняется вместе с baseline,
+// и по ключу компонента находятся затронутые сертифицированные версии.
+func TestCM08_PGStoreBaselineComponents(t *testing.T) {
+	db := openTestDB(t)
+	ctx := context.Background()
+	store := pgstore.New(db)
+	openssl := compliance.Component{Key: "pkg:generic/openssl", Version: "3.0.12"}
+	affected := compliance.CertifiedBaseline{ID: kernel.NewID(), ProductID: kernel.NewID(), Version: "3.1",
+		CertificateNo: "SYN-10", CertifiedAt: kernel.DateOf(2026, 9, 1), EOL: kernel.DateOf(2031, 9, 1),
+		Components: []compliance.Component{openssl, {Key: "pkg:generic/zlib", Version: "1.3"}}, CreatedAt: now}
+	other := compliance.CertifiedBaseline{ID: kernel.NewID(), ProductID: kernel.NewID(), Version: "4.0",
+		Components: []compliance.Component{{Key: "pkg:generic/openssl", Version: "3.5.0"}}, CreatedAt: now.Add(time.Second)}
+	empty := compliance.CertifiedBaseline{ID: kernel.NewID(), ProductID: kernel.NewID(), Version: "1.0", CreatedAt: now.Add(2 * time.Second)}
+	for _, b := range []compliance.CertifiedBaseline{affected, other, empty} {
+		if err := store.SaveBaseline(ctx, b); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, err := store.Baseline(ctx, affected.ID)
+	if err != nil || !reflect.DeepEqual(got, affected) {
+		t.Fatalf("baseline с составом:\n got %+v\nwant %+v\nerr=%v", got, affected, err)
+	}
+	if got, err := store.Baseline(ctx, empty.ID); err != nil || got.Components != nil {
+		t.Fatalf("пустой состав читается как %+v, err=%v", got.Components, err)
+	}
+	list, err := store.BaselinesWithComponent(ctx, openssl.Key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("по ключу компонента найдено %d baseline, ожидалось 2", len(list))
+	}
+	matched := 0
+	for _, b := range list {
+		if b.HasComponent(openssl) {
+			matched++
+		}
+	}
+	if matched != 1 {
+		t.Fatalf("уязвимую версию компонента содержит %d baseline, ожидался 1", matched)
+	}
+	if list, err := store.BaselinesWithComponent(ctx, "pkg:generic/нет-такого"); err != nil || len(list) != 0 {
+		t.Fatalf("неизвестный компонент: %+v err=%v", list, err)
+	}
+}
+
 func fillEvidence(t *testing.T, store compliance.EvidenceStore, n int) []compliance.EvidenceItem {
 	t.Helper()
 	ctx := context.Background()

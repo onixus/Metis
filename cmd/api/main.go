@@ -76,6 +76,8 @@ func run(log *slog.Logger) error {
 			}
 		}()
 	}
+	// Загрузка финансовых данных по расписанию (EC-01); без METIS_FINANCE_DIR ничего не делает.
+	go a.FinanceImportLoop(ctx)
 	select {
 	case <-ctx.Done():
 	case err := <-errCh:

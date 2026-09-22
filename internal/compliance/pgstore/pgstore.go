@@ -272,9 +272,14 @@ func (s *Store) ImpactHistory(ctx context.Context, featureID kernel.ID) ([]compl
 
 // SaveBaseline создаёт или обновляет baseline.
 func (s *Store) SaveBaseline(ctx context.Context, b compliance.CertifiedBaseline) error {
-	err := s.q(ctx).UpsertBaseline(ctx, db.UpsertBaselineParams{
+	components, err := marshalComponents(b.Components)
+	if err != nil {
+		return fmt.Errorf("compliance baseline %s: %w", b.ID, err)
+	}
+	err = s.q(ctx).UpsertBaseline(ctx, db.UpsertBaselineParams{
 		ID: b.ID, ProductID: b.ProductID, TrackID: pgdb.NullID(b.TrackID), Version: b.Version, RequirementSetID: pgdb.NullID(b.RequirementSetID),
 		CertificateNo: b.CertificateNo, CertifiedAt: pgdb.ToDate(b.CertifiedAt), Eol: pgdb.ToDate(b.EOL), CreatedAt: b.CreatedAt.UTC(),
+		Components: components,
 	})
 	if err != nil {
 		return fmt.Errorf("compliance baseline %s: %w", b.ID, pgdb.MapError(err))
@@ -304,9 +309,49 @@ func (s *Store) Baselines(ctx context.Context, productID kernel.ID) ([]complianc
 	return out, nil
 }
 
+// BaselinesWithComponent возвращает baseline, содержащие компонент с таким ключом (CM-08).
+func (s *Store) BaselinesWithComponent(ctx context.Context, componentKey string) ([]compliance.CertifiedBaseline, error) {
+	rows, err := s.q(ctx).ListBaselinesWithComponent(ctx, componentKey)
+	if err != nil {
+		return nil, fmt.Errorf("compliance baselines по компоненту %q: %w", componentKey, pgdb.MapError(err))
+	}
+	out := make([]compliance.CertifiedBaseline, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, baselineFromRow(r))
+	}
+	return out, nil
+}
+
 func baselineFromRow(r db.ComplianceBaseline) compliance.CertifiedBaseline {
 	return compliance.CertifiedBaseline{
 		ID: r.ID, ProductID: r.ProductID, TrackID: r.TrackID.UUID, Version: r.Version, RequirementSetID: r.RequirementSetID.UUID,
-		CertificateNo: r.CertificateNo, CertifiedAt: pgdb.FromDate(r.CertifiedAt), EOL: pgdb.FromDate(r.Eol), CreatedAt: r.CreatedAt.UTC(),
+		CertificateNo: r.CertificateNo, CertifiedAt: pgdb.FromDate(r.CertifiedAt), EOL: pgdb.FromDate(r.Eol),
+		Components: unmarshalComponents(r.Components), CreatedAt: r.CreatedAt.UTC(),
 	}
+}
+
+// marshalComponents сериализует состав baseline в jsonb; пустой состав — пустой массив.
+func marshalComponents(in []compliance.Component) ([]byte, error) {
+	if len(in) == 0 {
+		return []byte("[]"), nil
+	}
+	raw, err := json.Marshal(in)
+	if err != nil {
+		return nil, fmt.Errorf("%w: состав baseline: %w", kernel.ErrValidation, err)
+	}
+	return raw, nil
+}
+
+// unmarshalComponents читает состав baseline; повреждённое значение трактуется как пустой состав,
+// иначе одна плохая строка сделала бы недоступным весь список.
+func unmarshalComponents(raw []byte) []compliance.Component {
+	if len(raw) == 0 {
+		return nil
+	}
+	var out []compliance.Component
+	if err := json.Unmarshal(raw, &out); err != nil || len(out) == 0 {
+		// Пустой состав хранится как «[]»: в домене это отсутствие состава, а не пустой срез.
+		return nil
+	}
+	return out
 }

@@ -16,6 +16,53 @@ export const keys = {
   triage: (id: string) => ['products', id, 'triage'] as const,
   roadmap: (id: string, view: string) => ['products', id, 'roadmap', view] as const,
   history: (itemId: string) => ['roadmap-items', itemId, 'history'] as const,
+  portfolioPnl: (period: string) => ['economics', 'pnl', 'portfolio', period] as const,
+  productPnl: (id: string, period: string) => ['economics', 'pnl', id, period] as const,
+  winLoss: (productKey: string) => ['marketing', 'win-loss', productKey] as const,
+  launchCalendar: (id: string) => ['products', id, 'launch-calendar'] as const,
+}
+
+/** P&L портфеля за период (EC-03); требует уровня доступа к финансовым данным (NF-S02). */
+export function usePortfolioPnL(period: string) {
+  return useQuery({
+    queryKey: keys.portfolioPnl(period),
+    enabled: period !== '',
+    queryFn: async () => unwrap(await api.GET('/economics/pnl/portfolio', { params: { query: { period } } })),
+  })
+}
+
+/** P&L продукта в двух видах: прямой и с нагрузкой хаба (EC-03). */
+export function useProductPnL(productId: string, period: string, enabled = true) {
+  return useQuery({
+    queryKey: keys.productPnl(productId, period),
+    enabled: enabled && period !== '',
+    queryFn: async () =>
+      unwrap(
+        await api.GET('/economics/pnl/products/{productId}', {
+          params: { path: { productId }, query: { period } },
+        }),
+      ),
+  })
+}
+
+/** Win/loss по портфелю или продукту (DA-04). */
+export function useWinLoss(productKey: string) {
+  return useQuery({
+    queryKey: keys.winLoss(productKey),
+    queryFn: async () =>
+      unwrap(await api.GET('/marketing/win-loss', { params: { query: productKey ? { productKey } : {} } })),
+  })
+}
+
+/** Календарь запусков продукта (RM-06). */
+export function useLaunchCalendar(productId: string) {
+  return useQuery({
+    queryKey: keys.launchCalendar(productId),
+    queryFn: async () =>
+      unwrap(
+        await api.GET('/products/{productId}/roadmap/launch-calendar', { params: { path: { productId }, query: {} } }),
+      ),
+  })
 }
 
 export function useMe() {

@@ -58,6 +58,11 @@ const (
 type Action string
 
 const (
+	ActionReadModelFinance  Action = "read_model_finance"
+	ActionWriteModelFinance Action = "write_model_finance"
+)
+
+const (
 	ActionReadStrategic Action = "read_strategic"
 	ActionReadPrivate   Action = "read_private"
 	ActionWriteGraph    Action = "write_graph"
@@ -69,12 +74,16 @@ const (
 	ActionWriteCommitments Action = "write_commitments" // реестр обязательств (CT-01…CT-04)
 	ActionWriteCompliance  Action = "write_compliance"  // треки, гейты, доказательства, классы влияния (CM-01…CM-07)
 	ActionWriteDecisions   Action = "write_decisions"   // Decision Records (DA-01)
-	ActionAdminSettings    Action = "admin_settings"
-	ActionReadAudit        Action = "read_audit"
-	ActionManageAccess     Action = "manage_access"
-	ActionManageConnects   Action = "manage_connectors"
-	ActionReadFinance      Action = "read_finance"
-	ActionWriteFinance     Action = "write_finance"
+	// Этап 3.
+	ActionReadFinance    Action = "read_finance"    // P&L, показатели, строки импорта (EC-01…EC-13)
+	ActionWriteFinance   Action = "write_finance"   // поля, формулы, правила, загрузки (EC-01…EC-13)
+	ActionReadMarketing  Action = "read_marketing"  // win/loss, attach rate (DA-04)
+	ActionWriteDashboard Action = "write_dashboard" // конструктор дашбордов (DA-05)
+	ActionManageLicense  Action = "manage_license"  // лицензионный ключ поставки (AD-06)
+	ActionAdminSettings  Action = "admin_settings"
+	ActionReadAudit      Action = "read_audit"
+	ActionManageAccess   Action = "manage_access"
+	ActionManageConnects Action = "manage_connectors"
 )
 
 // Scope — область доступа субъекта. Неизменяемый; нулевое значение запрещает всё.
@@ -230,6 +239,36 @@ func (s Scope) Allows(action Action, product kernel.ID) bool {
 		return s.HasRole(RoleAdmin)
 	case ActionReadAudit:
 		return s.HasRole(RoleAdmin) || s.HasRole(RoleCompliance)
+	case ActionReadModelFinance:
+		// Финансовые данные видны только с уровнем доступа к финансам (NF-S02).
+		if s.finance == FinanceNone {
+			return false
+		}
+		if product == kernel.NilID {
+			return s.SeesAllProducts()
+		}
+		return s.Product(product) >= AccessStrategic
+	case ActionWriteModelFinance:
+		if s.finance < FinanceFull {
+			return false
+		}
+		return s.HasRole(RoleAdmin) || s.HasRole(RoleCPO) || s.HasRole(RoleFinance) || s.HasRole(RoleService)
+	case ActionReadMarketing:
+		if s.HasRole(RoleAdmin) || s.HasRole(RoleCPO) || s.HasRole(RoleMarketing) || s.HasRole(RoleService) {
+			return true
+		}
+		return s.HasRole(RolePM) && s.Product(product) >= AccessPrivate
+	case ActionWriteDashboard:
+		// Дашборд собирает тот, кто видит данные продукта; presale — только читатель.
+		if s.HasRole(RolePresale) && len(s.roles) == 1 {
+			return false
+		}
+		if s.HasRole(RoleAdmin) || s.HasRole(RoleCPO) {
+			return true
+		}
+		return s.Product(product) >= AccessStrategic
+	case ActionManageLicense:
+		return s.HasRole(RoleAdmin)
 	default:
 		return false
 	}

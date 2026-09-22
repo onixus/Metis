@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	"github.com/shopspring/decimal"
+
 	"context"
 
 	"github.com/onixus/metis/internal/decisions"
@@ -39,6 +41,17 @@ func toDecision(r decisions.DecisionRecord) gen.Decision {
 		}
 		out.Links = &links
 	}
+	if !r.Effect.IsZero() || !r.Effect.Value.IsZero() {
+		value := r.Effect.Value.String()
+		out.Effect = &gen.DecisionEffect{MetricKey: strPtr(r.Effect.MetricKey), Value: &value, Period: strPtr(r.Effect.Period)}
+	}
+	if r.Review != nil {
+		out.Review = &gen.DecisionReview{
+			At: r.Review.At, Actor: r.Review.Actor, Expected: r.Review.Expected.String(),
+			Actual: r.Review.Actual.String(), Delta: r.Review.Delta.String(),
+			Verdict: gen.DecisionReviewVerdict(r.Review.Verdict), Comment: strPtr(r.Review.Comment),
+		}
+	}
 	return out
 }
 
@@ -49,6 +62,15 @@ func toDecisionInput(in gen.DecisionInput) decisions.Input {
 	}
 	if in.Snapshot != nil {
 		out.Snapshot = *in.Snapshot
+	}
+	if in.Effect != nil {
+		effect := decisions.MeasurableEffect{MetricKey: strOrEmpty(in.Effect.MetricKey), Period: strOrEmpty(in.Effect.Period)}
+		if in.Effect.Value != nil && *in.Effect.Value != "" {
+			if v, err := decimal.NewFromString(*in.Effect.Value); err == nil {
+				effect.Value = v
+			}
+		}
+		out.Effect = effect
 	}
 	if in.Options != nil {
 		for _, o := range *in.Options {

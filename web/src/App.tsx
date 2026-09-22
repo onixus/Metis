@@ -18,6 +18,7 @@ import { DeliveryPage } from './pages/DeliveryPage'
 import { EconomicsPage } from './pages/EconomicsPage'
 import { HubPage } from './pages/HubPage'
 import { LoginPage } from './pages/LoginPage'
+import { PortfolioPage } from './pages/PortfolioPage'
 import { ProductBuilderPage } from './pages/ProductBuilderPage'
 import { ProductPage } from './pages/ProductPage'
 import { ProductsPage } from './pages/ProductsPage'
@@ -84,6 +85,7 @@ export default function App() {
                 <Route path="/hub" element={<HubPage />} />
                 <Route path="/delivery" element={<DeliveryPage />} />
                 <Route path="/economics" element={<EconomicsPage />} />
+                <Route path="/portfolio" element={<PortfolioPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="*" element={<NotFound />} />
               </Route>

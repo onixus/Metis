@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/onixus/metis/internal/decisions"
 	"github.com/onixus/metis/internal/decisions/internal/db"
 	"github.com/onixus/metis/internal/kernel"
@@ -50,11 +52,20 @@ func (s *Store) Save(ctx context.Context, r decisions.DecisionRecord) error {
 	if err != nil {
 		return fmt.Errorf("decisions save %s: links: %w", r.ID, err)
 	}
+	var review []byte
+	if r.Review != nil {
+		raw, err := json.Marshal(r.Review)
+		if err != nil {
+			return fmt.Errorf("decisions save %s: review: %w", r.ID, err)
+		}
+		review = raw
+	}
 	err = s.q(ctx).UpsertRecord(ctx, db.UpsertRecordParams{
 		ID: r.ID, ProductID: pgdb.NullID(r.ProductID), Title: r.Title, Context: r.Context, Snapshot: snapshot, Options: rawOptions,
 		ChosenKey: r.ChosenKey, Rationale: r.Rationale, ExpectedEffect: r.ExpectedEffect, ReviewDate: pgdb.ToDate(r.ReviewDate),
 		Status: string(r.Status), SupersededBy: pgdb.NullID(r.SupersededBy), Links: rawLinks, PageID: r.PageID, Author: r.Author,
 		CreatedAt: r.CreatedAt.UTC(), UpdatedAt: r.UpdatedAt.UTC(),
+		EffectMetric: r.Effect.MetricKey, EffectValue: effectValue(r.Effect), EffectPeriod: r.Effect.Period, Review: review,
 	})
 	if err != nil {
 		return fmt.Errorf("decisions save %s: %w", r.ID, pgdb.MapError(err))
@@ -122,7 +133,50 @@ func fromRow(r db.DecisionsRecord) (decisions.DecisionRecord, error) {
 	if len(rec.Links) == 0 {
 		rec.Links = nil
 	}
+	if r.EffectMetric != "" || r.EffectValue != "" || r.EffectPeriod != "" {
+		value := decimal.Zero
+		if r.EffectValue != "" {
+			v, err := decimal.NewFromString(r.EffectValue)
+			if err != nil {
+				return decisions.DecisionRecord{}, fmt.Errorf("decisions record %s: effect_value: %w", r.ID, err)
+			}
+			value = v
+		}
+		rec.Effect = decisions.MeasurableEffect{MetricKey: r.EffectMetric, Value: value, Period: r.EffectPeriod}
+	}
+	if len(r.Review) > 0 && string(r.Review) != "null" {
+		var review decisions.Review
+		if err := json.Unmarshal(r.Review, &review); err != nil {
+			return decisions.DecisionRecord{}, fmt.Errorf("decisions record %s: review: %w", r.ID, err)
+		}
+		rec.Review = &review
+	}
 	return rec, nil
+}
+
+// effectValue сериализует целевое значение показателя; пустой эффект — пустая строка.
+func effectValue(e decisions.MeasurableEffect) string {
+	if e.IsZero() && e.Value.IsZero() {
+		return ""
+	}
+	return e.Value.String()
+}
+
+// DueForReview возвращает принятые решения с наступившей датой ревизии и без ревизии (DA-06).
+func (s *Store) DueForReview(ctx context.Context, on kernel.Date) ([]decisions.DecisionRecord, error) {
+	rows, err := s.q(ctx).ListRecordsDueForReview(ctx, pgdb.ToDate(on))
+	if err != nil {
+		return nil, fmt.Errorf("decisions due for review: %w", pgdb.MapError(err))
+	}
+	out := make([]decisions.DecisionRecord, 0, len(rows))
+	for _, r := range rows {
+		rec, err := fromRow(r)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, rec)
+	}
+	return out, nil
 }
 
 // EventProcessed сообщает, обрабатывалось ли событие.

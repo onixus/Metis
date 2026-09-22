@@ -58,7 +58,7 @@ func (q *Queries) EvidenceAfter(ctx context.Context, arg EvidenceAfterParams) ([
 }
 
 const getBaseline = `-- name: GetBaseline :one
-SELECT id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at FROM compliance.baselines WHERE id = $1
+SELECT id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at, components FROM compliance.baselines WHERE id = $1
 `
 
 func (q *Queries) GetBaseline(ctx context.Context, id uuid.UUID) (ComplianceBaseline, error) {
@@ -74,6 +74,7 @@ func (q *Queries) GetBaseline(ctx context.Context, id uuid.UUID) (ComplianceBase
 		&i.CertifiedAt,
 		&i.Eol,
 		&i.CreatedAt,
+		&i.Components,
 	)
 	return i, err
 }
@@ -247,7 +248,7 @@ func (q *Queries) LastEvidence(ctx context.Context) (ComplianceEvidenceLog, erro
 }
 
 const listBaselines = `-- name: ListBaselines :many
-SELECT id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at FROM compliance.baselines WHERE ($1::uuid IS NULL OR product_id = $1::uuid) ORDER BY created_at, id
+SELECT id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at, components FROM compliance.baselines WHERE ($1::uuid IS NULL OR product_id = $1::uuid) ORDER BY created_at, id
 `
 
 func (q *Queries) ListBaselines(ctx context.Context, productID uuid.NullUUID) ([]ComplianceBaseline, error) {
@@ -269,6 +270,45 @@ func (q *Queries) ListBaselines(ctx context.Context, productID uuid.NullUUID) ([
 			&i.CertifiedAt,
 			&i.Eol,
 			&i.CreatedAt,
+			&i.Components,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBaselinesWithComponent = `-- name: ListBaselinesWithComponent :many
+SELECT id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at, components FROM compliance.baselines
+WHERE components @> jsonb_build_array(jsonb_build_object('key', $1::text))
+ORDER BY created_at, id
+`
+
+// CM-08: сертифицированные версии, содержащие компонент с указанным ключом.
+func (q *Queries) ListBaselinesWithComponent(ctx context.Context, componentKey string) ([]ComplianceBaseline, error) {
+	rows, err := q.db.Query(ctx, listBaselinesWithComponent, componentKey)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ComplianceBaseline
+	for rows.Next() {
+		var i ComplianceBaseline
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.TrackID,
+			&i.Version,
+			&i.RequirementSetID,
+			&i.CertificateNo,
+			&i.CertifiedAt,
+			&i.Eol,
+			&i.CreatedAt,
+			&i.Components,
 		); err != nil {
 			return nil, err
 		}
@@ -433,10 +473,11 @@ func (q *Queries) SaveSettings(ctx context.Context, value []byte) error {
 }
 
 const upsertBaseline = `-- name: UpsertBaseline :exec
-INSERT INTO compliance.baselines (id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO compliance.baselines (id, product_id, track_id, version, requirement_set_id, certificate_no, certified_at, eol, created_at, components)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, track_id = EXCLUDED.track_id, version = EXCLUDED.version,
-  requirement_set_id = EXCLUDED.requirement_set_id, certificate_no = EXCLUDED.certificate_no, certified_at = EXCLUDED.certified_at, eol = EXCLUDED.eol
+  requirement_set_id = EXCLUDED.requirement_set_id, certificate_no = EXCLUDED.certificate_no, certified_at = EXCLUDED.certified_at,
+  eol = EXCLUDED.eol, components = EXCLUDED.components
 `
 
 type UpsertBaselineParams struct {
@@ -449,6 +490,7 @@ type UpsertBaselineParams struct {
 	CertifiedAt      pgtype.Date
 	Eol              pgtype.Date
 	CreatedAt        time.Time
+	Components       []byte
 }
 
 func (q *Queries) UpsertBaseline(ctx context.Context, arg UpsertBaselineParams) error {
@@ -462,6 +504,7 @@ func (q *Queries) UpsertBaseline(ctx context.Context, arg UpsertBaselineParams) 
 		arg.CertifiedAt,
 		arg.Eol,
 		arg.CreatedAt,
+		arg.Components,
 	)
 	return err
 }

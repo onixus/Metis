@@ -1,5 +1,5 @@
-id,account_id,name,stage,amount,currency,product_key,regulatory,version,expected_date,requested_features,blocks_on_features,notes
-deal-001,acc-001,Поставка EDR+SOAR,negotiation,12000000.00,RUB,edr,ГОСТ Р 56939,3.0,2026-12-15,Response API v2,true,Заказчику нужен API реагирования
-deal-002,acc-002,Пилот VM,qualification,3000000,RUB,vm,,2.5,2027-02-01,Отчёт для ЦБ;Экспорт в SIEM,false,
-deal-003,acc-003,Продление,closed_won,1500000,RUB,edr,,,2026-10-01,,false,@import os
-deal-004,acc-004,Тест без суммы,lead,,RUB,soar,,,,-Коннектор,false,
+id,account_id,name,stage,amount,currency,product_key,regulatory,version,expected_date,requested_features,blocks_on_features,notes,outcome,reason,closed_date,products,features
+deal-001,acc-001,Поставка EDR+SOAR,negotiation,12000000.00,RUB,edr,ГОСТ Р 56939,3.0,2026-12-15,Response API v2,true,Заказчику нужен API реагирования,,,,edr;soar,
+deal-002,acc-002,Пилот VM,qualification,3000000,RUB,vm,,2.5,2027-02-01,Отчёт для ЦБ;Экспорт в SIEM,false,,,,,vm,
+deal-003,acc-003,Продление,closed_won,1500000,RUB,edr,,,2026-10-01,,false,@import os,won,цена,2026-10-01,edr,Response API v2
+deal-004,acc-004,Тест без суммы,lead,,RUB,soar,,,,-Коннектор,false,,lost,нет сертификата,2026-09-01,soar,

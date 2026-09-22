@@ -46,8 +46,9 @@ build:
 web:
 	cd web && npm run lint && npm run typecheck && npm test && npm run build
 
+# Исключения уязвимостей перечислены в scripts/govulncheck.sh и обоснованы в ADR-0005.
 vuln:
-	govulncheck ./...
+	./scripts/govulncheck.sh
 
 licenses:
 	go-licenses check --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,Zlib,MPL-2.0 ./...

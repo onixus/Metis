@@ -40,18 +40,17 @@ const writeAttempts = 5
 
 // Service — публичный интерфейс модуля compliance.
 type Service struct {
-	store    Store
-	evidence EvidenceStore
-	graph    GraphReader
-	releases ReleaseReader
-	pub      kernel.Publisher
-	clock    kernel.Clock
-	// Этап 3: запуск регуляторных сроков (CM-08) и автосбор доказательств (CM-09).
 	deadlines DeadlineRegistrar
 	pipeline  ports.SecurityPipeline
+	store     Store
+	evidence  EvidenceStore
+	graph     GraphReader
+	releases  ReleaseReader
+	pub       kernel.Publisher
+	clock     kernel.Clock
 }
 
-// NewService создаёт сервис; настройки принадлежат Store и переживают пересоздание Service.
+// NewService создаёт сервис; настройки читаются из Store, до первой записи используются defaults.
 func NewService(store Store, evidence EvidenceStore, graph GraphReader, pub kernel.Publisher, clock kernel.Clock) *Service {
 	return &Service{store: store, evidence: evidence, graph: graph, pub: pub, clock: clock}
 }
@@ -90,10 +89,19 @@ func requireCatalog(sc authz.Scope) error {
 // ---------- Настройки ----------
 
 // Settings возвращает настройки модуля.
-func (s *Service) Settings(ctx context.Context) (Settings, error) {
-	st, err := s.store.Settings(ctx)
+func (s *Service) Settings(ctx context.Context, sc authz.Scope) (Settings, error) {
+	if !sc.Valid() {
+		return Settings{}, kernel.ErrForbidden
+	}
+	st, err := s.store.Settings(ctx, sc)
+	if errors.Is(err, kernel.ErrNotFound) {
+		return DefaultSettings(), nil
+	}
 	if err != nil {
-		return Settings{}, fmt.Errorf("settings: %w", err)
+		return Settings{}, fmt.Errorf("compliance settings: %w", err)
+	}
+	if err := st.validate(); err != nil {
+		return Settings{}, fmt.Errorf("stored compliance settings: %w", err)
 	}
 	return st, nil
 }
@@ -106,8 +114,8 @@ func (s *Service) UpdateSettings(ctx context.Context, sc authz.Scope, st Setting
 	if err := st.validate(); err != nil {
 		return err
 	}
-	if err := s.store.SaveSettings(ctx, st); err != nil {
-		return fmt.Errorf("save settings: %w", err)
+	if err := s.store.SaveSettings(ctx, sc, st); err != nil {
+		return fmt.Errorf("save compliance settings: %w", err)
 	}
 	return nil
 }
@@ -657,7 +665,7 @@ func (s *Service) newBaseline(ctx context.Context, sc authz.Scope, t Track, g Ga
 	if err != nil {
 		return CertifiedBaseline{}, err
 	}
-	st, err := s.Settings(ctx)
+	st, err := s.Settings(ctx, sc)
 	if err != nil {
 		return CertifiedBaseline{}, err
 	}
@@ -1030,7 +1038,7 @@ func (s *Service) ConfirmationCost(ctx context.Context, sc authz.Scope, featureI
 	if err != nil {
 		return kernel.Money{}, fmt.Errorf("product: %w", err)
 	}
-	st, err := s.Settings(ctx)
+	st, err := s.Settings(ctx, sc)
 	if err != nil {
 		return kernel.Money{}, err
 	}

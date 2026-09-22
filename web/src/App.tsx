@@ -1,7 +1,7 @@
-import { lazy, Suspense } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
-import { ApiError } from './api/client'
+import { createSessionClient, discardSessionClient } from './api/sessionCache'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
 import { Layout } from './components/Layout'
@@ -15,6 +15,7 @@ import { DecisionsPage } from './pages/DecisionsPage'
 import { DiscoveryPage } from './pages/DiscoveryPage'
 import { TracePage } from './pages/TracePage'
 import { DeliveryPage } from './pages/DeliveryPage'
+import { EconomicsPage } from './pages/EconomicsPage'
 import { HubPage } from './pages/HubPage'
 import { LoginPage } from './pages/LoginPage'
 import { PortfolioPage } from './pages/PortfolioPage'
@@ -25,14 +26,19 @@ import { RoadmapPage } from './pages/RoadmapPage'
 
 const GraphPage = lazy(() => import('./pages/GraphPage').then((m) => ({ default: m.GraphPage })))
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
+/** Each identity owns a separate cache; late mutation callbacks retain only their old client. */
+function SessionCache({ children }: { children: ReactNode }) {
+  const [client] = useState(createSessionClient)
+  useEffect(() => () => {
+    discardSessionClient(client)
+  }, [client])
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+}
+
+function SessionBoundary({ children }: { children: ReactNode }) {
+  const { sessionVersion } = useAuth()
+  return <SessionCache key={sessionVersion}>{children}</SessionCache>
+}
 
 function RequireAuth() {
   const { ready, authenticated } = useAuth()
@@ -48,15 +54,15 @@ function NotFound() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+    <AuthProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/callback" element={<CallbackPage />} />
-            <Route element={<RequireAuth />}>
+            <Route element={<SessionBoundary><RequireAuth /></SessionBoundary>}>
               <Route element={<Layout />}>
                 <Route path="/" element={<ProductsPage />} />
+                <Route path="/products" element={<Navigate to="/" replace />} />
                 <Route
                   path="/graph"
                   element={
@@ -78,6 +84,7 @@ export default function App() {
                 <Route path="/trace/:kind/:id" element={<TracePage />} />
                 <Route path="/hub" element={<HubPage />} />
                 <Route path="/delivery" element={<DeliveryPage />} />
+                <Route path="/economics" element={<EconomicsPage />} />
                 <Route path="/portfolio" element={<PortfolioPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="*" element={<NotFound />} />
@@ -85,7 +92,6 @@ export default function App() {
             </Route>
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+    </AuthProvider>
   )
 }

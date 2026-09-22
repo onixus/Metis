@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/rest/api/content",
+    "queryParameters": { "title": { "matches": "Metis .*" } }
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": { "results": [], "limit": 2 }
+  }
+}

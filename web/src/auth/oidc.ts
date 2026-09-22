@@ -1,12 +1,14 @@
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
 import type { AuthProvider } from './types'
+import { runtimeConfig } from './runtime'
 
 let manager: UserManager | null = null
 
 function getManager(): UserManager {
   if (manager) return manager
-  const authority = import.meta.env.VITE_OIDC_ISSUER as string | undefined
-  const clientId = import.meta.env.VITE_OIDC_CLIENT_ID as string | undefined
+  const config = runtimeConfig()
+  const authority = config.oidcIssuer
+  const clientId = config.oidcClientId
   if (!authority || !clientId) {
     throw new Error('oidc_not_configured')
   }
@@ -16,7 +18,7 @@ function getManager(): UserManager {
     redirect_uri: `${window.location.origin}/callback`,
     post_logout_redirect_uri: `${window.location.origin}/login`,
     response_type: 'code',
-    scope: (import.meta.env.VITE_OIDC_SCOPE as string | undefined) ?? 'openid profile email',
+    scope: config.oidcScope ?? 'openid profile email',
     userStore: new WebStorageStateStore({ store: window.sessionStorage }),
     automaticSilentRenew: true,
   })

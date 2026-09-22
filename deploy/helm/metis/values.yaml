@@ -4,7 +4,7 @@ image:
   tag: "0.1.0"
   pullPolicy: IfNotPresent
 api:
-  replicas: 2
+  replicas: 1 # Пилот: увеличение требует проверки согласованности графа между процессами.
   port: 8081
   resources:
     requests: { cpu: 200m, memory: 256Mi }
@@ -18,15 +18,32 @@ config:
   authMode: oidc
   oidcIssuer: https://idp.example.internal/realms/metis
   oidcClientId: metis-web
+  hmacIssuer: metis-stand # Только локальный стенд; при authMode=hmac нужен Secret hmacSecret.
   jiraBaseURL: ""      # пусто — адаптер Jira выключен (NF-L03)
+  deliveryProvider: "" # none | jira; пусто — определить по jiraBaseURL
+  jiraFieldsFile: ""   # например /etc/metis/jira-fields.json
   confluenceBaseURL: ""  # пусто — адаптер Confluence выключен (NF-L03)
+  knowledgeProvider: "" # none | confluence; пусто — определить по confluenceBaseURL
   confluenceSpace: METIS # пространство страниц ADR
+  crmProvider: none     # none | csv | bitrix24; источник включается явно
   crmDir: /data/crm
-  otelExporter: otlp
+  crmSyncInterval: 1h
+  bitrixBaseURL: ""     # origin коробочного портала, без webhook credentials в URL
+  bitrixFieldsFile: ""  # например /etc/metis/bitrix-fields.json
+  financeSourcesFile: "" # например /etc/metis/finance-sources.json; пусто — расписание выключено
+  financeSyncInterval: 24h
+  worklogTeamsFile: "" # например /etc/metis/worklog-teams.json
+  otelExporter: none # Для otlp предварительно настройте доступный коллектор.
   logLevel: info
-  migrateOnStart: true
+  migrateOnStart: false # Сначала отдельный образ migrate с owner URL, runtime databaseUrl — metis_app.
+  deliverySyncInterval: 1h
+  renewalInterval: 24h
 secrets:
-  existingSecret: metis-secrets   # ключи: databaseUrl, jiraToken, webhookToken, confluenceToken
+  existingSecret: metis-secrets   # databaseUrl (metis_app), jiraToken, webhookToken, confluenceToken, bitrixToken
+  envFromSecrets: [] # существующие Secret с именами переменных из профилей 1С; никаких значений в values
+integrationFiles:
+  profileConfigMap: "" # существующий ConfigMap с JSON-профилями; read-only /etc/metis у API и worker
+  dataExistingClaim: "" # существующий PVC с crm/ и finance/; read-only /data у API и worker
 ingress:
   enabled: false
   className: nginx

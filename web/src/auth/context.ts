@@ -5,8 +5,10 @@ export interface AuthState {
   mode: AuthMode
   ready: boolean
   authenticated: boolean
+  sessionVersion: number
   login(token?: string): Promise<void>
   logout(): Promise<void>
+  expireSession(): Promise<void>
   refresh(): Promise<void>
 }
 

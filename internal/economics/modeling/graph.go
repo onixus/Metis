@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/onixus/metis/internal/economics/formula"
+	"github.com/onixus/metis/internal/economics/modeling/formula"
 	"github.com/onixus/metis/internal/kernel"
 )
 

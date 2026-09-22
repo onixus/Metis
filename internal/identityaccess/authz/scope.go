@@ -58,6 +58,11 @@ const (
 type Action string
 
 const (
+	ActionReadModelFinance  Action = "read_model_finance"
+	ActionWriteModelFinance Action = "write_model_finance"
+)
+
+const (
 	ActionReadStrategic Action = "read_strategic"
 	ActionReadPrivate   Action = "read_private"
 	ActionWriteGraph    Action = "write_graph"
@@ -194,6 +199,8 @@ func (s Scope) Allows(action Action, product kernel.ID) bool {
 		return false
 	}
 	switch action {
+	case ActionReadFinance, ActionWriteFinance:
+		return product != kernel.NilID && s.finance == FinanceFull && s.HasRole(RoleFinance) && s.Product(product) >= AccessPrivate
 	case ActionReadStrategic:
 		return s.Product(product) >= AccessStrategic
 	case ActionReadPrivate:
@@ -232,7 +239,7 @@ func (s Scope) Allows(action Action, product kernel.ID) bool {
 		return s.HasRole(RoleAdmin)
 	case ActionReadAudit:
 		return s.HasRole(RoleAdmin) || s.HasRole(RoleCompliance)
-	case ActionReadFinance:
+	case ActionReadModelFinance:
 		// Финансовые данные видны только с уровнем доступа к финансам (NF-S02).
 		if s.finance == FinanceNone {
 			return false
@@ -241,7 +248,7 @@ func (s Scope) Allows(action Action, product kernel.ID) bool {
 			return s.SeesAllProducts()
 		}
 		return s.Product(product) >= AccessStrategic
-	case ActionWriteFinance:
+	case ActionWriteModelFinance:
 		if s.finance < FinanceFull {
 			return false
 		}

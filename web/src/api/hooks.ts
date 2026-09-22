@@ -546,7 +546,7 @@ export function useMergeSignals(productId: string) {
         }),
       ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: keys.triage(productId) })
+      void qc.invalidateQueries({ queryKey: keys.product(productId) })
       void qc.invalidateQueries({ queryKey: ['signals'] })
     },
   })

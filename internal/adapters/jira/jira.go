@@ -43,19 +43,19 @@ func (StaticToken) String() string { return "StaticToken{***}" }
 
 // FieldConfig — имена полей Jira, настраиваемые администратором (AD-05, ТЗ 4.2).
 type FieldConfig struct {
-	EpicIssueType   string // тип задачи для эпика
-	EpicLinkField   string // поле «Epic Link» у задач
-	EpicNameField   string // поле «Epic Name»
-	FeatureRefField string // поле со ссылкой на фичу; пусто — используется метка
-	FeatureLabelPfx string // префикс метки со ссылкой на фичу
-	MaxResults      int
+	EpicIssueType   string `json:"epic_issue_type"`
+	EpicLinkField   string `json:"epic_link_field"`
+	EpicNameField   string `json:"epic_name_field"`
+	FeatureRefField string `json:"feature_ref_field"`
+	FeatureLabelPfx string `json:"feature_label_prefix"`
+	MaxResults      int    `json:"max_results"`
 }
 
 // DefaultFieldConfig — значения по умолчанию для Jira Data Center.
 func DefaultFieldConfig() FieldConfig {
 	return FieldConfig{
 		EpicIssueType:   "Epic",
-		EpicLinkField:   "customfield_10014",
+		EpicLinkField:   "Epic Link",
 		EpicNameField:   "customfield_10011",
 		FeatureLabelPfx: "metis-feature-",
 		MaxResults:      100,
@@ -75,7 +75,7 @@ var _ ports.DeliveryTracker = (*Client)(nil)
 // New создаёт клиент. httpClient может быть nil — тогда используется клиент с таймаутом 10 с.
 func New(baseURL string, creds Credentials, fields FieldConfig, httpClient *http.Client) (*Client, error) {
 	u, err := url.Parse(baseURL)
-	if err != nil || u.Scheme == "" || u.Host == "" {
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		return nil, kernel.Invalid("base_url", "некорректный адрес Jira")
 	}
 	if creds == nil {
@@ -87,7 +87,15 @@ func New(baseURL string, creds Credentials, fields FieldConfig, httpClient *http
 	if fields.MaxResults <= 0 {
 		fields.MaxResults = DefaultFieldConfig().MaxResults
 	}
-	return &Client{base: u, http: httpClient, creds: creds, fields: fields}, nil
+	if fields.MaxResults > 1000 {
+		return nil, kernel.Invalid("max_results", "must not exceed 1000")
+	}
+	if fields.EpicLinkField == "" {
+		fields.EpicLinkField = DefaultFieldConfig().EpicLinkField
+	}
+	copyClient := *httpClient
+	copyClient.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	return &Client{base: u, http: &copyClient, creds: creds, fields: fields}, nil
 }
 
 // --- вспомогательные типы ответов Jira (только нужные поля) ---
@@ -138,7 +146,10 @@ type jiraVersion struct {
 func (c *Client) do(ctx context.Context, method, path string, query url.Values, body, out any) error {
 	token, err := c.creds.Token(ctx)
 	if err != nil {
-		return err
+		if ctx.Err() != nil {
+			return fmt.Errorf("jira credentials: %w", ctx.Err())
+		}
+		return fmt.Errorf("%w: Jira credentials unavailable", kernel.ErrForbidden)
 	}
 	u := *c.base
 	u.Path = strings.TrimRight(u.Path, "/") + path
@@ -165,7 +176,10 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 	resp, err := c.http.Do(req)
 	if err != nil {
 		// Сообщение транспорта не содержит токена: заголовки в ошибку не попадают.
-		return fmt.Errorf("%w: jira %s %s: %w", kernel.ErrUnavailable, method, path, err)
+		if ctx.Err() != nil {
+			return fmt.Errorf("%w: jira request: %w", kernel.ErrUnavailable, ctx.Err())
+		}
+		return fmt.Errorf("%w: jira transport failed", kernel.ErrUnavailable)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	limited := io.LimitReader(resp.Body, 8<<20)
@@ -198,7 +212,10 @@ func statusError(code int, method, path string) error {
 
 func (c *Client) search(ctx context.Context, jql string, fields []string) ([]jiraIssue, error) {
 	var all []jiraIssue
-	for start := 0; ; {
+	for start, pages := 0, 0; ; pages++ {
+		if pages >= maxPages {
+			return nil, kernel.Invalid("pagination", "Jira page limit exceeded")
+		}
 		q := url.Values{}
 		q.Set("jql", jql)
 		q.Set("startAt", strconv.Itoa(start))
@@ -209,6 +226,9 @@ func (c *Client) search(ctx context.Context, jql string, fields []string) ([]jir
 			return nil, err
 		}
 		all = append(all, page.Issues...)
+		if len(all) > maxRecords {
+			return nil, kernel.Invalid("pagination", "Jira record limit exceeded")
+		}
 		start += len(page.Issues)
 		if len(page.Issues) == 0 || start >= page.Total {
 			break
@@ -261,7 +281,14 @@ func (c *Client) EpicIssues(ctx context.Context, epicKey string) ([]ports.Issue,
 	if err := validKey(epicKey); err != nil {
 		return nil, err
 	}
-	jql := fmt.Sprintf("%q = %s ORDER BY created ASC", "Epic Link", epicKey)
+	field := strconv.Quote(c.fields.EpicLinkField)
+	if suffix, ok := strings.CutPrefix(c.fields.EpicLinkField, "customfield_"); ok {
+		if _, err := strconv.ParseUint(suffix, 10, 64); err != nil {
+			return nil, kernel.Invalid("epic_link_field", "invalid custom field")
+		}
+		field = "cf[" + suffix + "]"
+	}
+	jql := fmt.Sprintf("%s = %s ORDER BY created ASC", field, epicKey)
 	issues, err := c.search(ctx, jql, []string{"summary", "status", "created", "closedSprints", "sprint"})
 	if err != nil {
 		return nil, err
@@ -280,26 +307,21 @@ func (c *Client) Sprints(ctx context.Context, board string) ([]ports.Sprint, err
 	if err := validKey(board); err != nil {
 		return nil, err
 	}
-	var page struct {
-		Values []jiraSprint `json:"values"`
-	}
-	if err := c.do(ctx, http.MethodGet, "/rest/agile/1.0/board/"+url.PathEscape(board)+"/sprint", nil, nil, &page); err != nil {
+	sprints, err := c.allSprints(ctx, board)
+	if err != nil {
 		return nil, err
 	}
-	out := make([]ports.Sprint, 0, len(page.Values))
-	for _, s := range page.Values {
+	out := make([]ports.Sprint, 0, len(sprints))
+	for _, s := range sprints {
 		sp := ports.Sprint{
 			ID: strconv.Itoa(s.ID), Name: Sanitize(s.Name, MaxSummary), Goal: Sanitize(s.Goal, MaxDescription),
 			State: sprintState(s.State), StartDate: dateOf(s.StartDate), EndDate: dateOf(s.EndDate),
 		}
-		q := url.Values{}
-		q.Set("fields", "summary,status,created,closedSprints,sprint")
-		q.Set("maxResults", strconv.Itoa(c.fields.MaxResults))
-		var issues jiraSearch
-		if err := c.do(ctx, http.MethodGet, "/rest/agile/1.0/sprint/"+strconv.Itoa(s.ID)+"/issue", q, nil, &issues); err != nil {
+		issues, err := c.sprintIssues(ctx, s.ID)
+		if err != nil {
 			return nil, err
 		}
-		for _, is := range issues.Issues {
+		for _, is := range issues {
 			sp.Issues = append(sp.Issues, toIssue(is))
 		}
 		out = append(out, sp)
@@ -321,11 +343,6 @@ func (c *Client) Versions(ctx context.Context, project string) ([]ports.Version,
 		out = append(out, ports.Version{ID: v.ID, Name: Sanitize(v.Name, MaxSummary), Released: v.Released, ReleaseDate: dateOf(v.ReleaseDate)})
 	}
 	return out, nil
-}
-
-// Worklogs — этап 3 (DL-05). Метод объявлен для полноты порта.
-func (c *Client) Worklogs(context.Context, []string, time.Time) ([]ports.Worklog, error) {
-	return nil, fmt.Errorf("%w: worklogs Jira — этап 3", kernel.ErrValidation)
 }
 
 // CreateEpic создаёт эпик и возвращает его ключ. Вызывается только из обработчика outbox.

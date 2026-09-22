@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -69,6 +70,13 @@ func (db *DB) Transact(ctx context.Context, fn func(ctx context.Context) error) 
 	if err != nil {
 		return fmt.Errorf("pgdb begin: %w", err)
 	}
+	// Also release the connection/savepoint if fn panics or its context expires.
+	// Rollback after commit is harmless and returns pgx.ErrTxClosed.
+	defer func() {
+		rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		_ = tx.Rollback(rollbackCtx)
+	}()
 	if err := fn(context.WithValue(ctx, txKey{}, tx)); err != nil {
 		if rbErr := tx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
 			return fmt.Errorf("pgdb rollback: %w (причина: %w)", rbErr, err)

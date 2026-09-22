@@ -53,7 +53,7 @@ func (r *Reader) Read(_ context.Context, src io.Reader, m ports.FinanceMapping) 
 	for _, sheet := range m.Sheets {
 		rows, err := f.GetRows(sheet.Sheet)
 		if err != nil {
-			out.Errors = append(out.Errors, ports.FinanceRowError{Sheet: sheet.Sheet, Message: "лист не найден"})
+			out.Errors = append(out.Errors, ports.FinanceImportRowError{Sheet: sheet.Sheet, Message: "лист не найден"})
 			continue
 		}
 		if len(rows) > maxRows {
@@ -64,7 +64,7 @@ func (r *Reader) Read(_ context.Context, src io.Reader, m ports.FinanceMapping) 
 			header = 1
 		}
 		if len(rows) < header {
-			out.Errors = append(out.Errors, ports.FinanceRowError{Sheet: sheet.Sheet, Row: header, Message: "нет строки заголовков"})
+			out.Errors = append(out.Errors, ports.FinanceImportRowError{Sheet: sheet.Sheet, Row: header, Message: "нет строки заголовков"})
 			continue
 		}
 		index := headerIndex(rows[header-1])
@@ -113,7 +113,7 @@ func readSheet(rows [][]string, header int, sheet ports.FinanceSheetMapping,
 		for _, c := range sheet.Columns {
 			idx, ok := colOf(c.Column)
 			if !ok {
-				out.Errors = append(out.Errors, ports.FinanceRowError{Sheet: sheet.Sheet, Row: rowNo,
+				out.Errors = append(out.Errors, ports.FinanceImportRowError{Sheet: sheet.Sheet, Row: rowNo,
 					Column: c.Column, Message: "колонка не найдена"})
 				continue
 			}
@@ -123,7 +123,7 @@ func readSheet(rows [][]string, header int, sheet ports.FinanceSheetMapping,
 			}
 			v, err := parseNumber(raw)
 			if err != nil {
-				out.Errors = append(out.Errors, ports.FinanceRowError{Sheet: sheet.Sheet, Row: rowNo,
+				out.Errors = append(out.Errors, ports.FinanceImportRowError{Sheet: sheet.Sheet, Row: rowNo,
 					Column: c.Column, Message: err.Error()})
 				continue
 			}

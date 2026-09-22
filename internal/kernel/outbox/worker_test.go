@@ -118,3 +118,26 @@ func TestNFR06_PublisherRejectsInvalidEvent(t *testing.T) {
 		t.Fatalf("ожидалась ошибка валидации, получено %v", err)
 	}
 }
+
+func TestNFR06_UnknownEventRetriesUntilHandlerIsRegistered(t *testing.T) {
+	ctx := context.Background()
+	clock := &stepClock{t: time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)}
+	store := outbox.NewMemStore()
+	ev, err := kernel.NewEvent(clock, "future.command", kernel.NewID(), kernel.NewID(), "synthetic", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Enqueue(ctx, clock.Now(), ev); err != nil {
+		t.Fatal(err)
+	}
+	w := outbox.NewWorker(store, clock, outbox.Config{}, nil)
+	if n, err := w.RunOnce(ctx); err != nil || n != 1 || store.Pending() != 1 {
+		t.Fatalf("unknown event was lost: count=%d pending=%d err=%v", n, store.Pending(), err)
+	}
+	calls := 0
+	w.Register(ev.Type, kernel.HandlerFunc(func(context.Context, kernel.Event) error { calls++; return nil }))
+	clock.t = clock.t.Add(time.Second)
+	if n, err := w.RunOnce(ctx); err != nil || n != 1 || store.Pending() != 0 || calls != 1 {
+		t.Fatalf("registered handler did not receive pending event: count=%d pending=%d calls=%d err=%v", n, store.Pending(), calls, err)
+	}
+}

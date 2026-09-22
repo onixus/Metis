@@ -76,13 +76,15 @@ func kids(in *[]openapi_types.UUID) []kernel.ID {
 func toProduct(p pg.Product) gen.Product {
 	return gen.Product{
 		Id: p.ID, Key: p.Key, Name: p.Name, Type: gen.ProductType(p.Type), Owner: ptr(p.Owner),
-		Lifecycle: ptr(gen.ProductLifecycle(p.Lifecycle)), SsdlcCertified: ptr(p.SSDLCCertified), HubManual: ptr(p.HubManual),
+		Description: ptr(p.Description),
+		Lifecycle:   ptr(gen.ProductLifecycle(p.Lifecycle)), SsdlcCertified: ptr(p.SSDLCCertified), HubManual: ptr(p.HubManual),
 		CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt,
 	}
 }
 
 func toProductInput(in gen.ProductInput) pg.ProductInput {
 	out := pg.ProductInput{Key: in.Key, Name: in.Name, Type: pg.ProductType(in.Type), Owner: strOrEmpty(in.Owner), SSDLCCertified: boolOr(in.SsdlcCertified), HubManual: boolOr(in.HubManual)}
+	out.Description = in.Description
 	if in.Lifecycle != nil {
 		out.Lifecycle = pg.Lifecycle(*in.Lifecycle)
 	}
@@ -181,7 +183,14 @@ func (s *Server) GetMe(ctx context.Context, _ gen.GetMeRequestObject) (gen.GetMe
 	if sc.SeesAllProducts() {
 		all = accessName(sc.Product(kernel.NilID))
 	}
-	return gen.GetMe200JSONResponse{Subject: sc.Subject(), Roles: roles, Audience: gen.MeAudience(sc.Audience()), AllProducts: gen.MeAllProducts(all), Products: products}, nil
+	finance := gen.MeFinanceNone
+	if sc.Finance() == authz.FinanceFull {
+		finance = gen.MeFinanceFull
+	}
+	if sc.Finance() == authz.FinanceAggregates {
+		finance = gen.MeFinanceAggregates
+	}
+	return gen.GetMe200JSONResponse{Subject: sc.Subject(), Roles: roles, Audience: gen.MeAudience(sc.Audience()), AllProducts: gen.MeAllProducts(all), Products: products, Finance: finance}, nil
 }
 
 // ---- portfolio ----
@@ -208,7 +217,9 @@ func (s *Server) CreateProduct(ctx context.Context, req gen.CreateProductRequest
 	if err != nil {
 		return nil, err
 	}
-	s.auditGraph(ctx, "product", p.ID, p.ID, "create")
+	if err := s.auditGraph(ctx, "product", p.ID, p.ID, "create"); err != nil {
+		return nil, err
+	}
 	return gen.CreateProduct201JSONResponse(toProduct(p)), nil
 }
 
@@ -227,7 +238,9 @@ func (s *Server) UpdateProduct(ctx context.Context, req gen.UpdateProductRequest
 	if err != nil {
 		return nil, err
 	}
-	s.auditGraph(ctx, "product", p.ID, p.ID, "update")
+	if err := s.auditGraph(ctx, "product", p.ID, p.ID, "update"); err != nil {
+		return nil, err
+	}
 	return gen.UpdateProduct200JSONResponse(toProduct(p)), nil
 }
 
@@ -241,7 +254,9 @@ func (s *Server) DeleteProduct(ctx context.Context, req gen.DeleteProductRequest
 		}
 		return nil, err
 	}
-	s.auditGraph(ctx, "product", req.ProductId, req.ProductId, "delete")
+	if err := s.auditGraph(ctx, "product", req.ProductId, req.ProductId, "delete"); err != nil {
+		return nil, err
+	}
 	return gen.DeleteProduct204Response{}, nil
 }
 
@@ -388,7 +403,9 @@ func (s *Server) CreateLink(ctx context.Context, req gen.CreateLinkRequestObject
 		}
 		return nil, err
 	}
-	s.auditGraph(ctx, "link", l.ID, l.FromProductID, "create")
+	if err := s.auditGraph(ctx, "link", l.ID, l.FromProductID, "create"); err != nil {
+		return nil, err
+	}
 	return gen.CreateLink201JSONResponse(toLink(l)), nil
 }
 
@@ -397,7 +414,9 @@ func (s *Server) DeleteLink(ctx context.Context, req gen.DeleteLinkRequestObject
 	if err := s.d.Portfolio.DeleteLink(ctx, scope(ctx), req.LinkId); err != nil {
 		return nil, err
 	}
-	s.auditGraph(ctx, "link", req.LinkId, kernel.NilID, "delete")
+	if err := s.auditGraph(ctx, "link", req.LinkId, kernel.NilID, "delete"); err != nil {
+		return nil, err
+	}
 	return gen.DeleteLink204Response{}, nil
 }
 
@@ -445,7 +464,9 @@ func (s *Server) CreateContract(ctx context.Context, req gen.CreateContractReque
 		return nil, err
 	}
 	_, ready, _ := s.d.Portfolio.Contract(ctx, scope(ctx), c.ID)
-	s.auditGraph(ctx, "contract", c.ID, c.ConsumerProductID, "create")
+	if err := s.auditGraph(ctx, "contract", c.ID, c.ConsumerProductID, "create"); err != nil {
+		return nil, err
+	}
 	return gen.CreateContract201JSONResponse(toContract(c, ready)), nil
 }
 
@@ -465,7 +486,9 @@ func (s *Server) UpdateContract(ctx context.Context, req gen.UpdateContractReque
 		return nil, err
 	}
 	_, ready, _ := s.d.Portfolio.Contract(ctx, scope(ctx), c.ID)
-	s.auditGraph(ctx, "contract", c.ID, c.ConsumerProductID, "update")
+	if err := s.auditGraph(ctx, "contract", c.ID, c.ConsumerProductID, "update"); err != nil {
+		return nil, err
+	}
 	return gen.UpdateContract200JSONResponse(toContract(c, ready)), nil
 }
 
@@ -501,7 +524,9 @@ func (s *Server) UpdateGraphSettings(ctx context.Context, req gen.UpdateGraphSet
 		return nil, err
 	}
 	if s.d.Audit != nil {
-		_, _ = s.d.Audit.Append(ctx, audit.Entry{Actor: scope(ctx).Subject(), Action: audit.ActionRuleChange, ObjectType: "graph_settings", Details: map[string]any{"coefficients": req.Body.Coefficients}})
+		if _, err := s.d.Audit.Append(ctx, audit.Entry{Actor: scope(ctx).Subject(), Action: audit.ActionRuleChange, ObjectType: "graph_settings", Details: map[string]any{"coefficients": req.Body.Coefficients}}); err != nil {
+			return nil, err
+		}
 	}
 	return gen.UpdateGraphSettings204Response{}, nil
 }
@@ -523,11 +548,12 @@ func (s *Server) VerifyAudit(ctx context.Context, _ gen.VerifyAuditRequestObject
 	return gen.VerifyAudit200JSONResponse(out), nil
 }
 
-func (s *Server) auditGraph(ctx context.Context, objectType string, id, product kernel.ID, op string) {
+func (s *Server) auditGraph(ctx context.Context, objectType string, id, product kernel.ID, op string) error {
 	if s.d.Audit == nil {
-		return
+		return nil
 	}
-	_, _ = s.d.Audit.Append(ctx, audit.Entry{Actor: scope(ctx).Subject(), Action: audit.ActionGraphChange, ObjectType: objectType, ObjectID: id.String(), ProductID: product, Details: map[string]any{"op": op, "at": time.Now().UTC().Format(time.RFC3339)}})
+	_, err := s.d.Audit.Append(ctx, audit.Entry{Actor: scope(ctx).Subject(), Action: audit.ActionGraphChange, ObjectType: objectType, ObjectID: id.String(), ProductID: product, Details: map[string]any{"op": op, "at": time.Now().UTC().Format(time.RFC3339)}})
+	return err
 }
 
 // checkProductLimit проверяет лимит лицензии поставки на число продуктов (AD-06).

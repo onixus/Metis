@@ -27,12 +27,14 @@ func (a *Authenticator) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		raw := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer"))
 		if raw == "" || !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") {
+			authenticationDenied(r.Context(), "anonymous", "token", "missing")
 			w.Header().Set("WWW-Authenticate", `Bearer realm="metis"`)
 			writeProblem(w, http.StatusUnauthorized, gen.Problem{Type: "urn:metis:problem:unauthenticated", Title: "Требуется аутентификация", Status: http.StatusUnauthorized})
 			return
 		}
 		claims, err := a.verifier.Verify(r.Context(), raw)
 		if err != nil {
+			authenticationDenied(r.Context(), "anonymous", "token", "token")
 			if a.audit != nil {
 				_, _ = a.audit.Append(r.Context(), audit.Entry{Actor: "anonymous", Action: audit.ActionLoginDenied, ObjectType: "token", Details: map[string]any{"reason": "token"}})
 			}
@@ -42,6 +44,7 @@ func (a *Authenticator) Middleware(next http.Handler) http.Handler {
 		}
 		scope, err := a.resolver.ScopeFor(r.Context(), claims)
 		if err != nil {
+			authenticationDenied(r.Context(), claims.Subject, "scope", "roles")
 			if a.audit != nil {
 				_, _ = a.audit.Append(r.Context(), audit.Entry{Actor: claims.Subject, Action: audit.ActionLoginDenied, ObjectType: "scope", Details: map[string]any{"reason": "roles"}})
 			}

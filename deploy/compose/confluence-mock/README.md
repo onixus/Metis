@@ -15,7 +15,11 @@
 | `POST /rest/api/content/{id}/label` | `__files/labels_added.json` |
 | `GET /rest/api/content/search?cql=…label = "adr"…` | `__files/search_adr.json` — две страницы ADR |
 | `POST /rest/api/content` | `__files/create_page.json` — созданная страница 2001 |
+| `GET /rest/api/content?title=Metis …` | пустой результат первичного поиска по стабильному ключу |
 
 Сценарий приёмки этапа 2: платформа публикует `decisions.page.requested`, обработчик outbox
 создаёт страницу (`POST /rest/api/content`), добавляет метки `metis`, `adr` и свойства
 `metis_decision_id`, `metis_link_*`; `PageID` решения становится `2001`.
+
+Мок статический: повторные публикации после потери ответа/rollback проверяются
+stateful HTTP-тестами в `internal/adapters/confluence/recovery_test.go`.

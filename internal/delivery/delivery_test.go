@@ -600,3 +600,36 @@ func TestPG08_EpicShiftPropagatesToFeature(t *testing.T) {
 		t.Fatalf("проекция: %+v", p)
 	}
 }
+
+func TestNFR05_RecordSyncFailureRequiresServiceAndKeepsLastSuccess(t *testing.T) {
+	ctx := context.Background()
+	store := delivery.NewMemStore()
+	clock := kernel.FixedClock{T: time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)}
+	previous := clock.Now().Add(-time.Hour)
+	if err := store.SaveSyncState(ctx, delivery.SyncState{LastSuccessAt: previous}); err != nil {
+		t.Fatal(err)
+	}
+	bare := delivery.NewService(store, nil, nil, nil, clock, delivery.Config{})
+	failure := errors.New("synthetic connector outage")
+	if err := bare.RecordSyncFailure(ctx, clock.Now(), failure); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("untrusted scope records sync state: %v", err)
+	}
+	svc := delivery.NewService(store, nil, nil, nil, clock, delivery.Config{ServiceScope: serviceScope()})
+	if err := svc.Sync(ctx); !errors.Is(err, kernel.ErrUnavailable) {
+		t.Fatalf("disabled connector must be unavailable: %v", err)
+	}
+	if err := svc.RecordSyncFailure(ctx, clock.Now(), failure); err != nil {
+		t.Fatal(err)
+	}
+	state, err := store.SyncState(ctx)
+	if err != nil || state.LastSuccessAt != previous || state.LastAttemptAt != clock.Now() || state.LastError != failure.Error() {
+		t.Fatalf("failure lost projection freshness: %+v %v", state, err)
+	}
+	if err := svc.RecordSyncFailure(ctx, previous, errors.New("older failed attempt")); err != nil {
+		t.Fatal(err)
+	}
+	state, err = store.SyncState(ctx)
+	if err != nil || state.LastError != failure.Error() {
+		t.Fatalf("older worker overwrote latest sync state: %+v %v", state, err)
+	}
+}

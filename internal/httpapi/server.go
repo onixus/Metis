@@ -18,7 +18,10 @@ import (
 	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/discovery"
 	"github.com/onixus/metis/internal/economics"
+	modeling "github.com/onixus/metis/internal/economics/modeling"
 	"github.com/onixus/metis/internal/httpapi/gen"
+	"github.com/onixus/metis/internal/identityaccess/authz"
+	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/licensing"
 	"github.com/onixus/metis/internal/marketing"
 	"github.com/onixus/metis/internal/portfoliograph"
@@ -30,26 +33,29 @@ import (
 
 // Deps — зависимости HTTP-сервера. Модули подключаются через публичные интерфейсы.
 type Deps struct {
+	Modeling   *modeling.Service
+	Marketing  *marketing.Service
+	Analytics  *analytics.Service
+	Licensing  *licensing.Service
 	Log        *slog.Logger
 	Auth       *Authenticator
 	Portfolio  *portfoliograph.Service
 	AuditStore audit.Store
 	Audit      *audit.Logger
 	// Модули; nil — соответствующие маршруты отвечают 503.
-	Signals        *signals.Service
-	Prioritization *prioritization.Service
-	Roadmap        *roadmap.Service
-	CRM            ports.CRM
-	Discovery      *discovery.Service
-	Commitments    *commitments.Service
-	Compliance     *compliance.Service
-	Decisions      *decisions.Service
-	// Модули этапа 3.
-	Economics *economics.Service
-	Marketing *marketing.Service
-	Analytics *analytics.Service
-	Licensing *licensing.Service
-	Delivery  *delivery.Service
+	Signals         *signals.Service
+	Prioritization  *prioritization.Service
+	Roadmap         *roadmap.Service
+	CRM             ports.CRM
+	Discovery       *discovery.Service
+	Commitments     *commitments.Service
+	Compliance      *compliance.Service
+	Decisions       *decisions.Service
+	Delivery        *delivery.Service
+	DeliveryEnabled bool
+	Economics       *economics.Service
+	Finance         ports.Finance
+	FinanceWorklogs func(context.Context, authz.Scope, kernel.ID, string, int, bool) (economics.Snapshot, error)
 	// KnowledgeSpace — пространство базы знаний по умолчанию для страниц ADR (METIS_CONFLUENCE_SPACE).
 	KnowledgeSpace string
 	// Ready сообщает о готовности зависимостей (БД, миграции) для /readyz.
@@ -82,6 +88,12 @@ func (s *Server) Handler() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID, middleware.Recoverer, middleware.Timeout(30*time.Second))
 	r.Use(requestLogger(s.d.Log))
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			req.Body = http.MaxBytesReader(w, req.Body, 12<<20)
+			next.ServeHTTP(w, req)
+		})
+	})
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))

@@ -23,23 +23,45 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
           ports: [{ name: http, containerPort: {{ .Values.api.port }} }]
+          {{- with .Values.secrets.envFromSecrets }}
+          envFrom:
+            {{- range . }}
+            - secretRef:
+                name: {{ . | quote }}
+            {{- end }}
+          {{- end }}
           env:
             {{- include "metis.env" . | nindent 12 }}
             - name: METIS_HTTP_ADDR
               value: ":{{ .Values.api.port }}"
+            - name: METIS_WEB_DIR
+              value: /web
             - name: METIS_AUTH_MODE
               value: {{ .Values.config.authMode | quote }}
             - name: METIS_OIDC_ISSUER
               value: {{ .Values.config.oidcIssuer | quote }}
             - name: METIS_OIDC_CLIENT_ID
               value: {{ .Values.config.oidcClientId | quote }}
-            - name: METIS_CRM_DIR
-              value: {{ .Values.config.crmDir | quote }}
+            {{- if eq .Values.config.authMode "hmac" }}
+            - name: METIS_HMAC_SECRET
+              valueFrom: { secretKeyRef: { name: {{ .Values.secrets.existingSecret }}, key: hmacSecret } }
+            - name: METIS_HMAC_ISSUER
+              value: {{ .Values.config.hmacIssuer | quote }}
+            {{- end }}
             - name: METIS_WEBHOOK_TOKEN
               valueFrom: { secretKeyRef: { name: {{ .Values.secrets.existingSecret }}, key: webhookToken, optional: true } }
           readinessProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5 }
           livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 10 }
+          startupProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5, failureThreshold: 60 }
           resources: {{- toYaml .Values.api.resources | nindent 12 }}
+          {{- if or .Values.integrationFiles.profileConfigMap .Values.integrationFiles.dataExistingClaim }}
+          volumeMounts:
+            {{- include "metis.integrationMounts" . | nindent 12 }}
+          {{- end }}
+      {{- if or .Values.integrationFiles.profileConfigMap .Values.integrationFiles.dataExistingClaim }}
+      volumes:
+        {{- include "metis.integrationVolumes" . | nindent 8 }}
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

@@ -94,7 +94,7 @@ func TestAcceptanceStage3(t *testing.T) {
 	})
 	period := "2026-01"
 	fileName := "january.xlsx"
-	imp := must(finFull.ImportFinanceFileWithBodyWithResponse(ctx, &client.ImportFinanceFileParams{
+	imp := must(finFull.ImportModelFinanceFileWithBodyWithResponse(ctx, &client.ImportModelFinanceFileParams{
 		TemplateId: tpl.JSON200.Id, Period: &period, FileName: &fileName},
 		"application/octet-stream", bytes.NewReader(book)))
 	if imp.StatusCode() != 200 {

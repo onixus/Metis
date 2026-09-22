@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/onixus/metis/internal/economics"
+	economics "github.com/onixus/metis/internal/economics/modeling"
 	"github.com/onixus/metis/internal/kernel"
 )
 

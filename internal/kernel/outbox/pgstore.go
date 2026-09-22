@@ -50,6 +50,9 @@ func (s *PGStore) Enqueue(ctx context.Context, now time.Time, events ...kernel.E
 func (s *PGStore) Process(ctx context.Context, now time.Time, limit int, fn func(ctx context.Context, m Message) Outcome) (int, error) {
 	n := 0
 	err := s.db.Transact(ctx, func(ctx context.Context) error {
+		if err := pgdb.LockApplication(ctx, s.db); err != nil {
+			return err
+		}
 		q := s.q(ctx)
 		rows, err := q.ClaimOutbox(ctx, db.ClaimOutboxParams{NextAttemptAt: now.UTC(), Limit: clampInt32(limit)})
 		if err != nil {

@@ -165,6 +165,8 @@ ul { margin: 0; padding-left: 18px; }
 .btn-danger { border-color: #d9534f; color: #b91c1c; }
 .btn-danger:hover { background: #fdecec; }
 .page-head .row { display: flex; gap: 8px; }
+/* Financial import mapping keeps source columns readable on narrow screens. */
+.finance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
 
 /* Этап 3: страница портфеля и P&L */
 .text-danger {

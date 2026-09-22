@@ -87,6 +87,7 @@ type PortfoliographProduct struct {
 	HubManual      bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	Description    string
 }
 
 type PortfoliographRequirement struct {

@@ -164,7 +164,7 @@ func (s *Service) ReportVulnerableComponent(ctx context.Context, sc authz.Scope,
 		}
 		return impact, nil
 	}
-	days, err := s.vulnerabilityDays(ctx, severity)
+	days, err := s.vulnerabilityDays(ctx, sc, severity)
 	if err != nil {
 		return VulnerabilityImpact{}, err
 	}
@@ -205,8 +205,8 @@ func vulnerabilityBasis(c Component, baselineID kernel.ID) string {
 
 // vulnerabilityDays — регуляторный срок устранения по критичности (TODO(question-31):
 // значения не заданы ТЗ, уточняются у compliance-офицера).
-func (s *Service) vulnerabilityDays(ctx context.Context, severity Severity) (int, error) {
-	st, err := s.Settings(ctx)
+func (s *Service) vulnerabilityDays(ctx context.Context, sc authz.Scope, severity Severity) (int, error) {
+	st, err := s.Settings(ctx, sc)
 	if err != nil {
 		// После персистирования Settings ошибка чтения означает, что мы не знаем
 		// настроенный регуляторный SLA. Молчаливый fallback мог бы создать

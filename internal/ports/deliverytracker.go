@@ -4,6 +4,7 @@ package ports
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/onixus/metis/internal/kernel"
@@ -61,12 +62,23 @@ type Version struct {
 	ReleaseDate kernel.Date
 }
 
-// Worklog — списание времени (DL-05, этап 3: только тип).
+// Worklog — списание времени (DL-05). Author — opaque account key, never a display name/email.
+// Consumers replace a complete requested period snapshot to reconcile edits/deletions.
 type Worklog struct {
-	IssueKey string
-	Author   string
-	Started  time.Time
-	Spent    time.Duration
+	ExternalID string
+	IssueKey   string
+	Author     string
+	Started    time.Time
+	UpdatedAt  time.Time
+	Spent      time.Duration
+}
+
+// ErrIgnoredWebhook means the payload is valid but outside the connector's subscribed events.
+var ErrIgnoredWebhook = errors.New("webhook is not relevant")
+
+// DeliveryWebhookParser is an optional capability implemented by a tracker adapter.
+type DeliveryWebhookParser interface {
+	ParseWebhook([]byte) (WebhookEvent, error)
 }
 
 // Типы входящих событий трекера.
@@ -101,7 +113,8 @@ type DeliveryTracker interface {
 	Sprints(ctx context.Context, board string) ([]Sprint, error)
 	// Versions возвращает версии проекта.
 	Versions(ctx context.Context, project string) ([]Version, error)
-	// Worklogs возвращает списания по задачам с момента since (этап 3).
+	// Worklogs возвращает все текущие списания с Started >= since (UTC).
+	// This is an authoritative snapshot, not an incremental updated-since stream.
 	Worklogs(ctx context.Context, issueKeys []string, since time.Time) ([]Worklog, error)
 
 	// CreateEpic создаёт эпик и возвращает его ключ. featureRef — ссылка на фичу платформы.

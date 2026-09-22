@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
+
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/portfoliograph"
 )
@@ -27,9 +29,8 @@ func (f TrackFilter) matches(t Track) bool {
 // Store — хранилище каталога, треков, оценок влияния и baseline. Авторизация — в Service.
 // Журнал доказательств — отдельный EvidenceStore (только INSERT).
 type Store interface {
-	// Settings возвращает сохранённые настройки модуля. Пустое хранилище возвращает DefaultSettings.
-	Settings(ctx context.Context) (Settings, error)
-	SaveSettings(ctx context.Context, st Settings) error
+	Settings(ctx context.Context, sc authz.Scope) (Settings, error)
+	SaveSettings(ctx context.Context, sc authz.Scope, settings Settings) error
 
 	SaveRequirementSet(ctx context.Context, rs RequirementSet) error
 	RequirementSet(ctx context.Context, id kernel.ID) (RequirementSet, error)
@@ -62,16 +63,43 @@ type Store interface {
 // MemStore — хранилище в памяти для тестов и стендов без БД.
 type MemStore struct {
 	mu        sync.RWMutex
+	settings  *Settings
 	sets      []RequirementSet
 	templates []TrackTemplate
 	tracks    []Track
 	impacts   []ImpactAssessment
 	baselines []CertifiedBaseline
-	settings  Settings
 }
 
-// NewMemStore создаёт пустое хранилище с настройками по умолчанию.
-func NewMemStore() *MemStore { return &MemStore{settings: cloneSettings(DefaultSettings())} }
+func NewMemStore() *MemStore { return &MemStore{} }
+
+// Settings returns a detached copy; absence is resolved by the service defaults.
+func (m *MemStore) Settings(_ context.Context, sc authz.Scope) (Settings, error) {
+	if !sc.Valid() {
+		return Settings{}, kernel.ErrForbidden
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.settings == nil {
+		return Settings{}, kernel.ErrNotFound
+	}
+	return cloneSettings(*m.settings), nil
+}
+
+// SaveSettings persists validated module settings without retaining caller-owned maps.
+func (m *MemStore) SaveSettings(_ context.Context, sc authz.Scope, st Settings) error {
+	if err := sc.Require(authz.ActionAdminSettings, kernel.NilID); err != nil {
+		return err
+	}
+	if err := st.validate(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copy := cloneSettings(st)
+	m.settings = &copy
+	return nil
+}
 
 func cloneSettings(st Settings) Settings {
 	out := st
@@ -84,21 +112,6 @@ func cloneSettings(st Settings) Settings {
 		out.VulnerabilityFixDays[k] = v
 	}
 	return out
-}
-
-// Settings возвращает копию настроек.
-func (m *MemStore) Settings(_ context.Context) (Settings, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return cloneSettings(m.settings), nil
-}
-
-// SaveSettings сохраняет копию настроек.
-func (m *MemStore) SaveSettings(_ context.Context, st Settings) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.settings = cloneSettings(st)
-	return nil
 }
 
 // SaveRequirementSet создаёт или обновляет набор.

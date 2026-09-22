@@ -17,7 +17,8 @@ const (
 )
 
 // Formula — разобранное арифметическое выражение. Поддерживаются числа, + - * /, скобки,
-// унарный минус, идентификаторы переменных и функции min/max. Циклов, присваиваний,
+// унарный минус, идентификаторы переменных и функции min/max, ifgt/ifge/ifeq.
+// Условные функции вычисляют только выбранную ветку. Циклов, присваиваний,
 // доступа к окружению нет.
 type Formula struct {
 	src  string
@@ -229,8 +230,8 @@ func (p *parser) primary() (node, error) {
 }
 
 func (p *parser) call(name string) (node, error) {
-	if name != "min" && name != "max" {
-		return nil, kernel.Invalid("formula", fmt.Sprintf("неизвестная функция %q; доступны min, max", name))
+	if name != "min" && name != "max" && name != "ifgt" && name != "ifge" && name != "ifeq" {
+		return nil, kernel.Invalid("formula", fmt.Sprintf("неизвестная функция %q; доступны min, max, ifgt, ifge, ifeq", name))
 	}
 	p.next() // (
 	var args []node
@@ -250,6 +251,9 @@ func (p *parser) call(name string) (node, error) {
 		return nil, kernel.Invalid("formula", fmt.Sprintf("ожидалась ')' в позиции %d", p.peek().pos))
 	}
 	p.next()
+	if (name == "ifgt" || name == "ifge" || name == "ifeq") && len(args) != 4 {
+		return nil, kernel.Invalid("formula", "условная функция требует четыре аргумента")
+	}
 	return &call{name: name, args: args}, nil
 }
 
@@ -318,6 +322,21 @@ type call struct {
 }
 
 func (n *call) eval(vars map[string]decimal.Decimal) (decimal.Decimal, error) {
+	if n.name == "ifgt" || n.name == "ifge" || n.name == "ifeq" {
+		left, err := n.args[0].eval(vars)
+		if err != nil {
+			return decimal.Zero, err
+		}
+		right, err := n.args[1].eval(vars)
+		if err != nil {
+			return decimal.Zero, err
+		}
+		matches := (n.name == "ifgt" && left.GreaterThan(right)) || (n.name == "ifge" && left.GreaterThanOrEqual(right)) || (n.name == "ifeq" && left.Equal(right))
+		if matches {
+			return n.args[2].eval(vars)
+		}
+		return n.args[3].eval(vars)
+	}
 	acc, err := n.args[0].eval(vars)
 	if err != nil {
 		return decimal.Zero, err

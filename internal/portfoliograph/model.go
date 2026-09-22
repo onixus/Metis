@@ -39,6 +39,7 @@ type Product struct {
 	ID             kernel.ID   `json:"id"`
 	Key            string      `json:"key"` // короткий ключ, совпадает с клеймом products в токене
 	Name           string      `json:"name"`
+	Description    string      `json:"description"`
 	Type           ProductType `json:"type"`
 	Owner          string      `json:"owner"`
 	Lifecycle      Lifecycle   `json:"lifecycle"`

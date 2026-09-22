@@ -40,13 +40,13 @@ func openTestDB(t *testing.T) *pgdb.DB {
 	return db
 }
 
-func TestPG_PGStoreRoundTrip(t *testing.T) {
+func TestPG01_PGStoreRoundTrip(t *testing.T) {
 	db := openTestDB(t)
 	ctx := context.Background()
 	now := time.Date(2026, 9, 17, 10, 30, 0, 123456000, time.UTC)
 	store := pgstore.NewStore(db, kernel.FixedClock{T: now})
 
-	edr := portfoliograph.Product{ID: kernel.NewID(), Key: "edr", Name: "EDR", Type: portfoliograph.ProductTypeSecurity, Owner: "pm-edr", Lifecycle: portfoliograph.LifecycleActive, SSDLCCertified: true, CreatedAt: now, UpdatedAt: now}
+	edr := portfoliograph.Product{ID: kernel.NewID(), Key: "edr", Name: "EDR", Description: "Назначение\nГраницы продукта", Type: portfoliograph.ProductTypeSecurity, Owner: "pm-edr", Lifecycle: portfoliograph.LifecycleActive, SSDLCCertified: true, CreatedAt: now, UpdatedAt: now}
 	soar := portfoliograph.Product{ID: kernel.NewID(), Key: "soar", Name: "SOAR", Type: portfoliograph.ProductTypeSecurity, Lifecycle: portfoliograph.LifecycleActive, HubManual: true, CreatedAt: now, UpdatedAt: now}
 	capEDR := portfoliograph.Capability{ID: kernel.NewID(), ProductID: edr.ID, Name: "Response"}
 	fEDR := portfoliograph.Feature{ID: kernel.NewID(), ProductID: edr.ID, CapabilityID: capEDR.ID, Name: "Response API v2", Status: portfoliograph.FeaturePlanned,
@@ -173,7 +173,7 @@ func TestPG01_PGStoreDeleteProductCascades(t *testing.T) {
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
 	store := pgstore.NewStore(db, kernel.FixedClock{T: now})
 	vm := portfoliograph.Product{ID: kernel.NewID(), Key: "vm", Name: "VM", Type: portfoliograph.ProductTypeSecurity, Lifecycle: portfoliograph.LifecycleActive, CreatedAt: now, UpdatedAt: now}
-	edr := portfoliograph.Product{ID: kernel.NewID(), Key: "edr", Name: "EDR", Type: portfoliograph.ProductTypeSecurity, Lifecycle: portfoliograph.LifecycleActive, CreatedAt: now, UpdatedAt: now}
+	edr := portfoliograph.Product{ID: kernel.NewID(), Key: "edr", Name: "EDR", Description: "Назначение\nГраницы продукта", Type: portfoliograph.ProductTypeSecurity, Lifecycle: portfoliograph.LifecycleActive, CreatedAt: now, UpdatedAt: now}
 	capVM := portfoliograph.Capability{ID: kernel.NewID(), ProductID: vm.ID, Name: "Сканирование"}
 	fVM := portfoliograph.Feature{ID: kernel.NewID(), ProductID: vm.ID, CapabilityID: capVM.ID, Name: "Экспорт", Status: portfoliograph.FeaturePlanned, CreatedAt: now, UpdatedAt: now}
 	fEDR := portfoliograph.Feature{ID: kernel.NewID(), ProductID: edr.ID, Name: "API", Status: portfoliograph.FeaturePlanned, CreatedAt: now, UpdatedAt: now}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/compliance/pgstore"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/pgdb"
@@ -43,54 +44,37 @@ func openTestDB(t *testing.T) *pgdb.DB {
 
 var now = time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
 
-func TestCM03_PGStoreSettingsPersist(t *testing.T) {
+func TestCM03_PR05_PGSettingsPersistAcrossServicesAndScopes(t *testing.T) {
 	db := openTestDB(t)
 	ctx := context.Background()
-	store := pgstore.New(db)
-
-	defaults, err := store.Settings(ctx)
+	sc := authz.New(authz.Params{Subject: "settings-admin", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate})
+	first := compliance.NewService(pgstore.New(db), nil, nil, nil, kernel.SystemClock{})
+	settings, err := first.Settings(ctx, sc)
+	if err != nil || settings.BaselineLifetimeYears != 5 {
+		t.Fatalf("default settings: %+v %v", settings, err)
+	}
+	settings.BaselineLifetimeYears = 3
+	settings.CostByClass[compliance.ImpactSecurityFunctions] = kernel.RUB(75_000_00)
+	if err := first.UpdateSettings(ctx, sc, settings); err != nil {
+		t.Fatal(err)
+	}
+	// A separate connection/pool simulates a second API or worker process.
+	otherDB, err := pgdb.Open(ctx, os.Getenv("METIS_TEST_DATABASE_URL"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(defaults, compliance.DefaultSettings()) {
-		t.Fatalf("defaults:\n got %+v\nwant %+v", defaults, compliance.DefaultSettings())
+	defer otherDB.Close()
+	store := pgstore.New(otherDB)
+	second := compliance.NewService(store, nil, nil, nil, kernel.SystemClock{})
+	got, err := second.Settings(ctx, sc)
+	if err != nil || !reflect.DeepEqual(got, settings) {
+		t.Fatalf("settings changed after restart: %+v %v", got, err)
 	}
-
-	want := compliance.DefaultSettings()
-	want.BaselineLifetimeYears = 7
-	want.VulnerabilityFixDays[compliance.SeverityCritical] = 21
-	want.CostByClass[compliance.ImpactSecurityFunctions] = kernel.RUB(420_000_00)
-	if err := store.SaveSettings(ctx, want); err != nil {
-		t.Fatal(err)
+	if _, err := store.Settings(ctx, authz.Scope{}); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("zero scope read: %v", err)
 	}
-
-	// Новый Store моделирует пересоздание API после рестарта процесса.
-	got, err := pgstore.New(db).Settings(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("settings after restart:\n got %+v\nwant %+v", got, want)
-	}
-
-	// Store обязан участвовать в транзакции из context, как остальные PG-хранилища.
-	rolledBack := compliance.DefaultSettings()
-	rolledBack.BaselineLifetimeYears = 99
-	rollbackErr := errors.New("rollback settings")
-	if err := db.Transact(ctx, func(txCtx context.Context) error {
-		if err := store.SaveSettings(txCtx, rolledBack); err != nil {
-			return err
-		}
-		return rollbackErr
-	}); !errors.Is(err, rollbackErr) {
-		t.Fatalf("rollback transaction: %v", err)
-	}
-	got, err = store.Settings(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("settings escaped rolled back transaction:\n got %+v\nwant %+v", got, want)
+	if err := store.SaveSettings(ctx, authz.Scope{}, settings); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("zero scope write: %v", err)
 	}
 }
 

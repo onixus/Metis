@@ -44,8 +44,8 @@ type FinanceCell struct {
 	Value      decimal.Decimal
 }
 
-// FinanceRowError — ошибка разбора строки файла (EC-07).
-type FinanceRowError struct {
+// FinanceImportRowError — ошибка разбора строки файла (EC-07).
+type FinanceImportRowError struct {
 	Sheet   string
 	Row     int
 	Column  string
@@ -55,7 +55,7 @@ type FinanceRowError struct {
 // FinanceReadResult — результат чтения книги: значения и ошибки по строкам.
 type FinanceReadResult struct {
 	Cells  []FinanceCell
-	Errors []FinanceRowError
+	Errors []FinanceImportRowError
 }
 
 // FinanceImport — порт импорта финансовых данных (ТЗ 4.1, EC-01).

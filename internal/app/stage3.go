@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -15,7 +14,7 @@ import (
 	"github.com/onixus/metis/internal/audit"
 	"github.com/onixus/metis/internal/commitments"
 	"github.com/onixus/metis/internal/compliance"
-	"github.com/onixus/metis/internal/economics"
+	economics "github.com/onixus/metis/internal/economics/modeling"
 	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
@@ -164,27 +163,14 @@ func buildLicensing(cfg Config, clock kernel.Clock, auditLog *audit.Logger, log 
 	return svc, nil
 }
 
-// envDuration читает интервал из окружения.
-func envDuration(k string, def time.Duration) (time.Duration, error) {
-	v := os.Getenv(k)
-	if v == "" {
-		return def, nil
-	}
-	d, err := time.ParseDuration(v)
-	if err != nil {
-		return 0, fmt.Errorf("%w: %s: %w", kernel.ErrValidation, k, err)
-	}
-	return d, nil
-}
-
 // RunFinanceImports выполняет загрузку финансовых книг по расписанию (EC-01): каталог задаётся
 // METIS_FINANCE_DIR, шаблон — METIS_FINANCE_TEMPLATE. Файл, загруженный раньше, пропускается по SHA-256.
 func (a *App) RunFinanceImports(ctx context.Context) ([]economics.ImportBatch, error) {
-	if a.Economics == nil || a.Cfg.FinanceDir == "" || a.Cfg.FinanceTemplate == "" {
+	if a.Modeling == nil || a.Cfg.FinanceDir == "" || a.Cfg.FinanceTemplate == "" {
 		return nil, nil
 	}
 	sc := identityaccess.FinanceServiceScope("finance-import")
-	templates, err := a.Economics.Templates(ctx, sc)
+	templates, err := a.Modeling.Templates(ctx, sc)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +178,7 @@ func (a *App) RunFinanceImports(ctx context.Context) ([]economics.ImportBatch, e
 		if t.Name != a.Cfg.FinanceTemplate {
 			continue
 		}
-		return a.Economics.RunScheduledImports(ctx, sc, t.ID, financexlsx.NewDirSource(a.Cfg.FinanceDir))
+		return a.Modeling.RunScheduledImports(ctx, sc, t.ID, financexlsx.NewDirSource(a.Cfg.FinanceDir))
 	}
 	return nil, fmt.Errorf("%w: шаблон импорта %q не заведён", kernel.ErrNotFound, a.Cfg.FinanceTemplate)
 }

@@ -6,6 +6,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/shopspring/decimal"
 
+	"github.com/onixus/metis/internal/audit"
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/httpapi/gen"
 	"github.com/onixus/metis/internal/kernel"
@@ -448,7 +449,7 @@ func (s *Server) GetComplianceSettings(ctx context.Context, _ gen.GetComplianceS
 	if !scope(ctx).Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	st, err := s.d.Compliance.Settings(ctx)
+	st, err := s.d.Compliance.Settings(ctx, scope(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -471,7 +472,12 @@ func (s *Server) UpdateComplianceSettings(ctx context.Context, req gen.UpdateCom
 	if err := s.d.Compliance.UpdateSettings(ctx, scope(ctx), st); err != nil {
 		return nil, err
 	}
-	cur, err := s.d.Compliance.Settings(ctx)
+	if s.d.Audit != nil {
+		if _, err := s.d.Audit.Append(ctx, audit.Entry{Actor: scope(ctx).Subject(), Action: audit.ActionRuleChange, ObjectType: "compliance_settings", Details: map[string]any{"settings": st}}); err != nil {
+			return nil, err
+		}
+	}
+	cur, err := s.d.Compliance.Settings(ctx, scope(ctx))
 	if err != nil {
 		return nil, err
 	}

@@ -6,8 +6,8 @@ import (
 
 	"github.com/shopspring/decimal"
 
-	"github.com/onixus/metis/internal/economics"
-	"github.com/onixus/metis/internal/economics/formula"
+	economics "github.com/onixus/metis/internal/economics/modeling"
+	"github.com/onixus/metis/internal/economics/modeling/formula"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )

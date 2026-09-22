@@ -13,12 +13,12 @@ func ServiceScope(name string) authz.Scope {
 	})
 }
 
-// FinanceServiceScope — область доступа сервисных задач, работающих с финансовыми данными
-// (загрузка XLSX по расписанию, EC-01). Отличается от ServiceScope полным финансовым уровнем.
+// FinanceServiceScope is reserved for explicitly configured financial imports.
+// Ordinary connectors retain ServiceScope, which has no financial access.
 func FinanceServiceScope(name string) authz.Scope {
 	return authz.New(authz.Params{
-		Subject:     "service:" + name,
-		Roles:       []authz.Role{authz.RoleService},
+		Subject:     "service:finance:" + name,
+		Roles:       []authz.Role{authz.RoleService, authz.RoleFinance},
 		AllProducts: authz.AccessPrivate,
 		Audience:    authz.AudienceInternal,
 		Finance:     authz.FinanceFull,

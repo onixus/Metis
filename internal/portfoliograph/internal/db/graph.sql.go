@@ -265,7 +265,7 @@ func (q *Queries) ListLinks(ctx context.Context) ([]PortfoliographLink, error) {
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT id, key, name, type, owner, lifecycle, ssdlc_certified, hub_manual, created_at, updated_at FROM portfoliograph.products ORDER BY id
+SELECT id, key, name, type, owner, lifecycle, ssdlc_certified, hub_manual, created_at, updated_at, description FROM portfoliograph.products ORDER BY id
 `
 
 func (q *Queries) ListProducts(ctx context.Context) ([]PortfoliographProduct, error) {
@@ -288,6 +288,7 @@ func (q *Queries) ListProducts(ctx context.Context) ([]PortfoliographProduct, er
 			&i.HubManual,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Description,
 		); err != nil {
 			return nil, err
 		}
@@ -520,12 +521,12 @@ func (q *Queries) UpsertLink(ctx context.Context, arg UpsertLinkParams) error {
 }
 
 const upsertProduct = `-- name: UpsertProduct :exec
-INSERT INTO portfoliograph.products (id, key, name, type, owner, lifecycle, ssdlc_certified, hub_manual, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO portfoliograph.products (id, key, name, type, owner, lifecycle, ssdlc_certified, hub_manual, created_at, updated_at, description)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (id) DO UPDATE SET
   key = EXCLUDED.key, name = EXCLUDED.name, type = EXCLUDED.type, owner = EXCLUDED.owner,
   lifecycle = EXCLUDED.lifecycle, ssdlc_certified = EXCLUDED.ssdlc_certified,
-  hub_manual = EXCLUDED.hub_manual, updated_at = EXCLUDED.updated_at
+  hub_manual = EXCLUDED.hub_manual, updated_at = EXCLUDED.updated_at, description = EXCLUDED.description
 `
 
 type UpsertProductParams struct {
@@ -539,6 +540,7 @@ type UpsertProductParams struct {
 	HubManual      bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	Description    string
 }
 
 func (q *Queries) UpsertProduct(ctx context.Context, arg UpsertProductParams) error {
@@ -553,6 +555,7 @@ func (q *Queries) UpsertProduct(ctx context.Context, arg UpsertProductParams) er
 		arg.HubManual,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.Description,
 	)
 	return err
 }

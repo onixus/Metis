@@ -1,0 +1,546 @@
+{
+  "as_of": "2026-09-22",
+  "basis": "Local source inspection; no production acceptance or remote issue refresh",
+  "products": [
+    {
+      "key": "asmodeus",
+      "name": "Asmodeus",
+      "repository": "Asmodeus",
+      "revision": "0e117ccb3af83b4d8e1e79bdcf8a963481c5af4c",
+      "working_tree_changes": false,
+      "type": "security",
+      "hub_manual": false,
+      "description": "Движок авторизованных киберучений, BAS и контролируемого инфраструктурного хаоса. Позволяет запускать подписанные сценарии и собирать проверяемые результаты исполнения.\n\nРоль в портфеле: Самостоятельный продукт ИБ; поставляет APEX каталог сценариев, управление прогонами и доказательства. Упоминание Ferrum/BSDM/Lariska как целей проверки не доказывает готовую интеграцию с ними.\n\nГраницы и зрелость: Есть control-plane, runner, gRPC/mTLS и аудит. Применение ограничено явно разрешёнными тестовыми сценариями. Симулированные результаты отделены от наблюдавшегося feedback; Linux/eBPF требует отдельной проверки.\n\nВозможности: Подписанные сценарии и разграничение запуска; Управляемый прогон: запуск, отмена и подтверждение очистки; Постоянный аудит, кампании и расписания; Метрики защиты по явному feedback.\n\nРазвитие: Приёмка Linux eBPF/TC-бэкенда на полигоне.\n\nИсточник: Asmodeus; HEAD 0e117cc. Локальный анализ 22.09.2026. Файлы: README.md, crates/asmodeus-control-plane/src/catalog.rs, docs/features-2026-09-22.ru.md, crates/asmodeus-control-plane/src/persistent.rs.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "Подписанные сценарии и разграничение запуска",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "crates/asmodeus-control-plane/src/catalog.rs",
+          "note": "Каталог подписанных сценариев; авторизация исполнения и ограничение scope."
+        },
+        {
+          "name": "Управляемый прогон: запуск, отмена и подтверждение очистки",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "docs/features-2026-09-22.ru.md",
+          "note": "Отмена не равна успешной очистке: результат подтверждается evidence.cleanup_confirmed."
+        },
+        {
+          "name": "Постоянный аудит, кампании и расписания",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "crates/asmodeus-control-plane/src/persistent.rs",
+          "note": "Восстановление состояния и фиксация результатов; не считать прерванный прогон успешным."
+        },
+        {
+          "name": "Метрики защиты по явному feedback",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "docs/features-2026-09-22.ru.md",
+          "note": "MTTD/MTTR опираются на feedback; simulated исключается из оценки защиты."
+        },
+        {
+          "name": "Приёмка Linux eBPF/TC-бэкенда на полигоне",
+          "status": "planned",
+          "capability": "Развитие и приёмка",
+          "source": "README.md",
+          "note": "Незакрытый пункт README: подключить BPF-объект к aya/TC и проверить на Linux."
+        }
+      ]
+    },
+    {
+      "key": "pulse",
+      "name": "ГенаДека (Pulse)",
+      "repository": "GenA/pulse",
+      "revision": "741d9f124ab8323c774d2fd8bf15269a744d440a",
+      "working_tree_changes": false,
+      "type": "security",
+      "hub_manual": false,
+      "description": "Асинхронный сетевой сканер и монитор периметра на Rust: обнаружение сервисов, TLS-профиля и изменений, отчёты для инженера и интеграционного контура.\n\nРоль в портфеле: Самостоятельный сканирующий продукт; источник сетевых наблюдений для целевой платформы APEX. Текущий клиент APEX имитирует сканирование, поэтому этот контракт ещё не принят.\n\nГраницы и зрелость: TCP/UDP, raw TCP, Rhai, REST/SSE и мониторинг представлены в коде. OS fingerprint ограничен IPv4; эксплуатационные проверки на чужих сетях не выполнялись. Roadmap v1.1 отмечен выполненным, новые задачи ниже — предложения анализа.\n\nВозможности: TCP/UDP и raw TCP сканирование с ограничением области; TLS/JARM и определение сервисов; REST API и поток событий сканирования; Мониторинг изменений и отчёты.\n\nРазвитие: Реальное исполнение Pulse из APEX вместо демонстрации.\n\nИсточник: GenA/pulse; HEAD 741d9f1. Локальный анализ 22.09.2026. Файлы: README.md, src/scanner/scope.rs, src/scanner/jarm.rs, src/server.rs, ROADMAP.md.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "TCP/UDP и raw TCP сканирование с ограничением области",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "src/scanner/scope.rs",
+          "note": "Работать только по разрешённой области; отдельные режимы требуют системных привилегий."
+        },
+        {
+          "name": "TLS/JARM и определение сервисов",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "src/scanner/jarm.rs",
+          "note": "Криптографический профиль дополняет обнаружение сервисов и CVE-контекст."
+        },
+        {
+          "name": "REST API и поток событий сканирования",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "src/server.rs",
+          "note": "HTTP-интерфейс и SSE для внешнего потребителя."
+        },
+        {
+          "name": "Мониторинг изменений и отчёты",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "ROADMAP.md",
+          "note": "v1.1: monitor, diff, JSON/XML/SARIF/PDF и события; ранние таблицы roadmap исторические."
+        },
+        {
+          "name": "Реальное исполнение Pulse из APEX вместо демонстрации",
+          "status": "discovery",
+          "capability": "Развитие и приёмка",
+          "source": "src/server.rs",
+          "note": "Предложено анализом связей; согласовать job ID, авторизацию, scope, отмену и формат результатов с APEX."
+        }
+      ]
+    },
+    {
+      "key": "evacal",
+      "name": "EvaCal",
+      "repository": "EvaCal",
+      "revision": "dcef45b33d0be2142053a4003a3c20add3a9da02",
+      "working_tree_changes": false,
+      "type": "other",
+      "hub_manual": false,
+      "description": "Прикладной продукт для пресейла: оценка трудозатрат, календарный план, смета, подготовка документации ГОСТ 34 и проверяемых черновиков ТЗ с LLM.\n\nРоль в портфеле: Самостоятельный продукт оценки и документирования; поддерживающий компонент целевого APEX. Не назначается платформой только из-за наличия собственного UI и нескольких модулей.\n\nГраницы и зрелость: Есть расчёты, проектные версии, факт, ресурсный план и генерация документов. APEX содержит попытки HTTP-вызова и fallback; совместимость его export API с EvaCal не подтверждена.\n\nВозможности: Оценка трудозатрат и версии расчёта; Документы ГОСТ 34 и трассировка требований; План-факт и анализ точности оценки; Ресурсный план и предупреждения о перегрузке.\n\nРазвитие: Изоляция организаций и фоновая генерация; Экспорт этапов и документов в трекер и wiki.\n\nИсточник: EvaCal; HEAD dcef45b. Локальный анализ 22.09.2026. Файлы: README.md, lib/gost34/requirements/adapters.ts, lib/actuals.ts, lib/capacity.ts, docs/CRITICAL_ASSESSMENT_AND_ROADMAP.md.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "Оценка трудозатрат и версии расчёта",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "README.md",
+          "note": "Сохранять версию оценки и воспроизводимость исходных параметров."
+        },
+        {
+          "name": "Документы ГОСТ 34 и трассировка требований",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "lib/gost34/requirements/adapters.ts",
+          "note": "Экспорт требований с трассируемостью; LLM-черновик требует проверки."
+        },
+        {
+          "name": "План-факт и анализ точности оценки",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "lib/actuals.ts",
+          "note": "Факт этапов, исход сделки и корректный знаменатель метрик."
+        },
+        {
+          "name": "Ресурсный план и предупреждения о перегрузке",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "lib/capacity.ts",
+          "note": "Спрос и ёмкость по ролям и неделям; what-if и предупреждения."
+        },
+        {
+          "name": "Изоляция организаций и фоновая генерация",
+          "status": "planned",
+          "capability": "Развитие и приёмка",
+          "source": "docs/CRITICAL_ASSESSMENT_AND_ROADMAP.md",
+          "note": "Горизонт C: tenantId, фоновые задачи и наблюдаемость остаются направлениями развития."
+        },
+        {
+          "name": "Экспорт этапов и документов в трекер и wiki",
+          "status": "planned",
+          "capability": "Развитие и приёмка",
+          "source": "docs/CRITICAL_ASSESSMENT_AND_ROADMAP.md",
+          "note": "Горизонт D: Jira/YouTrack, Confluence/wiki, semantic diff и air-gap."
+        }
+      ]
+    },
+    {
+      "key": "bsdm-proxy",
+      "name": "BSDM-Proxy",
+      "repository": "BSDM/bsdm-proxy",
+      "revision": "37e953ff329b76b3c9ccb0656091db740d559106",
+      "working_tree_changes": true,
+      "type": "security",
+      "hub_manual": false,
+      "description": "Secure Web Gateway и HTTP/HTTPS proxy на Rust: управление сетевым доступом, фильтрация, селективная TLS-инспекция, DNS/RPZ и аналитика трафика.\n\nРоль в портфеле: Специализированный продукт сетевого контроля; поставщик функций SWG для APEX. APEX является потребителем, а не доказательством готовности всех функций BSDM.\n\nГраницы и зрелость: Hybrid Policy, proxy, ACL, DNS/RPZ и основная админ-консоль — основной контур. ML/LDAP/Redis — beta; WASM/ICAP/DLP/CASB и кластерный mesh — experimental/frozen; eBPF и AmneziaWG — lab-only.\n\nВозможности: HTTP/CONNECT и селективная TLS-инспекция; ACL и DNS/RPZ управление доступом; Кеширование и аналитика сетевого трафика; Административная консоль основного контура.\n\nРазвитие: Приёмка контракта SWG/RPZ с APEX.\n\nИсточник: BSDM/bsdm-proxy; HEAD 37e953f + рабочие изменения. Локальный анализ 22.09.2026. Файлы: README.md, docs/project-status.md, admin-console/src/App.tsx.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "HTTP/CONNECT и селективная TLS-инспекция",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "docs/project-status.md",
+          "note": "Основной контур: DNS → SNI → selective MITM с явной политикой."
+        },
+        {
+          "name": "ACL и DNS/RPZ управление доступом",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "docs/project-status.md",
+          "note": "Основные политики и RPZ API; не подменять реальное применение правила ответом UI."
+        },
+        {
+          "name": "Кеширование и аналитика сетевого трафика",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "docs/project-status.md",
+          "note": "L1/mmap и Kafka → indexer → ClickHouse; Redis L2 требует отдельной приёмки."
+        },
+        {
+          "name": "Административная консоль основного контура",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "admin-console/src/App.tsx",
+          "note": "Основные разделы управления отделены от экспериментальных маршрутов."
+        },
+        {
+          "name": "Приёмка контракта SWG/RPZ с APEX",
+          "status": "discovery",
+          "capability": "Развитие и приёмка",
+          "source": "docs/project-status.md",
+          "note": "Предложено анализом: заменить in-memory RPZ в APEX реальным API и проверить авторизацию и применение политики."
+        }
+      ]
+    },
+    {
+      "key": "shapoclyack",
+      "name": "Shapoclyack",
+      "repository": "Shapoclyack",
+      "revision": "616cff7642e40e9f1c52278b2844da82dfb4aa08",
+      "working_tree_changes": false,
+      "type": "platform",
+      "hub_manual": true,
+      "description": "Платформа EASM/CAASM и риск-ориентированного управления уязвимостями: обнаружение активов, устойчивые идентичности, нормализация находок, приоритизация, устранение и контрольная проверка.\n\nРоль в портфеле: Платформа домена Attack Surface/Vulnerability Management. Объединяет сканирующий pipeline, инвентарь Lariska, риск и remediation; поставляет контекст вышестоящей консоли APEX. Хаб назначен по этой архитектурной роли.\n\nГраницы и зрелость: Большая часть roadmap реализована; наличие кода не является новой нагрузочной приёмкой. Lariska ↔ endpoint API подтверждены обеими сторонами исходников. В APEX часть данных и действий пока заменяется fallback.\n\nВозможности: Обнаружение поверхности атаки и устойчивый учёт активов; Приём инвентаря Lariska; Управление агентом и доставка обновлений; Очередь тикетов и интеграции remediation.\n\nРазвитие: Завершить contract-шаг actor-scoped idempotency; Сквозная приёмка выдачи активов в APEX.\n\nИсточник: Shapoclyack; HEAD 616cff7. Локальный анализ 22.09.2026. Файлы: README.md, api/routes/endpoint_inventory.py, api/services/integrations/ticket_sync.py, ROADMAP.md.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "Обнаружение поверхности атаки и устойчивый учёт активов",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "README.md",
+          "note": "Связывать находки с устойчивыми активами, а не только с IP."
+        },
+        {
+          "name": "Приём инвентаря Lariska",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "api/routes/endpoint_inventory.py",
+          "note": "Снимки endpoint inventory и идемпотентность по snapshot_id."
+        },
+        {
+          "name": "Управление агентом и доставка обновлений",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "api/routes/endpoint_inventory.py",
+          "note": "Управляемые параметры и артефакты агента; безопасность скачивания проверяется Lariska."
+        },
+        {
+          "name": "Очередь тикетов и интеграции remediation",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "api/services/integrations/ticket_sync.py",
+          "note": "Синхронизация тикетов и жизненного цикла устранения через явный интеграционный контур."
+        },
+        {
+          "name": "Завершить contract-шаг actor-scoped idempotency",
+          "status": "planned",
+          "capability": "Развитие и приёмка",
+          "source": "ROADMAP.md",
+          "note": "После окна совместимости миграции 0055 убрать actor IS NULL fallback и legacy индекс; не выполнять до наступления условия."
+        },
+        {
+          "name": "Сквозная приёмка выдачи активов в APEX",
+          "status": "discovery",
+          "capability": "Развитие и приёмка",
+          "source": "README.md",
+          "note": "Предложено анализом: проверять реальный authenticated API, пагинацию, tenant scope и отсутствие скрытого mock-fallback."
+        }
+      ]
+    },
+    {
+      "key": "ferrum",
+      "name": "Ferrum",
+      "repository": "Ferrum",
+      "revision": "2e8883885bf480fb813bd183b60e3ebb90ef2e31",
+      "working_tree_changes": false,
+      "type": "security",
+      "hub_manual": false,
+      "description": "Продукт принудительного применения политик безопасности Kubernetes: admission и runtime enforcement, подписанные policy bundle и восстановление last-known-good.\n\nРоль в портфеле: Специализированный продукт cloud-native enforcement; поставщик сигналов и действий для целевого APEX. Не классифицируется как объединяющая платформа или CNAPP.\n\nГраницы и зрелость: Заявляемые возможности ограничены MVP-1-BOUNDARY и названными тестами. В APEX проверка health делает HTTP-запрос, но изменение политик и enforcement-счётчики пока в памяти клиента.\n\nВозможности: Admission-проверки и режимы enforce/observe/audit; Подписанные bundle и fail-closed проверка целостности; Runtime-события и применение действия; Проверяемая граница продукта MVP-1.\n\nРазвитие: Приёмка реального enforcement-контракта с APEX.\n\nИсточник: Ferrum; HEAD 2e88838. Локальный анализ 22.09.2026. Файлы: README.md, crates/ferrum-admission/src/review.rs, crates/ferrum-admission/src/bundle.rs, crates/ferrum-agent/src/respond.rs, docs/MVP-1-BOUNDARY.md.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "Admission-проверки и режимы enforce/observe/audit",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "crates/ferrum-admission/src/review.rs",
+          "note": "Admission принимает решения по политике; observe/audit не равнозначны блокировке."
+        },
+        {
+          "name": "Подписанные bundle и fail-closed проверка целостности",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "crates/ferrum-admission/src/bundle.rs",
+          "note": "Непроверенный bundle не открывает доступ; сохраняется last-known-good."
+        },
+        {
+          "name": "Runtime-события и применение действия",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "crates/ferrum-agent/src/respond.rs",
+          "note": "Runtime-реализацию оценивать в пределах подтверждённого ядра и MVP-1."
+        },
+        {
+          "name": "Проверяемая граница продукта MVP-1",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "docs/MVP-1-BOUNDARY.md",
+          "note": "Каждое утверждение о возможностях связано с тестом/гейтом; не переносить маркетинговые функции APEX в Ferrum."
+        },
+        {
+          "name": "Приёмка реального enforcement-контракта с APEX",
+          "status": "discovery",
+          "capability": "Развитие и приёмка",
+          "source": "docs/MVP-1-BOUNDARY.md",
+          "note": "Предложено анализом: контракт статуса/политик, права, результат действия и доказательства вместо in-memory toggle."
+        }
+      ]
+    },
+    {
+      "key": "lariska",
+      "name": "Lariska",
+      "repository": "Lariska",
+      "revision": "0b979b3ad8ce6d081e206a406d790fbc3f7f430c",
+      "working_tree_changes": false,
+      "type": "security",
+      "hub_manual": false,
+      "description": "Кроссплатформенный endpoint-агент инвентаризации: собирает пакеты ОС и runtime, контекст контейнеров/виртуализации и доставляет версионированные снимки.\n\nРоль в портфеле: Самостоятельно поставляемый агент-продукт экосистемы Shapoclyack. Shapoclyack потребляет его телеметрию, а агент потребляет серверные функции управления. В APEX представлен через Shapoclyack, прямой контракт не добавляется.\n\nГраницы и зрелость: Inventory и управляемое обновление представлены в коде. Это не доказательство функций EDR, убийства процессов или containment, показанных демонстрационной консолью APEX.\n\nВозможности: Инвентаризация ОС, runtime и окружения; Надёжная доставка снимков и локальная очередь; Управляемые настройки и проверяемое обновление; Ограничение влияния агента на рабочую станцию.\n\nРазвитие: Приёмка обновлений и восстановления на целевых ОС.\n\nИсточник: Lariska; HEAD 0b979b3. Локальный анализ 22.09.2026. Файлы: README.md, src/inventory/mod.rs, src/delivery/spool.rs, src/managed.rs, src/qos.rs.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "Инвентаризация ОС, runtime и окружения",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "src/inventory/mod.rs",
+          "note": "Нормализованный инвентарь без исполнения непроверенного кода обнаруженных пакетов."
+        },
+        {
+          "name": "Надёжная доставка снимков и локальная очередь",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "src/delivery/spool.rs",
+          "note": "Повторная доставка, карантин и восстановление после отказа; endpoint API использует snapshot_id."
+        },
+        {
+          "name": "Управляемые настройки и проверяемое обновление",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "src/managed.rs",
+          "note": "TLS trust, SHA-256 и сохранение предыдущего бинарника; server_url и секреты остаются локальными."
+        },
+        {
+          "name": "Ограничение влияния агента на рабочую станцию",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "src/qos.rs",
+          "note": "QoS/affinity и параметры периодичности; платформенные ограничения требуют проверки на целевых ОС."
+        },
+        {
+          "name": "Приёмка обновлений и восстановления на целевых ОС",
+          "status": "discovery",
+          "capability": "Развитие и приёмка",
+          "source": "README.md",
+          "note": "Предложено анализом: подтвердить matrix ОС, потерю сети, повреждённый snapshot и rollback обновления на установках."
+        }
+      ]
+    },
+    {
+      "key": "unified-platform",
+      "name": "APEX (unified-platform)",
+      "repository": "unified-platform",
+      "revision": "09a293ff4d9d4b020533d411f91c902d61cadaaf",
+      "working_tree_changes": false,
+      "type": "platform",
+      "hub_manual": true,
+      "description": "Объединяющая консоль безопасности: общий обзор активов, угроз, workload, сетевого контроля и киберучений поверх самостоятельных продуктов портфеля.\n\nРоль в портфеле: Платформа-агрегатор и ручной хаб: потребляет Asmodeus, Shapoclyack, BSDM-Proxy, Ferrum, Pulse и EvaCal. Lariska доступна через Shapoclyack. Oko-Ra/Octo-man упомянуты в концепции, но их репозитории в текущий импорт не входят.\n\nГраницы и зрелость: FastAPI BFF и Next.js UI существуют. Asmodeus имеет реальный HTTP-клиент; Shapoclyack/BSDM/EvaCal — попытки HTTP с fallback; Ferrum — health HTTP, остальные операции в памяти; Pulse — имитация. Демонстрационные connected/healthy не доказывают подключение.\n\nВозможности: Единая консоль и доменные разделы; HTTP-клиент управления Asmodeus.\n\nРазвитие: Активы и endpoint-инвентарь Shapoclyack; SWG-метрики и управление RPZ; Workload/enforcement Ferrum; Экспорт документов EvaCal; Запуск Pulse и обработка реального результата; Убрать имитацию успеха из промышленных интеграций.\n\nИсточник: unified-platform; HEAD 09a293f. Локальный анализ 22.09.2026. Файлы: README.md, gateway/app/clients/asmodeus.py, gateway/app/clients/shapoclyack.py, gateway/app/clients/bsdm.py, gateway/app/clients/ferrum.py, gateway/app/clients/evacal.py, gateway/app/clients/scanners.py, gateway/app/services/connector_manager.py.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "Единая консоль и доменные разделы",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "README.md",
+          "note": "UI и BFF объединяют функциональные поверхности; зрелость определяется по каждому коннектору отдельно."
+        },
+        {
+          "name": "HTTP-клиент управления Asmodeus",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "gateway/app/clients/asmodeus.py",
+          "note": "REST-вызовы каталога, запуска, результатов и отмены; сквозная приёмка отдельно."
+        },
+        {
+          "name": "Активы и endpoint-инвентарь Shapoclyack",
+          "status": "in_progress",
+          "capability": "Основные возможности",
+          "source": "gateway/app/clients/shapoclyack.py",
+          "note": "HTTP-вызовы существуют, ошибки подменяются fallback-данными; требуется проверка contract/auth."
+        },
+        {
+          "name": "SWG-метрики и управление RPZ",
+          "status": "in_progress",
+          "capability": "Основные возможности",
+          "source": "gateway/app/clients/bsdm.py",
+          "note": "HTTP health/metrics и локальные RPZ-правила; запись в реальный BSDM не подтверждена."
+        },
+        {
+          "name": "Workload/enforcement Ferrum",
+          "status": "in_progress",
+          "capability": "Основные возможности",
+          "source": "gateway/app/clients/ferrum.py",
+          "note": "Реальный health; политика/счётчики в памяти, требуется настоящий enforcement API."
+        },
+        {
+          "name": "Экспорт документов EvaCal",
+          "status": "in_progress",
+          "capability": "Основные возможности",
+          "source": "gateway/app/clients/evacal.py",
+          "note": "Есть попытка вызова export endpoint и fallback; согласовать маршрут и доступ."
+        },
+        {
+          "name": "Запуск Pulse и обработка реального результата",
+          "status": "discovery",
+          "capability": "Развитие и приёмка",
+          "source": "gateway/app/clients/scanners.py",
+          "note": "Текущий trigger_scan вычисляет синтетические результаты без вызова сканера."
+        },
+        {
+          "name": "Убрать имитацию успеха из промышленных интеграций",
+          "status": "discovery",
+          "capability": "Развитие и приёмка",
+          "source": "gateway/app/services/connector_manager.py",
+          "note": "Предложено анализом: явно отделять demo/offline/verified, хранить конфигурацию и проверять реальные соединения."
+        }
+      ]
+    },
+    {
+      "key": "metis",
+      "name": "Metis",
+      "repository": "Metis",
+      "revision": "89073abb347805e991e86d80c794e7c91ba5023d",
+      "working_tree_changes": true,
+      "type": "platform",
+      "hub_manual": true,
+      "description": "Платформа управления портфелем B2B-продуктов ИБ: спрос → возможности и фичи → приоритеты → roadmap, обязательства и релизы; экономика и compliance.\n\nРоль в портфеле: Управляющая бизнес-платформа портфеля, самостоятельная по отношению к runtime-консоли APEX. Содержит карточки всех этих продуктов; это не означает наличие автоматических Git-адаптеров или технической зависимости продуктов от Metis.\n\nГраницы и зрелость: Пилот этапов 1–3. Jira/Confluence, коробочный Bitrix24 и 1С OData требуют настройки/приёмки; финансовые данные новых продуктов не подменяются демонстрационным P&L EDR/VM. Промышленная HA и полнота этапа 3 не заявляются.\n\nВозможности: Граф портфеля и управление зависимостями; Спрос, приоритеты и roadmap; Версионная экономика и распределение затрат; Корпоративные адаптеры и поставка через outbox.\n\nРазвитие: Корпоративный вход и приёмка внешних систем.\n\nИсточник: Metis; HEAD 89073ab + рабочие изменения. Локальный анализ 22.09.2026. Файлы: README.md, internal/portfoliograph/service.go, docs/economics.md, docs/integrations.md, docs/pilot-runbook.md.\n\nСтатус «выполнено» относится к наличию реализации в изученном коде, а не к приёмке на инфраструктуре заказчика. Владельцы, бюджеты и сроки не установлены.",
+      "features": [
+        {
+          "name": "Граф портфеля и управление зависимостями",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "internal/portfoliograph/service.go",
+          "note": "Продукты, фичи, контракты, циклы, хабы и распространение сроков."
+        },
+        {
+          "name": "Спрос, приоритеты и roadmap",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "README.md",
+          "note": "Рабочий цикл продукта с сигналами, моделями оценки и планом."
+        },
+        {
+          "name": "Версионная экономика и распределение затрат",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "docs/economics.md",
+          "note": "P&L, импорт, аллокации, сценарии, закрытие и раздельный финансовый доступ."
+        },
+        {
+          "name": "Корпоративные адаптеры и поставка через outbox",
+          "status": "done",
+          "capability": "Основные возможности",
+          "source": "docs/integrations.md",
+          "note": "Контрактные реализации Jira/Confluence/Bitrix24/1С; подключение источников отдельно."
+        },
+        {
+          "name": "Корпоративный вход и приёмка внешних систем",
+          "status": "discovery",
+          "capability": "Развитие и приёмка",
+          "source": "docs/pilot-runbook.md",
+          "note": "Предложено для пилота: включить OIDC вместо ручного HMAC-токена и принять реальные Jira/Bitrix/1С профили."
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "consumer": "unified-platform",
+      "provider": "asmodeus",
+      "consumer_feature": "HTTP-клиент управления Asmodeus",
+      "provider_feature": "Управляемый прогон: запуск, отмена и подтверждение очистки",
+      "name": "Код: APEX → Asmodeus, управление прогонами",
+      "evidence": "unified-platform/gateway/app/clients/asmodeus.py; Asmodeus/docs/features-2026-09-22.ru.md",
+      "status": "draft",
+      "criticality": "accelerates"
+    },
+    {
+      "consumer": "unified-platform",
+      "provider": "shapoclyack",
+      "consumer_feature": "Активы и endpoint-инвентарь Shapoclyack",
+      "provider_feature": "Приём инвентаря Lariska",
+      "name": "Частично: APEX → Shapoclyack, активы и инвентарь",
+      "evidence": "unified-platform/gateway/app/clients/shapoclyack.py; Shapoclyack/api/routes/endpoint_inventory.py",
+      "status": "draft",
+      "criticality": "accelerates"
+    },
+    {
+      "consumer": "unified-platform",
+      "provider": "bsdm-proxy",
+      "consumer_feature": "SWG-метрики и управление RPZ",
+      "provider_feature": "ACL и DNS/RPZ управление доступом",
+      "name": "Частично: APEX → BSDM, метрики и RPZ",
+      "evidence": "unified-platform/gateway/app/clients/bsdm.py; BSDM/bsdm-proxy/docs/project-status.md",
+      "status": "draft",
+      "criticality": "accelerates"
+    },
+    {
+      "consumer": "unified-platform",
+      "provider": "ferrum",
+      "consumer_feature": "Workload/enforcement Ferrum",
+      "provider_feature": "Admission-проверки и режимы enforce/observe/audit",
+      "name": "План: APEX → Ferrum, реальное управление политиками",
+      "evidence": "unified-platform/gateway/app/clients/ferrum.py; Ferrum/docs/MVP-1-BOUNDARY.md",
+      "status": "draft",
+      "criticality": "accelerates"
+    },
+    {
+      "consumer": "unified-platform",
+      "provider": "evacal",
+      "consumer_feature": "Экспорт документов EvaCal",
+      "provider_feature": "Документы ГОСТ 34 и трассировка требований",
+      "name": "Частично: APEX → EvaCal, экспорт документов",
+      "evidence": "unified-platform/gateway/app/clients/evacal.py; EvaCal/README.md",
+      "status": "draft",
+      "criticality": "accelerates"
+    },
+    {
+      "consumer": "unified-platform",
+      "provider": "pulse",
+      "consumer_feature": "Запуск Pulse и обработка реального результата",
+      "provider_feature": "REST API и поток событий сканирования",
+      "name": "План: APEX → Pulse, реальное сканирование",
+      "evidence": "unified-platform/gateway/app/clients/scanners.py; GenA/pulse/src/server.rs",
+      "status": "draft",
+      "criticality": "accelerates"
+    },
+    {
+      "consumer": "shapoclyack",
+      "provider": "lariska",
+      "consumer_feature": "Приём инвентаря Lariska",
+      "provider_feature": "Надёжная доставка снимков и локальная очередь",
+      "name": "Код: Shapoclyack ← Lariska, снимки инвентаря",
+      "evidence": "Shapoclyack/api/routes/endpoint_inventory.py; Lariska/src/api.rs",
+      "status": "draft",
+      "criticality": "accelerates"
+    },
+    {
+      "consumer": "lariska",
+      "provider": "shapoclyack",
+      "consumer_feature": "Управляемые настройки и проверяемое обновление",
+      "provider_feature": "Управление агентом и доставка обновлений",
+      "name": "Код: Lariska → Shapoclyack, управление агентом",
+      "evidence": "Lariska/src/managed.rs; Shapoclyack/api/routes/endpoint_inventory.py",
+      "status": "draft",
+      "criticality": "accelerates"
+    }
+  ]
+}

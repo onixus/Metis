@@ -64,21 +64,22 @@ func (h *PublishPageHandler) Handle(ctx context.Context, ev kernel.Event) error 
 	if err := canWrite(h.sc, rec.ProductID); err != nil {
 		return err
 	}
+	var pageURL string
 	if rec.PageID == "" {
 		page, err := h.kb.CreatePage(ctx, ports.CreatePageInput{
-			SpaceKey:   p.SpaceKey,
-			ParentID:   p.ParentID,
-			Title:      adrTitlePrefix + rec.Title,
-			Body:       RenderADR(rec),
-			Labels:     []string{LabelMetis, LabelADR},
-			Properties: PageProperties(rec),
+			IdempotencyKey: rec.ID.String(),
+			SpaceKey:       p.SpaceKey,
+			ParentID:       p.ParentID,
+			Title:          adrTitlePrefix + rec.Title,
+			Body:           RenderADR(rec),
+			Labels:         []string{LabelMetis, LabelADR},
+			Properties:     PageProperties(rec),
 		})
 		if err != nil {
-			// База знаний могла создать страницу и упасть на оформлении (метки, свойства).
-			// Идентификатор запоминается до возврата ошибки: событие останется неподтверждённым
-			// и повторится, но уже по ветке «страница есть» — вторая страница ADR не создаётся.
-			// TODO(question-29): между вызовом базы знаний и записью в БД процесс может упасть;
-			// полностью снимает риск только идемпотентный ключ на стороне базы знаний.
+			// Memory storage can retain this ID. PostgreSQL rolls the failed
+			// handler back; the adapter must recover by the same stable key.
+			// TODO(question-29): remote rename/delete or delayed visibility still
+			// require reconciliation; the remote API has no idempotency guarantee.
 			if page.ID != "" {
 				rec.PageID = page.ID
 				rec.UpdatedAt = h.svc.clock.Now()
@@ -88,14 +89,26 @@ func (h *PublishPageHandler) Handle(ctx context.Context, ev kernel.Event) error 
 			}
 			return fmt.Errorf("create page: %w", err)
 		}
+		if page.ID == "" {
+			return fmt.Errorf("%w: knowledge base returned an empty page id", kernel.ErrUnavailable)
+		}
+		pageURL = page.URL
 		rec.PageID = page.ID
 		rec.UpdatedAt = h.svc.clock.Now()
 		if err := h.svc.store.Save(ctx, rec); err != nil {
 			return fmt.Errorf("save decision: %w", err)
 		}
-		if err := h.svc.emit(ctx, EventPageCreated, rec, h.sc.Subject(), PageCreated{DecisionID: rec.ID, PageID: page.ID, URL: page.URL}); err != nil {
-			return err
-		}
+	}
+	// A prior attempt may have stored the page ID before decoration failed.
+	// Do not ACK until both repeat-safe decorations and the completion event succeed.
+	if err := h.kb.AddLabels(ctx, rec.PageID, []string{LabelMetis, LabelADR}); err != nil {
+		return fmt.Errorf("page labels: %w", err)
+	}
+	if err := h.kb.SetProperties(ctx, rec.PageID, PageProperties(rec)); err != nil {
+		return fmt.Errorf("page properties: %w", err)
+	}
+	if err := h.svc.emit(ctx, EventPageCreated, rec, h.sc.Subject(), PageCreated{DecisionID: rec.ID, PageID: rec.PageID, URL: pageURL}); err != nil {
+		return err
 	}
 	if err := h.svc.store.MarkEventProcessed(ctx, ev.ID); err != nil {
 		return fmt.Errorf("mark event processed: %w", err)

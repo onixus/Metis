@@ -104,6 +104,9 @@ func (w *Worker) handle(ctx context.Context, m Message, now time.Time) Outcome {
 	hs := w.handlers[m.Event.Type]
 	w.mu.RUnlock()
 	var errs []error
+	if len(hs) == 0 {
+		errs = append(errs, fmt.Errorf("%w: обработчик события %q не зарегистрирован", kernel.ErrUnavailable, m.Event.Type))
+	}
 	for _, h := range hs {
 		if err := h.Handle(ctx, m.Event); err != nil {
 			errs = append(errs, err)

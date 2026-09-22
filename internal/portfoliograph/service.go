@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
@@ -142,6 +143,7 @@ func (s *Service) emit(ctx context.Context, typ string, aggregate, product kerne
 type ProductInput struct {
 	Key            string
 	Name           string
+	Description    *string // nil сохраняет прежнее описание при обновлении
 	Type           ProductType
 	Owner          string
 	Lifecycle      Lifecycle
@@ -150,6 +152,9 @@ type ProductInput struct {
 }
 
 func (in ProductInput) validate() error {
+	if in.Description != nil && (!utf8.ValidString(*in.Description) || utf8.RuneCountInString(*in.Description) > 12000) {
+		return kernel.Invalid("description", "не более 12000 символов UTF-8")
+	}
 	if in.Key == "" {
 		return kernel.Invalid("key", "обязателен")
 	}
@@ -195,6 +200,9 @@ func (s *Service) CreateProduct(ctx context.Context, sc authz.Scope, in ProductI
 	if p.Lifecycle == "" {
 		p.Lifecycle = LifecycleActive
 	}
+	if in.Description != nil {
+		p.Description = *in.Description
+	}
 	if err := s.store.SaveProduct(ctx, p); err != nil {
 		return Product{}, fmt.Errorf("save product: %w", err)
 	}
@@ -228,6 +236,9 @@ func (s *Service) UpdateProduct(ctx context.Context, sc authz.Scope, id kernel.I
 	}
 	upd := *p
 	upd.Key, upd.Name, upd.Type, upd.Owner = in.Key, in.Name, in.Type, in.Owner
+	if in.Description != nil {
+		upd.Description = *in.Description
+	}
 	if in.Lifecycle != "" {
 		upd.Lifecycle = in.Lifecycle
 	}

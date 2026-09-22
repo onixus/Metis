@@ -2,7 +2,7 @@ GOBIN := $(shell go env GOPATH)/bin
 export PATH := $(PATH):$(GOBIN)
 export CGO_ENABLED=0
 
-.PHONY: all tools fmt vet lint test test-integration generate build ci vuln licenses sbom secrets
+.PHONY: all tools fmt vet lint test test-integration generate check-generated build web ci vuln licenses sbom secrets
 
 all: ci
 
@@ -25,6 +25,10 @@ generate:
 	oapi-codegen -config api/oapi-server.yaml api/openapi.yaml
 	oapi-codegen -config api/oapi-types.yaml api/openapi.yaml
 	sqlc generate
+	cd web && npm run generate
+
+check-generated: generate
+	git diff --exit-code -- internal/httpapi/gen tests/e2e/client internal/*/internal/db web/src/api/schema.d.ts
 
 # -race требует cgo; сборка бинарников остаётся без cgo (инвариант 9).
 test:
@@ -36,6 +40,11 @@ test-integration:
 build:
 	go build -trimpath -ldflags="-s -w" -o bin/api ./cmd/api
 	go build -trimpath -ldflags="-s -w" -o bin/worker ./cmd/worker
+	go build -trimpath -ldflags="-s -w" -o bin/migrate ./cmd/migrate
+	go build -trimpath -ldflags="-s -w" -o bin/dev-token ./cmd/dev-token
+
+web:
+	cd web && npm run lint && npm run typecheck && npm test && npm run build
 
 # Исключения уязвимостей перечислены в scripts/govulncheck.sh и обоснованы в ADR-0005.
 vuln:

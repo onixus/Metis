@@ -10,7 +10,7 @@ import (
 	"github.com/onixus/metis/internal/analytics"
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/delivery"
-	"github.com/onixus/metis/internal/economics"
+	economics "github.com/onixus/metis/internal/economics/modeling"
 	"github.com/onixus/metis/internal/httpapi/gen"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/licensing"
@@ -39,7 +39,7 @@ func (s *Server) ListScenarios(ctx context.Context, _ gen.ListScenariosRequestOb
 	if err := s.requireEconomics(); err != nil {
 		return nil, err
 	}
-	list, err := s.d.Economics.Scenarios(ctx, scope(ctx))
+	list, err := s.d.Modeling.Scenarios(ctx, scope(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (s *Server) SaveScenario(ctx context.Context, req gen.SaveScenarioRequestOb
 				ProductID: idOrNil(o.ProductId), Period: op, Value: value})
 		}
 	}
-	saved, err := s.d.Economics.SaveScenario(ctx, scope(ctx), sn)
+	saved, err := s.d.Modeling.SaveScenario(ctx, scope(ctx), sn)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (s *Server) RunScenario(ctx context.Context, req gen.RunScenarioRequestObje
 	if req.Body != nil && req.Body.Metrics != nil {
 		metrics = *req.Body.Metrics
 	}
-	res, err := s.d.Economics.RunScenario(ctx, scope(ctx), req.ScenarioId, metrics)
+	res, err := s.d.Modeling.RunScenario(ctx, scope(ctx), req.ScenarioId, metrics)
 	if err != nil {
 		return nil, err
 	}

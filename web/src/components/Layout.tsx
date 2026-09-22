@@ -1,19 +1,23 @@
-import { Navigate, NavLink, Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, Outlet } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useMe } from '../api/hooks'
 import { useAuth } from '../auth/useAuth'
 import { ru } from '../i18n/ru'
 import { canReadPortfolioDecisions, canSeeFinance, canSeeCompliance, isAdmin } from '../lib/roles'
-import { Badge } from './Status'
+import { Badge, Loading } from './Status'
 
 export function Layout() {
-  const { logout } = useAuth()
+  const { logout, expireSession } = useAuth()
   const me = useMe()
   const admin = isAdmin(me.data?.roles)
+  const unauthorized = me.isError && me.error instanceof ApiError && me.error.status === 401
 
-  if (me.isError && me.error instanceof ApiError && me.error.status === 401) {
-    return <Navigate to="/login" replace />
-  }
+  useEffect(() => {
+    if (unauthorized) void expireSession().catch(() => undefined)
+  }, [unauthorized, expireSession])
+
+  if (unauthorized) return <Loading />
 
   return (
     <div className="app">
@@ -27,6 +31,7 @@ export function Layout() {
           <NavLink to="/graph">{ru.nav.graph}</NavLink>
           <NavLink to="/hub">{ru.nav.hub}</NavLink>
           <NavLink to="/delivery">{ru.nav.delivery}</NavLink>
+          {me.data?.roles.includes('finance') && me.data.finance === 'full' && <NavLink to="/economics">Экономика</NavLink>}
           {canSeeFinance(me.data) && <NavLink to="/portfolio">{ru.nav2.portfolio}</NavLink>}
           {canReadPortfolioDecisions(me.data) && <NavLink to="/decisions">{ru.nav2.decisions}</NavLink>}
           {canSeeCompliance(me.data) && <NavLink to="/compliance">{ru.nav2.compliance}</NavLink>}

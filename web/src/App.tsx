@@ -61,6 +61,7 @@ export default function App() {
             <Route element={<SessionBoundary><RequireAuth /></SessionBoundary>}>
               <Route element={<Layout />}>
                 <Route path="/" element={<ProductsPage />} />
+                <Route path="/products" element={<Navigate to="/" replace />} />
                 <Route
                   path="/graph"
                   element={

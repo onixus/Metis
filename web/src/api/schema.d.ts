@@ -2058,6 +2058,8 @@ export interface components {
         ProductInput: {
             key: string;
             name: string;
+            /** @description Назначение */
+            description?: string;
             /** @enum {string} */
             type: "security" | "infrastructure" | "platform" | "other";
             owner?: string;

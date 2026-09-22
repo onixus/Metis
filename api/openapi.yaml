@@ -2820,6 +2820,7 @@ components:
       properties:
         key: { type: string }
         name: { type: string }
+        description: { type: string, maxLength: 12000, description: Назначение, границы и источники; обычный текст. Отсутствие поля сохраняет описание при обновлении. }
         type: { type: string, enum: [security, infrastructure, platform, other] }
         owner: { type: string }
         lifecycle: { type: string, enum: [idea, active, sunset, retired] }

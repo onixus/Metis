@@ -45,7 +45,8 @@ func (s *PG) Load(ctx context.Context) (portfoliograph.Snapshot, error) {
 		for _, p := range products {
 			snap.Products = append(snap.Products, portfoliograph.Product{
 				ID: p.ID, Key: p.Key, Name: p.Name, Type: portfoliograph.ProductType(p.Type), Owner: p.Owner,
-				Lifecycle: portfoliograph.Lifecycle(p.Lifecycle), SSDLCCertified: p.SsdlcCertified, HubManual: p.HubManual,
+				Description: p.Description,
+				Lifecycle:   portfoliograph.Lifecycle(p.Lifecycle), SSDLCCertified: p.SsdlcCertified, HubManual: p.HubManual,
 				CreatedAt: p.CreatedAt.UTC(), UpdatedAt: p.UpdatedAt.UTC(),
 			})
 		}
@@ -133,6 +134,7 @@ func (s *PG) Load(ctx context.Context) (portfoliograph.Snapshot, error) {
 func (s *PG) SaveProduct(ctx context.Context, p portfoliograph.Product) error {
 	err := s.q(ctx).UpsertProduct(ctx, db.UpsertProductParams{
 		ID: p.ID, Key: p.Key, Name: p.Name, Type: string(p.Type), Owner: p.Owner, Lifecycle: string(p.Lifecycle),
+		Description:    p.Description,
 		SsdlcCertified: p.SSDLCCertified, HubManual: p.HubManual, CreatedAt: p.CreatedAt.UTC(), UpdatedAt: p.UpdatedAt.UTC(),
 	})
 	return wrap("product", p.ID, err)

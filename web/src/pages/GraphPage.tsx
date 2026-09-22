@@ -26,6 +26,7 @@ import {
   useExpandedFeatures,
   useHubs,
   useLinks,
+  useContracts,
   useProducts,
   type GraphFeature,
   type LinkInput,
@@ -171,6 +172,7 @@ function GraphInner() {
   const nodesReady = useNodesInitialized()
   const products = useProducts()
   const links = useLinks()
+  const contracts = useContracts()
   const hubs = useHubs()
   const createLink = useCreateLink()
   const deleteLink = useDeleteLink()
@@ -300,6 +302,8 @@ function GraphInner() {
           const tn = featureNames.get(l.to_feature_id!)
           if (fn && tn) label = `${fn} → ${tn} · ${critLabel}`
         }
+        const contract = contracts.data?.find((c) => c.id === l.contract_id)
+        if (l.contract_id) label += ` · ${contract?.status ? ru.contract.statuses[contract.status] : 'статус не загружен'}`
         return {
           id: l.id,
           source: l.from_product_id,
@@ -314,7 +318,7 @@ function GraphInner() {
         }
       }),
     )
-  }, [visible.links, expanded, featureNames, setEdges])
+  }, [visible.links, expanded, featureNames, contracts.data, setEdges])
 
   const onNodeDragStop = useCallback((_e: unknown, node: Node) => {
     positions.current.set(node.id, node.position)

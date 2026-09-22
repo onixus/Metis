@@ -75,13 +75,15 @@ func kids(in *[]openapi_types.UUID) []kernel.ID {
 func toProduct(p pg.Product) gen.Product {
 	return gen.Product{
 		Id: p.ID, Key: p.Key, Name: p.Name, Type: gen.ProductType(p.Type), Owner: ptr(p.Owner),
-		Lifecycle: ptr(gen.ProductLifecycle(p.Lifecycle)), SsdlcCertified: ptr(p.SSDLCCertified), HubManual: ptr(p.HubManual),
+		Description: ptr(p.Description),
+		Lifecycle:   ptr(gen.ProductLifecycle(p.Lifecycle)), SsdlcCertified: ptr(p.SSDLCCertified), HubManual: ptr(p.HubManual),
 		CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt,
 	}
 }
 
 func toProductInput(in gen.ProductInput) pg.ProductInput {
 	out := pg.ProductInput{Key: in.Key, Name: in.Name, Type: pg.ProductType(in.Type), Owner: strOrEmpty(in.Owner), SSDLCCertified: boolOr(in.SsdlcCertified), HubManual: boolOr(in.HubManual)}
+	out.Description = in.Description
 	if in.Lifecycle != nil {
 		out.Lifecycle = pg.Lifecycle(*in.Lifecycle)
 	}

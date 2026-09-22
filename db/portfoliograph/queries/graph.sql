@@ -2,12 +2,12 @@
 SELECT * FROM portfoliograph.products ORDER BY id;
 
 -- name: UpsertProduct :exec
-INSERT INTO portfoliograph.products (id, key, name, type, owner, lifecycle, ssdlc_certified, hub_manual, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO portfoliograph.products (id, key, name, type, owner, lifecycle, ssdlc_certified, hub_manual, created_at, updated_at, description)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (id) DO UPDATE SET
   key = EXCLUDED.key, name = EXCLUDED.name, type = EXCLUDED.type, owner = EXCLUDED.owner,
   lifecycle = EXCLUDED.lifecycle, ssdlc_certified = EXCLUDED.ssdlc_certified,
-  hub_manual = EXCLUDED.hub_manual, updated_at = EXCLUDED.updated_at;
+  hub_manual = EXCLUDED.hub_manual, updated_at = EXCLUDED.updated_at, description = EXCLUDED.description;
 
 -- name: ListCapabilities :many
 SELECT * FROM portfoliograph.capabilities ORDER BY id;

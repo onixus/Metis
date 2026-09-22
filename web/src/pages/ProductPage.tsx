@@ -7,6 +7,8 @@ import {
   useFeatureValues,
   useFeatures,
   useMe,
+  useLinks,
+  useProducts,
   useShiftDate,
   useStrategic,
 } from '../api/hooks'
@@ -99,6 +101,13 @@ export function ProductPage() {
         </div>
       </div>
       {deleteError && <div className="alert error">{deleteError}</div>}
+      {product.description && (
+        <div className="card stack">
+          <h2>О продукте</h2>
+          <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{product.description}</div>
+        </div>
+      )}
+      <ProductRelations productId={id} contracts={contracts} />
 
       <div className="card stack">
         <h2>{ru.productPage.strategic}</h2>
@@ -150,6 +159,37 @@ export function ProductPage() {
         <p className="muted">{ru.productPage.backlogPrivateOnly}</p>
       )}
     </section>
+  )
+}
+
+function ProductRelations({ productId, contracts }: { productId: string; contracts: Contract[] }) {
+  const links = useLinks()
+  const products = useProducts()
+  if (links.isPending || products.isPending) return <Loading />
+  if (links.isError || products.isError) return <ErrorBox error={links.error ?? products.error} />
+  const related = [...new Map(links.data
+    .filter((l) => l.from_product_id === productId || l.to_product_id === productId)
+    .map((l) => [l.contract_id ?? l.id, l])).values()]
+  if (!related.length) return null
+  return (
+    <div className="card stack">
+      <h2>Связи в портфеле</h2>
+      <p className="muted">Направление зависимости: потребитель → поставщик. Статус контракта показывает зрелость интеграции.</p>
+      <ul>
+        {related.map((l) => {
+          const consumes = l.from_product_id === productId
+          const peerId = consumes ? l.to_product_id : l.from_product_id
+          const peer = products.data.find((p) => p.id === peerId)
+          const contract = contracts.find((c) => c.id === l.contract_id)
+          return <li key={l.id}>
+            {consumes ? 'Потребляет возможности: ' : 'Поставляет возможности: '}
+            <Link to={`/products/${peerId}`}>{peer?.name ?? peerId}</Link>
+            {' · '}{ru.link.types[l.type]}{' · '}{ru.link.criticality[l.criticality]}
+            {contract && <> · {pick(ru.contract.statuses, contract.status)} · {contract.name}</>}
+          </li>
+        })}
+      </ul>
+    </div>
   )
 }
 

@@ -2795,7 +2795,10 @@ type Problem struct {
 
 // Product defines model for Product.
 type Product struct {
-	CreatedAt      time.Time          `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
+
+	// Description Назначение
+	Description    *string            `json:"description,omitempty"`
 	HubManual      *bool              `json:"hub_manual,omitempty"`
 	Id             openapi_types.UUID `json:"id"`
 	Key            string             `json:"key"`
@@ -2815,6 +2818,8 @@ type ProductType string
 
 // ProductInput defines model for ProductInput.
 type ProductInput struct {
+	// Description Назначение
+	Description    *string                `json:"description,omitempty"`
 	HubManual      *bool                  `json:"hub_manual,omitempty"`
 	Key            string                 `json:"key"`
 	Lifecycle      *ProductInputLifecycle `json:"lifecycle,omitempty"`

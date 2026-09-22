@@ -57,6 +57,7 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
   const [kind, setKind] = useState<Kind>(initial?.type === 'platform' && initial.hub_manual ? 'platform' : 'product')
   const [key, setKey] = useState(initial?.key ?? '')
   const [name, setName] = useState(initial?.name ?? '')
+  const [description, setDescription] = useState(initial?.description ?? '')
   const [type, setType] = useState<ProductType>(initial?.type ?? 'security')
   const [owner, setOwner] = useState(initial?.owner ?? '')
   const [lifecycle, setLifecycle] = useState<Lifecycle>(initial?.lifecycle ?? 'active')
@@ -86,6 +87,7 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
     const failures: string[] = []
     const body: ProductInput = {
       key, name: name.trim(), type: effectiveType, owner: owner.trim() || undefined, lifecycle, ssdlc_certified: ssdlc, hub_manual: effectiveHub,
+      description,
     }
     if (editing) {
       try {
@@ -188,6 +190,10 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
             </label>
           </fieldset>
           {kind === 'platform' && <p className="muted">{ru.builder.kindHint}</p>}
+          <label className="field">
+            <span>Назначение, границы и источники</span>
+            <textarea rows={8} maxLength={12000} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </label>
           <div className="grid-2">
             <label className="field">
               <span>{ru.product.key}</span>

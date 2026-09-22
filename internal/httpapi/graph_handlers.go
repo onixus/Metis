@@ -180,7 +180,14 @@ func (s *Server) GetMe(ctx context.Context, _ gen.GetMeRequestObject) (gen.GetMe
 	if sc.SeesAllProducts() {
 		all = accessName(sc.Product(kernel.NilID))
 	}
-	return gen.GetMe200JSONResponse{Subject: sc.Subject(), Roles: roles, Audience: gen.MeAudience(sc.Audience()), AllProducts: gen.MeAllProducts(all), Products: products}, nil
+	finance := gen.MeFinanceNone
+	if sc.Finance() == authz.FinanceFull {
+		finance = gen.MeFinanceFull
+	}
+	if sc.Finance() == authz.FinanceAggregates {
+		finance = gen.MeFinanceAggregates
+	}
+	return gen.GetMe200JSONResponse{Subject: sc.Subject(), Roles: roles, Audience: gen.MeAudience(sc.Audience()), AllProducts: gen.MeAllProducts(all), Products: products, Finance: finance}, nil
 }
 
 // ---- portfolio ----

@@ -14,8 +14,12 @@ import (
 	"github.com/onixus/metis/internal/commitments"
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/decisions"
+	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/discovery"
+	"github.com/onixus/metis/internal/economics"
 	"github.com/onixus/metis/internal/httpapi/gen"
+	"github.com/onixus/metis/internal/identityaccess/authz"
+	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/portfoliograph"
 	"github.com/onixus/metis/internal/ports"
 	"github.com/onixus/metis/internal/prioritization"
@@ -31,14 +35,19 @@ type Deps struct {
 	AuditStore audit.Store
 	Audit      *audit.Logger
 	// Модули; nil — соответствующие маршруты отвечают 503.
-	Signals        *signals.Service
-	Prioritization *prioritization.Service
-	Roadmap        *roadmap.Service
-	CRM            ports.CRM
-	Discovery      *discovery.Service
-	Commitments    *commitments.Service
-	Compliance     *compliance.Service
-	Decisions      *decisions.Service
+	Signals         *signals.Service
+	Prioritization  *prioritization.Service
+	Roadmap         *roadmap.Service
+	CRM             ports.CRM
+	Discovery       *discovery.Service
+	Commitments     *commitments.Service
+	Compliance      *compliance.Service
+	Decisions       *decisions.Service
+	Delivery        *delivery.Service
+	DeliveryEnabled bool
+	Economics       *economics.Service
+	Finance         ports.Finance
+	FinanceWorklogs func(context.Context, authz.Scope, kernel.ID, string, int, bool) (economics.Snapshot, error)
 	// KnowledgeSpace — пространство базы знаний по умолчанию для страниц ADR (METIS_CONFLUENCE_SPACE).
 	KnowledgeSpace string
 	// Ready сообщает о готовности зависимостей (БД, миграции) для /readyz.
@@ -71,6 +80,12 @@ func (s *Server) Handler() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID, middleware.Recoverer, middleware.Timeout(30*time.Second))
 	r.Use(requestLogger(s.d.Log))
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			req.Body = http.MaxBytesReader(w, req.Body, 12<<20)
+			next.ServeHTTP(w, req)
+		})
+	})
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))

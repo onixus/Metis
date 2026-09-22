@@ -16,6 +16,9 @@ import (
 
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/onixus/metis/internal/delivery"
+	"github.com/onixus/metis/internal/economics"
+	"github.com/onixus/metis/internal/ports"
 )
 
 // Defines values for AffectedBaselineProcedure.
@@ -846,6 +849,27 @@ func (e MeAudience) Valid() bool {
 	case MeAudienceInternal:
 		return true
 	case MeAudienceSalesSafe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeFinance.
+const (
+	MeFinanceAggregates MeFinance = "aggregates"
+	MeFinanceFull       MeFinance = "full"
+	MeFinanceNone       MeFinance = "none"
+)
+
+// Valid indicates whether the value is a known member of the MeFinance enum.
+func (e MeFinance) Valid() bool {
+	switch e {
+	case MeFinanceAggregates:
+		return true
+	case MeFinanceFull:
+		return true
+	case MeFinanceNone:
 		return true
 	default:
 		return false
@@ -2236,6 +2260,126 @@ type DecisionRef struct {
 	Title string             `json:"title"`
 }
 
+// DeliveryConnector defines model for DeliveryConnector.
+type DeliveryConnector = delivery.ConnectorStatus
+
+// DeliveryEpicInput defines model for DeliveryEpicInput.
+type DeliveryEpicInput struct {
+	Project string `json:"project"`
+}
+
+// DeliveryFieldMapping defines model for DeliveryFieldMapping.
+type DeliveryFieldMapping = delivery.FieldMapping
+
+// DeliveryIssue defines model for DeliveryIssue.
+type DeliveryIssue = delivery.IssueSnapshot
+
+// DeliveryLinkInput defines model for DeliveryLinkInput.
+type DeliveryLinkInput struct {
+	EpicKey string `json:"epic_key"`
+	Project string `json:"project"`
+}
+
+// DeliveryMapping defines model for DeliveryMapping.
+type DeliveryMapping = delivery.Mapping
+
+// DeliveryMetrics defines model for DeliveryMetrics.
+type DeliveryMetrics = delivery.FeatureMetrics
+
+// DeliveryOverview defines model for DeliveryOverview.
+type DeliveryOverview struct {
+	Enabled  bool              `json:"enabled"`
+	Mappings []DeliveryMapping `json:"mappings"`
+	Metrics  []DeliveryMetrics `json:"metrics"`
+	Sprints  []DeliverySprint  `json:"sprints"`
+	Sync     DeliverySync      `json:"sync"`
+}
+
+// DeliveryPlanFact defines model for DeliveryPlanFact.
+type DeliveryPlanFact = delivery.PlanFact
+
+// DeliveryReadiness defines model for DeliveryReadiness.
+type DeliveryReadiness = delivery.Readiness
+
+// DeliveryScopeCreep defines model for DeliveryScopeCreep.
+type DeliveryScopeCreep = delivery.ScopeCreep
+
+// DeliverySprint defines model for DeliverySprint.
+type DeliverySprint = delivery.SprintStatus
+
+// DeliverySync defines model for DeliverySync.
+type DeliverySync = delivery.SyncState
+
+// EconomicsAllocation defines model for EconomicsAllocation.
+type EconomicsAllocation = economics.Allocation
+
+// EconomicsConfiguration defines model for EconomicsConfiguration.
+type EconomicsConfiguration struct {
+	ExpectedVersion int                `json:"expected_version"`
+	Fields          []EconomicsField   `json:"fields"`
+	Recalculate     *bool              `json:"recalculate,omitempty"`
+	Rows            []EconomicsRowRule `json:"rows"`
+}
+
+// EconomicsField defines model for EconomicsField.
+type EconomicsField = economics.Field
+
+// EconomicsImportTemplate defines model for EconomicsImportTemplate.
+type EconomicsImportTemplate = economics.ImportTemplate
+
+// EconomicsInvestment defines model for EconomicsInvestment.
+type EconomicsInvestment = economics.Investment
+
+// EconomicsLineage defines model for EconomicsLineage.
+type EconomicsLineage = economics.Lineage
+
+// EconomicsProductReport defines model for EconomicsProductReport.
+type EconomicsProductReport = economics.ProductReport
+
+// EconomicsReport defines model for EconomicsReport.
+type EconomicsReport = economics.Report
+
+// EconomicsRow defines model for EconomicsRow.
+type EconomicsRow = economics.Row
+
+// EconomicsRowRule defines model for EconomicsRowRule.
+type EconomicsRowRule struct {
+	Allocations []EconomicsAllocation `json:"allocations"`
+	RowId       openapi_types.UUID    `json:"row_id"`
+	Values      *map[string]string    `json:"values,omitempty"`
+}
+
+// EconomicsScenario defines model for EconomicsScenario.
+type EconomicsScenario struct {
+	FilterProductId *openapi_types.UUID `json:"filter_product_id,omitempty"`
+	Overrides       map[string]string   `json:"overrides"`
+	Team            *string             `json:"team,omitempty"`
+	Version         int                 `json:"version"`
+}
+
+// EconomicsSnapshot defines model for EconomicsSnapshot.
+type EconomicsSnapshot = economics.Snapshot
+
+// EconomicsSnapshotInfo defines model for EconomicsSnapshotInfo.
+type EconomicsSnapshotInfo = economics.SnapshotInfo
+
+// EconomicsSource defines model for EconomicsSource.
+type EconomicsSource = economics.Source
+
+// EconomicsTeamCost defines model for EconomicsTeamCost.
+type EconomicsTeamCost = economics.TeamCost
+
+// EconomicsVersionInput defines model for EconomicsVersionInput.
+type EconomicsVersionInput struct {
+	ExpectedVersion int `json:"expected_version"`
+}
+
+// EconomicsWorklogInput defines model for EconomicsWorklogInput.
+type EconomicsWorklogInput struct {
+	ExpectedVersion int  `json:"expected_version"`
+	Recalculate     bool `json:"recalculate"`
+}
+
 // Evidence defines model for Evidence.
 type Evidence struct {
 	CreatedAt    time.Time           `json:"created_at"`
@@ -2382,6 +2526,30 @@ type FeatureValue struct {
 	ProductId    openapi_types.UUID `json:"product_id"`
 	TotalValue   Money              `json:"total_value"`
 }
+
+// FinanceFileInput defines model for FinanceFileInput.
+type FinanceFileInput struct {
+	ContentBase64   string          `json:"content_base64"`
+	ExpectedVersion int             `json:"expected_version"`
+	Filename        string          `json:"filename"`
+	Recalculate     *bool           `json:"recalculate,omitempty"`
+	Template        FinanceTemplate `json:"template"`
+}
+
+// FinancePreview defines model for FinancePreview.
+type FinancePreview = ports.FinancePreview
+
+// FinanceRow defines model for FinanceRow.
+type FinanceRow = ports.FinanceRow
+
+// FinanceRowError defines model for FinanceRowError.
+type FinanceRowError = ports.FinanceRowError
+
+// FinanceSource defines model for FinanceSource.
+type FinanceSource = ports.FinanceSource
+
+// FinanceTemplate defines model for FinanceTemplate.
+type FinanceTemplate = ports.FinanceTemplate
 
 // Gate defines model for Gate.
 type Gate struct {
@@ -2591,6 +2759,7 @@ type LinkInputType string
 type Me struct {
 	AllProducts MeAllProducts         `json:"all_products"`
 	Audience    MeAudience            `json:"audience"`
+	Finance     MeFinance             `json:"finance"`
 	Products    map[string]MeProducts `json:"products"`
 	Roles       []string              `json:"roles"`
 	Subject     string                `json:"subject"`
@@ -2601,6 +2770,9 @@ type MeAllProducts string
 
 // MeAudience defines model for Me.Audience.
 type MeAudience string
+
+// MeFinance defines model for Me.Finance.
+type MeFinance string
 
 // MeProducts defines model for Me.Products.
 type MeProducts string
@@ -3295,6 +3467,25 @@ type ListCommitmentsParamsKind string
 // ListCommitmentsParamsStatus defines parameters for ListCommitments.
 type ListCommitmentsParamsStatus string
 
+// GetEconomicsSnapshotParams defines parameters for GetEconomicsSnapshot.
+type GetEconomicsSnapshotParams struct {
+	Version *int `form:"version,omitempty" json:"version,omitempty"`
+}
+
+// ExportEconomicsParams defines parameters for ExportEconomics.
+type ExportEconomicsParams struct {
+	Version         *int                `form:"version,omitempty" json:"version,omitempty"`
+	FilterProductId *openapi_types.UUID `form:"filter_product_id,omitempty" json:"filter_product_id,omitempty"`
+	Team            *string             `form:"team,omitempty" json:"team,omitempty"`
+}
+
+// GetEconomicsReportParams defines parameters for GetEconomicsReport.
+type GetEconomicsReportParams struct {
+	Version         *int                `form:"version,omitempty" json:"version,omitempty"`
+	FilterProductId *openapi_types.UUID `form:"filter_product_id,omitempty" json:"filter_product_id,omitempty"`
+	Team            *string             `form:"team,omitempty" json:"team,omitempty"`
+}
+
 // ListEvidenceParams defines parameters for ListEvidence.
 type ListEvidenceParams struct {
 	HypothesisId *openapi_types.UUID             `form:"hypothesisId,omitempty" json:"hypothesisId,omitempty"`
@@ -3408,6 +3599,9 @@ type DefineCustomFieldJSONRequestBody = CustomFieldDefInput
 // DefineCustomStatusJSONRequestBody defines body for DefineCustomStatus for application/json ContentType.
 type DefineCustomStatusJSONRequestBody = CustomStatusDef
 
+// SetDeliveryMappingJSONRequestBody defines body for SetDeliveryMapping for application/json ContentType.
+type SetDeliveryMappingJSONRequestBody = DeliveryFieldMapping
+
 // CreateRequirementSetJSONRequestBody defines body for CreateRequirementSet for application/json ContentType.
 type CreateRequirementSetJSONRequestBody = RequirementSetInput
 
@@ -3459,11 +3653,17 @@ type UpdateFeatureJSONRequestBody = FeatureInput
 // SetFeatureDevCostJSONRequestBody defines body for SetFeatureDevCost for application/json ContentType.
 type SetFeatureDevCostJSONRequestBody SetFeatureDevCostJSONBody
 
+// MapDeliveryFeatureJSONRequestBody defines body for MapDeliveryFeature for application/json ContentType.
+type MapDeliveryFeatureJSONRequestBody = DeliveryLinkInput
+
 // SetFeatureFlagsJSONRequestBody defines body for SetFeatureFlags for application/json ContentType.
 type SetFeatureFlagsJSONRequestBody = FeatureFlagsInput
 
 // SetFeatureImpactJSONRequestBody defines body for SetFeatureImpact for application/json ContentType.
 type SetFeatureImpactJSONRequestBody = ImpactInput
+
+// RequestDeliveryEpicJSONRequestBody defines body for RequestDeliveryEpic for application/json ContentType.
+type RequestDeliveryEpicJSONRequestBody = DeliveryEpicInput
 
 // CreateRequirementJSONRequestBody defines body for CreateRequirement for application/json ContentType.
 type CreateRequirementJSONRequestBody CreateRequirementJSONBody
@@ -3498,11 +3698,32 @@ type CreateCapabilityJSONRequestBody CreateCapabilityJSONBody
 // CreateCommitmentJSONRequestBody defines body for CreateCommitment for application/json ContentType.
 type CreateCommitmentJSONRequestBody = CommitmentInput
 
+// CloseEconomicsJSONRequestBody defines body for CloseEconomics for application/json ContentType.
+type CloseEconomicsJSONRequestBody = EconomicsVersionInput
+
+// ConfigureEconomicsJSONRequestBody defines body for ConfigureEconomics for application/json ContentType.
+type ConfigureEconomicsJSONRequestBody = EconomicsConfiguration
+
+// ImportFinanceFileJSONRequestBody defines body for ImportFinanceFile for application/json ContentType.
+type ImportFinanceFileJSONRequestBody = FinanceFileInput
+
+// PreviewFinanceImportJSONRequestBody defines body for PreviewFinanceImport for application/json ContentType.
+type PreviewFinanceImportJSONRequestBody = FinanceFileInput
+
+// CalculateEconomicsScenarioJSONRequestBody defines body for CalculateEconomicsScenario for application/json ContentType.
+type CalculateEconomicsScenarioJSONRequestBody = EconomicsScenario
+
+// ApplyFinanceWorklogsJSONRequestBody defines body for ApplyFinanceWorklogs for application/json ContentType.
+type ApplyFinanceWorklogsJSONRequestBody = EconomicsWorklogInput
+
 // CreateEvidenceJSONRequestBody defines body for CreateEvidence for application/json ContentType.
 type CreateEvidenceJSONRequestBody = EvidenceInput
 
 // CreateFeatureJSONRequestBody defines body for CreateFeature for application/json ContentType.
 type CreateFeatureJSONRequestBody = FeatureInput
+
+// SaveFinanceTemplateJSONRequestBody defines body for SaveFinanceTemplate for application/json ContentType.
+type SaveFinanceTemplateJSONRequestBody = EconomicsImportTemplate
 
 // CreateHypothesisJSONRequestBody defines body for CreateHypothesis for application/json ContentType.
 type CreateHypothesisJSONRequestBody = HypothesisInput
@@ -3692,6 +3913,25 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /admin/custom-statuses (the `DefineCustomStatus` operationId).
 	DefineCustomStatus(ctx context.Context, body DefineCustomStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDeliveryConnector Состояние коннектора поставки (AD-05)
+	//
+	// Corresponds with GET /admin/delivery (the `GetDeliveryConnector` operationId).
+	GetDeliveryConnector(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetDeliveryMappingWithBody Настроить доски и соответствие статусов (AD-05)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /admin/delivery/mapping (the `SetDeliveryMapping` operationId).
+	SetDeliveryMappingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetDeliveryMapping Настроить доски и соответствие статусов (AD-05)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /admin/delivery/mapping (the `SetDeliveryMapping` operationId).
+	SetDeliveryMapping(ctx context.Context, body SetDeliveryMappingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// VerifyEvidenceLog Проверить целостность журнала доказательств (CM-04)
 	//
@@ -4036,6 +4276,20 @@ type ClientInterface interface {
 	// Corresponds with PUT /features/{featureId}/cost (the `SetFeatureDevCost` operationId).
 	SetFeatureDevCost(ctx context.Context, featureId FeatureId, body SetFeatureDevCostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// MapDeliveryFeatureWithBody Привязать существующий эпик (DL-01)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /features/{featureId}/delivery-mapping (the `MapDeliveryFeature` operationId).
+	MapDeliveryFeatureWithBody(ctx context.Context, featureId FeatureId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// MapDeliveryFeature Привязать существующий эпик (DL-01)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /features/{featureId}/delivery-mapping (the `MapDeliveryFeature` operationId).
+	MapDeliveryFeature(ctx context.Context, featureId FeatureId, body MapDeliveryFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetFeatureFlags Флаги фичи (PR-04)
 	//
 	// Corresponds with GET /features/{featureId}/flags (the `GetFeatureFlags` operationId).
@@ -4078,6 +4332,20 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /features/{featureId}/impact/history (the `GetFeatureImpactHistory` operationId).
 	GetFeatureImpactHistory(ctx context.Context, featureId FeatureId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequestDeliveryEpicWithBody Поставить создание эпика в outbox (DL-01)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
+	RequestDeliveryEpicWithBody(ctx context.Context, featureId FeatureId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequestDeliveryEpic Поставить создание эпика в outbox (DL-01)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
+	RequestDeliveryEpic(ctx context.Context, featureId FeatureId, body RequestDeliveryEpicJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateRequirementWithBody Добавить требование (PG-02)
 	//
@@ -4303,6 +4571,115 @@ type ClientInterface interface {
 	// Corresponds with POST /products/{productId}/commitments (the `CreateCommitment` operationId).
 	CreateCommitment(ctx context.Context, productId ProductId, body CreateCommitmentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetProductDelivery Проекция поставки, спринты и метрики (DL-01…03)
+	//
+	// Corresponds with GET /products/{productId}/delivery (the `GetProductDelivery` operationId).
+	GetProductDelivery(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEconomicsSnapshot Исходные строки выбранной версии (EC-07)
+	//
+	// Corresponds with GET /products/{productId}/economics/{period} (the `GetEconomicsSnapshot` operationId).
+	GetEconomicsSnapshot(ctx context.Context, productId ProductId, period string, params *GetEconomicsSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CloseEconomicsWithBody Закрыть период новой неизменяемой версией (EC-11)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/close (the `CloseEconomics` operationId).
+	CloseEconomicsWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CloseEconomics Закрыть период новой неизменяемой версией (EC-11)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/close (the `CloseEconomics` operationId).
+	CloseEconomics(ctx context.Context, productId ProductId, period string, body CloseEconomicsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ConfigureEconomicsWithBody Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /products/{productId}/economics/{period}/configuration (the `ConfigureEconomics` operationId).
+	ConfigureEconomicsWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ConfigureEconomics Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /products/{productId}/economics/{period}/configuration (the `ConfigureEconomics` operationId).
+	ConfigureEconomics(ctx context.Context, productId ProductId, period string, body ConfigureEconomicsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExportEconomics Аудируемый CSV P&L (NF-S02/14)
+	//
+	// Corresponds with GET /products/{productId}/economics/{period}/export (the `ExportEconomics` operationId).
+	ExportEconomics(ctx context.Context, productId ProductId, period string, params *ExportEconomicsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ImportFinanceFileWithBody Импорт файла в новую версию периода (EC-01/07)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
+	ImportFinanceFileWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ImportFinanceFile Импорт файла в новую версию периода (EC-01/07)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
+	ImportFinanceFile(ctx context.Context, productId ProductId, period string, body ImportFinanceFileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PreviewFinanceImportWithBody Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
+	PreviewFinanceImportWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PreviewFinanceImport Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
+	PreviewFinanceImport(ctx context.Context, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEconomicsReport P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
+	//
+	// Corresponds with GET /products/{productId}/economics/{period}/report (the `GetEconomicsReport` operationId).
+	GetEconomicsReport(ctx context.Context, productId ProductId, period string, params *GetEconomicsReportParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CalculateEconomicsScenarioWithBody Сценарий без изменения фактов (EC-13)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
+	CalculateEconomicsScenarioWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CalculateEconomicsScenario Сценарий без изменения фактов (EC-13)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
+	CalculateEconomicsScenario(ctx context.Context, productId ProductId, period string, body CalculateEconomicsScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListEconomicsVersions История финансового периода (EC-11)
+	//
+	// Corresponds with GET /products/{productId}/economics/{period}/versions (the `ListEconomicsVersions` operationId).
+	ListEconomicsVersions(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApplyFinanceWorklogsWithBody Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/worklog-shares (the `ApplyFinanceWorklogs` operationId).
+	ApplyFinanceWorklogsWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApplyFinanceWorklogs Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/worklog-shares (the `ApplyFinanceWorklogs` operationId).
+	ApplyFinanceWorklogs(ctx context.Context, productId ProductId, period string, body ApplyFinanceWorklogsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListEvidence Evidence продукта (DS-03)
 	//
 	// Corresponds with GET /products/{productId}/evidence (the `ListEvidence` operationId).
@@ -4345,6 +4722,17 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /products/{productId}/features (the `CreateFeature` operationId).
 	CreateFeature(ctx context.Context, productId ProductId, body CreateFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListFinanceTemplates performs a GET /products/{productId}/finance-templates (the `ListFinanceTemplates` operationId) request.
+	ListFinanceTemplates(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveFinanceTemplateWithBody performs a PUT /products/{productId}/finance-templates (the `SaveFinanceTemplate` operationId) request,
+	// with any type of body and a specified content type.
+	SaveFinanceTemplateWithBody(ctx context.Context, productId ProductId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveFinanceTemplate performs a PUT /products/{productId}/finance-templates (the `SaveFinanceTemplate` operationId) request.
+	// Takes a body of the `application/json` content type.
+	SaveFinanceTemplate(ctx context.Context, productId ProductId, body SaveFinanceTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListHypotheses Гипотезы продукта (DS-01)
 	//
@@ -4916,6 +5304,55 @@ func (c *Client) DefineCustomStatusWithBody(ctx context.Context, contentType str
 // Corresponds with POST /admin/custom-statuses (the `DefineCustomStatus` operationId).
 func (c *Client) DefineCustomStatus(ctx context.Context, body DefineCustomStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDefineCustomStatusRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetDeliveryConnector Состояние коннектора поставки (AD-05)
+//
+// Corresponds with GET /admin/delivery (the `GetDeliveryConnector` operationId).
+func (c *Client) GetDeliveryConnector(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDeliveryConnectorRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SetDeliveryMappingWithBody Настроить доски и соответствие статусов (AD-05)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /admin/delivery/mapping (the `SetDeliveryMapping` operationId).
+func (c *Client) SetDeliveryMappingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetDeliveryMappingRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SetDeliveryMapping Настроить доски и соответствие статусов (AD-05)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /admin/delivery/mapping (the `SetDeliveryMapping` operationId).
+func (c *Client) SetDeliveryMapping(ctx context.Context, body SetDeliveryMappingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetDeliveryMappingRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5819,6 +6256,40 @@ func (c *Client) SetFeatureDevCost(ctx context.Context, featureId FeatureId, bod
 	return c.Client.Do(req)
 }
 
+// MapDeliveryFeatureWithBody Привязать существующий эпик (DL-01)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /features/{featureId}/delivery-mapping (the `MapDeliveryFeature` operationId).
+func (c *Client) MapDeliveryFeatureWithBody(ctx context.Context, featureId FeatureId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewMapDeliveryFeatureRequestWithBody(c.Server, featureId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// MapDeliveryFeature Привязать существующий эпик (DL-01)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /features/{featureId}/delivery-mapping (the `MapDeliveryFeature` operationId).
+func (c *Client) MapDeliveryFeature(ctx context.Context, featureId FeatureId, body MapDeliveryFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewMapDeliveryFeatureRequest(c.Server, featureId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // GetFeatureFlags Флаги фичи (PR-04)
 //
 // Corresponds with GET /features/{featureId}/flags (the `GetFeatureFlags` operationId).
@@ -5922,6 +6393,40 @@ func (c *Client) SetFeatureImpact(ctx context.Context, featureId FeatureId, body
 // Corresponds with GET /features/{featureId}/impact/history (the `GetFeatureImpactHistory` operationId).
 func (c *Client) GetFeatureImpactHistory(ctx context.Context, featureId FeatureId, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetFeatureImpactHistoryRequest(c.Server, featureId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RequestDeliveryEpicWithBody Поставить создание эпика в outbox (DL-01)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
+func (c *Client) RequestDeliveryEpicWithBody(ctx context.Context, featureId FeatureId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestDeliveryEpicRequestWithBody(c.Server, featureId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RequestDeliveryEpic Поставить создание эпика в outbox (DL-01)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
+func (c *Client) RequestDeliveryEpic(ctx context.Context, featureId FeatureId, body RequestDeliveryEpicJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestDeliveryEpicRequest(c.Server, featureId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -6516,6 +7021,285 @@ func (c *Client) CreateCommitment(ctx context.Context, productId ProductId, body
 	return c.Client.Do(req)
 }
 
+// GetProductDelivery Проекция поставки, спринты и метрики (DL-01…03)
+//
+// Corresponds with GET /products/{productId}/delivery (the `GetProductDelivery` operationId).
+func (c *Client) GetProductDelivery(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProductDeliveryRequest(c.Server, productId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEconomicsSnapshot Исходные строки выбранной версии (EC-07)
+//
+// Corresponds with GET /products/{productId}/economics/{period} (the `GetEconomicsSnapshot` operationId).
+func (c *Client) GetEconomicsSnapshot(ctx context.Context, productId ProductId, period string, params *GetEconomicsSnapshotParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEconomicsSnapshotRequest(c.Server, productId, period, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CloseEconomicsWithBody Закрыть период новой неизменяемой версией (EC-11)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/close (the `CloseEconomics` operationId).
+func (c *Client) CloseEconomicsWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCloseEconomicsRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CloseEconomics Закрыть период новой неизменяемой версией (EC-11)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/close (the `CloseEconomics` operationId).
+func (c *Client) CloseEconomics(ctx context.Context, productId ProductId, period string, body CloseEconomicsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCloseEconomicsRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ConfigureEconomicsWithBody Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /products/{productId}/economics/{period}/configuration (the `ConfigureEconomics` operationId).
+func (c *Client) ConfigureEconomicsWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewConfigureEconomicsRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ConfigureEconomics Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /products/{productId}/economics/{period}/configuration (the `ConfigureEconomics` operationId).
+func (c *Client) ConfigureEconomics(ctx context.Context, productId ProductId, period string, body ConfigureEconomicsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewConfigureEconomicsRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ExportEconomics Аудируемый CSV P&L (NF-S02/14)
+//
+// Corresponds with GET /products/{productId}/economics/{period}/export (the `ExportEconomics` operationId).
+func (c *Client) ExportEconomics(ctx context.Context, productId ProductId, period string, params *ExportEconomicsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExportEconomicsRequest(c.Server, productId, period, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ImportFinanceFileWithBody Импорт файла в новую версию периода (EC-01/07)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
+func (c *Client) ImportFinanceFileWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportFinanceFileRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ImportFinanceFile Импорт файла в новую версию периода (EC-01/07)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
+func (c *Client) ImportFinanceFile(ctx context.Context, productId ProductId, period string, body ImportFinanceFileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportFinanceFileRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PreviewFinanceImportWithBody Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
+func (c *Client) PreviewFinanceImportWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreviewFinanceImportRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PreviewFinanceImport Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
+func (c *Client) PreviewFinanceImport(ctx context.Context, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreviewFinanceImportRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEconomicsReport P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
+//
+// Corresponds with GET /products/{productId}/economics/{period}/report (the `GetEconomicsReport` operationId).
+func (c *Client) GetEconomicsReport(ctx context.Context, productId ProductId, period string, params *GetEconomicsReportParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEconomicsReportRequest(c.Server, productId, period, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CalculateEconomicsScenarioWithBody Сценарий без изменения фактов (EC-13)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
+func (c *Client) CalculateEconomicsScenarioWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCalculateEconomicsScenarioRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CalculateEconomicsScenario Сценарий без изменения фактов (EC-13)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
+func (c *Client) CalculateEconomicsScenario(ctx context.Context, productId ProductId, period string, body CalculateEconomicsScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCalculateEconomicsScenarioRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListEconomicsVersions История финансового периода (EC-11)
+//
+// Corresponds with GET /products/{productId}/economics/{period}/versions (the `ListEconomicsVersions` operationId).
+func (c *Client) ListEconomicsVersions(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListEconomicsVersionsRequest(c.Server, productId, period)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ApplyFinanceWorklogsWithBody Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/worklog-shares (the `ApplyFinanceWorklogs` operationId).
+func (c *Client) ApplyFinanceWorklogsWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApplyFinanceWorklogsRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ApplyFinanceWorklogs Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/worklog-shares (the `ApplyFinanceWorklogs` operationId).
+func (c *Client) ApplyFinanceWorklogs(ctx context.Context, productId ProductId, period string, body ApplyFinanceWorklogsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApplyFinanceWorklogsRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListEvidence Evidence продукта (DS-03)
 //
 // Corresponds with GET /products/{productId}/evidence (the `ListEvidence` operationId).
@@ -6619,6 +7403,47 @@ func (c *Client) CreateFeatureWithBody(ctx context.Context, productId ProductId,
 // Corresponds with POST /products/{productId}/features (the `CreateFeature` operationId).
 func (c *Client) CreateFeature(ctx context.Context, productId ProductId, body CreateFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateFeatureRequest(c.Server, productId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListFinanceTemplates performs a GET /products/{productId}/finance-templates (the `ListFinanceTemplates` operationId) request.
+func (c *Client) ListFinanceTemplates(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListFinanceTemplatesRequest(c.Server, productId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveFinanceTemplateWithBody performs a PUT /products/{productId}/finance-templates (the `SaveFinanceTemplate` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) SaveFinanceTemplateWithBody(ctx context.Context, productId ProductId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveFinanceTemplateRequestWithBody(c.Server, productId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SaveFinanceTemplate performs a PUT /products/{productId}/finance-templates (the `SaveFinanceTemplate` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) SaveFinanceTemplate(ctx context.Context, productId ProductId, body SaveFinanceTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveFinanceTemplateRequest(c.Server, productId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -8033,6 +8858,73 @@ func NewDefineCustomStatusRequestWithBody(server string, contentType string, bod
 	}
 
 	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetDeliveryConnectorRequest constructs an http.Request for the GetDeliveryConnector method
+func NewGetDeliveryConnectorRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/delivery")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSetDeliveryMappingRequest calls the generic SetDeliveryMapping builder with application/json body
+func NewSetDeliveryMappingRequest(server string, body SetDeliveryMappingJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetDeliveryMappingRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSetDeliveryMappingRequestWithBody constructs an http.Request for the SetDeliveryMapping method, with any body, and a specified content type
+func NewSetDeliveryMappingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/delivery/mapping")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -9543,6 +10435,53 @@ func NewSetFeatureDevCostRequestWithBody(server string, featureId FeatureId, con
 	return req, nil
 }
 
+// NewMapDeliveryFeatureRequest calls the generic MapDeliveryFeature builder with application/json body
+func NewMapDeliveryFeatureRequest(server string, featureId FeatureId, body MapDeliveryFeatureJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewMapDeliveryFeatureRequestWithBody(server, featureId, "application/json", bodyReader)
+}
+
+// NewMapDeliveryFeatureRequestWithBody constructs an http.Request for the MapDeliveryFeature method, with any body, and a specified content type
+func NewMapDeliveryFeatureRequestWithBody(server string, featureId FeatureId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "featureId", featureId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/features/%s/delivery-mapping", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetFeatureFlagsRequest constructs an http.Request for the GetFeatureFlags method
 func NewGetFeatureFlagsRequest(server string, featureId FeatureId) (*http.Request, error) {
 	var err error
@@ -9735,6 +10674,53 @@ func NewGetFeatureImpactHistoryRequest(server string, featureId FeatureId) (*htt
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewRequestDeliveryEpicRequest calls the generic RequestDeliveryEpic builder with application/json body
+func NewRequestDeliveryEpicRequest(server string, featureId FeatureId, body RequestDeliveryEpicJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequestDeliveryEpicRequestWithBody(server, featureId, "application/json", bodyReader)
+}
+
+// NewRequestDeliveryEpicRequestWithBody constructs an http.Request for the RequestDeliveryEpic method, with any body, and a specified content type
+func NewRequestDeliveryEpicRequestWithBody(server string, featureId FeatureId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "featureId", featureId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/features/%s/request-epic", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -10756,6 +11742,657 @@ func NewCreateCommitmentRequestWithBody(server string, productId ProductId, cont
 	return req, nil
 }
 
+// NewGetProductDeliveryRequest constructs an http.Request for the GetProductDelivery method
+func NewGetProductDeliveryRequest(server string, productId ProductId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/delivery", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetEconomicsSnapshotRequest constructs an http.Request for the GetEconomicsSnapshot method
+func NewGetEconomicsSnapshotRequest(server string, productId ProductId, period string, params *GetEconomicsSnapshotParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Version != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCloseEconomicsRequest calls the generic CloseEconomics builder with application/json body
+func NewCloseEconomicsRequest(server string, productId ProductId, period string, body CloseEconomicsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCloseEconomicsRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewCloseEconomicsRequestWithBody constructs an http.Request for the CloseEconomics method, with any body, and a specified content type
+func NewCloseEconomicsRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/close", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewConfigureEconomicsRequest calls the generic ConfigureEconomics builder with application/json body
+func NewConfigureEconomicsRequest(server string, productId ProductId, period string, body ConfigureEconomicsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewConfigureEconomicsRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewConfigureEconomicsRequestWithBody constructs an http.Request for the ConfigureEconomics method, with any body, and a specified content type
+func NewConfigureEconomicsRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/configuration", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewExportEconomicsRequest constructs an http.Request for the ExportEconomics method
+func NewExportEconomicsRequest(server string, productId ProductId, period string, params *ExportEconomicsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/export", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Version != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.FilterProductId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter_product_id", *params.FilterProductId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Team != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "team", *params.Team, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewImportFinanceFileRequest calls the generic ImportFinanceFile builder with application/json body
+func NewImportFinanceFileRequest(server string, productId ProductId, period string, body ImportFinanceFileJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewImportFinanceFileRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewImportFinanceFileRequestWithBody constructs an http.Request for the ImportFinanceFile method, with any body, and a specified content type
+func NewImportFinanceFileRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/import", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPreviewFinanceImportRequest calls the generic PreviewFinanceImport builder with application/json body
+func NewPreviewFinanceImportRequest(server string, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPreviewFinanceImportRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewPreviewFinanceImportRequestWithBody constructs an http.Request for the PreviewFinanceImport method, with any body, and a specified content type
+func NewPreviewFinanceImportRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/preview", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetEconomicsReportRequest constructs an http.Request for the GetEconomicsReport method
+func NewGetEconomicsReportRequest(server string, productId ProductId, period string, params *GetEconomicsReportParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/report", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Version != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", *params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.FilterProductId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter_product_id", *params.FilterProductId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Team != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "team", *params.Team, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCalculateEconomicsScenarioRequest calls the generic CalculateEconomicsScenario builder with application/json body
+func NewCalculateEconomicsScenarioRequest(server string, productId ProductId, period string, body CalculateEconomicsScenarioJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCalculateEconomicsScenarioRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewCalculateEconomicsScenarioRequestWithBody constructs an http.Request for the CalculateEconomicsScenario method, with any body, and a specified content type
+func NewCalculateEconomicsScenarioRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/scenario", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListEconomicsVersionsRequest constructs an http.Request for the ListEconomicsVersions method
+func NewListEconomicsVersionsRequest(server string, productId ProductId, period string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/versions", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewApplyFinanceWorklogsRequest calls the generic ApplyFinanceWorklogs builder with application/json body
+func NewApplyFinanceWorklogsRequest(server string, productId ProductId, period string, body ApplyFinanceWorklogsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApplyFinanceWorklogsRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewApplyFinanceWorklogsRequestWithBody constructs an http.Request for the ApplyFinanceWorklogs method, with any body, and a specified content type
+func NewApplyFinanceWorklogsRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/worklog-shares", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListEvidenceRequest constructs an http.Request for the ListEvidence method
 func NewListEvidenceRequest(server string, productId ProductId, params *ListEvidenceParams) (*http.Request, error) {
 	var err error
@@ -11006,6 +12643,87 @@ func NewCreateFeatureRequestWithBody(server string, productId ProductId, content
 	}
 
 	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListFinanceTemplatesRequest constructs an http.Request for the ListFinanceTemplates method
+func NewListFinanceTemplatesRequest(server string, productId ProductId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/finance-templates", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveFinanceTemplateRequest calls the generic SaveFinanceTemplate builder with application/json body
+func NewSaveFinanceTemplateRequest(server string, productId ProductId, body SaveFinanceTemplateJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveFinanceTemplateRequestWithBody(server, productId, "application/json", bodyReader)
+}
+
+// NewSaveFinanceTemplateRequestWithBody constructs an http.Request for the SaveFinanceTemplate method, with any body, and a specified content type
+func NewSaveFinanceTemplateRequestWithBody(server string, productId ProductId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/finance-templates", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -13311,6 +15029,27 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /admin/custom-statuses (the `DefineCustomStatus` operationId).
 	DefineCustomStatusWithResponse(ctx context.Context, body DefineCustomStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*DefineCustomStatusResponse, error)
 
+	// GetDeliveryConnectorWithResponse Состояние коннектора поставки (AD-05)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /admin/delivery (the `GetDeliveryConnector` operationId).
+	GetDeliveryConnectorWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDeliveryConnectorResponse, error)
+
+	// SetDeliveryMappingWithBodyWithResponse Настроить доски и соответствие статусов (AD-05)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /admin/delivery/mapping (the `SetDeliveryMapping` operationId).
+	SetDeliveryMappingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetDeliveryMappingResponse, error)
+
+	// SetDeliveryMappingWithResponse Настроить доски и соответствие статусов (AD-05)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /admin/delivery/mapping (the `SetDeliveryMapping` operationId).
+	SetDeliveryMappingWithResponse(ctx context.Context, body SetDeliveryMappingJSONRequestBody, reqEditors ...RequestEditorFn) (*SetDeliveryMappingResponse, error)
+
 	// VerifyEvidenceLogWithResponse Проверить целостность журнала доказательств (CM-04)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -13696,6 +15435,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with PUT /features/{featureId}/cost (the `SetFeatureDevCost` operationId).
 	SetFeatureDevCostWithResponse(ctx context.Context, featureId FeatureId, body SetFeatureDevCostJSONRequestBody, reqEditors ...RequestEditorFn) (*SetFeatureDevCostResponse, error)
 
+	// MapDeliveryFeatureWithBodyWithResponse Привязать существующий эпик (DL-01)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /features/{featureId}/delivery-mapping (the `MapDeliveryFeature` operationId).
+	MapDeliveryFeatureWithBodyWithResponse(ctx context.Context, featureId FeatureId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MapDeliveryFeatureResponse, error)
+
+	// MapDeliveryFeatureWithResponse Привязать существующий эпик (DL-01)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /features/{featureId}/delivery-mapping (the `MapDeliveryFeature` operationId).
+	MapDeliveryFeatureWithResponse(ctx context.Context, featureId FeatureId, body MapDeliveryFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*MapDeliveryFeatureResponse, error)
+
 	// GetFeatureFlagsWithResponse Флаги фичи (PR-04)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -13744,6 +15497,20 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /features/{featureId}/impact/history (the `GetFeatureImpactHistory` operationId).
 	GetFeatureImpactHistoryWithResponse(ctx context.Context, featureId FeatureId, reqEditors ...RequestEditorFn) (*GetFeatureImpactHistoryResponse, error)
+
+	// RequestDeliveryEpicWithBodyWithResponse Поставить создание эпика в outbox (DL-01)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
+	RequestDeliveryEpicWithBodyWithResponse(ctx context.Context, featureId FeatureId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestDeliveryEpicResponse, error)
+
+	// RequestDeliveryEpicWithResponse Поставить создание эпика в outbox (DL-01)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
+	RequestDeliveryEpicWithResponse(ctx context.Context, featureId FeatureId, body RequestDeliveryEpicJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestDeliveryEpicResponse, error)
 
 	// CreateRequirementWithBodyWithResponse Добавить требование (PG-02)
 	//
@@ -13997,6 +15764,125 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /products/{productId}/commitments (the `CreateCommitment` operationId).
 	CreateCommitmentWithResponse(ctx context.Context, productId ProductId, body CreateCommitmentJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCommitmentResponse, error)
 
+	// GetProductDeliveryWithResponse Проекция поставки, спринты и метрики (DL-01…03)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /products/{productId}/delivery (the `GetProductDelivery` operationId).
+	GetProductDeliveryWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*GetProductDeliveryResponse, error)
+
+	// GetEconomicsSnapshotWithResponse Исходные строки выбранной версии (EC-07)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /products/{productId}/economics/{period} (the `GetEconomicsSnapshot` operationId).
+	GetEconomicsSnapshotWithResponse(ctx context.Context, productId ProductId, period string, params *GetEconomicsSnapshotParams, reqEditors ...RequestEditorFn) (*GetEconomicsSnapshotResponse, error)
+
+	// CloseEconomicsWithBodyWithResponse Закрыть период новой неизменяемой версией (EC-11)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/close (the `CloseEconomics` operationId).
+	CloseEconomicsWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CloseEconomicsResponse, error)
+
+	// CloseEconomicsWithResponse Закрыть период новой неизменяемой версией (EC-11)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/close (the `CloseEconomics` operationId).
+	CloseEconomicsWithResponse(ctx context.Context, productId ProductId, period string, body CloseEconomicsJSONRequestBody, reqEditors ...RequestEditorFn) (*CloseEconomicsResponse, error)
+
+	// ConfigureEconomicsWithBodyWithResponse Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /products/{productId}/economics/{period}/configuration (the `ConfigureEconomics` operationId).
+	ConfigureEconomicsWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfigureEconomicsResponse, error)
+
+	// ConfigureEconomicsWithResponse Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /products/{productId}/economics/{period}/configuration (the `ConfigureEconomics` operationId).
+	ConfigureEconomicsWithResponse(ctx context.Context, productId ProductId, period string, body ConfigureEconomicsJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfigureEconomicsResponse, error)
+
+	// ExportEconomicsWithResponse Аудируемый CSV P&L (NF-S02/14)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /products/{productId}/economics/{period}/export (the `ExportEconomics` operationId).
+	ExportEconomicsWithResponse(ctx context.Context, productId ProductId, period string, params *ExportEconomicsParams, reqEditors ...RequestEditorFn) (*ExportEconomicsResponse, error)
+
+	// ImportFinanceFileWithBodyWithResponse Импорт файла в новую версию периода (EC-01/07)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
+	ImportFinanceFileWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportFinanceFileResponse, error)
+
+	// ImportFinanceFileWithResponse Импорт файла в новую версию периода (EC-01/07)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
+	ImportFinanceFileWithResponse(ctx context.Context, productId ProductId, period string, body ImportFinanceFileJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportFinanceFileResponse, error)
+
+	// PreviewFinanceImportWithBodyWithResponse Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
+	PreviewFinanceImportWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PreviewFinanceImportResponse, error)
+
+	// PreviewFinanceImportWithResponse Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
+	PreviewFinanceImportWithResponse(ctx context.Context, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody, reqEditors ...RequestEditorFn) (*PreviewFinanceImportResponse, error)
+
+	// GetEconomicsReportWithResponse P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /products/{productId}/economics/{period}/report (the `GetEconomicsReport` operationId).
+	GetEconomicsReportWithResponse(ctx context.Context, productId ProductId, period string, params *GetEconomicsReportParams, reqEditors ...RequestEditorFn) (*GetEconomicsReportResponse, error)
+
+	// CalculateEconomicsScenarioWithBodyWithResponse Сценарий без изменения фактов (EC-13)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
+	CalculateEconomicsScenarioWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CalculateEconomicsScenarioResponse, error)
+
+	// CalculateEconomicsScenarioWithResponse Сценарий без изменения фактов (EC-13)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
+	CalculateEconomicsScenarioWithResponse(ctx context.Context, productId ProductId, period string, body CalculateEconomicsScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*CalculateEconomicsScenarioResponse, error)
+
+	// ListEconomicsVersionsWithResponse История финансового периода (EC-11)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /products/{productId}/economics/{period}/versions (the `ListEconomicsVersions` operationId).
+	ListEconomicsVersionsWithResponse(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*ListEconomicsVersionsResponse, error)
+
+	// ApplyFinanceWorklogsWithBodyWithResponse Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/worklog-shares (the `ApplyFinanceWorklogs` operationId).
+	ApplyFinanceWorklogsWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApplyFinanceWorklogsResponse, error)
+
+	// ApplyFinanceWorklogsWithResponse Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/worklog-shares (the `ApplyFinanceWorklogs` operationId).
+	ApplyFinanceWorklogsWithResponse(ctx context.Context, productId ProductId, period string, body ApplyFinanceWorklogsJSONRequestBody, reqEditors ...RequestEditorFn) (*ApplyFinanceWorklogsResponse, error)
+
 	// ListEvidenceWithResponse Evidence продукта (DS-03)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -14045,6 +15931,21 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /products/{productId}/features (the `CreateFeature` operationId).
 	CreateFeatureWithResponse(ctx context.Context, productId ProductId, body CreateFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateFeatureResponse, error)
+
+	// ListFinanceTemplatesWithResponse performs a GET /products/{productId}/finance-templates (the `ListFinanceTemplates` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ListFinanceTemplatesWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*ListFinanceTemplatesResponse, error)
+
+	// SaveFinanceTemplateWithBodyWithResponse performs a PUT /products/{productId}/finance-templates (the `SaveFinanceTemplate` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	SaveFinanceTemplateWithBodyWithResponse(ctx context.Context, productId ProductId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveFinanceTemplateResponse, error)
+
+	// SaveFinanceTemplateWithResponse performs a PUT /products/{productId}/finance-templates (the `SaveFinanceTemplate` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	SaveFinanceTemplateWithResponse(ctx context.Context, productId ProductId, body SaveFinanceTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveFinanceTemplateResponse, error)
 
 	// ListHypothesesWithResponse Гипотезы продукта (DS-01)
 	//
@@ -14799,6 +16700,95 @@ func (r DefineCustomStatusResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r DefineCustomStatusResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetDeliveryConnectorResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *DeliveryConnector
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetDeliveryConnectorResponse) GetJSON200() *DeliveryConnector {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetDeliveryConnectorResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetDeliveryConnectorResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDeliveryConnectorResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDeliveryConnectorResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetDeliveryConnectorResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SetDeliveryMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SetDeliveryMappingResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SetDeliveryMappingResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SetDeliveryMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetDeliveryMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SetDeliveryMappingResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -16622,6 +18612,54 @@ func (r SetFeatureDevCostResponse) ContentType() string {
 	return ""
 }
 
+type MapDeliveryFeatureResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *DeliveryMapping
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r MapDeliveryFeatureResponse) GetJSON200() *DeliveryMapping {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r MapDeliveryFeatureResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r MapDeliveryFeatureResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r MapDeliveryFeatureResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r MapDeliveryFeatureResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r MapDeliveryFeatureResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetFeatureFlagsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -16856,6 +18894,47 @@ func (r GetFeatureImpactHistoryResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetFeatureImpactHistoryResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type RequestDeliveryEpicResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r RequestDeliveryEpicResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r RequestDeliveryEpicResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RequestDeliveryEpicResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequestDeliveryEpicResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RequestDeliveryEpicResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -18062,6 +20141,527 @@ func (r CreateCommitmentResponse) ContentType() string {
 	return ""
 }
 
+type GetProductDeliveryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *DeliveryOverview
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetProductDeliveryResponse) GetJSON200() *DeliveryOverview {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetProductDeliveryResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetProductDeliveryResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProductDeliveryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProductDeliveryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetProductDeliveryResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetEconomicsSnapshotResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EconomicsSnapshot
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEconomicsSnapshotResponse) GetJSON200() *EconomicsSnapshot {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetEconomicsSnapshotResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEconomicsSnapshotResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEconomicsSnapshotResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEconomicsSnapshotResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEconomicsSnapshotResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CloseEconomicsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EconomicsSnapshot
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CloseEconomicsResponse) GetJSON200() *EconomicsSnapshot {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r CloseEconomicsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CloseEconomicsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CloseEconomicsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CloseEconomicsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CloseEconomicsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ConfigureEconomicsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EconomicsSnapshot
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ConfigureEconomicsResponse) GetJSON200() *EconomicsSnapshot {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ConfigureEconomicsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ConfigureEconomicsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ConfigureEconomicsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ConfigureEconomicsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ConfigureEconomicsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ExportEconomicsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ExportEconomicsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ExportEconomicsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ExportEconomicsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExportEconomicsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ExportEconomicsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ImportFinanceFileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *EconomicsSnapshot
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r ImportFinanceFileResponse) GetJSON201() *EconomicsSnapshot {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ImportFinanceFileResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ImportFinanceFileResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ImportFinanceFileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ImportFinanceFileResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ImportFinanceFileResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type PreviewFinanceImportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *FinancePreview
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r PreviewFinanceImportResponse) GetJSON200() *FinancePreview {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r PreviewFinanceImportResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r PreviewFinanceImportResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r PreviewFinanceImportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PreviewFinanceImportResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PreviewFinanceImportResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetEconomicsReportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EconomicsReport
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEconomicsReportResponse) GetJSON200() *EconomicsReport {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetEconomicsReportResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEconomicsReportResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEconomicsReportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEconomicsReportResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEconomicsReportResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CalculateEconomicsScenarioResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EconomicsReport
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CalculateEconomicsScenarioResponse) GetJSON200() *EconomicsReport {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r CalculateEconomicsScenarioResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CalculateEconomicsScenarioResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CalculateEconomicsScenarioResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CalculateEconomicsScenarioResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CalculateEconomicsScenarioResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListEconomicsVersionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]EconomicsSnapshotInfo
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListEconomicsVersionsResponse) GetJSON200() *[]EconomicsSnapshotInfo {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListEconomicsVersionsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListEconomicsVersionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListEconomicsVersionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListEconomicsVersionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListEconomicsVersionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ApplyFinanceWorklogsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EconomicsSnapshot
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ApplyFinanceWorklogsResponse) GetJSON200() *EconomicsSnapshot {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ApplyFinanceWorklogsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ApplyFinanceWorklogsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ApplyFinanceWorklogsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApplyFinanceWorklogsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ApplyFinanceWorklogsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListEvidenceResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -18296,6 +20896,102 @@ func (r CreateFeatureResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r CreateFeatureResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListFinanceTemplatesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]EconomicsImportTemplate
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListFinanceTemplatesResponse) GetJSON200() *[]EconomicsImportTemplate {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListFinanceTemplatesResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListFinanceTemplatesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListFinanceTemplatesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListFinanceTemplatesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListFinanceTemplatesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveFinanceTemplateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EconomicsImportTemplate
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SaveFinanceTemplateResponse) GetJSON200() *EconomicsImportTemplate {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SaveFinanceTemplateResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SaveFinanceTemplateResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveFinanceTemplateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveFinanceTemplateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveFinanceTemplateResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -20786,6 +23482,45 @@ func (c *ClientWithResponses) DefineCustomStatusWithResponse(ctx context.Context
 	return ParseDefineCustomStatusResponse(rsp)
 }
 
+// GetDeliveryConnectorWithResponse Состояние коннектора поставки (AD-05)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /admin/delivery (the `GetDeliveryConnector` operationId).
+func (c *ClientWithResponses) GetDeliveryConnectorWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDeliveryConnectorResponse, error) {
+	rsp, err := c.GetDeliveryConnector(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDeliveryConnectorResponse(rsp)
+}
+
+// SetDeliveryMappingWithBodyWithResponse Настроить доски и соответствие статусов (AD-05)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /admin/delivery/mapping (the `SetDeliveryMapping` operationId).
+func (c *ClientWithResponses) SetDeliveryMappingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetDeliveryMappingResponse, error) {
+	rsp, err := c.SetDeliveryMappingWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetDeliveryMappingResponse(rsp)
+}
+
+// SetDeliveryMappingWithResponse Настроить доски и соответствие статусов (AD-05)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /admin/delivery/mapping (the `SetDeliveryMapping` operationId).
+func (c *ClientWithResponses) SetDeliveryMappingWithResponse(ctx context.Context, body SetDeliveryMappingJSONRequestBody, reqEditors ...RequestEditorFn) (*SetDeliveryMappingResponse, error) {
+	rsp, err := c.SetDeliveryMapping(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetDeliveryMappingResponse(rsp)
+}
+
 // VerifyEvidenceLogWithResponse Проверить целостность журнала доказательств (CM-04)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -21501,6 +24236,32 @@ func (c *ClientWithResponses) SetFeatureDevCostWithResponse(ctx context.Context,
 	return ParseSetFeatureDevCostResponse(rsp)
 }
 
+// MapDeliveryFeatureWithBodyWithResponse Привязать существующий эпик (DL-01)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /features/{featureId}/delivery-mapping (the `MapDeliveryFeature` operationId).
+func (c *ClientWithResponses) MapDeliveryFeatureWithBodyWithResponse(ctx context.Context, featureId FeatureId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MapDeliveryFeatureResponse, error) {
+	rsp, err := c.MapDeliveryFeatureWithBody(ctx, featureId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseMapDeliveryFeatureResponse(rsp)
+}
+
+// MapDeliveryFeatureWithResponse Привязать существующий эпик (DL-01)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /features/{featureId}/delivery-mapping (the `MapDeliveryFeature` operationId).
+func (c *ClientWithResponses) MapDeliveryFeatureWithResponse(ctx context.Context, featureId FeatureId, body MapDeliveryFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*MapDeliveryFeatureResponse, error) {
+	rsp, err := c.MapDeliveryFeature(ctx, featureId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseMapDeliveryFeatureResponse(rsp)
+}
+
 // GetFeatureFlagsWithResponse Флаги фичи (PR-04)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -21590,6 +24351,32 @@ func (c *ClientWithResponses) GetFeatureImpactHistoryWithResponse(ctx context.Co
 		return nil, err
 	}
 	return ParseGetFeatureImpactHistoryResponse(rsp)
+}
+
+// RequestDeliveryEpicWithBodyWithResponse Поставить создание эпика в outbox (DL-01)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
+func (c *ClientWithResponses) RequestDeliveryEpicWithBodyWithResponse(ctx context.Context, featureId FeatureId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestDeliveryEpicResponse, error) {
+	rsp, err := c.RequestDeliveryEpicWithBody(ctx, featureId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestDeliveryEpicResponse(rsp)
+}
+
+// RequestDeliveryEpicWithResponse Поставить создание эпика в outbox (DL-01)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
+func (c *ClientWithResponses) RequestDeliveryEpicWithResponse(ctx context.Context, featureId FeatureId, body RequestDeliveryEpicJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestDeliveryEpicResponse, error) {
+	rsp, err := c.RequestDeliveryEpic(ctx, featureId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestDeliveryEpicResponse(rsp)
 }
 
 // CreateRequirementWithBodyWithResponse Добавить требование (PG-02)
@@ -22060,6 +24847,227 @@ func (c *ClientWithResponses) CreateCommitmentWithResponse(ctx context.Context, 
 	return ParseCreateCommitmentResponse(rsp)
 }
 
+// GetProductDeliveryWithResponse Проекция поставки, спринты и метрики (DL-01…03)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /products/{productId}/delivery (the `GetProductDelivery` operationId).
+func (c *ClientWithResponses) GetProductDeliveryWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*GetProductDeliveryResponse, error) {
+	rsp, err := c.GetProductDelivery(ctx, productId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProductDeliveryResponse(rsp)
+}
+
+// GetEconomicsSnapshotWithResponse Исходные строки выбранной версии (EC-07)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /products/{productId}/economics/{period} (the `GetEconomicsSnapshot` operationId).
+func (c *ClientWithResponses) GetEconomicsSnapshotWithResponse(ctx context.Context, productId ProductId, period string, params *GetEconomicsSnapshotParams, reqEditors ...RequestEditorFn) (*GetEconomicsSnapshotResponse, error) {
+	rsp, err := c.GetEconomicsSnapshot(ctx, productId, period, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEconomicsSnapshotResponse(rsp)
+}
+
+// CloseEconomicsWithBodyWithResponse Закрыть период новой неизменяемой версией (EC-11)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/close (the `CloseEconomics` operationId).
+func (c *ClientWithResponses) CloseEconomicsWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CloseEconomicsResponse, error) {
+	rsp, err := c.CloseEconomicsWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCloseEconomicsResponse(rsp)
+}
+
+// CloseEconomicsWithResponse Закрыть период новой неизменяемой версией (EC-11)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/close (the `CloseEconomics` operationId).
+func (c *ClientWithResponses) CloseEconomicsWithResponse(ctx context.Context, productId ProductId, period string, body CloseEconomicsJSONRequestBody, reqEditors ...RequestEditorFn) (*CloseEconomicsResponse, error) {
+	rsp, err := c.CloseEconomics(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCloseEconomicsResponse(rsp)
+}
+
+// ConfigureEconomicsWithBodyWithResponse Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /products/{productId}/economics/{period}/configuration (the `ConfigureEconomics` operationId).
+func (c *ClientWithResponses) ConfigureEconomicsWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfigureEconomicsResponse, error) {
+	rsp, err := c.ConfigureEconomicsWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConfigureEconomicsResponse(rsp)
+}
+
+// ConfigureEconomicsWithResponse Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /products/{productId}/economics/{period}/configuration (the `ConfigureEconomics` operationId).
+func (c *ClientWithResponses) ConfigureEconomicsWithResponse(ctx context.Context, productId ProductId, period string, body ConfigureEconomicsJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfigureEconomicsResponse, error) {
+	rsp, err := c.ConfigureEconomics(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConfigureEconomicsResponse(rsp)
+}
+
+// ExportEconomicsWithResponse Аудируемый CSV P&L (NF-S02/14)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /products/{productId}/economics/{period}/export (the `ExportEconomics` operationId).
+func (c *ClientWithResponses) ExportEconomicsWithResponse(ctx context.Context, productId ProductId, period string, params *ExportEconomicsParams, reqEditors ...RequestEditorFn) (*ExportEconomicsResponse, error) {
+	rsp, err := c.ExportEconomics(ctx, productId, period, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExportEconomicsResponse(rsp)
+}
+
+// ImportFinanceFileWithBodyWithResponse Импорт файла в новую версию периода (EC-01/07)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
+func (c *ClientWithResponses) ImportFinanceFileWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportFinanceFileResponse, error) {
+	rsp, err := c.ImportFinanceFileWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseImportFinanceFileResponse(rsp)
+}
+
+// ImportFinanceFileWithResponse Импорт файла в новую версию периода (EC-01/07)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
+func (c *ClientWithResponses) ImportFinanceFileWithResponse(ctx context.Context, productId ProductId, period string, body ImportFinanceFileJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportFinanceFileResponse, error) {
+	rsp, err := c.ImportFinanceFile(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseImportFinanceFileResponse(rsp)
+}
+
+// PreviewFinanceImportWithBodyWithResponse Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
+func (c *ClientWithResponses) PreviewFinanceImportWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PreviewFinanceImportResponse, error) {
+	rsp, err := c.PreviewFinanceImportWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreviewFinanceImportResponse(rsp)
+}
+
+// PreviewFinanceImportWithResponse Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
+func (c *ClientWithResponses) PreviewFinanceImportWithResponse(ctx context.Context, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody, reqEditors ...RequestEditorFn) (*PreviewFinanceImportResponse, error) {
+	rsp, err := c.PreviewFinanceImport(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreviewFinanceImportResponse(rsp)
+}
+
+// GetEconomicsReportWithResponse P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /products/{productId}/economics/{period}/report (the `GetEconomicsReport` operationId).
+func (c *ClientWithResponses) GetEconomicsReportWithResponse(ctx context.Context, productId ProductId, period string, params *GetEconomicsReportParams, reqEditors ...RequestEditorFn) (*GetEconomicsReportResponse, error) {
+	rsp, err := c.GetEconomicsReport(ctx, productId, period, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEconomicsReportResponse(rsp)
+}
+
+// CalculateEconomicsScenarioWithBodyWithResponse Сценарий без изменения фактов (EC-13)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
+func (c *ClientWithResponses) CalculateEconomicsScenarioWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CalculateEconomicsScenarioResponse, error) {
+	rsp, err := c.CalculateEconomicsScenarioWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCalculateEconomicsScenarioResponse(rsp)
+}
+
+// CalculateEconomicsScenarioWithResponse Сценарий без изменения фактов (EC-13)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
+func (c *ClientWithResponses) CalculateEconomicsScenarioWithResponse(ctx context.Context, productId ProductId, period string, body CalculateEconomicsScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*CalculateEconomicsScenarioResponse, error) {
+	rsp, err := c.CalculateEconomicsScenario(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCalculateEconomicsScenarioResponse(rsp)
+}
+
+// ListEconomicsVersionsWithResponse История финансового периода (EC-11)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /products/{productId}/economics/{period}/versions (the `ListEconomicsVersions` operationId).
+func (c *ClientWithResponses) ListEconomicsVersionsWithResponse(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*ListEconomicsVersionsResponse, error) {
+	rsp, err := c.ListEconomicsVersions(ctx, productId, period, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListEconomicsVersionsResponse(rsp)
+}
+
+// ApplyFinanceWorklogsWithBodyWithResponse Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/worklog-shares (the `ApplyFinanceWorklogs` operationId).
+func (c *ClientWithResponses) ApplyFinanceWorklogsWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApplyFinanceWorklogsResponse, error) {
+	rsp, err := c.ApplyFinanceWorklogsWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApplyFinanceWorklogsResponse(rsp)
+}
+
+// ApplyFinanceWorklogsWithResponse Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/worklog-shares (the `ApplyFinanceWorklogs` operationId).
+func (c *ClientWithResponses) ApplyFinanceWorklogsWithResponse(ctx context.Context, productId ProductId, period string, body ApplyFinanceWorklogsJSONRequestBody, reqEditors ...RequestEditorFn) (*ApplyFinanceWorklogsResponse, error) {
+	rsp, err := c.ApplyFinanceWorklogs(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApplyFinanceWorklogsResponse(rsp)
+}
+
 // ListEvidenceWithResponse Evidence продукта (DS-03)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -22149,6 +25157,39 @@ func (c *ClientWithResponses) CreateFeatureWithResponse(ctx context.Context, pro
 		return nil, err
 	}
 	return ParseCreateFeatureResponse(rsp)
+}
+
+// ListFinanceTemplatesWithResponse performs a GET /products/{productId}/finance-templates (the `ListFinanceTemplates` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ListFinanceTemplatesWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*ListFinanceTemplatesResponse, error) {
+	rsp, err := c.ListFinanceTemplates(ctx, productId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListFinanceTemplatesResponse(rsp)
+}
+
+// SaveFinanceTemplateWithBodyWithResponse performs a PUT /products/{productId}/finance-templates (the `SaveFinanceTemplate` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) SaveFinanceTemplateWithBodyWithResponse(ctx context.Context, productId ProductId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveFinanceTemplateResponse, error) {
+	rsp, err := c.SaveFinanceTemplateWithBody(ctx, productId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveFinanceTemplateResponse(rsp)
+}
+
+// SaveFinanceTemplateWithResponse performs a PUT /products/{productId}/finance-templates (the `SaveFinanceTemplate` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) SaveFinanceTemplateWithResponse(ctx context.Context, productId ProductId, body SaveFinanceTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveFinanceTemplateResponse, error) {
+	rsp, err := c.SaveFinanceTemplate(ctx, productId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveFinanceTemplateResponse(rsp)
 }
 
 // ListHypothesesWithResponse Гипотезы продукта (DS-01)
@@ -23265,6 +26306,68 @@ func ParseDefineCustomStatusResponse(rsp *http.Response) (*DefineCustomStatusRes
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDeliveryConnectorResponse parses an HTTP response from a GetDeliveryConnectorWithResponse call
+func ParseGetDeliveryConnectorResponse(rsp *http.Response) (*GetDeliveryConnectorResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDeliveryConnectorResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeliveryConnector
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSetDeliveryMappingResponse parses an HTTP response from a SetDeliveryMappingWithResponse call
+func ParseSetDeliveryMappingResponse(rsp *http.Response) (*SetDeliveryMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetDeliveryMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Problem
@@ -24531,6 +27634,39 @@ func ParseSetFeatureDevCostResponse(rsp *http.Response) (*SetFeatureDevCostRespo
 	return response, nil
 }
 
+// ParseMapDeliveryFeatureResponse parses an HTTP response from a MapDeliveryFeatureWithResponse call
+func ParseMapDeliveryFeatureResponse(rsp *http.Response) (*MapDeliveryFeatureResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &MapDeliveryFeatureResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeliveryMapping
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetFeatureFlagsResponse parses an HTTP response from a GetFeatureFlagsWithResponse call
 func ParseGetFeatureFlagsResponse(rsp *http.Response) (*GetFeatureFlagsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -24683,6 +27819,35 @@ func ParseGetFeatureImpactHistoryResponse(rsp *http.Response) (*GetFeatureImpact
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRequestDeliveryEpicResponse parses an HTTP response from a RequestDeliveryEpicWithResponse call
+func ParseRequestDeliveryEpicResponse(rsp *http.Response) (*RequestDeliveryEpicResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequestDeliveryEpicResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 202:
+		break // No content-type
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Problem
@@ -25527,6 +28692,362 @@ func ParseCreateCommitmentResponse(rsp *http.Response) (*CreateCommitmentRespons
 	return response, nil
 }
 
+// ParseGetProductDeliveryResponse parses an HTTP response from a GetProductDeliveryWithResponse call
+func ParseGetProductDeliveryResponse(rsp *http.Response) (*GetProductDeliveryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProductDeliveryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeliveryOverview
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetEconomicsSnapshotResponse parses an HTTP response from a GetEconomicsSnapshotWithResponse call
+func ParseGetEconomicsSnapshotResponse(rsp *http.Response) (*GetEconomicsSnapshotResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEconomicsSnapshotResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EconomicsSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCloseEconomicsResponse parses an HTTP response from a CloseEconomicsWithResponse call
+func ParseCloseEconomicsResponse(rsp *http.Response) (*CloseEconomicsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CloseEconomicsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EconomicsSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseConfigureEconomicsResponse parses an HTTP response from a ConfigureEconomicsWithResponse call
+func ParseConfigureEconomicsResponse(rsp *http.Response) (*ConfigureEconomicsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ConfigureEconomicsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EconomicsSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseExportEconomicsResponse parses an HTTP response from a ExportEconomicsWithResponse call
+func ParseExportEconomicsResponse(rsp *http.Response) (*ExportEconomicsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExportEconomicsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseImportFinanceFileResponse parses an HTTP response from a ImportFinanceFileWithResponse call
+func ParseImportFinanceFileResponse(rsp *http.Response) (*ImportFinanceFileResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ImportFinanceFileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest EconomicsSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePreviewFinanceImportResponse parses an HTTP response from a PreviewFinanceImportWithResponse call
+func ParsePreviewFinanceImportResponse(rsp *http.Response) (*PreviewFinanceImportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PreviewFinanceImportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FinancePreview
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetEconomicsReportResponse parses an HTTP response from a GetEconomicsReportWithResponse call
+func ParseGetEconomicsReportResponse(rsp *http.Response) (*GetEconomicsReportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEconomicsReportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EconomicsReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCalculateEconomicsScenarioResponse parses an HTTP response from a CalculateEconomicsScenarioWithResponse call
+func ParseCalculateEconomicsScenarioResponse(rsp *http.Response) (*CalculateEconomicsScenarioResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CalculateEconomicsScenarioResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EconomicsReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListEconomicsVersionsResponse parses an HTTP response from a ListEconomicsVersionsWithResponse call
+func ParseListEconomicsVersionsResponse(rsp *http.Response) (*ListEconomicsVersionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListEconomicsVersionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []EconomicsSnapshotInfo
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApplyFinanceWorklogsResponse parses an HTTP response from a ApplyFinanceWorklogsWithResponse call
+func ParseApplyFinanceWorklogsResponse(rsp *http.Response) (*ApplyFinanceWorklogsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApplyFinanceWorklogsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EconomicsSnapshot
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListEvidenceResponse parses an HTTP response from a ListEvidenceWithResponse call
 func ParseListEvidenceResponse(rsp *http.Response) (*ListEvidenceResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -25679,6 +29200,72 @@ func ParseCreateFeatureResponse(rsp *http.Response) (*CreateFeatureResponse, err
 			return nil, err
 		}
 		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListFinanceTemplatesResponse parses an HTTP response from a ListFinanceTemplatesWithResponse call
+func ParseListFinanceTemplatesResponse(rsp *http.Response) (*ListFinanceTemplatesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListFinanceTemplatesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []EconomicsImportTemplate
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveFinanceTemplateResponse parses an HTTP response from a SaveFinanceTemplateWithResponse call
+func ParseSaveFinanceTemplateResponse(rsp *http.Response) (*SaveFinanceTemplateResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveFinanceTemplateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EconomicsImportTemplate
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Problem

@@ -125,15 +125,43 @@ func (a *App) RunWorker(ctx context.Context) error {
 	defer syncTimer.Stop()
 	renewalTimer := time.NewTimer(0)
 	defer renewalTimer.Stop()
+	crmInterval := a.Cfg.CRMSyncInterval
+	if crmInterval <= 0 {
+		crmInterval = time.Hour
+	}
+	crmTimer := time.NewTimer(0)
+	defer crmTimer.Stop()
+	financeInterval := a.Cfg.FinanceSyncInterval
+	if financeInterval <= 0 {
+		financeInterval = 24 * time.Hour
+	}
+	financeTimer := time.NewTimer(0)
+	defer financeTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+		case <-financeTimer.C:
+			if len(a.financeSources) > 0 {
+				a.syncFinance(ctx)
+			}
+			financeTimer.Reset(financeInterval)
 		case <-syncTimer.C:
-			if a.Jira != nil {
+			if a.Tracker != nil {
 				a.syncDelivery(ctx)
 			}
 			syncTimer.Reset(syncInterval)
+		case <-crmTimer.C:
+			if a.CRM != nil {
+				a.runBackground(ctx, "crm.import", func(ctx context.Context) error {
+					result, err := a.Signals.ImportFromCRM(ctx, identityaccess.ServiceScope("crm-import"), a.CRM)
+					if err == nil && len(result.Skipped) > 0 {
+						a.Log.WarnContext(ctx, "CRM deals skipped: product mapping requires review", "count", len(result.Skipped))
+					}
+					return err
+				})
+			}
+			crmTimer.Reset(crmInterval)
 		case <-renewalTimer.C:
 			a.runBackground(ctx, "commitments.renewals", func(ctx context.Context) error {
 				_, err := a.Commitments.EnsureRenewals(ctx, identityaccess.ServiceScope("renewals"), kernel.DateFromTime(time.Now()))

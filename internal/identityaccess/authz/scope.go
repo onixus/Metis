@@ -73,6 +73,8 @@ const (
 	ActionReadAudit        Action = "read_audit"
 	ActionManageAccess     Action = "manage_access"
 	ActionManageConnects   Action = "manage_connectors"
+	ActionReadFinance      Action = "read_finance"
+	ActionWriteFinance     Action = "write_finance"
 )
 
 // Scope — область доступа субъекта. Неизменяемый; нулевое значение запрещает всё.
@@ -188,6 +190,8 @@ func (s Scope) Allows(action Action, product kernel.ID) bool {
 		return false
 	}
 	switch action {
+	case ActionReadFinance, ActionWriteFinance:
+		return product != kernel.NilID && s.finance == FinanceFull && s.HasRole(RoleFinance) && s.Product(product) >= AccessPrivate
 	case ActionReadStrategic:
 		return s.Product(product) >= AccessStrategic
 	case ActionReadPrivate:

@@ -26,6 +26,7 @@ func run(args []string, getenv func(string) string, output io.Writer) error {
 	subject := flags.String("subject", "", "синтетический пользователь стенда (обязательно)")
 	roles := flags.String("roles", "pm", "роли через запятую")
 	products := flags.String("products", "", "ключи продуктов через запятую (например edr,vm)")
+	finance := flags.String("finance", "none", "финансовый уровень: none, aggregates, full")
 	ttl := flags.Duration("ttl", time.Hour, "срок действия от 1m до 8h")
 	if err := flags.Parse(args); err != nil {
 		return fmt.Errorf("параметры: %w", err)
@@ -55,7 +56,10 @@ func run(args []string, getenv func(string) string, output io.Writer) error {
 			return fmt.Errorf("неизвестная пользовательская роль %q", role)
 		}
 	}
-	token, err := identityaccess.MintHS256(secret, issuer, *subject, roleList, split(*products), "", *ttl, kernel.SystemClock{})
+	if *finance != "none" && *finance != "aggregates" && *finance != "full" {
+		return fmt.Errorf("неизвестный финансовый уровень")
+	}
+	token, err := identityaccess.MintHS256(secret, issuer, *subject, roleList, split(*products), *finance, *ttl, kernel.SystemClock{})
 	if err != nil {
 		return fmt.Errorf("выдача токена: %w", err)
 	}

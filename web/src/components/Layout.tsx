@@ -31,6 +31,7 @@ export function Layout() {
           <NavLink to="/graph">{ru.nav.graph}</NavLink>
           <NavLink to="/hub">{ru.nav.hub}</NavLink>
           <NavLink to="/delivery">{ru.nav.delivery}</NavLink>
+          {me.data?.roles.includes('finance') && me.data.finance === 'full' && <NavLink to="/economics">Экономика</NavLink>}
           {canReadPortfolioDecisions(me.data) && <NavLink to="/decisions">{ru.nav2.decisions}</NavLink>}
           {canSeeCompliance(me.data) && <NavLink to="/compliance">{ru.nav2.compliance}</NavLink>}
           {admin && <NavLink to="/admin">{ru.nav.admin}</NavLink>}

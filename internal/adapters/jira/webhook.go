@@ -2,7 +2,6 @@ package jira
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -12,7 +11,7 @@ import (
 )
 
 // ErrNotEpicEvent — событие webhook не относится к эпику или не отслеживается; вызывающий игнорирует его.
-var ErrNotEpicEvent = errors.New("событие не относится к эпику")
+var ErrNotEpicEvent = ports.ErrIgnoredWebhook
 
 // MaxWebhookBody — предел размера тела webhook.
 const MaxWebhookBody = 1 << 20

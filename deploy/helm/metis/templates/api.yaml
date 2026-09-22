@@ -23,6 +23,13 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
           ports: [{ name: http, containerPort: {{ .Values.api.port }} }]
+          {{- with .Values.secrets.envFromSecrets }}
+          envFrom:
+            {{- range . }}
+            - secretRef:
+                name: {{ . | quote }}
+            {{- end }}
+          {{- end }}
           env:
             {{- include "metis.env" . | nindent 12 }}
             - name: METIS_HTTP_ADDR
@@ -41,14 +48,20 @@ spec:
             - name: METIS_HMAC_ISSUER
               value: {{ .Values.config.hmacIssuer | quote }}
             {{- end }}
-            - name: METIS_CRM_DIR
-              value: {{ .Values.config.crmDir | quote }}
             - name: METIS_WEBHOOK_TOKEN
               valueFrom: { secretKeyRef: { name: {{ .Values.secrets.existingSecret }}, key: webhookToken, optional: true } }
           readinessProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5 }
           livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 10 }
           startupProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5, failureThreshold: 60 }
           resources: {{- toYaml .Values.api.resources | nindent 12 }}
+          {{- if or .Values.integrationFiles.profileConfigMap .Values.integrationFiles.dataExistingClaim }}
+          volumeMounts:
+            {{- include "metis.integrationMounts" . | nindent 12 }}
+          {{- end }}
+      {{- if or .Values.integrationFiles.profileConfigMap .Values.integrationFiles.dataExistingClaim }}
+      volumes:
+        {{- include "metis.integrationVolumes" . | nindent 8 }}
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

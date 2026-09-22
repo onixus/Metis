@@ -15,6 +15,7 @@ import { DecisionsPage } from './pages/DecisionsPage'
 import { DiscoveryPage } from './pages/DiscoveryPage'
 import { TracePage } from './pages/TracePage'
 import { DeliveryPage } from './pages/DeliveryPage'
+import { EconomicsPage } from './pages/EconomicsPage'
 import { HubPage } from './pages/HubPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProductBuilderPage } from './pages/ProductBuilderPage'
@@ -81,6 +82,7 @@ export default function App() {
                 <Route path="/trace/:kind/:id" element={<TracePage />} />
                 <Route path="/hub" element={<HubPage />} />
                 <Route path="/delivery" element={<DeliveryPage />} />
+                <Route path="/economics" element={<EconomicsPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="*" element={<NotFound />} />
               </Route>

@@ -25,6 +25,7 @@ tags:
   - name: compliance
   - name: decisions
   - name: admin
+  - name: economics
 paths:
   /me:
     get:
@@ -2238,6 +2239,443 @@ paths:
           description: Запрос поставлен в outbox
         default: { $ref: "#/components/responses/Problem" }
 
+  /products/{productId}/delivery:
+    get:
+      tags:
+        - delivery
+      operationId: getProductDelivery
+      summary: Проекция поставки, спринты и метрики (DL-01…03)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryOverview'
+        default:
+          $ref: '#/components/responses/Problem'
+  /features/{featureId}/delivery-mapping:
+    put:
+      tags:
+        - delivery
+      operationId: mapDeliveryFeature
+      summary: Привязать существующий эпик (DL-01)
+      parameters:
+        - $ref: '#/components/parameters/featureId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryLinkInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryMapping'
+        default:
+          $ref: '#/components/responses/Problem'
+  /features/{featureId}/request-epic:
+    post:
+      tags:
+        - economics
+      operationId: requestDeliveryEpic
+      summary: Поставить создание эпика в outbox (DL-01)
+      parameters:
+        - $ref: '#/components/parameters/featureId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryEpicInput'
+      responses:
+        '202':
+          description: OK
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/delivery:
+    get:
+      tags:
+        - delivery
+      operationId: getDeliveryConnector
+      summary: Состояние коннектора поставки (AD-05)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryConnector'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/delivery/mapping:
+    put:
+      tags:
+        - delivery
+      operationId: setDeliveryMapping
+      summary: Настроить доски и соответствие статусов (AD-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryFieldMapping'
+      responses:
+        '204':
+          description: OK
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /products/{productId}/economics/{period}/preview:
+    post:
+      tags:
+        - economics
+      operationId: previewFinanceImport
+      summary: Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceFileInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancePreview'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/import:
+    post:
+      tags:
+        - economics
+      operationId: importFinanceFile
+      summary: Импорт файла в новую версию периода (EC-01/07)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceFileInput'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicsSnapshot'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/versions:
+    get:
+      tags:
+        - economics
+      operationId: listEconomicsVersions
+      summary: История финансового периода (EC-11)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EconomicsSnapshotInfo'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}:
+    get:
+      tags:
+        - economics
+      operationId: getEconomicsSnapshot
+      summary: Исходные строки выбранной версии (EC-07)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        - name: version
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicsSnapshot'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/configuration:
+    put:
+      tags:
+        - economics
+      operationId: configureEconomics
+      summary: Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EconomicsConfiguration'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicsSnapshot'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/close:
+    post:
+      tags:
+        - economics
+      operationId: closeEconomics
+      summary: Закрыть период новой неизменяемой версией (EC-11)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EconomicsVersionInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicsSnapshot'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/report:
+    get:
+      tags:
+        - economics
+      operationId: getEconomicsReport
+      summary: P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        - name: version
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: filter_product_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: team
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicsReport'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/scenario:
+    post:
+      tags:
+        - economics
+      operationId: calculateEconomicsScenario
+      summary: Сценарий без изменения фактов (EC-13)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EconomicsScenario'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicsReport'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/export:
+    get:
+      tags:
+        - economics
+      operationId: exportEconomics
+      summary: Аудируемый CSV P&L (NF-S02/14)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        - name: version
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: filter_product_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: team
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /products/{productId}/finance-templates:
+    parameters:
+      - $ref: '#/components/parameters/productId'
+    get:
+      tags:
+        - economics
+      operationId: listFinanceTemplates
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EconomicsImportTemplate'
+        default:
+          $ref: '#/components/responses/Problem'
+    put:
+      tags:
+        - economics
+      operationId: saveFinanceTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EconomicsImportTemplate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicsImportTemplate'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /products/{productId}/economics/{period}/worklog-shares:
+    parameters:
+      - $ref: '#/components/parameters/productId'
+      - name: period
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+    post:
+      tags:
+        - economics
+      operationId: applyFinanceWorklogs
+      summary: Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EconomicsWorklogInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicsSnapshot'
+        default:
+          $ref: '#/components/responses/Problem'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2364,8 +2802,9 @@ components:
         currency: { type: string }
     Me:
       type: object
-      required: [subject, roles, audience, all_products, products]
+      required: [subject, roles, audience, all_products, products, finance]
       properties:
+        finance: { type: string, enum: [none, aggregates, full] }
         subject: { type: string }
         roles:
           type: array
@@ -3345,3 +3784,943 @@ components:
       properties:
         id: { type: string, format: uuid }
         title: { type: string }
+    DeliveryMapping:
+      type: object
+      required:
+        - feature_id
+        - product_id
+        - epic_key
+        - project
+        - created_at
+      properties:
+        feature_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        epic_key:
+          type: string
+        project:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      x-go-type: delivery.Mapping
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliverySync:
+      type: object
+      required:
+        - last_success_at
+        - last_attempt_at
+        - lag
+        - stale
+      properties:
+        last_success_at:
+          type: string
+          format: date-time
+        last_attempt_at:
+          type: string
+          format: date-time
+        last_error:
+          type: string
+        lag:
+          type: integer
+          format: int64
+        stale:
+          type: boolean
+      x-go-type: delivery.SyncState
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliveryIssue:
+      type: object
+      required:
+        - key
+        - summary
+        - status
+        - done
+        - created_at
+      properties:
+        key:
+          type: string
+        summary:
+          type: string
+        status:
+          type: string
+        done:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+      x-go-type: delivery.IssueSnapshot
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliverySprint:
+      type: object
+      required:
+        - product_id
+        - board
+        - sprint_id
+        - name
+        - goal
+        - state
+        - start_date
+        - end_date
+        - issues
+        - total
+        - done
+        - carried_over
+        - synced_at
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        board:
+          type: string
+        sprint_id:
+          type: string
+        name:
+          type: string
+        goal:
+          type: string
+        state:
+          type: string
+        start_date:
+          type: string
+        end_date:
+          type: string
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliveryIssue'
+        total:
+          type: integer
+        done:
+          type: integer
+        carried_over:
+          type: array
+          items:
+            type: string
+        synced_at:
+          type: string
+          format: date-time
+      x-go-type: delivery.SprintStatus
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliveryReadiness:
+      type: object
+      required:
+        - done
+        - total
+        - percent
+      properties:
+        done:
+          type: integer
+        total:
+          type: integer
+        percent:
+          type: number
+      x-go-type: delivery.Readiness
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliveryScopeCreep:
+      type: object
+      required:
+        - initial
+        - added
+        - removed
+        - percent
+        - snapshot_at
+      properties:
+        initial:
+          type: integer
+        added:
+          type: array
+          items:
+            type: string
+        removed:
+          type: array
+          items:
+            type: string
+        percent:
+          type: number
+        snapshot_at:
+          type: string
+          format: date-time
+      x-go-type: delivery.ScopeCreep
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliveryPlanFact:
+      type: object
+      required:
+        - planned_date
+        - due_date
+        - delta_days
+        - late
+      properties:
+        planned_date:
+          type: string
+        due_date:
+          type: string
+        delta_days:
+          type: integer
+        late:
+          type: boolean
+      x-go-type: delivery.PlanFact
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliveryMetrics:
+      type: object
+      required:
+        - feature_id
+        - product_id
+        - epic_key
+        - readiness
+        - scope_creep
+        - plan_fact
+        - sync
+      properties:
+        feature_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        epic_key:
+          type: string
+        readiness:
+          $ref: '#/components/schemas/DeliveryReadiness'
+        scope_creep:
+          $ref: '#/components/schemas/DeliveryScopeCreep'
+        plan_fact:
+          $ref: '#/components/schemas/DeliveryPlanFact'
+        sync:
+          $ref: '#/components/schemas/DeliverySync'
+      x-go-type: delivery.FeatureMetrics
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliveryOverview:
+      type: object
+      required:
+        - mappings
+        - sprints
+        - metrics
+        - sync
+        - enabled
+      properties:
+        mappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliveryMapping'
+        sprints:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliverySprint'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeliveryMetrics'
+        sync:
+          $ref: '#/components/schemas/DeliverySync'
+        enabled:
+          type: boolean
+    DeliveryFieldMapping:
+      type: object
+      required:
+        - project
+        - boards
+        - epic_issue_type
+        - feature_ref_field
+        - due_date_field
+        - status_map
+      properties:
+        project:
+          type: string
+        boards:
+          type: object
+          additionalProperties:
+            type: string
+        epic_issue_type:
+          type: string
+        feature_ref_field:
+          type: string
+        due_date_field:
+          type: string
+        status_map:
+          type: object
+          additionalProperties:
+            type: string
+      x-go-type: delivery.FieldMapping
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliveryConnector:
+      type: object
+      required:
+        - name
+        - mapping
+        - sync
+        - dlq_count
+        - mapped_epics
+        - stale_after
+      properties:
+        name:
+          type: string
+        mapping:
+          $ref: '#/components/schemas/DeliveryFieldMapping'
+        sync:
+          $ref: '#/components/schemas/DeliverySync'
+        dlq_count:
+          type: integer
+        mapped_epics:
+          type: integer
+        stale_after:
+          type: integer
+          format: int64
+      x-go-type: delivery.ConnectorStatus
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/delivery
+    DeliveryLinkInput:
+      type: object
+      required:
+        - epic_key
+        - project
+      properties:
+        epic_key:
+          type: string
+          minLength: 1
+          maxLength: 200
+        project:
+          type: string
+          minLength: 1
+          maxLength: 200
+    DeliveryEpicInput:
+      type: object
+      required:
+        - project
+      properties:
+        project:
+          type: string
+          minLength: 1
+          maxLength: 200
+    FinanceTemplate:
+      type: object
+      required:
+        - sheet
+        - header_row
+        - delimiter
+        - columns
+      properties:
+        sheet:
+          type: string
+        header_row:
+          type: integer
+        delimiter:
+          type: string
+        columns:
+          type: object
+          additionalProperties:
+            type: string
+      x-go-type: ports.FinanceTemplate
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/ports
+    FinanceSource:
+      type: object
+      required:
+        - file
+        - sheet
+        - row
+        - hash
+      properties:
+        file:
+          type: string
+        sheet:
+          type: string
+        row:
+          type: integer
+        hash:
+          type: string
+      x-go-type: ports.FinanceSource
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/ports
+    FinanceRow:
+      type: object
+      required:
+        - product_id
+        - period
+        - category
+        - amount
+        - source
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        period:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        category:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        team_id:
+          type: string
+        headcount:
+          type: integer
+        feature_id:
+          type: string
+          format: uuid
+        certification_track_id:
+          type: string
+          format: uuid
+        branch:
+          type: string
+        bundle_id:
+          type: string
+        description:
+          type: string
+        source:
+          $ref: '#/components/schemas/FinanceSource'
+      x-go-type: ports.FinanceRow
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/ports
+    FinanceRowError:
+      type: object
+      required:
+        - row
+        - field
+        - message
+      properties:
+        row:
+          type: integer
+        field:
+          type: string
+        message:
+          type: string
+      x-go-type: ports.FinanceRowError
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/ports
+    FinancePreview:
+      type: object
+      required:
+        - rows
+        - errors
+        - source_hash
+        - sheet
+      properties:
+        source_hashes:
+          type: array
+          items: { type: string }
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceRow'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceRowError'
+        source_hash:
+          type: string
+        sheet:
+          type: string
+      x-go-type: ports.FinancePreview
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/ports
+    FinanceFileInput:
+      type: object
+      required:
+        - filename
+        - content_base64
+        - template
+        - expected_version
+      properties:
+        filename:
+          type: string
+          maxLength: 240
+        content_base64:
+          type: string
+          maxLength: 11184812
+        template:
+          $ref: '#/components/schemas/FinanceTemplate'
+        expected_version:
+          type: integer
+          minimum: 0
+        recalculate:
+          type: boolean
+    EconomicsSource:
+      type: object
+      required:
+        - file
+        - sheet
+        - row
+        - hash
+      properties:
+        file:
+          type: string
+        sheet:
+          type: string
+        row:
+          type: integer
+        hash:
+          type: string
+      x-go-type: economics.Source
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsAllocation:
+      type: object
+      required:
+        - product_id
+        - share
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        share:
+          type: string
+          description: Точная десятичная доля, сумма долей 1
+      x-go-type: economics.Allocation
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsRow:
+      type: object
+      required:
+        - id
+        - product_id
+        - category
+        - amount
+        - source
+        - allocations
+        - values
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        category:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        team_id:
+          type: string
+        headcount:
+          type: integer
+        feature_id:
+          type: string
+          format: uuid
+        certification_track_id:
+          type: string
+          format: uuid
+        branch:
+          type: string
+        bundle_id:
+          type: string
+        description:
+          type: string
+        source:
+          $ref: '#/components/schemas/EconomicsSource'
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsAllocation'
+        allocation_source:
+          type: string
+        values:
+          type: object
+          additionalProperties:
+            type: string
+      x-go-type: economics.Row
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsField:
+      type: object
+      required:
+        - key
+        - name
+        - type
+        - source
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - money
+            - number
+            - percent
+            - date
+            - catalog
+        source:
+          type: string
+          enum:
+            - import
+            - manual
+            - calculated
+        formula:
+          type: string
+      x-go-type: economics.Field
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsSnapshotInfo:
+      type: object
+      required:
+        - id
+        - product_id
+        - period
+        - currency
+        - version
+        - closed
+        - source
+        - source_hash
+        - created_at
+        - created_by
+        - row_count
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        period:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        currency:
+          type: string
+        version:
+          type: integer
+        closed:
+          type: boolean
+        source:
+          type: string
+        source_hash:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+        row_count:
+          type: integer
+      x-go-type: economics.SnapshotInfo
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsSnapshot:
+      type: object
+      required:
+        - id
+        - product_id
+        - period
+        - currency
+        - version
+        - closed
+        - source
+        - source_hash
+        - created_at
+        - created_by
+        - row_count
+        - rows
+        - fields
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        period:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        currency:
+          type: string
+        version:
+          type: integer
+        closed:
+          type: boolean
+        source:
+          type: string
+        source_hash:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+        row_count:
+          type: integer
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsRow'
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsField'
+      x-go-type: economics.Snapshot
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsLineage:
+      type: object
+      required:
+        - formula
+        - dependencies
+        - row_ids
+        - sources
+      properties:
+        formula:
+          type: string
+        dependencies:
+          type: array
+          items:
+            type: string
+        row_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsSource'
+      x-go-type: economics.Lineage
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsProductReport:
+      type: object
+      required:
+        - product_id
+        - amounts
+        - revenue
+        - direct_cost
+        - hub_cost
+        - direct_profit
+        - loaded_profit
+        - metrics
+        - lineage
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        amounts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        revenue:
+          type: integer
+          format: int64
+        direct_cost:
+          type: integer
+          format: int64
+        hub_cost:
+          type: integer
+          format: int64
+        direct_profit:
+          type: integer
+          format: int64
+        loaded_profit:
+          type: integer
+          format: int64
+        metrics:
+          type: object
+          additionalProperties:
+            type: string
+        lineage:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EconomicsLineage'
+      x-go-type: economics.ProductReport
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsTeamCost:
+      type: object
+      required:
+        - product_id
+        - team_id
+        - headcount
+        - cost
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        team_id:
+          type: string
+        headcount:
+          type: integer
+        cost:
+          type: integer
+          format: int64
+      x-go-type: economics.TeamCost
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsInvestment:
+      type: object
+      required:
+        - product_id
+        - kind
+        - key
+        - revenue
+        - cost
+        - balance
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+        key:
+          type: string
+        revenue:
+          type: integer
+          format: int64
+        cost:
+          type: integer
+          format: int64
+        balance:
+          type: integer
+          format: int64
+      x-go-type: economics.Investment
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsReport:
+      type: object
+      required:
+        - product_id
+        - period
+        - currency
+        - version
+        - closed
+        - scenario
+        - products
+        - total
+        - teams
+        - investments
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        period:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        currency:
+          type: string
+        version:
+          type: integer
+        closed:
+          type: boolean
+        scenario:
+          type: boolean
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsProductReport'
+        total:
+          $ref: '#/components/schemas/EconomicsProductReport'
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsTeamCost'
+        investments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsInvestment'
+      x-go-type: economics.Report
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsVersionInput:
+      type: object
+      required:
+        - expected_version
+      properties:
+        expected_version:
+          type: integer
+          minimum: 1
+    EconomicsRowRule:
+      type: object
+      required:
+        - row_id
+        - allocations
+      properties:
+        row_id:
+          type: string
+          format: uuid
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsAllocation'
+        values:
+          type: object
+          additionalProperties:
+            type: string
+    EconomicsConfiguration:
+      type: object
+      required:
+        - expected_version
+        - fields
+        - rows
+      properties:
+        expected_version:
+          type: integer
+          minimum: 1
+        recalculate:
+          type: boolean
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsField'
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsRowRule'
+    EconomicsScenario:
+      type: object
+      required:
+        - version
+        - overrides
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        filter_product_id:
+          type: string
+          format: uuid
+        team:
+          type: string
+        overrides:
+          type: object
+          additionalProperties:
+            type: string
+    EconomicsImportTemplate:
+      type: object
+      required:
+        - product_id
+        - name
+        - template
+        - updated_at
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        template:
+          $ref: '#/components/schemas/FinanceTemplate'
+        updated_at:
+          type: string
+          format: date-time
+      x-go-type: economics.ImportTemplate
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    EconomicsWorklogInput:
+      type: object
+      required:
+        - expected_version
+        - recalculate
+      properties:
+        expected_version:
+          type: integer
+          minimum: 1
+        recalculate:
+          type: boolean

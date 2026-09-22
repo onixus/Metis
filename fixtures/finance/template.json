@@ -1,0 +1,19 @@
+{
+  "sheet": "Finance",
+  "header_row": 1,
+  "delimiter": ",",
+  "columns": {
+    "product_id": "product_id",
+    "period": "period",
+    "category": "category",
+    "amount": "amount",
+    "currency": "currency",
+    "team_id": "team_id",
+    "headcount": "headcount",
+    "feature_id": "feature_id",
+    "certification_track_id": "certification_track_id",
+    "branch": "branch",
+    "bundle_id": "bundle_id",
+    "description": "description"
+  }
+}

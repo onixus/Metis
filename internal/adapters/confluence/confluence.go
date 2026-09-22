@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"net/url"
@@ -62,7 +63,7 @@ var _ ports.KnowledgeBase = (*Client)(nil)
 // New создаёт клиент. client может быть nil — тогда используется клиент с таймаутом 10 с.
 func New(baseURL string, token TokenSource, client *http.Client) (*Client, error) {
 	u, err := url.Parse(baseURL)
-	if err != nil || u.Scheme == "" || u.Host == "" {
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		return nil, kernel.Invalid("base_url", "некорректный адрес Confluence")
 	}
 	if token == nil {
@@ -71,7 +72,9 @@ func New(baseURL string, token TokenSource, client *http.Client) (*Client, error
 	if client == nil {
 		client = &http.Client{Timeout: 10 * time.Second}
 	}
-	return &Client{base: u, http: client, tok: token}, nil
+	copyClient := *client
+	copyClient.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	return &Client{base: u, http: &copyClient, tok: token}, nil
 }
 
 // --- типы ответов Confluence (только нужные поля) ---
@@ -129,7 +132,10 @@ const contentExpand = "space,version,body.storage,metadata.labels"
 func (c *Client) do(ctx context.Context, method, path string, query url.Values, body, out any) error {
 	token, err := c.tok.Token(ctx)
 	if err != nil {
-		return err
+		if ctx.Err() != nil {
+			return fmt.Errorf("confluence credentials: %w", ctx.Err())
+		}
+		return fmt.Errorf("%w: Confluence credentials unavailable", kernel.ErrForbidden)
 	}
 	u := *c.base
 	u.Path = strings.TrimRight(u.Path, "/") + path
@@ -156,7 +162,10 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 	resp, err := c.http.Do(req)
 	if err != nil {
 		// Сообщение транспорта не содержит токена: заголовки в ошибку не попадают.
-		return fmt.Errorf("%w: confluence %s %s: %w", kernel.ErrUnavailable, method, path, err)
+		if ctx.Err() != nil {
+			return fmt.Errorf("%w: confluence request: %w", kernel.ErrUnavailable, ctx.Err())
+		}
+		return fmt.Errorf("%w: confluence transport failed", kernel.ErrUnavailable)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	limited := io.LimitReader(resp.Body, MaxResponseBytes)
@@ -221,7 +230,10 @@ func (c *Client) Search(ctx context.Context, spaceKey, label string) ([]ports.Pa
 	}
 	cql += " ORDER BY created ASC"
 	var out []ports.Page
-	for start := 0; ; {
+	for start, pages := 0, 0; ; pages++ {
+		if pages >= 200 {
+			return nil, kernel.Invalid("pagination", "Confluence page limit exceeded")
+		}
 		q := url.Values{}
 		q.Set("cql", cql)
 		q.Set("expand", contentExpand)
@@ -234,6 +246,9 @@ func (c *Client) Search(ctx context.Context, spaceKey, label string) ([]ports.Pa
 		for _, ct := range page.Results {
 			out = append(out, c.toPage(ct))
 		}
+		if len(out) > 10000 {
+			return nil, kernel.Invalid("pagination", "Confluence result limit exceeded")
+		}
 		start += len(page.Results)
 		if len(page.Results) == 0 || len(page.Results) < page.Limit || page.Limit == 0 {
 			break
@@ -242,11 +257,9 @@ func (c *Client) Search(ctx context.Context, spaceKey, label string) ([]ports.Pa
 	return out, nil
 }
 
-// CreatePage создаёт страницу, затем добавляет метки и свойства. Вызывается только из обработчика outbox.
-//
-// Если страница создана, а оформление (метки, свойства) не удалось, возвращается созданная страница
-// вместе с ошибкой: идентификатор не теряется, и вызывающий сохраняет его до повторной доставки
-// события — иначе повтор создал бы вторую страницу ADR того же решения.
+// CreatePage recovers an earlier result by stable title and body marker before
+// creating it, then repeats labels/properties. It remains reconciliation, not a
+// server-side exactly-once guarantee (question-29).
 func (c *Client) CreatePage(ctx context.Context, in ports.CreatePageInput) (ports.Page, error) {
 	if err := validKey(in.SpaceKey); err != nil {
 		return ports.Page{}, err
@@ -257,6 +270,20 @@ func (c *Client) CreatePage(ctx context.Context, in ports.CreatePageInput) (port
 	if in.ParentID != "" {
 		if err := validKey(in.ParentID); err != nil {
 			return ports.Page{}, err
+		}
+	}
+	if in.IdempotencyKey != "" {
+		if err := validKey(in.IdempotencyKey); err != nil {
+			return ports.Page{}, kernel.Invalid("idempotency_key", "invalid stable key")
+		}
+		// The external title stays stable even if the decision is renamed while its
+		// first delivery is pending. The readable title remains in the page body.
+		in.Title = "Metis " + in.IdempotencyKey
+		in.Body += requestMarker(in.IdempotencyKey)
+		if existing, found, err := c.findRequest(ctx, in); err != nil {
+			return ports.Page{}, err
+		} else if found {
+			return c.decorate(ctx, existing, in)
 		}
 	}
 	body := map[string]any{
@@ -272,19 +299,50 @@ func (c *Client) CreatePage(ctx context.Context, in ports.CreatePageInput) (port
 	}
 	var ct cfContent
 	if err := c.do(ctx, http.MethodPost, "/rest/api/content", nil, body, &ct); err != nil {
+		// A transport error or title conflict may follow a successful create.
+		// The next retry also performs this lookup before attempting any write.
+		if in.IdempotencyKey != "" && (errors.Is(err, kernel.ErrUnavailable) || errors.Is(err, kernel.ErrValidation)) {
+			if existing, found, lookupErr := c.findRequest(ctx, in); lookupErr == nil && found {
+				return c.decorate(ctx, existing, in)
+			}
+		}
 		return ports.Page{}, err
 	}
 	if ct.ID == "" {
 		return ports.Page{}, fmt.Errorf("%w: confluence не вернула идентификатор страницы", kernel.ErrUnavailable)
 	}
-	created := c.toPage(ct)
+	return c.decorate(ctx, c.toPage(ct), in)
+}
+
+func requestMarker(key string) string { return "<p>Metis request: " + html.EscapeString(key) + "</p>" }
+
+func (c *Client) findRequest(ctx context.Context, in ports.CreatePageInput) (ports.Page, bool, error) {
+	q := url.Values{"type": {"page"}, "spaceKey": {in.SpaceKey}, "title": {in.Title}, "expand": {contentExpand}, "limit": {"2"}}
+	var list cfList[cfContent]
+	if err := c.do(ctx, http.MethodGet, "/rest/api/content", q, nil, &list); err != nil {
+		return ports.Page{}, false, err
+	}
+	if len(list.Results) == 0 {
+		return ports.Page{}, false, nil
+	}
+	if len(list.Results) != 1 {
+		return ports.Page{}, false, fmt.Errorf("%w: multiple pages match the request identity", kernel.ErrConflict)
+	}
+	ct := list.Results[0]
+	if ct.ID == "" || ct.Title != in.Title || ct.Space.Key != in.SpaceKey || !strings.Contains(ct.Body.Storage.Value, requestMarker(in.IdempotencyKey)) {
+		return ports.Page{}, false, fmt.Errorf("%w: existing page does not carry the expected request identity", kernel.ErrConflict)
+	}
+	return c.toPage(ct), true, nil
+}
+
+func (c *Client) decorate(ctx context.Context, created ports.Page, in ports.CreatePageInput) (ports.Page, error) {
 	if len(in.Labels) > 0 {
-		if err := c.AddLabels(ctx, ct.ID, in.Labels); err != nil {
+		if err := c.AddLabels(ctx, created.ID, in.Labels); err != nil {
 			return created, fmt.Errorf("метки страницы %s: %w", created.ID, err)
 		}
 	}
 	if len(in.Properties) > 0 {
-		if err := c.SetProperties(ctx, ct.ID, in.Properties); err != nil {
+		if err := c.SetProperties(ctx, created.ID, in.Properties); err != nil {
 			return created, fmt.Errorf("свойства страницы %s: %w", created.ID, err)
 		}
 	}

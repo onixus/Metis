@@ -16,9 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onixus/metis/internal/adapters/confluence"
-	"github.com/onixus/metis/internal/adapters/crmfile"
-	"github.com/onixus/metis/internal/adapters/jira"
 	"github.com/onixus/metis/internal/audit"
 	auditpg "github.com/onixus/metis/internal/audit/pgstore"
 	"github.com/onixus/metis/internal/commitments"
@@ -31,6 +28,7 @@ import (
 	deliverypg "github.com/onixus/metis/internal/delivery/pgstore"
 	"github.com/onixus/metis/internal/discovery"
 	discoverypg "github.com/onixus/metis/internal/discovery/pgstore"
+	"github.com/onixus/metis/internal/economics"
 	"github.com/onixus/metis/internal/httpapi"
 	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
@@ -53,18 +51,29 @@ import (
 
 // Config — конфигурация приложения.
 type Config struct {
-	HTTPAddr             string // METIS_HTTP_ADDR
-	Storage              string // METIS_STORAGE: memory | postgres
-	DatabaseURL          string // METIS_DATABASE_URL
-	Migrate              bool   // METIS_MIGRATE
-	AuthMode             string // METIS_AUTH_MODE: oidc | hmac
-	OIDCIssuer           string // METIS_OIDC_ISSUER
-	OIDCClient           string // METIS_OIDC_CLIENT_ID
-	HMACSecret           string // METIS_HMAC_SECRET (только стенд и e2e)
-	HMACIssuer           string // METIS_HMAC_ISSUER
-	JiraBaseURL          string // METIS_JIRA_BASE_URL (пусто — адаптер выключен, NF-L03)
-	JiraToken            string // METIS_JIRA_TOKEN
-	WebhookToken         string // METIS_WEBHOOK_TOKEN
+	WorklogTeamsFile     string        // METIS_WORKLOG_TEAMS_FILE: opaque tracker authors mapped to financial teams
+	FinanceSourcesFile   string        // METIS_FINANCE_SOURCES_FILE: trusted read-only source profiles
+	FinanceSyncInterval  time.Duration // METIS_FINANCE_SYNC_INTERVAL
+	HTTPAddr             string        // METIS_HTTP_ADDR
+	Storage              string        // METIS_STORAGE: memory | postgres
+	DatabaseURL          string        // METIS_DATABASE_URL
+	Migrate              bool          // METIS_MIGRATE
+	AuthMode             string        // METIS_AUTH_MODE: oidc | hmac
+	OIDCIssuer           string        // METIS_OIDC_ISSUER
+	OIDCClient           string        // METIS_OIDC_CLIENT_ID
+	HMACSecret           string        // METIS_HMAC_SECRET (только стенд и e2e)
+	HMACIssuer           string        // METIS_HMAC_ISSUER
+	JiraBaseURL          string        // METIS_JIRA_BASE_URL (пусто — адаптер выключен, NF-L03)
+	JiraToken            string        // METIS_JIRA_TOKEN
+	JiraFieldsFile       string        // METIS_JIRA_FIELDS_FILE
+	DeliveryProvider     string        // METIS_DELIVERY_PROVIDER: none | jira
+	KnowledgeProvider    string        // METIS_KNOWLEDGE_PROVIDER: none | confluence
+	CRMProvider          string        // METIS_CRM_PROVIDER: none | csv | bitrix24
+	BitrixBaseURL        string        // METIS_BITRIX_BASE_URL: portal origin, no webhook credentials
+	BitrixToken          string        // METIS_BITRIX_TOKEN: OAuth access token
+	BitrixFieldsFile     string        // METIS_BITRIX_FIELDS_FILE: explicit product/custom fields
+	CRMSyncInterval      time.Duration // METIS_CRM_SYNC_INTERVAL
+	WebhookToken         string        // METIS_WEBHOOK_TOKEN
 	OutboxConfig         outbox.Config
 	DeliverySyncInterval time.Duration // METIS_DELIVERY_SYNC_INTERVAL; по умолчанию час
 	RenewalInterval      time.Duration // METIS_RENEWAL_INTERVAL; по умолчанию сутки
@@ -82,26 +91,38 @@ type Config struct {
 // FromEnv читает конфигурацию из окружения.
 func FromEnv() (Config, error) {
 	c := Config{
-		HTTPAddr:          envOr("METIS_HTTP_ADDR", ":8081"),
-		Storage:           envOr("METIS_STORAGE", "postgres"),
-		DatabaseURL:       os.Getenv("METIS_DATABASE_URL"),
-		AuthMode:          envOr("METIS_AUTH_MODE", "oidc"),
-		OIDCIssuer:        os.Getenv("METIS_OIDC_ISSUER"),
-		OIDCClient:        os.Getenv("METIS_OIDC_CLIENT_ID"),
-		HMACSecret:        os.Getenv("METIS_HMAC_SECRET"),
-		HMACIssuer:        envOr("METIS_HMAC_ISSUER", "metis-stand"),
-		JiraBaseURL:       os.Getenv("METIS_JIRA_BASE_URL"),
-		JiraToken:         os.Getenv("METIS_JIRA_TOKEN"),
-		WebhookToken:      os.Getenv("METIS_WEBHOOK_TOKEN"),
-		ConfluenceBaseURL: os.Getenv("METIS_CONFLUENCE_BASE_URL"),
-		ConfluenceToken:   os.Getenv("METIS_CONFLUENCE_TOKEN"),
-		ConfluenceSpace:   envOr("METIS_CONFLUENCE_SPACE", "METIS"),
-		CRMDir:            os.Getenv("METIS_CRM_DIR"),
-		OTelExport:        envOr("METIS_OTEL_EXPORTER", "none"),
-		LogLevel:          envOr("METIS_LOG_LEVEL", "info"),
-		Version:           envOr("METIS_VERSION", "0.1.0"),
+		WorklogTeamsFile:   os.Getenv("METIS_WORKLOG_TEAMS_FILE"),
+		FinanceSourcesFile: os.Getenv("METIS_FINANCE_SOURCES_FILE"),
+		HTTPAddr:           envOr("METIS_HTTP_ADDR", ":8081"),
+		Storage:            envOr("METIS_STORAGE", "postgres"),
+		DatabaseURL:        os.Getenv("METIS_DATABASE_URL"),
+		AuthMode:           envOr("METIS_AUTH_MODE", "oidc"),
+		OIDCIssuer:         os.Getenv("METIS_OIDC_ISSUER"),
+		OIDCClient:         os.Getenv("METIS_OIDC_CLIENT_ID"),
+		HMACSecret:         os.Getenv("METIS_HMAC_SECRET"),
+		HMACIssuer:         envOr("METIS_HMAC_ISSUER", "metis-stand"),
+		JiraBaseURL:        os.Getenv("METIS_JIRA_BASE_URL"),
+		JiraToken:          os.Getenv("METIS_JIRA_TOKEN"),
+		JiraFieldsFile:     os.Getenv("METIS_JIRA_FIELDS_FILE"),
+		DeliveryProvider:   os.Getenv("METIS_DELIVERY_PROVIDER"),
+		KnowledgeProvider:  os.Getenv("METIS_KNOWLEDGE_PROVIDER"),
+		CRMProvider:        os.Getenv("METIS_CRM_PROVIDER"),
+		BitrixBaseURL:      os.Getenv("METIS_BITRIX_BASE_URL"),
+		BitrixToken:        os.Getenv("METIS_BITRIX_TOKEN"),
+		BitrixFieldsFile:   os.Getenv("METIS_BITRIX_FIELDS_FILE"),
+		WebhookToken:       os.Getenv("METIS_WEBHOOK_TOKEN"),
+		ConfluenceBaseURL:  os.Getenv("METIS_CONFLUENCE_BASE_URL"),
+		ConfluenceToken:    os.Getenv("METIS_CONFLUENCE_TOKEN"),
+		ConfluenceSpace:    envOr("METIS_CONFLUENCE_SPACE", "METIS"),
+		CRMDir:             os.Getenv("METIS_CRM_DIR"),
+		OTelExport:         envOr("METIS_OTEL_EXPORTER", "none"),
+		LogLevel:           envOr("METIS_LOG_LEVEL", "info"),
+		Version:            envOr("METIS_VERSION", "0.1.0"),
 	}
 	var err error
+	if c.FinanceSyncInterval, err = envPositiveDuration("METIS_FINANCE_SYNC_INTERVAL", 24*time.Hour); err != nil {
+		return c, err
+	}
 	if c.Migrate, err = envBool("METIS_MIGRATE"); err != nil {
 		return c, err
 	}
@@ -115,6 +136,9 @@ func FromEnv() (Config, error) {
 		return c, err
 	}
 	if c.DeliverySyncInterval, err = envPositiveDuration("METIS_DELIVERY_SYNC_INTERVAL", time.Hour); err != nil {
+		return c, err
+	}
+	if c.CRMSyncInterval, err = envPositiveDuration("METIS_CRM_SYNC_INTERVAL", time.Hour); err != nil {
 		return c, err
 	}
 	if c.RenewalInterval, err = envPositiveDuration("METIS_RENEWAL_INTERVAL", 24*time.Hour); err != nil {
@@ -147,6 +171,10 @@ func envBool(k string) (bool, error) {
 
 // App — собранное приложение.
 type App struct {
+	Economics      *economics.Service
+	Finance        ports.Finance
+	financeSources []ports.FinanceSourceReader
+	financeBook    kernel.ID
 	Cfg            Config
 	Log            *slog.Logger
 	Handler        http.Handler
@@ -165,8 +193,10 @@ type App struct {
 	AuditStore    audit.Store
 	Outbox        outbox.Store
 	Worker        *outbox.Worker
-	Jira          *jira.Client
-	Confluence    *confluence.Client
+	Tracker       ports.DeliveryTracker
+	Knowledge     ports.KnowledgeBase
+	CRM           ports.CRM
+	webhookParser ports.DeliveryWebhookParser
 	ServiceScope  authz.Scope
 	db            *pgdb.DB
 	shutdownTrace func(context.Context) error
@@ -266,24 +296,21 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 	a.Discovery = discovery.NewService(discoveryStore, pub, clock,
 		discovery.WithSignals(a.Signals), discovery.WithSignalMerger(a.Signals), discovery.WithSignalLinker(a.Signals),
 		discovery.WithFeatures(a.Portfolio), discovery.WithDecisions(decisionLinks{a.Decisions}), discovery.WithIndex(index))
-
-	// Delivery: адаптер Jira подключается только при заданном URL; ядро работает без него (NF-L03).
-	var tracker ports.DeliveryTracker
-	if cfg.JiraBaseURL != "" {
-		jc, err := jira.New(cfg.JiraBaseURL, jira.NewStaticToken(cfg.JiraToken), jira.DefaultFieldConfig(), &http.Client{Timeout: 15 * time.Second})
-		if err != nil {
-			return nil, fmt.Errorf("адаптер Jira: %w", err)
-		}
-		a.Jira, tracker = jc, jc
+	if err := a.buildEconomics(ctx); err != nil {
+		return nil, err
 	}
-	a.Delivery = delivery.NewService(deliveryStore, tracker, a.Portfolio, pub, clock, delivery.Config{Name: "jira", ServiceScope: identityaccess.ServiceScope("delivery")})
+
+	if err := a.configureConnectors(); err != nil {
+		return nil, err
+	}
+	a.Delivery = delivery.NewService(deliveryStore, a.Tracker, a.Portfolio, pub, clock, delivery.Config{Name: a.Cfg.DeliveryProvider, ServiceScope: identityaccess.ServiceScope("delivery")})
 
 	// Воркер outbox: обработчики модулей.
 	a.Worker = outbox.NewWorker(operationStore{Store: obStore, app: a}, clock, cfg.OutboxConfig, log)
 	a.registerNotifications()
 	a.Worker.Register(portfoliograph.EventDateShifted, roadmap.NewShiftHandler(a.Roadmap, identityaccess.ServiceScope("roadmap")))
-	if tracker != nil {
-		a.Worker.Register(delivery.EventEpicCreateRequested, delivery.NewCreateEpicHandler(tracker, a.Delivery, a.Portfolio, identityaccess.ServiceScope("delivery")))
+	if a.Tracker != nil {
+		a.Worker.Register(delivery.EventEpicCreateRequested, delivery.NewCreateEpicHandler(a.Tracker, a.Delivery, a.Portfolio, identityaccess.ServiceScope("delivery")))
 	}
 	// CT-03: алерты по обязательствам при сдвигах фич и элементов roadmap.
 	shift := commitments.NewShiftHandler(a.Commitments, identityaccess.ServiceScope("commitments"))
@@ -291,13 +318,8 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 	a.Worker.Register(roadmap.EventDatesChanged, shift)
 	// База знаний: адаптер Confluence подключается только при заданном URL (NF-L03); страницы ADR
 	// создаются исключительно обработчиком outbox (инвариант 5).
-	if cfg.ConfluenceBaseURL != "" {
-		cc, err := confluence.New(cfg.ConfluenceBaseURL, confluence.NewStaticToken(cfg.ConfluenceToken), &http.Client{Timeout: 15 * time.Second})
-		if err != nil {
-			return nil, fmt.Errorf("адаптер Confluence: %w", err)
-		}
-		a.Confluence = cc
-		a.Worker.Register(decisions.EventPageRequested, decisions.NewPublishPageHandler(a.Decisions, cc, identityaccess.ServiceScope("decisions")))
+	if a.Knowledge != nil {
+		a.Worker.Register(decisions.EventPageRequested, decisions.NewPublishPageHandler(a.Decisions, a.Knowledge, identityaccess.ServiceScope("decisions")))
 	}
 	a.Delivery = a.Delivery.WithDLQ(dlqAdapter{a.Worker})
 	serviceName := "metis-api"
@@ -334,11 +356,6 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 	}
 	resolver := identityaccess.NewResolver(a.Portfolio, a.Portfolio)
 
-	var crm ports.CRM
-	if cfg.CRMDir != "" {
-		crm = crmfile.New(cfg.CRMDir)
-	}
-
 	if cfg.Seed {
 		if err := a.runOperation(ctx, func(ctx context.Context) error {
 			if _, err := seed.Security(ctx, a.Portfolio, identityaccess.ServiceScope("seed")); err != nil {
@@ -352,7 +369,7 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 			}, identityaccess.ServiceScope("seed")); err != nil {
 				return fmt.Errorf("seed этапа 2: %w", err)
 			}
-			return nil
+			return a.seedEconomics(ctx)
 		}); err != nil {
 			return nil, err
 		}
@@ -363,9 +380,11 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 	srv := httpapi.NewServer(httpapi.Deps{
 		Log: log, Auth: httpapi.NewAuthenticator(verifier, resolver, a.Audit),
 		Portfolio: a.Portfolio, AuditStore: auditStore, Audit: a.Audit,
-		Signals: a.Signals, Prioritization: a.Prioritization, Roadmap: a.Roadmap, CRM: crm,
+		Signals: a.Signals, Prioritization: a.Prioritization, Roadmap: a.Roadmap, CRM: a.CRM,
+		Delivery: a.Delivery, DeliveryEnabled: a.Tracker != nil,
+		Economics: a.Economics, Finance: a.Finance, FinanceWorklogs: a.ApplyFinanceWorklogs,
 		Discovery: a.Discovery, Commitments: a.Commitments, Compliance: a.Compliance, Decisions: a.Decisions,
-		KnowledgeSpace: knowledgeSpace(cfg),
+		KnowledgeSpace: a.knowledgeSpace(),
 		Ready:          a.ready,
 		Metrics:        metrics.Handler(),
 		Instrument:     func(h http.Handler) http.Handler { return observability.Instrument(h, "metis-api") },
@@ -385,11 +404,12 @@ func (a *App) ready(ctx context.Context) error {
 // Машинный запрос аутентифицируется отдельным секретом; без него маршрут выключен.
 func (a *App) withWebhook(next http.Handler) http.Handler {
 	token := a.Cfg.WebhookToken
-	if a.Jira == nil || token == "" {
+	if a.webhookParser == nil || token == "" {
 		return next
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path != "/api/v1/webhooks/jira" || req.Method != http.MethodPost {
+		matches := req.URL.Path == "/api/v1/webhooks/delivery" || (a.Cfg.DeliveryProvider == "jira" && req.URL.Path == "/api/v1/webhooks/jira")
+		if !matches || req.Method != http.MethodPost {
 			next.ServeHTTP(w, req)
 			return
 		}
@@ -397,15 +417,15 @@ func (a *App) withWebhook(next http.Handler) http.Handler {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
-		a.jiraWebhook(w, req)
+		a.deliveryWebhook(w, req)
 	})
 }
 
 // WebhookHandler — обработчик webhook без проверки токена (для e2e и внутренних вызовов).
-func (a *App) WebhookHandler() http.HandlerFunc { return a.jiraWebhook }
+func (a *App) WebhookHandler() http.HandlerFunc { return a.deliveryWebhook }
 
-func (a *App) jiraWebhook(w http.ResponseWriter, req *http.Request) {
-	if a.Jira == nil {
+func (a *App) deliveryWebhook(w http.ResponseWriter, req *http.Request) {
+	if a.webhookParser == nil {
 		http.Error(w, "адаптер трекера выключен", http.StatusServiceUnavailable)
 		return
 	}
@@ -419,9 +439,9 @@ func (a *App) jiraWebhook(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	ev, err := a.Jira.ParseWebhook(body)
+	ev, err := a.webhookParser.ParseWebhook(body)
 	if err != nil {
-		if !errors.Is(err, jira.ErrNotEpicEvent) {
+		if !errors.Is(err, ports.ErrIgnoredWebhook) {
 			http.Error(w, "invalid webhook payload", http.StatusBadRequest)
 			return
 		}
@@ -470,11 +490,11 @@ func parseLevel(s string) slog.Level {
 }
 
 // knowledgeSpace — пространство базы знаний для страниц ADR; без адаптера страницы не запрашиваются (503).
-func knowledgeSpace(cfg Config) string {
-	if cfg.ConfluenceBaseURL == "" {
+func (a *App) knowledgeSpace() string {
+	if a.Knowledge == nil {
 		return ""
 	}
-	return cfg.ConfluenceSpace
+	return a.Cfg.ConfluenceSpace
 }
 
 // readinessAdapter соединяет порт roadmap.ReadinessChecker с compliance.ReleaseReadiness (CM-05):

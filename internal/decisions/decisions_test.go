@@ -434,9 +434,10 @@ func TestDA01_PublishPageHandlerIdempotent(t *testing.T) {
 // decoratingKB — база знаний, которая создаёт страницу и падает на оформлении (метки, свойства),
 // возвращая созданную страницу вместе с ошибкой, как адаптер Confluence.
 type decoratingKB struct {
-	mu      sync.Mutex
-	created []ports.CreatePageInput
-	failing bool
+	mu                 sync.Mutex
+	created            []ports.CreatePageInput
+	failing            bool
+	labels, properties int
 }
 
 func (f *decoratingKB) Page(context.Context, string) (ports.Page, error) {
@@ -444,9 +445,20 @@ func (f *decoratingKB) Page(context.Context, string) (ports.Page, error) {
 }
 func (f *decoratingKB) Search(context.Context, string, string) ([]ports.Page, error) { return nil, nil }
 func (f *decoratingKB) SetProperties(context.Context, string, map[string]string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.properties++
 	return nil
 }
-func (f *decoratingKB) AddLabels(context.Context, string, []string) error { return nil }
+func (f *decoratingKB) AddLabels(context.Context, string, []string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.labels++
+	if f.failing {
+		return kernel.ErrUnavailable
+	}
+	return nil
+}
 
 func (f *decoratingKB) CreatePage(_ context.Context, in ports.CreatePageInput) (ports.Page, error) {
 	f.mu.Lock()
@@ -490,6 +502,13 @@ func TestDA01_PublishPageDoesNotDuplicateOnDecorationFailure(t *testing.T) {
 		t.Fatalf("PageID не сохранён после сбоя оформления: %q %v", got.PageID, err)
 	}
 
+	// Failed decoration must not acknowledge the event even when the page ID survived.
+	if err := h.Handle(f.ctx, ev); !errors.Is(err, kernel.ErrUnavailable) {
+		t.Fatalf("premature ACK: %v", err)
+	}
+	kb.mu.Lock()
+	kb.failing = false
+	kb.mu.Unlock()
 	// Повтор события: страница уже есть, второй вызов CreatePage не делается.
 	if err := h.Handle(f.ctx, ev); err != nil {
 		t.Fatalf("повтор: %v", err)
@@ -503,8 +522,11 @@ func TestDA01_PublishPageDoesNotDuplicateOnDecorationFailure(t *testing.T) {
 	if got, err := f.svc.Get(f.ctx, cpo, rec.ID); err != nil || got.PageID != "3001" {
 		t.Fatalf("PageID после повтора: %q %v", got.PageID, err)
 	}
-	// Страница не оформлена — событие page.created не публиковалось.
-	if f.pub.count(decisions.EventPageCreated) != 0 {
+	// Decoration is retried before one completion event is published.
+	if kb.labels != 2 || kb.properties != 1 {
+		t.Fatalf("decoration calls: labels=%d properties=%d", kb.labels, kb.properties)
+	}
+	if f.pub.count(decisions.EventPageCreated) != 1 {
 		t.Fatalf("событий page.created: %d", f.pub.count(decisions.EventPageCreated))
 	}
 }

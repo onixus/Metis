@@ -31,12 +31,15 @@ type PageTemplate struct {
 // Body — разметка в формате адаптера (storage/html-подобная); текст в ней экранирует вызывающий
 // (internal/knowledgedocs) либо адаптер.
 type CreatePageInput struct {
-	SpaceKey   string
-	ParentID   string
-	Title      string
-	Body       string
-	Labels     []string
-	Properties map[string]string
+	// IdempotencyKey is a stable identity for recovery after lost responses.
+	// Adapters may use a deterministic title; callers must retain the same key on retry.
+	IdempotencyKey string
+	SpaceKey       string
+	ParentID       string
+	Title          string
+	Body           string
+	Labels         []string
+	Properties     map[string]string
 }
 
 // KnowledgeBase — порт базы знаний (ТЗ 4.1). Чтение метаданных, текста для индекса и меток;

@@ -1,6 +1,20 @@
 version: "2"
 sql:
   - engine: postgresql
+    schema: db/economics/migrations
+    queries: db/economics/queries
+    gen:
+      go:
+        package: db
+        out: internal/economics/internal/db
+        sql_package: pgx/v5
+        emit_json_tags: false
+        overrides:
+          - db_type: "uuid"
+            go_type: "github.com/google/uuid.UUID"
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+  - engine: postgresql
     schema: db/kernel/migrations
     queries: db/kernel/queries
     gen:

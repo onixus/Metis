@@ -24,6 +24,10 @@ func (m *confluenceMock) serve(w http.ResponseWriter, r *http.Request) {
 	p := r.URL.Path
 	file := ""
 	switch {
+	case r.Method == http.MethodGet && p == "/rest/api/content":
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"results":[],"limit":2}`))
+		return
 	case r.Method == http.MethodPost && p == "/rest/api/content":
 		file = "create_page.json"
 	case r.Method == http.MethodPost && strings.HasSuffix(p, "/label"):

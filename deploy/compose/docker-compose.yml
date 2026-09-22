@@ -3,15 +3,35 @@ x-runtime-environment: &runtime-environment
   METIS_STORAGE: postgres
   METIS_DATABASE_URL: postgres://metis_app:metis-dev-only@postgres:5432/metis?sslmode=disable
   METIS_MIGRATE: "false"
+  METIS_DELIVERY_PROVIDER: ${METIS_DELIVERY_PROVIDER:-}
+  METIS_KNOWLEDGE_PROVIDER: ${METIS_KNOWLEDGE_PROVIDER:-}
   # Пустое значение отключает соответствующий адаптер у API и worker одновременно.
   METIS_JIRA_BASE_URL: ${METIS_JIRA_BASE_URL-http://jira-mock:8090}
-  METIS_JIRA_TOKEN: metis-dev-only
+  METIS_JIRA_TOKEN: ${METIS_JIRA_TOKEN:-metis-dev-only}
+  METIS_JIRA_FIELDS_FILE: ${METIS_JIRA_FIELDS_FILE:-}
   METIS_CONFLUENCE_BASE_URL: ${METIS_CONFLUENCE_BASE_URL-http://confluence-mock:8091}
-  METIS_CONFLUENCE_TOKEN: metis-dev-only
+  METIS_CONFLUENCE_TOKEN: ${METIS_CONFLUENCE_TOKEN:-metis-dev-only}
   METIS_CONFLUENCE_SPACE: METIS
+  METIS_CRM_PROVIDER: ${METIS_CRM_PROVIDER:-csv}
+  METIS_CRM_DIR: ${METIS_CRM_DIR:-/fixtures/crm}
+  METIS_CRM_SYNC_INTERVAL: ${METIS_CRM_SYNC_INTERVAL:-1h}
+  METIS_BITRIX_BASE_URL: ${METIS_BITRIX_BASE_URL:-}
+  METIS_BITRIX_TOKEN: ${METIS_BITRIX_TOKEN:-}
+  METIS_BITRIX_FIELDS_FILE: ${METIS_BITRIX_FIELDS_FILE:-}
+  METIS_FINANCE_SOURCES_FILE: ${METIS_FINANCE_SOURCES_FILE:-}
+  METIS_FINANCE_SYNC_INTERVAL: ${METIS_FINANCE_SYNC_INTERVAL:-24h}
+  METIS_WORKLOG_TEAMS_FILE: ${METIS_WORKLOG_TEAMS_FILE:-}
   METIS_OTEL_EXPORTER: ${METIS_OTEL_EXPORTER:-none}
   METIS_DELIVERY_SYNC_INTERVAL: ${METIS_DELIVERY_SYNC_INTERVAL:-1h}
   METIS_RENEWAL_INTERVAL: ${METIS_RENEWAL_INTERVAL:-24h}
+x-runtime-volumes: &runtime-volumes
+  - ../../fixtures:/fixtures:ro
+  - ${METIS_CONNECTOR_CONFIG_DIR:-./connector-config}:/etc/metis:ro
+  - ${METIS_FINANCE_DATA_DIR:-../../fixtures/finance}:/data/finance:ro
+x-runtime-env-files: &runtime-env-files
+  # Для произвольных имён credential env из профилей 1С; файл хранится вне репозитория.
+  - path: ${METIS_CONNECTOR_ENV_FILE:-/dev/null}
+    required: false
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -80,6 +100,7 @@ services:
       context: ../..
       dockerfile: deploy/Dockerfile
       target: api
+    env_file: *runtime-env-files
     environment:
       <<: *runtime-environment
       METIS_HTTP_ADDR: ":8081"
@@ -91,10 +112,8 @@ services:
       METIS_OIDC_ISSUER: ${METIS_OIDC_ISSUER:-http://idp.metis.test:8080/realms/metis}
       METIS_OIDC_CLIENT_ID: metis-web
       METIS_WEBHOOK_TOKEN: metis-dev-only-webhook
-      METIS_CRM_DIR: /fixtures/crm
     ports: ["127.0.0.1:${METIS_API_PORT:-8082}:8081"]
-    volumes:
-      - ../../fixtures/crm:/fixtures/crm:ro
+    volumes: *runtime-volumes
     depends_on:
       postgres: { condition: service_healthy }
       migrate: { condition: service_completed_successfully }
@@ -103,8 +122,10 @@ services:
       context: ../..
       dockerfile: deploy/Dockerfile
       target: worker
+    env_file: *runtime-env-files
     environment:
       <<: *runtime-environment
+    volumes: *runtime-volumes
     depends_on:
       postgres: { condition: service_healthy }
       migrate: { condition: service_completed_successfully }

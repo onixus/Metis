@@ -48,3 +48,37 @@ func TestAD01_DevTokenRequiresExplicitHMACStand(t *testing.T) {
 		}
 	}
 }
+
+func TestNFS02_DevTokenFinanceRequiresExplicitLevel(t *testing.T) {
+	env := func(key string) string {
+		switch key {
+		case "METIS_AUTH_MODE":
+			return "hmac"
+		case "METIS_HMAC_SECRET":
+			return strings.Repeat("x", 32)
+		}
+		return ""
+	}
+	verifier, err := identityaccess.NewHMACVerifier([]byte(strings.Repeat("x", 32)), "metis-stand", kernel.SystemClock{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, level := range []string{"none", "full"} {
+		var out bytes.Buffer
+		args := []string{"-subject", "synthetic-finance", "-roles", "finance"}
+		if level == "full" {
+			args = append(args, "-finance", level)
+		}
+		if err := run(args, env, &out); err != nil {
+			t.Fatal(err)
+		}
+		c, err := verifier.Verify(context.Background(), strings.TrimSpace(out.String()))
+		if err != nil || c.Finance != level {
+			t.Fatalf("claims: %+v %v", c, err)
+		}
+	}
+	var out bytes.Buffer
+	if err := run([]string{"-subject", "test", "-finance", "all"}, env, &out); err == nil || out.Len() != 0 {
+		t.Fatal("unknown finance claim accepted")
+	}
+}

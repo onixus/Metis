@@ -1743,6 +1743,282 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/products/{productId}/delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Проекция поставки, спринты и метрики (DL-01…03) */
+        get: operations["getProductDelivery"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/features/{featureId}/delivery-mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Привязать существующий эпик (DL-01) */
+        put: operations["mapDeliveryFeature"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/features/{featureId}/request-epic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Поставить создание эпика в outbox (DL-01) */
+        post: operations["requestDeliveryEpic"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Состояние коннектора поставки (AD-05) */
+        get: operations["getDeliveryConnector"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/delivery/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Настроить доски и соответствие статусов (AD-05) */
+        put: operations["setDeliveryMapping"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07) */
+        post: operations["previewFinanceImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Импорт файла в новую версию периода (EC-01/07) */
+        post: operations["importFinanceFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** История финансового периода (EC-11) */
+        get: operations["listEconomicsVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Исходные строки выбранной версии (EC-07) */
+        get: operations["getEconomicsSnapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Версия полей, формул и распределения без изменения исходных сумм (EC-02/04/08/11) */
+        put: operations["configureEconomics"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Закрыть период новой неизменяемой версией (EC-11) */
+        post: operations["closeEconomics"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12) */
+        get: operations["getEconomicsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/scenario": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Сценарий без изменения фактов (EC-13) */
+        post: operations["calculateEconomicsScenario"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Аудируемый CSV P&L (NF-S02/14) */
+        get: operations["exportEconomics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/finance-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        get: operations["listFinanceTemplates"];
+        put: operations["saveFinanceTemplate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/worklog-shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12) */
+        post: operations["applyFinanceWorklogs"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1767,6 +2043,8 @@ export interface components {
             currency: string;
         };
         Me: {
+            /** @enum {string} */
+            finance: "none" | "aggregates" | "full";
             subject: string;
             roles: string[];
             /** @enum {string} */
@@ -2758,6 +3036,344 @@ export interface components {
             /** Format: uuid */
             id: string;
             title: string;
+        };
+        DeliveryMapping: {
+            /** Format: uuid */
+            feature_id: string;
+            /** Format: uuid */
+            product_id: string;
+            epic_key: string;
+            project: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        DeliverySync: {
+            /** Format: date-time */
+            last_success_at: string;
+            /** Format: date-time */
+            last_attempt_at: string;
+            last_error?: string;
+            /** Format: int64 */
+            lag: number;
+            stale: boolean;
+        };
+        DeliveryIssue: {
+            key: string;
+            summary: string;
+            status: string;
+            done: boolean;
+            /** Format: date-time */
+            created_at: string;
+        };
+        DeliverySprint: {
+            /** Format: uuid */
+            product_id: string;
+            board: string;
+            sprint_id: string;
+            name: string;
+            goal: string;
+            state: string;
+            start_date: string;
+            end_date: string;
+            issues: components["schemas"]["DeliveryIssue"][];
+            total: number;
+            done: number;
+            carried_over: string[];
+            /** Format: date-time */
+            synced_at: string;
+        };
+        DeliveryReadiness: {
+            done: number;
+            total: number;
+            percent: number;
+        };
+        DeliveryScopeCreep: {
+            initial: number;
+            added: string[];
+            removed: string[];
+            percent: number;
+            /** Format: date-time */
+            snapshot_at: string;
+        };
+        DeliveryPlanFact: {
+            planned_date: string;
+            due_date: string;
+            delta_days: number;
+            late: boolean;
+        };
+        DeliveryMetrics: {
+            /** Format: uuid */
+            feature_id: string;
+            /** Format: uuid */
+            product_id: string;
+            epic_key: string;
+            readiness: components["schemas"]["DeliveryReadiness"];
+            scope_creep: components["schemas"]["DeliveryScopeCreep"];
+            plan_fact: components["schemas"]["DeliveryPlanFact"];
+            sync: components["schemas"]["DeliverySync"];
+        };
+        DeliveryOverview: {
+            mappings: components["schemas"]["DeliveryMapping"][];
+            sprints: components["schemas"]["DeliverySprint"][];
+            metrics: components["schemas"]["DeliveryMetrics"][];
+            sync: components["schemas"]["DeliverySync"];
+            enabled: boolean;
+        };
+        DeliveryFieldMapping: {
+            project: string;
+            boards: {
+                [key: string]: string;
+            };
+            epic_issue_type: string;
+            feature_ref_field: string;
+            due_date_field: string;
+            status_map: {
+                [key: string]: string;
+            };
+        };
+        DeliveryConnector: {
+            name: string;
+            mapping: components["schemas"]["DeliveryFieldMapping"];
+            sync: components["schemas"]["DeliverySync"];
+            dlq_count: number;
+            mapped_epics: number;
+            /** Format: int64 */
+            stale_after: number;
+        };
+        DeliveryLinkInput: {
+            epic_key: string;
+            project: string;
+        };
+        DeliveryEpicInput: {
+            project: string;
+        };
+        FinanceTemplate: {
+            sheet: string;
+            header_row: number;
+            delimiter: string;
+            columns: {
+                [key: string]: string;
+            };
+        };
+        FinanceSource: {
+            file: string;
+            sheet: string;
+            row: number;
+            hash: string;
+        };
+        FinanceRow: {
+            /** Format: uuid */
+            product_id: string;
+            period: string;
+            category: string;
+            amount: components["schemas"]["Money"];
+            team_id?: string;
+            headcount?: number;
+            /** Format: uuid */
+            feature_id?: string;
+            /** Format: uuid */
+            certification_track_id?: string;
+            branch?: string;
+            bundle_id?: string;
+            description?: string;
+            source: components["schemas"]["FinanceSource"];
+        };
+        FinanceRowError: {
+            row: number;
+            field: string;
+            message: string;
+        };
+        FinancePreview: {
+            source_hashes?: string[];
+            rows: components["schemas"]["FinanceRow"][];
+            errors: components["schemas"]["FinanceRowError"][];
+            source_hash: string;
+            sheet: string;
+        };
+        FinanceFileInput: {
+            filename: string;
+            content_base64: string;
+            template: components["schemas"]["FinanceTemplate"];
+            expected_version: number;
+            recalculate?: boolean;
+        };
+        EconomicsSource: {
+            file: string;
+            sheet: string;
+            row: number;
+            hash: string;
+        };
+        EconomicsAllocation: {
+            /** Format: uuid */
+            product_id: string;
+            /** @description Точная десятичная доля, сумма долей 1 */
+            share: string;
+        };
+        EconomicsRow: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            category: string;
+            amount: components["schemas"]["Money"];
+            team_id?: string;
+            headcount?: number;
+            /** Format: uuid */
+            feature_id?: string;
+            /** Format: uuid */
+            certification_track_id?: string;
+            branch?: string;
+            bundle_id?: string;
+            description?: string;
+            source: components["schemas"]["EconomicsSource"];
+            allocations: components["schemas"]["EconomicsAllocation"][];
+            allocation_source?: string;
+            values: {
+                [key: string]: string;
+            };
+        };
+        EconomicsField: {
+            key: string;
+            name: string;
+            /** @enum {string} */
+            type: "money" | "number" | "percent" | "date" | "catalog";
+            /** @enum {string} */
+            source: "import" | "manual" | "calculated";
+            formula?: string;
+        };
+        EconomicsSnapshotInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            period: string;
+            currency: string;
+            version: number;
+            closed: boolean;
+            source: string;
+            source_hash: string;
+            /** Format: date-time */
+            created_at: string;
+            created_by: string;
+            row_count: number;
+        };
+        EconomicsSnapshot: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            product_id: string;
+            period: string;
+            currency: string;
+            version: number;
+            closed: boolean;
+            source: string;
+            source_hash: string;
+            /** Format: date-time */
+            created_at: string;
+            created_by: string;
+            row_count: number;
+            rows: components["schemas"]["EconomicsRow"][];
+            fields: components["schemas"]["EconomicsField"][];
+        };
+        EconomicsLineage: {
+            formula: string;
+            dependencies: string[];
+            row_ids: string[];
+            sources: components["schemas"]["EconomicsSource"][];
+        };
+        EconomicsProductReport: {
+            /** Format: uuid */
+            product_id: string;
+            amounts: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            revenue: number;
+            /** Format: int64 */
+            direct_cost: number;
+            /** Format: int64 */
+            hub_cost: number;
+            /** Format: int64 */
+            direct_profit: number;
+            /** Format: int64 */
+            loaded_profit: number;
+            metrics: {
+                [key: string]: string;
+            };
+            lineage: {
+                [key: string]: components["schemas"]["EconomicsLineage"];
+            };
+        };
+        EconomicsTeamCost: {
+            /** Format: uuid */
+            product_id: string;
+            team_id: string;
+            headcount: number;
+            /** Format: int64 */
+            cost: number;
+        };
+        EconomicsInvestment: {
+            /** Format: uuid */
+            product_id: string;
+            kind: string;
+            key: string;
+            /** Format: int64 */
+            revenue: number;
+            /** Format: int64 */
+            cost: number;
+            /** Format: int64 */
+            balance: number;
+        };
+        EconomicsReport: {
+            /** Format: uuid */
+            product_id: string;
+            period: string;
+            currency: string;
+            version: number;
+            closed: boolean;
+            scenario: boolean;
+            products: components["schemas"]["EconomicsProductReport"][];
+            total: components["schemas"]["EconomicsProductReport"];
+            teams: components["schemas"]["EconomicsTeamCost"][];
+            investments: components["schemas"]["EconomicsInvestment"][];
+        };
+        EconomicsVersionInput: {
+            expected_version: number;
+        };
+        EconomicsRowRule: {
+            /** Format: uuid */
+            row_id: string;
+            allocations: components["schemas"]["EconomicsAllocation"][];
+            values?: {
+                [key: string]: string;
+            };
+        };
+        EconomicsConfiguration: {
+            expected_version: number;
+            recalculate?: boolean;
+            fields: components["schemas"]["EconomicsField"][];
+            rows: components["schemas"]["EconomicsRowRule"][];
+        };
+        EconomicsScenario: {
+            version: number;
+            /** Format: uuid */
+            filter_product_id?: string;
+            team?: string;
+            overrides: {
+                [key: string]: string;
+            };
+        };
+        EconomicsImportTemplate: {
+            /** Format: uuid */
+            product_id: string;
+            name: string;
+            template: components["schemas"]["FinanceTemplate"];
+            /** Format: date-time */
+            updated_at: string;
+        };
+        EconomicsWorklogInput: {
+            expected_version: number;
+            recalculate: boolean;
         };
     };
     responses: {
@@ -6040,6 +6656,449 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getProductDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryOverview"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    mapDeliveryFeature: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryLinkInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryMapping"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    requestDeliveryEpic: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryEpicInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getDeliveryConnector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryConnector"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setDeliveryMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryFieldMapping"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    previewFinanceImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinanceFileInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinancePreview"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    importFinanceFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinanceFileInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsSnapshot"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listEconomicsVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsSnapshotInfo"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getEconomicsSnapshot: {
+        parameters: {
+            query?: {
+                version?: number;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsSnapshot"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    configureEconomics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EconomicsConfiguration"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsSnapshot"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    closeEconomics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EconomicsVersionInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsSnapshot"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getEconomicsReport: {
+        parameters: {
+            query?: {
+                version?: number;
+                filter_product_id?: string;
+                team?: string;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsReport"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    calculateEconomicsScenario: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EconomicsScenario"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsReport"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    exportEconomics: {
+        parameters: {
+            query?: {
+                version?: number;
+                filter_product_id?: string;
+                team?: string;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listFinanceTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsImportTemplate"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    saveFinanceTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EconomicsImportTemplate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsImportTemplate"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    applyFinanceWorklogs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EconomicsWorklogInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EconomicsSnapshot"];
+                };
             };
             default: components["responses"]["Problem"];
         };

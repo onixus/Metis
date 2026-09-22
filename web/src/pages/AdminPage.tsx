@@ -18,12 +18,14 @@ import { Tabs } from '../components/Tabs'
 import { ru } from '../i18n/ru'
 import { fmtDateTime } from '../lib/format'
 import { hasRole, isAdmin } from '../lib/roles'
+import { DeliveryConnectorPanel } from './DeliveryConnectorPanel'
 
-type Tab = 'audit' | 'requirementSets' | 'trackTemplates' | 'customFields'
+type Tab = 'audit' | 'requirementSets' | 'trackTemplates' | 'customFields' | 'connectors'
 const TABS: { key: Tab; label: string }[] = (['audit', 'requirementSets', 'trackTemplates', 'customFields'] as const).map((k) => ({
   key: k,
   label: ru.admin2.tabs[k],
 }))
+TABS.push({ key: 'connectors', label: 'Интеграции' })
 const PRODUCT_TYPES: ProductType[] = ['security', 'infrastructure', 'platform', 'other']
 const GATE_KINDS: GateTemplate['kind'][] = ['ssdlc', 'registry', 'fstec', 'support']
 const ENTITIES: CustomEntity[] = ['feature', 'signal', 'hypothesis']
@@ -42,12 +44,13 @@ export function AdminPage() {
     <section className="stack">
       <div className="page-head">
         <h1>{ru.admin.title}</h1>
-        <Tabs<Tab> tabs={TABS} value={tab} onChange={setTab} />
+        <Tabs<Tab> tabs={TABS.filter((item) => item.key !== 'connectors' || hasRole(me.data, 'admin'))} value={tab} onChange={setTab} />
       </div>
       {tab === 'audit' && <AuditTab />}
       {tab === 'requirementSets' && <RequirementSetsTab canWrite={canWrite} />}
       {tab === 'trackTemplates' && <TrackTemplatesTab canWrite={canWrite} />}
       {tab === 'customFields' && <CustomFieldsTab canWrite={hasRole(me.data, 'admin')} />}
+      {tab === 'connectors' && hasRole(me.data, 'admin') && <DeliveryConnectorPanel />}
     </section>
   )
 }

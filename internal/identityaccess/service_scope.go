@@ -12,3 +12,15 @@ func ServiceScope(name string) authz.Scope {
 		Audience:    authz.AudienceInternal,
 	})
 }
+
+// FinanceServiceScope is reserved for explicitly configured financial imports.
+// Ordinary connectors retain ServiceScope, which has no financial access.
+func FinanceServiceScope(name string) authz.Scope {
+	return authz.New(authz.Params{
+		Subject:     "service:finance:" + name,
+		Roles:       []authz.Role{authz.RoleService, authz.RoleFinance},
+		AllProducts: authz.AccessPrivate,
+		Audience:    authz.AudienceInternal,
+		Finance:     authz.FinanceFull,
+	})
+}

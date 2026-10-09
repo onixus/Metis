@@ -100,6 +100,7 @@ type Dashboard struct {
 type Store interface {
 	Save(ctx context.Context, sc authz.Scope, d Dashboard) error
 	Get(ctx context.Context, sc authz.Scope, id kernel.ID) (Dashboard, error)
+	GetForWrite(ctx context.Context, sc authz.Scope, id kernel.ID) (Dashboard, error)
 	List(ctx context.Context, sc authz.Scope) ([]Dashboard, error)
 	Delete(ctx context.Context, sc authz.Scope, id kernel.ID) error
 }
@@ -134,6 +135,16 @@ func (m *MemStore) Save(_ context.Context, sc authz.Scope, d Dashboard) error {
 
 // Get возвращает дашборд.
 func (m *MemStore) Get(_ context.Context, sc authz.Scope, id kernel.ID) (Dashboard, error) {
+	return m.get(sc, id, dashboardVisible)
+}
+
+// GetForWrite returns detached metadata only to an authorized editor. It does
+// not change ordinary Get/List visibility or reserve a write lock.
+func (m *MemStore) GetForWrite(_ context.Context, sc authz.Scope, id kernel.ID) (Dashboard, error) {
+	return m.get(sc, id, dashboardWritable)
+}
+
+func (m *MemStore) get(sc authz.Scope, id kernel.ID, allowed func(authz.Scope, Dashboard) bool) (Dashboard, error) {
 	if !sc.Valid() {
 		return Dashboard{}, kernel.ErrForbidden
 	}
@@ -143,7 +154,7 @@ func (m *MemStore) Get(_ context.Context, sc authz.Scope, id kernel.ID) (Dashboa
 	if !ok {
 		return Dashboard{}, kernel.NotFound("dashboard", id)
 	}
-	if !dashboardVisible(sc, d) {
+	if !allowed(sc, d) {
 		return Dashboard{}, kernel.ErrForbidden
 	}
 	return kernel.CloneValue(cloneDashboard(d)), nil
@@ -248,7 +259,7 @@ func (s *Service) Save(ctx context.Context, sc authz.Scope, in Input) (Dashboard
 	if d.ID == kernel.NilID {
 		d.ID, d.CreatedAt = kernel.NewID(), now
 	} else {
-		prev, err := s.store.Get(ctx, sc, d.ID)
+		prev, err := s.store.GetForWrite(ctx, sc, d.ID)
 		if err != nil {
 			return Dashboard{}, err
 		}
@@ -296,13 +307,6 @@ func (s *Service) Get(ctx context.Context, sc authz.Scope, id kernel.ID) (Dashbo
 
 // Delete удаляет дашборд: автор или администратор.
 func (s *Service) Delete(ctx context.Context, sc authz.Scope, id kernel.ID) error {
-	d, err := s.store.Get(ctx, sc, id)
-	if err != nil {
-		return err
-	}
-	if d.Owner != sc.Subject() && !sc.HasRole(authz.RoleAdmin) {
-		return fmt.Errorf("%w: удалить дашборд может автор или администратор", kernel.ErrForbidden)
-	}
 	if err := s.store.Delete(ctx, sc, id); err != nil {
 		return fmt.Errorf("delete dashboard: %w", err)
 	}

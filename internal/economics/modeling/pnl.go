@@ -200,19 +200,26 @@ func (s *Service) worklogWeight(ctx context.Context, sc authz.Scope, product ker
 
 // pnl считает P&L продукта за период; overrides — сценарий (nil для фактических данных).
 func (s *Service) pnl(ctx context.Context, sc authz.Scope, product kernel.ID, p Period, overrides []Override) (PnL, error) {
-	revenue, err := s.sumField(ctx, sc, s.cfg.RevenueField, product, p, overrides)
+	// Only this fixed aggregate uses the complete cross-product inputs. The
+	// original caller is checked before any reads; no raw rows escape this method.
+	calculation, err := identityaccess.ProductPnLCalculationScope(sc, product)
 	if err != nil {
 		return PnL{}, err
 	}
-	bundle, err := s.bundleRevenue(ctx, sc, product, p, overrides)
+
+	revenue, err := s.sumField(ctx, calculation, s.cfg.RevenueField, product, p, overrides)
 	if err != nil {
 		return PnL{}, err
 	}
-	costs, err := s.directCosts(ctx, sc, product, p, overrides)
+	bundle, err := s.bundleRevenue(ctx, calculation, product, p, overrides)
 	if err != nil {
 		return PnL{}, err
 	}
-	load, err := s.hubLoad(ctx, sc, product, p, overrides)
+	costs, err := s.directCosts(ctx, calculation, product, p, overrides)
+	if err != nil {
+		return PnL{}, err
+	}
+	load, err := s.hubLoad(ctx, calculation, product, p, overrides)
 	if err != nil {
 		return PnL{}, err
 	}

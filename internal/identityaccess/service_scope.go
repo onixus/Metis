@@ -45,3 +45,13 @@ func ModelCalculationScope(caller authz.Scope) authz.Scope {
 	}
 	return authz.New(authz.Params{Subject: caller.Subject(), Products: products, AllProducts: all, Audience: caller.Audience(), Finance: authz.FinanceFull})
 }
+
+// ProductPnLCalculationScope permits only the fixed cross-product P&L
+// calculation after authorizing its target. Never use it for caller-defined
+// formulas, raw fact responses, or rule listings.
+func ProductPnLCalculationScope(caller authz.Scope, product kernel.ID) (authz.Scope, error) {
+	if product == kernel.NilID || !caller.Allows(authz.ActionReadModelFinance, product) || caller.Finance() < authz.FinanceAggregates {
+		return authz.Scope{}, kernel.ErrForbidden
+	}
+	return authz.New(authz.Params{Subject: "calculation:pnl:" + caller.Subject(), AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal, Finance: authz.FinanceFull}), nil
+}

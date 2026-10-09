@@ -9,17 +9,12 @@ env:
   CGO_ENABLED: "0"
 jobs:
   go:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: metis
-          POSTGRES_PASSWORD: metis-dev-only
-          POSTGRES_DB: metis_test
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U metis" --health-interval 5s --health-timeout 5s --health-retries 10
+    runs-on: ubuntu-24.04
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "55432"
+      PGUSER: metis
+      PGPASSWORD: metis-dev-only
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
@@ -36,19 +31,37 @@ jobs:
       - name: unit tests
         env: { CGO_ENABLED: "1" }
         run: go test -race -count=1 -coverprofile=coverage.out ./...
+      - name: prepare PostgreSQL 16 with pgvector
+        run: |
+          sudo apt-get update -o Acquire::Retries=3
+          sudo apt-get install -y -o Acquire::Retries=3 postgresql-16 postgresql-16-pgvector
+          umask 077
+          mkdir -p "$RUNNER_TEMP/metis-postgres/socket"
+          printf '%s\n' "$PGPASSWORD" > "$RUNNER_TEMP/metis-postgres/password"
+          /usr/lib/postgresql/16/bin/initdb -D "$RUNNER_TEMP/metis-postgres/data" \
+            -U "$PGUSER" --auth-host=scram-sha-256 --auth-local=trust \
+            --pwfile="$RUNNER_TEMP/metis-postgres/password"
+          rm "$RUNNER_TEMP/metis-postgres/password"
+          /usr/lib/postgresql/16/bin/pg_ctl -D "$RUNNER_TEMP/metis-postgres/data" \
+            -l "$RUNNER_TEMP/metis-postgres/server.log" \
+            -o "-h 127.0.0.1 -p $PGPORT -k $RUNNER_TEMP/metis-postgres/socket" -w start
+          createdb metis_test
+          test "$(psql -d metis_test -Atc 'SHOW server_version_num')" -ge 160000
+          test "$(psql -d metis_test -Atc 'SHOW server_version_num')" -lt 170000
+          psql -d metis_test -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION vector'
       - name: integration tests
         env:
           CGO_ENABLED: "1"
-          METIS_TEST_DATABASE_URL: postgres://metis:metis-dev-only@localhost:5432/metis_test?sslmode=disable
+          METIS_TEST_DATABASE_URL: postgres://metis:metis-dev-only@127.0.0.1:55432/metis_test?sslmode=disable
         run: go test -race -count=1 -tags integration ./...
       - name: prepare isolated runtime database and application role
         run: |
-          docker exec '${{ job.services.postgres.id }}' psql -U metis -d metis_test -v ON_ERROR_STOP=1 -c "CREATE ROLE metis_app LOGIN PASSWORD 'metis-dev-only' NOSUPERUSER NOCREATEDB NOCREATEROLE"
-          docker exec '${{ job.services.postgres.id }}' psql -U metis -d metis_test -v ON_ERROR_STOP=1 -c "CREATE DATABASE metis_runtime_test OWNER metis"
+          psql -d metis_test -v ON_ERROR_STOP=1 -c "CREATE ROLE metis_app LOGIN PASSWORD 'metis-dev-only' NOSUPERUSER NOCREATEDB NOCREATEROLE"
+          psql -d metis_test -v ON_ERROR_STOP=1 -c "CREATE DATABASE metis_runtime_test OWNER metis"
       - name: runtime transactions and separate worker
         env:
           CGO_ENABLED: "1"
-          METIS_RUNTIME_TEST_DATABASE_URL: postgres://metis:metis-dev-only@localhost:5432/metis_runtime_test?sslmode=disable
+          METIS_RUNTIME_TEST_DATABASE_URL: postgres://metis:metis-dev-only@127.0.0.1:55432/metis_runtime_test?sslmode=disable
         run: go test -race -count=1 -tags integration ./internal/app
       - name: govulncheck
         run: ./scripts/govulncheck.sh
@@ -64,6 +77,19 @@ jobs:
         with: { name: sbom, path: sbom.api.json }
       - name: build
         run: go build -trimpath ./...
+      - name: stop isolated PostgreSQL
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/metis-postgres/data/postmaster.pid" ]; then
+            /usr/lib/postgresql/16/bin/pg_ctl -D "$RUNNER_TEMP/metis-postgres/data" -m fast -w stop
+          fi
+      - name: PostgreSQL diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: postgres-log
+          path: ${{ runner.temp }}/metis-postgres/server.log
+          if-no-files-found: ignore
   secrets:
     runs-on: ubuntu-latest
     steps:

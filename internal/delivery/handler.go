@@ -55,7 +55,7 @@ func (h *CreateEpicHandler) Handle(ctx context.Context, ev kernel.Event) error {
 	}
 	// Запоминаем успешную обработку после внешнего вызова. Иначе временный
 	// отказ трекера оставит marker в memory store и поглотит следующий повтор.
-	if _, err := h.svc.store.MarkProcessed(ctx, "event:"+ev.ID.String()); err != nil {
+	if _, err := h.svc.store.MarkProcessed(ctx, h.sc, "event:"+ev.ID.String()); err != nil {
 		return fmt.Errorf("mark processed: %w", err)
 	}
 	return nil

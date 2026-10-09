@@ -43,7 +43,7 @@ func (h *PublishPageHandler) Handle(ctx context.Context, ev kernel.Event) error 
 	if !h.sc.Valid() {
 		return kernel.ErrForbidden
 	}
-	done, err := h.svc.store.EventProcessed(ctx, ev.ID)
+	done, err := h.svc.store.EventProcessed(ctx, h.sc, ev.ID)
 	if err != nil {
 		return fmt.Errorf("event processed: %w", err)
 	}
@@ -57,11 +57,11 @@ func (h *PublishPageHandler) Handle(ctx context.Context, ev kernel.Event) error 
 	if p.DecisionID == kernel.NilID || p.SpaceKey == "" {
 		return kernel.Invalid("payload", "decision_id и space_key обязательны")
 	}
-	rec, err := h.svc.store.Get(ctx, p.DecisionID)
+	rec, err := h.svc.store.Get(ctx, h.sc, p.DecisionID)
 	if err != nil {
 		return err
 	}
-	if err := canWrite(h.sc, rec.ProductID); err != nil {
+	if err := RequireWrite(h.sc, rec.ProductID); err != nil {
 		return err
 	}
 	var pageURL string
@@ -83,7 +83,7 @@ func (h *PublishPageHandler) Handle(ctx context.Context, ev kernel.Event) error 
 			if page.ID != "" {
 				rec.PageID = page.ID
 				rec.UpdatedAt = h.svc.clock.Now()
-				if serr := h.svc.store.Save(ctx, rec); serr != nil {
+				if serr := h.svc.store.Save(ctx, h.sc, rec); serr != nil {
 					return fmt.Errorf("create page: %w (страница %s не сохранена: %w)", err, page.ID, serr)
 				}
 			}
@@ -95,7 +95,7 @@ func (h *PublishPageHandler) Handle(ctx context.Context, ev kernel.Event) error 
 		pageURL = page.URL
 		rec.PageID = page.ID
 		rec.UpdatedAt = h.svc.clock.Now()
-		if err := h.svc.store.Save(ctx, rec); err != nil {
+		if err := h.svc.store.Save(ctx, h.sc, rec); err != nil {
 			return fmt.Errorf("save decision: %w", err)
 		}
 	}
@@ -110,7 +110,7 @@ func (h *PublishPageHandler) Handle(ctx context.Context, ev kernel.Event) error 
 	if err := h.svc.emit(ctx, EventPageCreated, rec, h.sc.Subject(), PageCreated{DecisionID: rec.ID, PageID: rec.PageID, URL: pageURL}); err != nil {
 		return err
 	}
-	if err := h.svc.store.MarkEventProcessed(ctx, ev.ID); err != nil {
+	if err := h.svc.store.MarkEventProcessed(ctx, h.sc, ev.ID); err != nil {
 		return fmt.Errorf("mark event processed: %w", err)
 	}
 	return nil

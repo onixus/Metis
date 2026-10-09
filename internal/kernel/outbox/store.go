@@ -7,6 +7,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -50,14 +51,14 @@ type Outcome struct {
 // Store — хранилище outbox. PG-реализация держит пачку под FOR UPDATE SKIP LOCKED на время обработки.
 type Store interface {
 	// Enqueue добавляет события; в PG — в транзакцию из контекста.
-	Enqueue(ctx context.Context, now time.Time, events ...kernel.Event) error
+	Enqueue(ctx context.Context, sc authz.Scope, now time.Time, events ...kernel.Event) error
 	// Process захватывает до limit сообщений с NextAttemptAt <= now, вызывает fn для каждого
 	// и применяет результат. Возвращает число захваченных сообщений.
-	Process(ctx context.Context, now time.Time, limit int, fn func(ctx context.Context, m Message) Outcome) (int, error)
+	Process(ctx context.Context, sc authz.Scope, now time.Time, limit int, fn func(ctx context.Context, m Message) Outcome) (int, error)
 	// DLQCount — число сообщений в DLQ.
-	DLQCount(ctx context.Context) (int64, error)
+	DLQCount(ctx context.Context, sc authz.Scope) (int64, error)
 	// DLQList — последние сообщения DLQ.
-	DLQList(ctx context.Context, limit int) ([]DeadMessage, error)
+	DLQList(ctx context.Context, sc authz.Scope, limit int) ([]DeadMessage, error)
 	// Requeue возвращает сообщение из DLQ в очередь; kernel.ErrNotFound, если его нет.
-	Requeue(ctx context.Context, id kernel.ID, now time.Time) error
+	Requeue(ctx context.Context, sc authz.Scope, id kernel.ID, now time.Time) error
 }

@@ -91,9 +91,9 @@ func (s *Service) checkFeature(ctx context.Context, sc authz.Scope, featureID, p
 }
 
 // checkHypotheses проверяет, что гипотезы существуют и принадлежат продукту.
-func (s *Service) checkHypotheses(ctx context.Context, ids []kernel.ID, productID kernel.ID) error {
+func (s *Service) checkHypotheses(ctx context.Context, sc authz.Scope, ids []kernel.ID, productID kernel.ID) error {
 	for _, id := range ids {
-		h, err := s.store.Hypothesis(ctx, id)
+		h, err := s.store.Hypothesis(ctx, sc, id)
 		if err != nil {
 			return err
 		}
@@ -184,7 +184,7 @@ func (s *Service) SaveHypothesis(ctx context.Context, sc authz.Scope, in Hypothe
 	if err := sc.Require(authz.ActionWriteDiscovery, in.ProductID); err != nil {
 		return Hypothesis{}, err
 	}
-	if err := s.ValidateCustomFields(ctx, EntityHypothesis, in.CustomFields); err != nil {
+	if err := s.ValidateCustomFields(ctx, sc, EntityHypothesis, in.CustomFields); err != nil {
 		return Hypothesis{}, err
 	}
 	if err := s.checkFeature(ctx, sc, in.FeatureID, in.ProductID); err != nil {
@@ -206,7 +206,7 @@ func (s *Service) SaveHypothesis(ctx context.Context, sc authz.Scope, in Hypothe
 		UpdatedAt:             now,
 	}
 	if in.ID != kernel.NilID {
-		prev, err := s.store.Hypothesis(ctx, in.ID)
+		prev, err := s.store.Hypothesis(ctx, sc, in.ID)
 		if err != nil {
 			return Hypothesis{}, err
 		}
@@ -216,7 +216,7 @@ func (s *Service) SaveHypothesis(ctx context.Context, sc authz.Scope, in Hypothe
 		h.ID, h.Status, h.Resolution = prev.ID, prev.Status, prev.Resolution
 		h.CreatedBy, h.CreatedAt = prev.CreatedBy, prev.CreatedAt
 	}
-	if err := s.store.SaveHypothesis(ctx, h); err != nil {
+	if err := s.store.SaveHypothesis(ctx, sc, h); err != nil {
 		return Hypothesis{}, fmt.Errorf("save hypothesis: %w", err)
 	}
 	if err := s.emit(ctx, EventHypothesisSaved, h.ID, h.ProductID, sc.Subject(), h); err != nil {
@@ -249,18 +249,18 @@ func allowedTransition(from, to HypothesisStatus) bool {
 // категориям: draft → testing|rejected, testing → confirmed|rejected|draft, confirmed|rejected → draft.
 // Смена ключа внутри одной категории (встроенный ↔ пользовательский) разрешена.
 func (s *Service) ChangeHypothesisStatus(ctx context.Context, sc authz.Scope, id kernel.ID, ch StatusChange) (Hypothesis, error) {
-	h, err := s.store.Hypothesis(ctx, id)
+	h, err := s.store.Hypothesis(ctx, sc, id)
 	if err != nil {
 		return Hypothesis{}, err
 	}
 	if err := sc.Require(authz.ActionWriteDiscovery, h.ProductID); err != nil {
 		return Hypothesis{}, err
 	}
-	to, err := s.hypothesisCategory(ctx, ch.Status)
+	to, err := s.hypothesisCategory(ctx, sc, ch.Status)
 	if err != nil {
 		return Hypothesis{}, err
 	}
-	from, err := s.hypothesisCategory(ctx, h.Status)
+	from, err := s.hypothesisCategory(ctx, sc, h.Status)
 	if err != nil {
 		return Hypothesis{}, err
 	}
@@ -272,7 +272,7 @@ func (s *Service) ChangeHypothesisStatus(ctx context.Context, sc authz.Scope, id
 		return Hypothesis{}, kernel.Invalid("resolution", "причина обязательна для подтверждения и отклонения")
 	}
 	h.Status, h.Resolution, h.UpdatedAt = ch.Status, resolution, s.clock.Now()
-	if err := s.store.SaveHypothesis(ctx, h); err != nil {
+	if err := s.store.SaveHypothesis(ctx, sc, h); err != nil {
 		return Hypothesis{}, fmt.Errorf("save hypothesis: %w", err)
 	}
 	if err := s.emit(ctx, EventHypothesisSaved, h.ID, h.ProductID, sc.Subject(), h); err != nil {
@@ -283,7 +283,7 @@ func (s *Service) ChangeHypothesisStatus(ctx context.Context, sc authz.Scope, id
 
 // Hypothesis возвращает гипотезу (приватный контур продукта).
 func (s *Service) Hypothesis(ctx context.Context, sc authz.Scope, id kernel.ID) (Hypothesis, error) {
-	h, err := s.store.Hypothesis(ctx, id)
+	h, err := s.store.Hypothesis(ctx, sc, id)
 	if err != nil {
 		return Hypothesis{}, err
 	}
@@ -299,7 +299,7 @@ func (s *Service) Hypotheses(ctx context.Context, sc authz.Scope, productID kern
 		return nil, err
 	}
 	f.ProductID = productID
-	out, err := s.store.Hypotheses(ctx, f)
+	out, err := s.store.Hypotheses(ctx, sc, f)
 	if err != nil {
 		return nil, fmt.Errorf("list hypotheses: %w", err)
 	}
@@ -356,7 +356,7 @@ func (s *Service) SaveInterview(ctx context.Context, sc authz.Scope, in Intervie
 		return Interview{}, err
 	}
 	hyps := dedupe(in.HypothesisIDs)
-	if err := s.checkHypotheses(ctx, hyps, in.ProductID); err != nil {
+	if err := s.checkHypotheses(ctx, sc, hyps, in.ProductID); err != nil {
 		return Interview{}, err
 	}
 	now := s.clock.Now()
@@ -374,7 +374,7 @@ func (s *Service) SaveInterview(ctx context.Context, sc authz.Scope, in Intervie
 		UpdatedAt:     now,
 	}
 	if in.ID != kernel.NilID {
-		prev, err := s.store.Interview(ctx, in.ID)
+		prev, err := s.store.Interview(ctx, sc, in.ID)
 		if err != nil {
 			return Interview{}, err
 		}
@@ -383,7 +383,7 @@ func (s *Service) SaveInterview(ctx context.Context, sc authz.Scope, in Intervie
 		}
 		i.ID, i.CreatedBy, i.CreatedAt = prev.ID, prev.CreatedBy, prev.CreatedAt
 	}
-	if err := s.store.SaveInterview(ctx, i); err != nil {
+	if err := s.store.SaveInterview(ctx, sc, i); err != nil {
 		return Interview{}, fmt.Errorf("save interview: %w", err)
 	}
 	if err := s.emit(ctx, EventInterviewSaved, i.ID, i.ProductID, sc.Subject(), i); err != nil {
@@ -394,7 +394,7 @@ func (s *Service) SaveInterview(ctx context.Context, sc authz.Scope, in Intervie
 
 // Interview возвращает интервью (приватный контур продукта).
 func (s *Service) Interview(ctx context.Context, sc authz.Scope, id kernel.ID) (Interview, error) {
-	i, err := s.store.Interview(ctx, id)
+	i, err := s.store.Interview(ctx, sc, id)
 	if err != nil {
 		return Interview{}, err
 	}
@@ -409,7 +409,7 @@ func (s *Service) Interviews(ctx context.Context, sc authz.Scope, productID kern
 	if err := sc.Require(authz.ActionReadPrivate, productID); err != nil {
 		return nil, err
 	}
-	out, err := s.store.Interviews(ctx, productID)
+	out, err := s.store.Interviews(ctx, sc, productID)
 	if err != nil {
 		return nil, fmt.Errorf("list interviews: %w", err)
 	}
@@ -445,7 +445,7 @@ func (s *Service) SaveInsight(ctx context.Context, sc authz.Scope, in InsightInp
 		return Insight{}, err
 	}
 	if in.InterviewID != kernel.NilID {
-		iv, err := s.store.Interview(ctx, in.InterviewID)
+		iv, err := s.store.Interview(ctx, sc, in.InterviewID)
 		if err != nil {
 			return Insight{}, err
 		}
@@ -454,7 +454,7 @@ func (s *Service) SaveInsight(ctx context.Context, sc authz.Scope, in InsightInp
 		}
 	}
 	hyps, sigs := dedupe(in.HypothesisIDs), dedupe(in.SignalIDs)
-	if err := s.checkHypotheses(ctx, hyps, in.ProductID); err != nil {
+	if err := s.checkHypotheses(ctx, sc, hyps, in.ProductID); err != nil {
 		return Insight{}, err
 	}
 	if err := s.checkSignals(ctx, sc, sigs, in.ProductID); err != nil {
@@ -474,7 +474,7 @@ func (s *Service) SaveInsight(ctx context.Context, sc authz.Scope, in InsightInp
 		UpdatedAt:     now,
 	}
 	if in.ID != kernel.NilID {
-		prev, err := s.store.Insight(ctx, in.ID)
+		prev, err := s.store.Insight(ctx, sc, in.ID)
 		if err != nil {
 			return Insight{}, err
 		}
@@ -483,7 +483,7 @@ func (s *Service) SaveInsight(ctx context.Context, sc authz.Scope, in InsightInp
 		}
 		i.ID, i.CreatedBy, i.CreatedAt = prev.ID, prev.CreatedBy, prev.CreatedAt
 	}
-	if err := s.store.SaveInsight(ctx, i); err != nil {
+	if err := s.store.SaveInsight(ctx, sc, i); err != nil {
 		return Insight{}, fmt.Errorf("save insight: %w", err)
 	}
 	if err := s.emit(ctx, EventInsightSaved, i.ID, i.ProductID, sc.Subject(), i); err != nil {
@@ -494,7 +494,7 @@ func (s *Service) SaveInsight(ctx context.Context, sc authz.Scope, in InsightInp
 
 // Insight возвращает инсайт (приватный контур продукта).
 func (s *Service) Insight(ctx context.Context, sc authz.Scope, id kernel.ID) (Insight, error) {
-	i, err := s.store.Insight(ctx, id)
+	i, err := s.store.Insight(ctx, sc, id)
 	if err != nil {
 		return Insight{}, err
 	}
@@ -510,7 +510,7 @@ func (s *Service) Insights(ctx context.Context, sc authz.Scope, productID kernel
 		return nil, err
 	}
 	f.ProductID = productID
-	out, err := s.store.Insights(ctx, f)
+	out, err := s.store.Insights(ctx, sc, f)
 	if err != nil {
 		return nil, fmt.Errorf("list insights: %w", err)
 	}
@@ -569,12 +569,12 @@ func (s *Service) SaveEvidence(ctx context.Context, sc authz.Scope, in EvidenceI
 		return Evidence{}, err
 	}
 	if in.HypothesisID != kernel.NilID {
-		if err := s.checkHypotheses(ctx, []kernel.ID{in.HypothesisID}, in.ProductID); err != nil {
+		if err := s.checkHypotheses(ctx, sc, []kernel.ID{in.HypothesisID}, in.ProductID); err != nil {
 			return Evidence{}, err
 		}
 	}
 	if in.InsightID != kernel.NilID {
-		i, err := s.store.Insight(ctx, in.InsightID)
+		i, err := s.store.Insight(ctx, sc, in.InsightID)
 		if err != nil {
 			return Evidence{}, err
 		}
@@ -606,7 +606,7 @@ func (s *Service) SaveEvidence(ctx context.Context, sc authz.Scope, in EvidenceI
 		e.Verification = VerificationUnverified
 	}
 	if in.ID != kernel.NilID {
-		prev, err := s.store.Evidence(ctx, in.ID)
+		prev, err := s.store.Evidence(ctx, sc, in.ID)
 		if err != nil {
 			return Evidence{}, err
 		}
@@ -615,7 +615,7 @@ func (s *Service) SaveEvidence(ctx context.Context, sc authz.Scope, in EvidenceI
 		}
 		e.ID, e.CreatedBy, e.CreatedAt = prev.ID, prev.CreatedBy, prev.CreatedAt
 	}
-	if err := s.store.SaveEvidence(ctx, e); err != nil {
+	if err := s.store.SaveEvidence(ctx, sc, e); err != nil {
 		return Evidence{}, fmt.Errorf("save evidence: %w", err)
 	}
 	if err := s.emit(ctx, EventEvidenceSaved, e.ID, e.ProductID, sc.Subject(), e); err != nil {
@@ -626,7 +626,7 @@ func (s *Service) SaveEvidence(ctx context.Context, sc authz.Scope, in EvidenceI
 
 // Evidence возвращает evidence (приватный контур продукта).
 func (s *Service) Evidence(ctx context.Context, sc authz.Scope, id kernel.ID) (Evidence, error) {
-	e, err := s.store.Evidence(ctx, id)
+	e, err := s.store.Evidence(ctx, sc, id)
 	if err != nil {
 		return Evidence{}, err
 	}
@@ -642,7 +642,7 @@ func (s *Service) EvidenceList(ctx context.Context, sc authz.Scope, productID ke
 		return nil, err
 	}
 	f.ProductID = productID
-	out, err := s.store.EvidenceList(ctx, f)
+	out, err := s.store.EvidenceList(ctx, sc, f)
 	if err != nil {
 		return nil, fmt.Errorf("list evidence: %w", err)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -17,30 +18,39 @@ type MemStore struct {
 func NewMemStore() *MemStore { return &MemStore{} }
 
 // Last — последняя запись.
-func (m *MemStore) Last(context.Context) (Record, error) {
+func (m *MemStore) Last(_ context.Context, sc authz.Scope) (Record, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return Record{}, err
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if len(m.recs) == 0 {
 		return Record{}, kernel.ErrNotFound
 	}
-	return m.recs[len(m.recs)-1], nil
+	return kernel.CloneValue(m.recs[len(m.recs)-1]), nil
 }
 
 // Insert добавляет запись.
-func (m *MemStore) Insert(_ context.Context, r Record) error {
+func (m *MemStore) Insert(_ context.Context, sc authz.Scope, r Record) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if len(m.recs) > 0 && m.recs[len(m.recs)-1].Seq >= r.Seq {
 		return kernel.ErrConflict
 	}
-	m.recs = append(m.recs, r)
+	m.recs = append(m.recs, kernel.CloneValue(r))
 	return nil
 }
 
 // Walk перебирает записи.
-func (m *MemStore) Walk(_ context.Context, fn func(Record) error) error {
+func (m *MemStore) Walk(_ context.Context, sc authz.Scope, fn func(Record) error) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	m.mu.RLock()
-	snapshot := append([]Record(nil), m.recs...)
+	snapshot := kernel.CloneValue(m.recs)
 	m.mu.RUnlock()
 	for _, r := range snapshot {
 		if err := fn(r); err != nil {

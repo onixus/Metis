@@ -12,6 +12,7 @@ import (
 
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/compliance/pgstore"
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
@@ -89,24 +90,24 @@ func TestCM01_PGStoreRequirementSets(t *testing.T) {
 	other := compliance.RequirementSet{ID: kernel.NewID(), Code: "REESTR", Version: 1, ProductType: portfoliograph.ProductTypeOther,
 		Items: []compliance.RequirementItem{}, Status: compliance.RequirementSetPublished, CreatedAt: now, UpdatedAt: now}
 	for _, rs := range []compliance.RequirementSet{v2, v1, other} {
-		if err := store.SaveRequirementSet(ctx, rs); err != nil {
+		if err := store.SaveRequirementSet(ctx, repositoryScope(), rs); err != nil {
 			t.Fatal(err)
 		}
 	}
 	v1.Status = compliance.RequirementSetRetired
-	if err := store.SaveRequirementSet(ctx, v1); err != nil {
+	if err := store.SaveRequirementSet(ctx, repositoryScope(), v1); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.RequirementSet(ctx, v1.ID); err != nil || !reflect.DeepEqual(got, v1) {
+	if got, err := store.RequirementSet(ctx, repositoryScope(), v1.ID); err != nil || !reflect.DeepEqual(got, v1) {
 		t.Fatalf("RequirementSet:\n got %+v\nwant %+v\nerr=%v", got, v1, err)
 	}
-	if list, err := store.RequirementSets(ctx, "FSTEC-UD4"); err != nil || len(list) != 2 || list[0].Version != 1 || list[1].Version != 2 {
+	if list, err := store.RequirementSets(ctx, repositoryScope(), "FSTEC-UD4"); err != nil || len(list) != 2 || list[0].Version != 1 || list[1].Version != 2 {
 		t.Fatalf("RequirementSets by code: %+v err=%v", list, err)
 	}
-	if list, err := store.RequirementSets(ctx, ""); err != nil || len(list) != 3 {
+	if list, err := store.RequirementSets(ctx, repositoryScope(), ""); err != nil || len(list) != 3 {
 		t.Fatalf("RequirementSets all: %+v err=%v", list, err)
 	}
-	if _, err := store.RequirementSet(ctx, kernel.NewID()); !kernel.IsNotFound(err) {
+	if _, err := store.RequirementSet(ctx, repositoryScope(), kernel.NewID()); !kernel.IsNotFound(err) {
 		t.Fatalf("RequirementSet missing: %v", err)
 	}
 }
@@ -119,22 +120,22 @@ func TestCM02_PGStoreTemplates(t *testing.T) {
 	for i, tpl := range compliance.DefaultTemplates() {
 		tpl.ID = kernel.NewID()
 		tpl.CreatedAt, tpl.UpdatedAt = now.Add(time.Duration(i)*time.Second), now.Add(time.Duration(i)*time.Second)
-		if err := store.SaveTemplate(ctx, tpl); err != nil {
+		if err := store.SaveTemplate(ctx, repositoryScope(), tpl); err != nil {
 			t.Fatal(err)
 		}
 		templates = append(templates, tpl)
 	}
 	templates[0].Name = "Изменённый"
-	if err := store.SaveTemplate(ctx, templates[0]); err != nil {
+	if err := store.SaveTemplate(ctx, repositoryScope(), templates[0]); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Template(ctx, templates[0].ID); err != nil || !reflect.DeepEqual(got, templates[0]) {
+	if got, err := store.Template(ctx, repositoryScope(), templates[0].ID); err != nil || !reflect.DeepEqual(got, templates[0]) {
 		t.Fatalf("Template:\n got %+v\nwant %+v\nerr=%v", got, templates[0], err)
 	}
-	if list, err := store.Templates(ctx, portfoliograph.ProductTypeSecurity); err != nil || len(list) != 1 || !reflect.DeepEqual(list[0], templates[0]) {
+	if list, err := store.Templates(ctx, repositoryScope(), portfoliograph.ProductTypeSecurity); err != nil || len(list) != 1 || !reflect.DeepEqual(list[0], templates[0]) {
 		t.Fatalf("Templates by type: %+v err=%v", list, err)
 	}
-	if list, err := store.Templates(ctx, ""); err != nil || !reflect.DeepEqual(list, templates) {
+	if list, err := store.Templates(ctx, repositoryScope(), ""); err != nil || !reflect.DeepEqual(list, templates) {
 		t.Fatalf("Templates all: %d err=%v", len(list), err)
 	}
 }
@@ -152,23 +153,23 @@ func TestCM03_PGStoreTracks(t *testing.T) {
 			{ID: kernel.NewID(), Key: compliance.GateKeyCertificate, Name: "Сертификат", Kind: compliance.GateKindFSTEC, Order: 2, ParallelGroup: "fstec",
 				RequirementSetCode: "FSTEC-UD4", Checklist: []compliance.ChecklistItem{}, Status: compliance.GatePassed, PassedAt: now},
 		}, CreatedBy: "compliance", CreatedAt: now, UpdatedAt: now}
-	if err := store.SaveTrack(ctx, tr); err != nil {
+	if err := store.SaveTrack(ctx, repositoryScope(), tr); err != nil {
 		t.Fatal(err)
 	}
 	tr.Status, tr.BaselineID = compliance.TrackCertified, kernel.NewID()
-	if err := store.SaveTrack(ctx, tr); err != nil {
+	if err := store.SaveTrack(ctx, repositoryScope(), tr); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Track(ctx, tr.ID); err != nil || !reflect.DeepEqual(got, tr) {
+	if got, err := store.Track(ctx, repositoryScope(), tr.ID); err != nil || !reflect.DeepEqual(got, tr) {
 		t.Fatalf("Track:\n got %+v\nwant %+v\nerr=%v", got, tr, err)
 	}
-	if list, err := store.Tracks(ctx, compliance.TrackFilter{ProductID: product, ReleaseID: release}); err != nil || len(list) != 1 {
+	if list, err := store.Tracks(ctx, repositoryScope(), compliance.TrackFilter{ProductID: product, ReleaseID: release}); err != nil || len(list) != 1 {
 		t.Fatalf("Tracks: %+v err=%v", list, err)
 	}
-	if list, err := store.Tracks(ctx, compliance.TrackFilter{ReleaseID: kernel.NewID()}); err != nil || len(list) != 0 {
+	if list, err := store.Tracks(ctx, repositoryScope(), compliance.TrackFilter{ReleaseID: kernel.NewID()}); err != nil || len(list) != 0 {
 		t.Fatalf("Tracks other release: %+v err=%v", list, err)
 	}
-	if _, err := store.Track(ctx, kernel.NewID()); !kernel.IsNotFound(err) {
+	if _, err := store.Track(ctx, repositoryScope(), kernel.NewID()); !kernel.IsNotFound(err) {
 		t.Fatalf("Track missing: %v", err)
 	}
 }
@@ -183,14 +184,14 @@ func TestCM06_PGImpactAppendOnly(t *testing.T) {
 		{ID: kernel.NewID(), FeatureID: feature, ProductID: product, Class: compliance.ImpactSecurityFunctions, Justification: "затрагивает СЗИ", Author: "compliance", At: now.Add(time.Second)},
 	}
 	for _, a := range history {
-		if err := store.AppendImpact(ctx, a); err != nil {
+		if err := store.AppendImpact(ctx, repositoryScope(), a); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if got, err := store.ImpactHistory(ctx, feature); err != nil || !reflect.DeepEqual(got, history) {
+	if got, err := store.ImpactHistory(ctx, repositoryScope(), feature); err != nil || !reflect.DeepEqual(got, history) {
 		t.Fatalf("ImpactHistory:\n got %+v\nwant %+v\nerr=%v", got, history, err)
 	}
-	if got, err := store.ImpactHistory(ctx, kernel.NewID()); err != nil || len(got) != 0 {
+	if got, err := store.ImpactHistory(ctx, repositoryScope(), kernel.NewID()); err != nil || len(got) != 0 {
 		t.Fatalf("ImpactHistory unknown: %+v err=%v", got, err)
 	}
 	if _, err := db.Pool().Exec(ctx, "UPDATE compliance.impact_assessments SET class = 'none' WHERE id = $1", history[0].ID); err == nil {
@@ -210,24 +211,24 @@ func TestCM07_PGStoreBaselines(t *testing.T) {
 		CertificateNo: "SYN-1", CertifiedAt: kernel.DateOf(2026, 9, 1), EOL: kernel.DateOf(2031, 9, 1), CreatedAt: now}
 	b2 := compliance.CertifiedBaseline{ID: kernel.NewID(), ProductID: kernel.NewID(), Version: "2.0", CreatedAt: now.Add(time.Second)}
 	for _, x := range []compliance.CertifiedBaseline{b, b2} {
-		if err := store.SaveBaseline(ctx, x); err != nil {
+		if err := store.SaveBaseline(ctx, repositoryScope(), x); err != nil {
 			t.Fatal(err)
 		}
 	}
 	b.CertificateNo = "SYN-2"
-	if err := store.SaveBaseline(ctx, b); err != nil {
+	if err := store.SaveBaseline(ctx, repositoryScope(), b); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Baseline(ctx, b.ID); err != nil || !reflect.DeepEqual(got, b) {
+	if got, err := store.Baseline(ctx, repositoryScope(), b.ID); err != nil || !reflect.DeepEqual(got, b) {
 		t.Fatalf("Baseline:\n got %+v\nwant %+v\nerr=%v", got, b, err)
 	}
-	if got, err := store.Baseline(ctx, b2.ID); err != nil || !reflect.DeepEqual(got, b2) {
+	if got, err := store.Baseline(ctx, repositoryScope(), b2.ID); err != nil || !reflect.DeepEqual(got, b2) {
 		t.Fatalf("Baseline b2:\n got %+v\nwant %+v\nerr=%v", got, b2, err)
 	}
-	if list, err := store.Baselines(ctx, product); err != nil || len(list) != 1 {
+	if list, err := store.Baselines(ctx, repositoryScope(), product); err != nil || len(list) != 1 {
 		t.Fatalf("Baselines by product: %+v err=%v", list, err)
 	}
-	if list, err := store.Baselines(ctx, kernel.NilID); err != nil || len(list) != 2 || list[0].ID != b.ID {
+	if list, err := store.Baselines(ctx, repositoryScope(), kernel.NilID); err != nil || len(list) != 2 || list[0].ID != b.ID {
 		t.Fatalf("Baselines all: %+v err=%v", list, err)
 	}
 }
@@ -246,18 +247,18 @@ func TestCM08_PGStoreBaselineComponents(t *testing.T) {
 		Components: []compliance.Component{{Key: "pkg:generic/openssl", Version: "3.5.0"}}, CreatedAt: now.Add(time.Second)}
 	empty := compliance.CertifiedBaseline{ID: kernel.NewID(), ProductID: kernel.NewID(), Version: "1.0", CreatedAt: now.Add(2 * time.Second)}
 	for _, b := range []compliance.CertifiedBaseline{affected, other, empty} {
-		if err := store.SaveBaseline(ctx, b); err != nil {
+		if err := store.SaveBaseline(ctx, repositoryScope(), b); err != nil {
 			t.Fatal(err)
 		}
 	}
-	got, err := store.Baseline(ctx, affected.ID)
+	got, err := store.Baseline(ctx, repositoryScope(), affected.ID)
 	if err != nil || !reflect.DeepEqual(got, affected) {
 		t.Fatalf("baseline с составом:\n got %+v\nwant %+v\nerr=%v", got, affected, err)
 	}
-	if got, err := store.Baseline(ctx, empty.ID); err != nil || got.Components != nil {
+	if got, err := store.Baseline(ctx, repositoryScope(), empty.ID); err != nil || got.Components != nil {
 		t.Fatalf("пустой состав читается как %+v, err=%v", got.Components, err)
 	}
-	list, err := store.BaselinesWithComponent(ctx, openssl.Key)
+	list, err := store.BaselinesWithComponent(ctx, repositoryScope(), openssl.Key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -273,7 +274,7 @@ func TestCM08_PGStoreBaselineComponents(t *testing.T) {
 	if matched != 1 {
 		t.Fatalf("уязвимую версию компонента содержит %d baseline, ожидался 1", matched)
 	}
-	if list, err := store.BaselinesWithComponent(ctx, "pkg:generic/нет-такого"); err != nil || len(list) != 0 {
+	if list, err := store.BaselinesWithComponent(ctx, repositoryScope(), "pkg:generic/нет-такого"); err != nil || len(list) != 0 {
 		t.Fatalf("неизвестный компонент: %+v err=%v", list, err)
 	}
 }
@@ -297,7 +298,7 @@ func fillEvidence(t *testing.T, store compliance.EvidenceStore, n int) []complia
 			t.Fatal(err)
 		}
 		e.Hash = h
-		if err := store.Insert(ctx, e); err != nil {
+		if err := store.Insert(ctx, identityaccess.ServiceScope("journal"), e); err != nil {
 			t.Fatal(err)
 		}
 		prevHash = h
@@ -310,11 +311,11 @@ func TestCM04_PGEvidenceLogRejectsUpdate(t *testing.T) {
 	db := openTestDB(t)
 	ctx := context.Background()
 	store := pgstore.NewEvidenceStore(db)
-	if _, err := store.Last(ctx); !kernel.IsNotFound(err) {
+	if _, err := store.Last(ctx, identityaccess.ServiceScope("journal")); !kernel.IsNotFound(err) {
 		t.Fatalf("Last на пустом журнале: %v", err)
 	}
 	items := fillEvidence(t, store, 2)
-	if last, err := store.Last(ctx); err != nil || !reflect.DeepEqual(last, items[1]) {
+	if last, err := store.Last(ctx, identityaccess.ServiceScope("journal")); err != nil || !reflect.DeepEqual(last, items[1]) {
 		t.Fatalf("Last:\n got %+v\nwant %+v\nerr=%v", last, items[1], err)
 	}
 	if _, err := db.Pool().Exec(ctx, "UPDATE compliance.evidence_log SET status = 'accepted' WHERE seq = 1"); err == nil {
@@ -323,7 +324,7 @@ func TestCM04_PGEvidenceLogRejectsUpdate(t *testing.T) {
 	if _, err := db.Pool().Exec(ctx, "DELETE FROM compliance.evidence_log WHERE seq = 1"); err == nil {
 		t.Fatal("DELETE FROM compliance.evidence_log должен быть отклонён триггером")
 	}
-	if err := store.Insert(ctx, items[1]); !errors.Is(err, kernel.ErrConflict) {
+	if err := store.Insert(ctx, identityaccess.ServiceScope("journal"), items[1]); !errors.Is(err, kernel.ErrConflict) {
 		t.Fatalf("повторный seq должен давать ErrConflict: %v", err)
 	}
 	res, err := compliance.VerifyEvidenceLog(ctx, store)
@@ -363,7 +364,7 @@ func TestCM04_PGEvidenceStoreRejectsSubMicrosecondTime(t *testing.T) {
 	db := openTestDB(t)
 	e := compliance.EvidenceItem{Seq: 1, ID: kernel.NewID(), At: time.Date(2026, 9, 17, 0, 0, 0, 1, time.UTC), Actor: "a",
 		Status: compliance.EvidenceSubmitted, PrevHash: compliance.EvidenceGenesisHash, Hash: compliance.EvidenceGenesisHash}
-	if err := pgstore.NewEvidenceStore(db).Insert(context.Background(), e); !errors.Is(err, kernel.ErrValidation) {
+	if err := pgstore.NewEvidenceStore(db).Insert(context.Background(), identityaccess.ServiceScope("journal"), e); !errors.Is(err, kernel.ErrValidation) {
 		t.Fatalf("Insert с наносекундами должен быть отклонён: %v", err)
 	}
 }
@@ -377,25 +378,29 @@ func TestCM01_PGRequirementSetVersionUnique(t *testing.T) {
 	store := pgstore.New(db)
 	first := compliance.RequirementSet{ID: kernel.NewID(), Code: "SYN-UNIQ", Version: 1, ProductType: portfoliograph.ProductTypeSecurity,
 		Items: []compliance.RequirementItem{{Key: "r1", Text: "требование 1"}}, Status: compliance.RequirementSetDraft, CreatedBy: "compliance", CreatedAt: now, UpdatedAt: now}
-	if err := store.SaveRequirementSet(ctx, first); err != nil {
+	if err := store.SaveRequirementSet(ctx, repositoryScope(), first); err != nil {
 		t.Fatalf("первая версия: %v", err)
 	}
 	// Повторное сохранение той же записи (по id) — обновление, не конфликт.
 	first.Status = compliance.RequirementSetPublished
-	if err := store.SaveRequirementSet(ctx, first); err != nil {
+	if err := store.SaveRequirementSet(ctx, repositoryScope(), first); err != nil {
 		t.Fatalf("обновление по id: %v", err)
 	}
 	race := first
 	race.ID, race.Status = kernel.NewID(), compliance.RequirementSetDraft
-	if err := store.SaveRequirementSet(ctx, race); !errors.Is(err, kernel.ErrConflict) {
+	if err := store.SaveRequirementSet(ctx, repositoryScope(), race); !errors.Is(err, kernel.ErrConflict) {
 		t.Fatalf("дубль версии принят: %v", err)
 	}
 	race.Version = 2
-	if err := store.SaveRequirementSet(ctx, race); err != nil {
+	if err := store.SaveRequirementSet(ctx, repositoryScope(), race); err != nil {
 		t.Fatalf("следующая версия: %v", err)
 	}
-	list, err := store.RequirementSets(ctx, "SYN-UNIQ")
+	list, err := store.RequirementSets(ctx, repositoryScope(), "SYN-UNIQ")
 	if err != nil || len(list) != 2 || list[0].Version != 1 || list[1].Version != 2 {
 		t.Fatalf("версии набора: %+v, %v", list, err)
 	}
+}
+
+func repositoryScope() authz.Scope {
+	return authz.New(authz.Params{Subject: "repository-fixture", Roles: []authz.Role{authz.RoleAdmin, authz.RoleService}, AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal})
 }

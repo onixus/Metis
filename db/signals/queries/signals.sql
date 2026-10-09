@@ -1,4 +1,4 @@
--- name: UpsertSignal :exec
+-- name: UpsertSignal :execrows
 INSERT INTO signals.signals (id, product_id, source, text, external_key, account_id, deal_id, version, segment,
   weight_amount, weight_currency, account_arr_amount, account_arr_currency, blocks_deal, status, due_date,
   feature_id, contract_id, hypothesis_id, merged_into, created_by, created_at, updated_at)
@@ -10,7 +10,8 @@ ON CONFLICT (id) DO UPDATE SET
   account_arr_amount = EXCLUDED.account_arr_amount, account_arr_currency = EXCLUDED.account_arr_currency,
   blocks_deal = EXCLUDED.blocks_deal, status = EXCLUDED.status, due_date = EXCLUDED.due_date,
   feature_id = EXCLUDED.feature_id, contract_id = EXCLUDED.contract_id, hypothesis_id = EXCLUDED.hypothesis_id,
-  merged_into = EXCLUDED.merged_into, created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at;
+  merged_into = EXCLUDED.merged_into, created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE signals.signals.product_id = EXCLUDED.product_id;
 
 -- name: GetSignal :one
 SELECT * FROM signals.signals WHERE id = $1;

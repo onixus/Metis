@@ -7,12 +7,13 @@ import (
 	"strings"
 
 	"github.com/onixus/metis/internal/economics/modeling/formula"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
 // dependencies строит карту «показатель → ссылки его последней версии» (EC-10).
-func (s *Service) dependencies(ctx context.Context) (map[string][]formula.Ref, error) {
-	metrics, err := s.store.Metrics(ctx)
+func (s *Service) dependencies(ctx context.Context, sc authz.Scope) (map[string][]formula.Ref, error) {
+	metrics, err := s.store.Metrics(ctx, sc)
 	if err != nil {
 		return nil, fmt.Errorf("metrics: %w", err)
 	}
@@ -24,8 +25,8 @@ func (s *Service) dependencies(ctx context.Context) (map[string][]formula.Ref, e
 }
 
 // checkCycle отклоняет формулу, создающую цикл, и показывает путь (EC-10).
-func (s *Service) checkCycle(ctx context.Context, key string, refs []formula.Ref) error {
-	deps, err := s.dependencies(ctx)
+func (s *Service) checkCycle(ctx context.Context, sc authz.Scope, key string, refs []formula.Ref) error {
+	deps, err := s.dependencies(ctx, sc)
 	if err != nil {
 		return err
 	}
@@ -61,8 +62,8 @@ func (s *Service) checkCycle(ctx context.Context, key string, refs []formula.Ref
 
 // Affected возвращает показатели, которые нужно пересчитать при изменении поля
 // или показателя, включая сам изменённый показатель (EC-10).
-func (s *Service) Affected(ctx context.Context, changed formula.Ref) ([]string, error) {
-	deps, err := s.dependencies(ctx)
+func (s *Service) Affected(ctx context.Context, sc authz.Scope, changed formula.Ref) ([]string, error) {
+	deps, err := s.dependencies(ctx, sc)
 	if err != nil {
 		return nil, err
 	}

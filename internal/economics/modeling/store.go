@@ -6,6 +6,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -22,42 +23,42 @@ type FactFilter struct {
 
 // Store — хранилище экономики. Авторизация выполняется в Service до вызова хранилища.
 type Store interface {
-	SaveField(ctx context.Context, f Field) error
-	Field(ctx context.Context, key string) (Field, error)
-	Fields(ctx context.Context) ([]Field, error)
+	SaveField(ctx context.Context, sc authz.Scope, f Field) error
+	Field(ctx context.Context, sc authz.Scope, key string) (Field, error)
+	Fields(ctx context.Context, sc authz.Scope) ([]Field, error)
 
-	SaveMetric(ctx context.Context, m Metric) error
-	Metric(ctx context.Context, key string) (Metric, error)
-	Metrics(ctx context.Context) ([]Metric, error)
+	SaveMetric(ctx context.Context, sc authz.Scope, m Metric) error
+	Metric(ctx context.Context, sc authz.Scope, key string) (Metric, error)
+	Metrics(ctx context.Context, sc authz.Scope) ([]Metric, error)
 
-	SaveTemplate(ctx context.Context, t Template) error
-	Template(ctx context.Context, id kernel.ID) (Template, error)
-	Templates(ctx context.Context) ([]Template, error)
+	SaveTemplate(ctx context.Context, sc authz.Scope, t Template) error
+	Template(ctx context.Context, sc authz.Scope, id kernel.ID) (Template, error)
+	Templates(ctx context.Context, sc authz.Scope) ([]Template, error)
 
-	SaveBatch(ctx context.Context, b ImportBatch) error
-	Batch(ctx context.Context, id kernel.ID) (ImportBatch, error)
+	SaveBatch(ctx context.Context, sc authz.Scope, b ImportBatch) error
+	Batch(ctx context.Context, sc authz.Scope, id kernel.ID) (ImportBatch, error)
 	// Batches возвращает историю загрузок; нулевой период — все загрузки.
-	Batches(ctx context.Context, period Period) ([]ImportBatch, error)
+	Batches(ctx context.Context, sc authz.Scope, period Period) ([]ImportBatch, error)
 	// AppendFacts добавляет строки данных; строки не изменяются и не удаляются.
-	AppendFacts(ctx context.Context, rows []FactRow) error
-	Facts(ctx context.Context, f FactFilter) ([]FactRow, error)
+	AppendFacts(ctx context.Context, sc authz.Scope, rows []FactRow) error
+	Facts(ctx context.Context, sc authz.Scope, f FactFilter) ([]FactRow, error)
 
-	SaveAllocationRule(ctx context.Context, r AllocationRule) error
-	AllocationRules(ctx context.Context) ([]AllocationRule, error)
-	SaveBundleRule(ctx context.Context, r BundleRule) error
-	BundleRules(ctx context.Context) ([]BundleRule, error)
+	SaveAllocationRule(ctx context.Context, sc authz.Scope, r AllocationRule) error
+	AllocationRules(ctx context.Context, sc authz.Scope) ([]AllocationRule, error)
+	SaveBundleRule(ctx context.Context, sc authz.Scope, r BundleRule) error
+	BundleRules(ctx context.Context, sc authz.Scope) ([]BundleRule, error)
 
-	SaveTeam(ctx context.Context, t Team) error
-	Teams(ctx context.Context) ([]Team, error)
-	SaveTeamShares(ctx context.Context, shares []TeamShare) error
-	TeamShares(ctx context.Context, period Period) ([]TeamShare, error)
+	SaveTeam(ctx context.Context, sc authz.Scope, t Team) error
+	Teams(ctx context.Context, sc authz.Scope) ([]Team, error)
+	SaveTeamShares(ctx context.Context, sc authz.Scope, shares []TeamShare) error
+	TeamShares(ctx context.Context, sc authz.Scope, period Period) ([]TeamShare, error)
 
-	ClosePeriod(ctx context.Context, p Period, actor string) error
-	ClosedPeriods(ctx context.Context) ([]Period, error)
+	ClosePeriod(ctx context.Context, sc authz.Scope, p Period, actor string) error
+	ClosedPeriods(ctx context.Context, sc authz.Scope) ([]Period, error)
 
-	SaveScenario(ctx context.Context, s Scenario) error
-	Scenario(ctx context.Context, id kernel.ID) (Scenario, error)
-	Scenarios(ctx context.Context) ([]Scenario, error)
+	SaveScenario(ctx context.Context, sc authz.Scope, s Scenario) error
+	Scenario(ctx context.Context, sc authz.Scope, id kernel.ID) (Scenario, error)
+	Scenarios(ctx context.Context, sc authz.Scope) ([]Scenario, error)
 }
 
 // MemStore — хранилище в памяти (тесты, стенд). PG-хранилище — отдельной итерацией (вопрос 12).
@@ -92,7 +93,11 @@ func NewMemStore() *MemStore {
 var _ Store = (*MemStore)(nil)
 
 // SaveField сохраняет поле.
-func (m *MemStore) SaveField(_ context.Context, f Field) error {
+func (m *MemStore) SaveField(_ context.Context, sc authz.Scope, f Field) error {
+	f = kernel.CloneValue(f)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.fields[f.Key] = f
@@ -100,18 +105,24 @@ func (m *MemStore) SaveField(_ context.Context, f Field) error {
 }
 
 // Field возвращает поле по ключу.
-func (m *MemStore) Field(_ context.Context, key string) (Field, error) {
+func (m *MemStore) Field(_ context.Context, sc authz.Scope, key string) (Field, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return Field{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	f, ok := m.fields[key]
 	if !ok {
 		return Field{}, fmt.Errorf("%w: поле %q", kernel.ErrNotFound, key)
 	}
-	return f, nil
+	return kernel.CloneValue(f), nil
 }
 
 // Fields возвращает поля в порядке ключа.
-func (m *MemStore) Fields(_ context.Context) ([]Field, error) {
+func (m *MemStore) Fields(_ context.Context, sc authz.Scope) ([]Field, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]Field, 0, len(m.fields))
@@ -119,11 +130,15 @@ func (m *MemStore) Fields(_ context.Context) ([]Field, error) {
 		out = append(out, f)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Key < out[j].Key })
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveMetric сохраняет показатель.
-func (m *MemStore) SaveMetric(_ context.Context, v Metric) error {
+func (m *MemStore) SaveMetric(_ context.Context, sc authz.Scope, v Metric) error {
+	v = kernel.CloneValue(v)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.metrics[v.Key] = v
@@ -131,18 +146,24 @@ func (m *MemStore) SaveMetric(_ context.Context, v Metric) error {
 }
 
 // Metric возвращает показатель по ключу.
-func (m *MemStore) Metric(_ context.Context, key string) (Metric, error) {
+func (m *MemStore) Metric(_ context.Context, sc authz.Scope, key string) (Metric, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return Metric{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	v, ok := m.metrics[key]
 	if !ok {
 		return Metric{}, fmt.Errorf("%w: показатель %q", kernel.ErrNotFound, key)
 	}
-	return v, nil
+	return kernel.CloneValue(v), nil
 }
 
 // Metrics возвращает показатели в порядке ключа.
-func (m *MemStore) Metrics(_ context.Context) ([]Metric, error) {
+func (m *MemStore) Metrics(_ context.Context, sc authz.Scope) ([]Metric, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]Metric, 0, len(m.metrics))
@@ -150,11 +171,15 @@ func (m *MemStore) Metrics(_ context.Context) ([]Metric, error) {
 		out = append(out, v)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Key < out[j].Key })
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveTemplate сохраняет шаблон импорта.
-func (m *MemStore) SaveTemplate(_ context.Context, t Template) error {
+func (m *MemStore) SaveTemplate(_ context.Context, sc authz.Scope, t Template) error {
+	t = kernel.CloneValue(t)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.templates[t.ID] = t
@@ -162,18 +187,24 @@ func (m *MemStore) SaveTemplate(_ context.Context, t Template) error {
 }
 
 // Template возвращает шаблон импорта.
-func (m *MemStore) Template(_ context.Context, id kernel.ID) (Template, error) {
+func (m *MemStore) Template(_ context.Context, sc authz.Scope, id kernel.ID) (Template, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return Template{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	t, ok := m.templates[id]
 	if !ok {
 		return Template{}, kernel.NotFound("import_template", id)
 	}
-	return t, nil
+	return kernel.CloneValue(t), nil
 }
 
 // Templates возвращает шаблоны импорта.
-func (m *MemStore) Templates(_ context.Context) ([]Template, error) {
+func (m *MemStore) Templates(_ context.Context, sc authz.Scope) ([]Template, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]Template, 0, len(m.templates))
@@ -181,11 +212,15 @@ func (m *MemStore) Templates(_ context.Context) ([]Template, error) {
 		out = append(out, t)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveBatch сохраняет загрузку.
-func (m *MemStore) SaveBatch(_ context.Context, b ImportBatch) error {
+func (m *MemStore) SaveBatch(_ context.Context, sc authz.Scope, b ImportBatch) error {
+	b = kernel.CloneValue(b)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.batches[b.ID] = b
@@ -193,18 +228,30 @@ func (m *MemStore) SaveBatch(_ context.Context, b ImportBatch) error {
 }
 
 // Batch возвращает загрузку.
-func (m *MemStore) Batch(_ context.Context, id kernel.ID) (ImportBatch, error) {
+func (m *MemStore) Batch(_ context.Context, sc authz.Scope, id kernel.ID) (ImportBatch, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceFull {
+		return ImportBatch{}, kernel.ErrForbidden
+	}
+	if !sc.SeesAllProducts() {
+		return ImportBatch{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	b, ok := m.batches[id]
 	if !ok {
 		return ImportBatch{}, kernel.NotFound("import_batch", id)
 	}
-	return b, nil
+	return kernel.CloneValue(b), nil
 }
 
 // Batches возвращает историю загрузок периода (нулевой период — все).
-func (m *MemStore) Batches(_ context.Context, p Period) ([]ImportBatch, error) {
+func (m *MemStore) Batches(_ context.Context, sc authz.Scope, p Period) ([]ImportBatch, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceFull {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.SeesAllProducts() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]ImportBatch, 0, len(m.batches))
@@ -220,11 +267,20 @@ func (m *MemStore) Batches(_ context.Context, p Period) ([]ImportBatch, error) {
 		}
 		return out[i].DataVersion < out[j].DataVersion
 	})
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // AppendFacts добавляет строки данных.
-func (m *MemStore) AppendFacts(_ context.Context, rows []FactRow) error {
+func (m *MemStore) AppendFacts(_ context.Context, sc authz.Scope, rows []FactRow) error {
+	rows = kernel.CloneValue(rows)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
+	for _, row := range rows {
+		if !sc.Allows(authz.ActionReadModelFinance, row.ProductID) {
+			return kernel.ErrForbidden
+		}
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.facts = append(m.facts, rows...)
@@ -233,7 +289,14 @@ func (m *MemStore) AppendFacts(_ context.Context, rows []FactRow) error {
 
 // Facts возвращает строки данных по фильтру. Без указания версии берётся действующая
 // версия данных периода — последняя применённая загрузка (EC-07).
-func (m *MemStore) Facts(_ context.Context, f FactFilter) ([]FactRow, error) {
+func (m *MemStore) Facts(_ context.Context, sc authz.Scope, f FactFilter) ([]FactRow, error) {
+	f = kernel.CloneValue(f)
+	if !sc.Valid() || sc.Finance() < authz.FinanceFull {
+		return nil, kernel.ErrForbidden
+	}
+	if f.Product != nil && !sc.Allows(authz.ActionReadModelFinance, *f.Product) {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	latest := map[string]int{}
@@ -249,6 +312,9 @@ func (m *MemStore) Facts(_ context.Context, f FactFilter) ([]FactRow, error) {
 	}
 	out := make([]FactRow, 0)
 	for _, r := range m.facts {
+		if !sc.Allows(authz.ActionReadModelFinance, r.ProductID) {
+			continue
+		}
 		if !applied[r.BatchID] {
 			continue
 		}
@@ -280,11 +346,15 @@ func (m *MemStore) Facts(_ context.Context, f FactFilter) ([]FactRow, error) {
 		out = append(out, r)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID.String() < out[j].ID.String() })
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveAllocationRule добавляет версию правила аллокации.
-func (m *MemStore) SaveAllocationRule(_ context.Context, r AllocationRule) error {
+func (m *MemStore) SaveAllocationRule(_ context.Context, sc authz.Scope, r AllocationRule) error {
+	r = kernel.CloneValue(r)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.alloc = append(m.alloc, r)
@@ -292,16 +362,42 @@ func (m *MemStore) SaveAllocationRule(_ context.Context, r AllocationRule) error
 }
 
 // AllocationRules возвращает правила аллокации в порядке даты действия.
-func (m *MemStore) AllocationRules(_ context.Context) ([]AllocationRule, error) {
+func (m *MemStore) AllocationRules(_ context.Context, sc authz.Scope) ([]AllocationRule, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	out := append([]AllocationRule(nil), m.alloc...)
+	out := make([]AllocationRule, 0)
+	for _, rule := range m.alloc {
+		visible := true
+		for id := range rule.Shares {
+			if !sc.Allows(authz.ActionReadModelFinance, id) {
+				visible = false
+			}
+		}
+		if !sc.Allows(authz.ActionReadModelFinance, rule.HubProductID) {
+			visible = false
+		}
+		for _, id := range rule.Consumers {
+			if !sc.Allows(authz.ActionReadModelFinance, id) {
+				visible = false
+			}
+		}
+		if visible {
+			out = append(out, rule)
+		}
+	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Version < out[j].Version })
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveBundleRule добавляет версию правила атрибуции бандла.
-func (m *MemStore) SaveBundleRule(_ context.Context, r BundleRule) error {
+func (m *MemStore) SaveBundleRule(_ context.Context, sc authz.Scope, r BundleRule) error {
+	r = kernel.CloneValue(r)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.bundles = append(m.bundles, r)
@@ -309,16 +405,34 @@ func (m *MemStore) SaveBundleRule(_ context.Context, r BundleRule) error {
 }
 
 // BundleRules возвращает правила атрибуции бандлов.
-func (m *MemStore) BundleRules(_ context.Context) ([]BundleRule, error) {
+func (m *MemStore) BundleRules(_ context.Context, sc authz.Scope) ([]BundleRule, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	out := append([]BundleRule(nil), m.bundles...)
+	out := make([]BundleRule, 0)
+	for _, rule := range m.bundles {
+		visible := true
+		for id := range rule.Shares {
+			if !sc.Allows(authz.ActionReadModelFinance, id) {
+				visible = false
+			}
+		}
+		if visible {
+			out = append(out, rule)
+		}
+	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Version < out[j].Version })
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveTeam сохраняет команду.
-func (m *MemStore) SaveTeam(_ context.Context, t Team) error {
+func (m *MemStore) SaveTeam(_ context.Context, sc authz.Scope, t Team) error {
+	t = kernel.CloneValue(t)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.teams[t.ID] = t
@@ -326,7 +440,10 @@ func (m *MemStore) SaveTeam(_ context.Context, t Team) error {
 }
 
 // Teams возвращает команды.
-func (m *MemStore) Teams(_ context.Context) ([]Team, error) {
+func (m *MemStore) Teams(_ context.Context, sc authz.Scope) ([]Team, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]Team, 0, len(m.teams))
@@ -334,11 +451,15 @@ func (m *MemStore) Teams(_ context.Context) ([]Team, error) {
 		out = append(out, t)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Key < out[j].Key })
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveTeamShares заменяет доли команд в периодах, к которым относятся переданные записи.
-func (m *MemStore) SaveTeamShares(_ context.Context, shares []TeamShare) error {
+func (m *MemStore) SaveTeamShares(_ context.Context, sc authz.Scope, shares []TeamShare) error {
+	shares = kernel.CloneValue(shares)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	affected := map[string]map[kernel.ID]bool{}
@@ -360,21 +481,30 @@ func (m *MemStore) SaveTeamShares(_ context.Context, shares []TeamShare) error {
 }
 
 // TeamShares возвращает доли команд периода (нулевой период — все).
-func (m *MemStore) TeamShares(_ context.Context, p Period) ([]TeamShare, error) {
+func (m *MemStore) TeamShares(_ context.Context, sc authz.Scope, p Period) ([]TeamShare, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]TeamShare, 0, len(m.shares))
 	for _, s := range m.shares {
+		if !sc.Allows(authz.ActionReadModelFinance, s.ProductID) {
+			continue
+		}
 		if !p.IsZero() && s.Period != p {
 			continue
 		}
 		out = append(out, s)
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // ClosePeriod закрывает период.
-func (m *MemStore) ClosePeriod(_ context.Context, p Period, _ string) error {
+func (m *MemStore) ClosePeriod(_ context.Context, sc authz.Scope, p Period, _ string) error {
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.closed[p.String()] = p
@@ -382,7 +512,10 @@ func (m *MemStore) ClosePeriod(_ context.Context, p Period, _ string) error {
 }
 
 // ClosedPeriods возвращает закрытые периоды.
-func (m *MemStore) ClosedPeriods(_ context.Context) ([]Period, error) {
+func (m *MemStore) ClosedPeriods(_ context.Context, sc authz.Scope) ([]Period, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]Period, 0, len(m.closed))
@@ -390,11 +523,15 @@ func (m *MemStore) ClosedPeriods(_ context.Context) ([]Period, error) {
 		out = append(out, p)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Before(out[j]) })
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveScenario сохраняет сценарий.
-func (m *MemStore) SaveScenario(_ context.Context, s Scenario) error {
+func (m *MemStore) SaveScenario(_ context.Context, sc authz.Scope, s Scenario) error {
+	s = kernel.CloneValue(s)
+	if !sc.Allows(authz.ActionWriteModelFinance, kernel.NilID) || !sc.SeesAllProducts() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.scenarios[s.ID] = s
@@ -402,24 +539,55 @@ func (m *MemStore) SaveScenario(_ context.Context, s Scenario) error {
 }
 
 // Scenario возвращает сценарий.
-func (m *MemStore) Scenario(_ context.Context, id kernel.ID) (Scenario, error) {
+func (m *MemStore) Scenario(_ context.Context, sc authz.Scope, id kernel.ID) (Scenario, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return Scenario{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	s, ok := m.scenarios[id]
 	if !ok {
 		return Scenario{}, kernel.NotFound("scenario", id)
 	}
-	return s, nil
+	if !scenarioVisible(sc, s) {
+		return Scenario{}, kernel.ErrForbidden
+	}
+	return kernel.CloneValue(s), nil
 }
 
 // Scenarios возвращает сценарии.
-func (m *MemStore) Scenarios(_ context.Context) ([]Scenario, error) {
+func (m *MemStore) Scenarios(_ context.Context, sc authz.Scope) ([]Scenario, error) {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]Scenario, 0, len(m.scenarios))
 	for _, s := range m.scenarios {
-		out = append(out, s)
+		if scenarioVisible(sc, s) {
+			out = append(out, s)
+		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
-	return out, nil
+	return kernel.CloneValue(out), nil
+}
+
+func scenarioVisible(sc authz.Scope, s Scenario) bool {
+	if !sc.Valid() || sc.Finance() < authz.FinanceAggregates {
+		return false
+	}
+	if len(s.Products) == 0 && !sc.SeesAllProducts() {
+		return false
+	}
+	for _, id := range s.Products {
+		if !sc.Allows(authz.ActionReadModelFinance, id) {
+			return false
+		}
+	}
+	for _, o := range s.Overrides {
+		if !sc.Allows(authz.ActionReadModelFinance, o.ProductID) {
+			return false
+		}
+	}
+	return true
 }

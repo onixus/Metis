@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/pgdb"
 	"github.com/onixus/metis/internal/portfoliograph"
@@ -34,7 +35,10 @@ func New(d *pgdb.DB, clock kernel.Clock) *PG {
 func (s *PG) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
 
 // Load читает весь граф одной транзакцией.
-func (s *PG) Load(ctx context.Context) (portfoliograph.Snapshot, error) {
+func (s *PG) Load(ctx context.Context, sc authz.Scope) (portfoliograph.Snapshot, error) {
+	if err := portfoliograph.RequireSnapshot(sc); err != nil {
+		return portfoliograph.Snapshot{}, err
+	}
 	var snap portfoliograph.Snapshot
 	err := s.db.Transact(ctx, func(ctx context.Context) error {
 		q := s.q(ctx)
@@ -131,7 +135,10 @@ func (s *PG) Load(ctx context.Context) (portfoliograph.Snapshot, error) {
 }
 
 // SaveProduct сохраняет продукт (upsert).
-func (s *PG) SaveProduct(ctx context.Context, p portfoliograph.Product) error {
+func (s *PG) SaveProduct(ctx context.Context, sc authz.Scope, p portfoliograph.Product) error {
+	if err := portfoliograph.RequireProductWrite(sc, p.ID); err != nil {
+		return err
+	}
 	err := s.q(ctx).UpsertProduct(ctx, db.UpsertProductParams{
 		ID: p.ID, Key: p.Key, Name: p.Name, Type: string(p.Type), Owner: p.Owner, Lifecycle: string(p.Lifecycle),
 		Description:    p.Description,
@@ -141,7 +148,10 @@ func (s *PG) SaveProduct(ctx context.Context, p portfoliograph.Product) error {
 }
 
 // DeleteProduct удаляет продукт и всё, что ему принадлежит, одной транзакцией.
-func (s *PG) DeleteProduct(ctx context.Context, id kernel.ID) error {
+func (s *PG) DeleteProduct(ctx context.Context, sc authz.Scope, id kernel.ID) error {
+	if err := portfoliograph.RequireProductWrite(sc, id); err != nil {
+		return err
+	}
 	return s.db.Transact(ctx, func(ctx context.Context) error {
 		q := s.q(ctx)
 		steps := []func(context.Context, kernel.ID) error{
@@ -165,40 +175,82 @@ func (s *PG) DeleteProduct(ctx context.Context, id kernel.ID) error {
 }
 
 // SaveCapability сохраняет возможность.
-func (s *PG) SaveCapability(ctx context.Context, c portfoliograph.Capability) error {
-	return wrap("capability", c.ID, s.q(ctx).UpsertCapability(ctx, db.UpsertCapabilityParams{ID: c.ID, ProductID: c.ProductID, Name: c.Name}))
+func (s *PG) SaveCapability(ctx context.Context, sc authz.Scope, c portfoliograph.Capability) error {
+	if err := portfoliograph.RequireProductWrite(sc, c.ProductID); err != nil {
+		return err
+	}
+	n, err := s.q(ctx).UpsertCapability(ctx, db.UpsertCapabilityParams{ID: c.ID, ProductID: c.ProductID, Name: c.Name})
+	if err != nil {
+		return wrap("capability", c.ID, err)
+	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
+	return nil
 }
 
 // SaveFeature сохраняет фичу.
-func (s *PG) SaveFeature(ctx context.Context, f portfoliograph.Feature) error {
-	err := s.q(ctx).UpsertFeature(ctx, db.UpsertFeatureParams{
+func (s *PG) SaveFeature(ctx context.Context, sc authz.Scope, f portfoliograph.Feature) error {
+	if err := portfoliograph.RequireProductWrite(sc, f.ProductID); err != nil {
+		return err
+	}
+	n, err := s.q(ctx).UpsertFeature(ctx, db.UpsertFeatureParams{
 		ID: f.ID, ProductID: f.ProductID, CapabilityID: nullID(f.CapabilityID), Name: f.Name, Status: string(f.Status),
 		OwnValueAmount: f.OwnValue.Amount, OwnValueCurrency: f.OwnValue.Currency,
 		PlannedDate: toDate(f.PlannedDate), Affected: f.Affected, AffectedBy: nullID(f.AffectedBy),
 		ImpliedDate: toDate(f.ImpliedDate), ExternalKey: f.ExternalKey,
 		CreatedAt: f.CreatedAt.UTC(), UpdatedAt: f.UpdatedAt.UTC(),
 	})
+	if err == nil && n == 0 {
+		return kernel.ErrForbidden
+	}
 	return wrap("feature", f.ID, err)
 }
 
 // SaveRequirement сохраняет требование.
-func (s *PG) SaveRequirement(ctx context.Context, r portfoliograph.Requirement) error {
-	return wrap("requirement", r.ID, s.q(ctx).UpsertRequirement(ctx, db.UpsertRequirementParams{ID: r.ID, ProductID: r.ProductID, FeatureID: r.FeatureID, Text: r.Text}))
+func (s *PG) SaveRequirement(ctx context.Context, sc authz.Scope, r portfoliograph.Requirement) error {
+	if err := portfoliograph.RequireProductWrite(sc, r.ProductID); err != nil {
+		return err
+	}
+	n, err := s.q(ctx).UpsertRequirement(ctx, db.UpsertRequirementParams{ID: r.ID, ProductID: r.ProductID, FeatureID: r.FeatureID, Text: r.Text})
+	if err != nil {
+		return wrap("requirement", r.ID, err)
+	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
+	return nil
 }
 
 // SaveLink сохраняет связь.
-func (s *PG) SaveLink(ctx context.Context, l portfoliograph.Link) error {
-	err := s.q(ctx).UpsertLink(ctx, db.UpsertLinkParams{
+func (s *PG) SaveLink(ctx context.Context, sc authz.Scope, l portfoliograph.Link) error {
+	if err := portfoliograph.RequireLinkWrite(sc, l.FromProductID, l.ToProductID); err != nil {
+		return err
+	}
+	n, err := s.q(ctx).UpsertLink(ctx, db.UpsertLinkParams{
 		ID: l.ID, Type: string(l.Type), FromProductID: l.FromProductID, ToProductID: l.ToProductID,
 		FromFeatureID: nullID(l.FromFeatureID), ToFeatureID: nullID(l.ToFeatureID),
 		Criticality: string(l.Criticality), ContractID: nullID(l.ContractID), CreatedAt: l.CreatedAt.UTC(),
 	})
+	if err == nil && n == 0 {
+		return kernel.ErrForbidden
+	}
 	return wrap("link", l.ID, err)
 }
 
 // DeleteLink удаляет связь; kernel.ErrNotFound, если её нет.
-func (s *PG) DeleteLink(ctx context.Context, id kernel.ID) error {
-	n, err := s.q(ctx).DeleteLink(ctx, id)
+func (s *PG) DeleteLink(ctx context.Context, sc authz.Scope, id kernel.ID) error {
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
+	row, err := s.q(ctx).GetLink(ctx, id)
+	if err != nil {
+		return wrap("link", id, err)
+	}
+	if err := portfoliograph.RequireLinkWrite(sc, row.FromProductID, row.ToProductID); err != nil {
+		return err
+	}
+	n, err := s.q(ctx).DeleteLink(ctx, db.DeleteLinkParams{ID: id, FromProductID: row.FromProductID, ToProductID: row.ToProductID})
 	if err != nil {
 		return wrap("link", id, err)
 	}
@@ -209,7 +261,10 @@ func (s *PG) DeleteLink(ctx context.Context, id kernel.ID) error {
 }
 
 // SaveContract сохраняет контракт.
-func (s *PG) SaveContract(ctx context.Context, c portfoliograph.IntegrationContract) error {
+func (s *PG) SaveContract(ctx context.Context, sc authz.Scope, c portfoliograph.IntegrationContract) error {
+	if err := portfoliograph.RequireLinkWrite(sc, c.ProviderProductID, c.ConsumerProductID); err != nil {
+		return err
+	}
 	compat := c.Compatibility
 	if compat == nil {
 		compat = []portfoliograph.VersionPair{}
@@ -218,18 +273,24 @@ func (s *PG) SaveContract(ctx context.Context, c portfoliograph.IntegrationContr
 	if err != nil {
 		return fmt.Errorf("portfoliograph contract %s: compatibility: %w", c.ID, err)
 	}
-	err = s.q(ctx).UpsertContract(ctx, db.UpsertContractParams{
+	n, err := s.q(ctx).UpsertContract(ctx, db.UpsertContractParams{
 		ID: c.ID, Name: c.Name, ProviderProductID: c.ProviderProductID, ConsumerProductID: c.ConsumerProductID,
 		ProviderFeatureIds: orEmpty(c.ProviderFeatureIDs), ConsumerFeatureIds: orEmpty(c.ConsumerFeatureIDs),
 		InterfaceVersion: c.InterfaceVersion, Owner: c.Owner, Status: string(c.Status), Criticality: string(c.Criticality),
 		Compatibility: raw, SignalValueAmount: c.SignalValue.Amount, SignalValueCurrency: c.SignalValue.Currency,
 		CreatedAt: c.CreatedAt.UTC(), UpdatedAt: c.UpdatedAt.UTC(),
 	})
+	if err == nil && n == 0 {
+		return kernel.ErrForbidden
+	}
 	return wrap("contract", c.ID, err)
 }
 
 // SaveSettings сохраняет коэффициенты как строки decimal (инвариант 6).
-func (s *PG) SaveSettings(ctx context.Context, st portfoliograph.Settings) error {
+func (s *PG) SaveSettings(ctx context.Context, sc authz.Scope, st portfoliograph.Settings) error {
+	if err := sc.Require(authz.ActionAdminSettings, kernel.NilID); err != nil {
+		return err
+	}
 	coefs := st.Coefficients
 	if coefs == nil {
 		coefs = portfoliograph.DefaultSettings().Coefficients
@@ -245,7 +306,10 @@ func (s *PG) SaveSettings(ctx context.Context, st portfoliograph.Settings) error
 }
 
 // SaveRollup сохраняет результат rollup одной транзакцией.
-func (s *PG) SaveRollup(ctx context.Context, values []portfoliograph.FeatureValue) error {
+func (s *PG) SaveRollup(ctx context.Context, sc authz.Scope, values []portfoliograph.FeatureValue) error {
+	if err := portfoliograph.RequireSnapshot(sc); err != nil {
+		return err
+	}
 	return s.db.Transact(ctx, func(ctx context.Context) error {
 		q := s.q(ctx)
 		for _, v := range values {
@@ -265,7 +329,10 @@ func (s *PG) SaveRollup(ctx context.Context, values []portfoliograph.FeatureValu
 }
 
 // Rollup возвращает сохранённый rollup.
-func (s *PG) Rollup(ctx context.Context) ([]portfoliograph.FeatureValue, error) {
+func (s *PG) Rollup(ctx context.Context, sc authz.Scope) ([]portfoliograph.FeatureValue, error) {
+	if err := portfoliograph.RequireSnapshot(sc); err != nil {
+		return nil, err
+	}
 	rows, err := s.q(ctx).ListFeatureValues(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("portfoliograph rollup: %w", err)

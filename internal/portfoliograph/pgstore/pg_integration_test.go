@@ -4,6 +4,7 @@ package pgstore_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"reflect"
 	"testing"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/pgdb"
@@ -68,16 +70,36 @@ func TestPG01_PGStoreRoundTrip(t *testing.T) {
 
 	err := db.Transact(ctx, func(ctx context.Context) error {
 		for _, f := range []func() error{
-			func() error { return store.SaveProduct(ctx, edr) },
-			func() error { return store.SaveProduct(ctx, soar) },
-			func() error { return store.SaveCapability(ctx, capEDR) },
-			func() error { return store.SaveFeature(ctx, fEDR) },
-			func() error { return store.SaveFeature(ctx, fSOAR) },
-			func() error { return store.SaveRequirement(ctx, req) },
-			func() error { return store.SaveContract(ctx, contract) },
-			func() error { return store.SaveLink(ctx, link) },
-			func() error { return store.SaveLink(ctx, productLink) },
-			func() error { return store.SaveSettings(ctx, settings) },
+			func() error {
+				return store.SaveProduct(ctx, repositoryScope(), edr)
+			},
+			func() error {
+				return store.SaveProduct(ctx, repositoryScope(), soar)
+			},
+			func() error {
+				return store.SaveCapability(ctx, repositoryScope(), capEDR)
+			},
+			func() error {
+				return store.SaveFeature(ctx, repositoryScope(), fEDR)
+			},
+			func() error {
+				return store.SaveFeature(ctx, repositoryScope(), fSOAR)
+			},
+			func() error {
+				return store.SaveRequirement(ctx, repositoryScope(), req)
+			},
+			func() error {
+				return store.SaveContract(ctx, repositoryScope(), contract)
+			},
+			func() error {
+				return store.SaveLink(ctx, repositoryScope(), link)
+			},
+			func() error {
+				return store.SaveLink(ctx, repositoryScope(), productLink)
+			},
+			func() error {
+				return store.SaveSettings(ctx, repositoryScope(), settings)
+			},
 		} {
 			if err := f(); err != nil {
 				return err
@@ -90,11 +112,11 @@ func TestPG01_PGStoreRoundTrip(t *testing.T) {
 	}
 	// Повторное сохранение — upsert.
 	edr.Name = "EDR v2"
-	if err := store.SaveProduct(ctx, edr); err != nil {
+	if err := store.SaveProduct(ctx, repositoryScope(), edr); err != nil {
 		t.Fatal(err)
 	}
 
-	snap, err := store.Load(ctx)
+	snap, err := store.Load(ctx, repositoryScope())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,21 +161,21 @@ func TestPG01_PGStoreRoundTrip(t *testing.T) {
 	}
 
 	values := []portfoliograph.FeatureValue{{FeatureID: fEDR.ID, ProductID: edr.ID, OwnValue: kernel.RUB(1), DerivedValue: kernel.RUB(2), TotalValue: kernel.RUB(3), ComputedAt: now}}
-	if err := store.SaveRollup(ctx, values); err != nil {
+	if err := store.SaveRollup(ctx, repositoryScope(), values); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SaveRollup(ctx, values); err != nil {
+	if err := store.SaveRollup(ctx, repositoryScope(), values); err != nil {
 		t.Fatal(err)
 	}
-	got, err := store.Rollup(ctx)
+	got, err := store.Rollup(ctx, repositoryScope())
 	if err != nil || !reflect.DeepEqual(got, values) {
 		t.Fatalf("rollup: %+v err=%v", got, err)
 	}
 
-	if err := store.DeleteLink(ctx, productLink.ID); err != nil {
+	if err := store.DeleteLink(ctx, repositoryScope(), productLink.ID); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.DeleteLink(ctx, productLink.ID); !kernel.IsNotFound(err) {
+	if err := store.DeleteLink(ctx, repositoryScope(), productLink.ID); !kernel.IsNotFound(err) {
 		t.Fatalf("повторный DeleteLink: %v", err)
 	}
 
@@ -161,7 +183,7 @@ func TestPG01_PGStoreRoundTrip(t *testing.T) {
 	if _, err := db.Pool().Exec(ctx, "TRUNCATE portfoliograph.settings"); err != nil {
 		t.Fatal(err)
 	}
-	snap, err = store.Load(ctx)
+	snap, err = store.Load(ctx, repositoryScope())
 	if err != nil || !snap.Settings.Coef(portfoliograph.CritAccelerates).Equal(decimal.RequireFromString("0.5")) {
 		t.Fatalf("настройки по умолчанию: %+v err=%v", snap.Settings, err)
 	}
@@ -180,29 +202,88 @@ func TestPG01_PGStoreDeleteProductCascades(t *testing.T) {
 	req := portfoliograph.Requirement{ID: kernel.NewID(), ProductID: vm.ID, FeatureID: fVM.ID, Text: "CSV"}
 	link := portfoliograph.Link{ID: kernel.NewID(), Type: portfoliograph.LinkIntegration, FromProductID: vm.ID, ToProductID: edr.ID, FromFeatureID: fVM.ID, ToFeatureID: fEDR.ID, Criticality: portfoliograph.CritBlocks, CreatedAt: now}
 	for _, f := range []func() error{
-		func() error { return store.SaveProduct(ctx, vm) }, func() error { return store.SaveProduct(ctx, edr) },
-		func() error { return store.SaveCapability(ctx, capVM) }, func() error { return store.SaveFeature(ctx, fVM) },
-		func() error { return store.SaveFeature(ctx, fEDR) }, func() error { return store.SaveRequirement(ctx, req) },
-		func() error { return store.SaveLink(ctx, link) },
 		func() error {
-			return store.SaveRollup(ctx, []portfoliograph.FeatureValue{{FeatureID: fVM.ID, ProductID: vm.ID, ComputedAt: now}, {FeatureID: fEDR.ID, ProductID: edr.ID, ComputedAt: now}})
+			return store.SaveProduct(ctx, repositoryScope(), vm)
+		}, func() error {
+			return store.SaveProduct(ctx, repositoryScope(), edr)
+		},
+		func() error {
+			return store.SaveCapability(ctx, repositoryScope(), capVM)
+		}, func() error {
+			return store.SaveFeature(ctx, repositoryScope(), fVM)
+		},
+		func() error {
+			return store.SaveFeature(ctx, repositoryScope(), fEDR)
+		}, func() error {
+			return store.SaveRequirement(ctx, repositoryScope(), req)
+		},
+		func() error {
+			return store.SaveLink(ctx, repositoryScope(), link)
+		},
+		func() error {
+			return store.SaveRollup(ctx, repositoryScope(), []portfoliograph.FeatureValue{{FeatureID: fVM.ID, ProductID: vm.ID, ComputedAt: now}, {FeatureID: fEDR.ID, ProductID: edr.ID, ComputedAt: now}})
 		},
 	} {
 		if err := f(); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if err := store.DeleteProduct(ctx, vm.ID); err != nil {
+	if err := store.DeleteProduct(ctx, repositoryScope(), vm.ID); err != nil {
 		t.Fatal(err)
 	}
-	snap, err := store.Load(ctx)
+	snap, err := store.Load(ctx, repositoryScope())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(snap.Products) != 1 || snap.Products[0].ID != edr.ID || len(snap.Features) != 1 || len(snap.Links) != 0 || len(snap.Capabilities) != 0 || len(snap.Requirements) != 0 {
 		t.Fatalf("каскад не сработал: %+v", snap)
 	}
-	if err := store.DeleteProduct(ctx, vm.ID); err == nil {
+	if err := store.DeleteProduct(ctx, repositoryScope(), vm.ID); err == nil {
 		t.Fatal("повторное удаление должно давать ErrNotFound")
+	}
+}
+
+func repositoryScope() authz.Scope {
+	return authz.New(authz.Params{Subject: "repository-fixture", Roles: []authz.Role{authz.RoleAdmin, authz.RoleService}, AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal})
+}
+
+func TestAD02_NFS01_PGContractBothSidesAndImmutableOwner(t *testing.T) {
+	db := openTestDB(t)
+	ctx := context.Background()
+	store := pgstore.NewStore(db, nil)
+	a, b := kernel.NewID(), kernel.NewID()
+	for i, id := range []kernel.ID{a, b} {
+		if err := store.SaveProduct(ctx, repositoryScope(), portfoliograph.Product{ID: id, Key: []string{"scope-a", "scope-b"}[i], Name: "Synthetic product", Type: portfoliograph.ProductTypeSecurity, Lifecycle: portfoliograph.LifecycleActive}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	pm := func(other authz.Access) authz.Scope {
+		return authz.New(authz.Params{Subject: "pm", Roles: []authz.Role{authz.RolePM}, Products: map[kernel.ID]authz.Access{a: authz.AccessPrivate, b: other}})
+	}
+	c := portfoliograph.IntegrationContract{ID: kernel.NewID(), ProviderProductID: a, ConsumerProductID: b, Status: portfoliograph.ContractActive, Criticality: portfoliograph.CritBlocks}
+	if err := store.SaveContract(ctx, pm(authz.AccessNone), c); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("hidden endpoint: %v", err)
+	}
+	if err := store.SaveContract(ctx, pm(authz.AccessStrategic), c); err != nil {
+		t.Fatal(err)
+	}
+	c.ConsumerProductID = a
+	if err := store.SaveContract(ctx, pm(authz.AccessStrategic), c); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("endpoint takeover: %v", err)
+	}
+	cap := portfoliograph.Capability{ID: kernel.NewID(), ProductID: b, Name: "Synthetic capability"}
+	if err := store.SaveCapability(ctx, repositoryScope(), cap); err != nil {
+		t.Fatal(err)
+	}
+	cap.ProductID = a
+	if err := store.SaveCapability(ctx, pm(authz.AccessNone), cap); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("owner takeover: %v", err)
+	}
+	if _, err := store.Load(ctx, pm(authz.AccessStrategic)); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("partial scope loaded full graph: %v", err)
+	}
+	snap, err := store.Load(ctx, repositoryScope())
+	if err != nil || len(snap.Contracts) != 1 || snap.Contracts[0].ConsumerProductID != b || len(snap.Capabilities) != 1 || snap.Capabilities[0].ProductID != b {
+		t.Fatalf("state changed: %+v, %v", snap, err)
 	}
 }

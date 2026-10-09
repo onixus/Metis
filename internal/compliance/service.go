@@ -9,6 +9,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/portfoliograph"
@@ -75,7 +76,7 @@ func (s *Service) emit(ctx context.Context, typ string, aggregate, product kerne
 
 // requireCatalog — право вести каталог наборов требований и шаблонов: администратор
 // настроек или роль compliance.
-func requireCatalog(sc authz.Scope) error {
+func RequireCatalog(sc authz.Scope) error {
 	if !sc.Valid() {
 		return kernel.ErrForbidden
 	}
@@ -155,7 +156,7 @@ func (in RequirementSetInput) validate() error {
 // CreateRequirementSet создаёт новую версию набора в статусе draft: версия = максимальная
 // по коду + 1; существующие версии не изменяются (CM-01).
 func (s *Service) CreateRequirementSet(ctx context.Context, sc authz.Scope, in RequirementSetInput) (RequirementSet, error) {
-	if err := requireCatalog(sc); err != nil {
+	if err := RequireCatalog(sc); err != nil {
 		return RequirementSet{}, err
 	}
 	if err := in.validate(); err != nil {
@@ -166,7 +167,7 @@ func (s *Service) CreateRequirementSet(ctx context.Context, sc authz.Scope, in R
 	// при гонке двух создателей проигравший получает kernel.ErrConflict и пересчитывает версию.
 	var lastErr error
 	for attempt := 0; attempt < writeAttempts; attempt++ {
-		existing, err := s.store.RequirementSets(ctx, code)
+		existing, err := s.store.RequirementSets(ctx, sc, code)
 		if err != nil {
 			return RequirementSet{}, fmt.Errorf("list requirement sets: %w", err)
 		}
@@ -184,7 +185,7 @@ func (s *Service) CreateRequirementSet(ctx context.Context, sc authz.Scope, in R
 			ID: kernel.NewID(), Code: code, Version: version, ProductType: in.ProductType,
 			Items: in.Items, Status: RequirementSetDraft, CreatedBy: sc.Subject(), CreatedAt: now, UpdatedAt: now,
 		}
-		err = s.store.SaveRequirementSet(ctx, rs)
+		err = s.store.SaveRequirementSet(ctx, sc, rs)
 		switch {
 		case err == nil:
 			return rs, nil
@@ -199,10 +200,10 @@ func (s *Service) CreateRequirementSet(ctx context.Context, sc authz.Scope, in R
 
 // SetRequirementSetStatus переводит набор: draft → published → retired. Назад — нельзя.
 func (s *Service) SetRequirementSetStatus(ctx context.Context, sc authz.Scope, id kernel.ID, st RequirementSetStatus) (RequirementSet, error) {
-	if err := requireCatalog(sc); err != nil {
+	if err := RequireCatalog(sc); err != nil {
 		return RequirementSet{}, err
 	}
-	rs, err := s.store.RequirementSet(ctx, id)
+	rs, err := s.store.RequirementSet(ctx, sc, id)
 	if err != nil {
 		return RequirementSet{}, err
 	}
@@ -212,7 +213,7 @@ func (s *Service) SetRequirementSetStatus(ctx context.Context, sc authz.Scope, i
 		return RequirementSet{}, fmt.Errorf("%w: переход %s → %s недопустим", kernel.ErrConflict, rs.Status, st)
 	}
 	rs.Status, rs.UpdatedAt = st, s.clock.Now()
-	if err := s.store.SaveRequirementSet(ctx, rs); err != nil {
+	if err := s.store.SaveRequirementSet(ctx, sc, rs); err != nil {
 		return RequirementSet{}, fmt.Errorf("save requirement set: %w", err)
 	}
 	return rs, nil
@@ -223,7 +224,7 @@ func (s *Service) RequirementSet(ctx context.Context, sc authz.Scope, id kernel.
 	if !sc.Valid() {
 		return RequirementSet{}, kernel.ErrForbidden
 	}
-	return s.store.RequirementSet(ctx, id)
+	return s.store.RequirementSet(ctx, sc, id)
 }
 
 // RequirementSets возвращает версии набора по коду (пустой код — весь каталог).
@@ -231,7 +232,7 @@ func (s *Service) RequirementSets(ctx context.Context, sc authz.Scope, code stri
 	if !sc.Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	out, err := s.store.RequirementSets(ctx, strings.ToUpper(strings.TrimSpace(code)))
+	out, err := s.store.RequirementSets(ctx, sc, strings.ToUpper(strings.TrimSpace(code)))
 	if err != nil {
 		return nil, fmt.Errorf("list requirement sets: %w", err)
 	}
@@ -245,11 +246,11 @@ func (s *Service) RequirementSets(ctx context.Context, sc authz.Scope, code stri
 }
 
 // publishedSet — последняя опубликованная версия набора по коду для типа продукта; NilID, если нет.
-func (s *Service) publishedSet(ctx context.Context, code string, pt portfoliograph.ProductType) (kernel.ID, error) {
+func (s *Service) publishedSet(ctx context.Context, sc authz.Scope, code string, pt portfoliograph.ProductType) (kernel.ID, error) {
 	if code == "" {
 		return kernel.NilID, nil
 	}
-	sets, err := s.store.RequirementSets(ctx, code)
+	sets, err := s.store.RequirementSets(ctx, sc, code)
 	if err != nil {
 		return kernel.NilID, fmt.Errorf("list requirement sets: %w", err)
 	}
@@ -299,7 +300,7 @@ func validateTemplate(t TrackTemplate) error {
 
 // SaveTemplate создаёт (ID пуст) или обновляет шаблон (CM-02). Право: каталог.
 func (s *Service) SaveTemplate(ctx context.Context, sc authz.Scope, t TrackTemplate) (TrackTemplate, error) {
-	if err := requireCatalog(sc); err != nil {
+	if err := RequireCatalog(sc); err != nil {
 		return TrackTemplate{}, err
 	}
 	if err := validateTemplate(t); err != nil {
@@ -309,7 +310,7 @@ func (s *Service) SaveTemplate(ctx context.Context, sc authz.Scope, t TrackTempl
 	if t.ID == kernel.NilID {
 		t.ID, t.CreatedAt = kernel.NewID(), now
 	} else {
-		prev, err := s.store.Template(ctx, t.ID)
+		prev, err := s.store.Template(ctx, sc, t.ID)
 		if err != nil {
 			return TrackTemplate{}, err
 		}
@@ -317,7 +318,7 @@ func (s *Service) SaveTemplate(ctx context.Context, sc authz.Scope, t TrackTempl
 	}
 	t.UpdatedAt = now
 	sort.SliceStable(t.Gates, func(i, j int) bool { return t.Gates[i].Order < t.Gates[j].Order })
-	if err := s.store.SaveTemplate(ctx, t); err != nil {
+	if err := s.store.SaveTemplate(ctx, sc, t); err != nil {
 		return TrackTemplate{}, fmt.Errorf("save template: %w", err)
 	}
 	return t, nil
@@ -328,7 +329,7 @@ func (s *Service) Template(ctx context.Context, sc authz.Scope, id kernel.ID) (T
 	if !sc.Valid() {
 		return TrackTemplate{}, kernel.ErrForbidden
 	}
-	return s.store.Template(ctx, id)
+	return s.store.Template(ctx, sc, id)
 }
 
 // Templates возвращает шаблоны типа продукта (пустой тип — все).
@@ -336,7 +337,7 @@ func (s *Service) Templates(ctx context.Context, sc authz.Scope, pt portfoliogra
 	if !sc.Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	out, err := s.store.Templates(ctx, pt)
+	out, err := s.store.Templates(ctx, sc, pt)
 	if err != nil {
 		return nil, fmt.Errorf("list templates: %w", err)
 	}
@@ -384,7 +385,7 @@ func (s *Service) StartTrack(ctx context.Context, sc authz.Scope, in TrackInput)
 			return Track{}, kernel.Invalid("release_id", "релиз принадлежит другому продукту")
 		}
 	}
-	existing, err := s.store.Tracks(ctx, TrackFilter{ReleaseID: in.ReleaseID})
+	existing, err := s.store.Tracks(ctx, sc, TrackFilter{ReleaseID: in.ReleaseID})
 	if err != nil {
 		return Track{}, fmt.Errorf("list tracks: %w", err)
 	}
@@ -393,7 +394,7 @@ func (s *Service) StartTrack(ctx context.Context, sc authz.Scope, in TrackInput)
 	}
 	var tpl TrackTemplate
 	if in.TemplateID != kernel.NilID {
-		tpl, err = s.store.Template(ctx, in.TemplateID)
+		tpl, err = s.store.Template(ctx, sc, in.TemplateID)
 		if err != nil {
 			return Track{}, err
 		}
@@ -401,7 +402,7 @@ func (s *Service) StartTrack(ctx context.Context, sc authz.Scope, in TrackInput)
 			return Track{}, kernel.Invalid("template_id", "шаблон другого типа продукта")
 		}
 	} else {
-		tpls, err := s.store.Templates(ctx, product.Type)
+		tpls, err := s.store.Templates(ctx, sc, product.Type)
 		if err != nil {
 			return Track{}, fmt.Errorf("list templates: %w", err)
 		}
@@ -427,7 +428,7 @@ func (s *Service) StartTrack(ctx context.Context, sc authz.Scope, in TrackInput)
 		t.Gates = append(t.Gates, gate)
 	}
 	sort.SliceStable(t.Gates, func(i, j int) bool { return t.Gates[i].Order < t.Gates[j].Order })
-	if err := s.store.SaveTrack(ctx, t); err != nil {
+	if err := s.store.SaveTrack(ctx, sc, t); err != nil {
 		return Track{}, fmt.Errorf("save track: %w", err)
 	}
 	if err := s.emit(ctx, EventTrackStarted, t.ID, t.ProductID, sc.Subject(), t); err != nil {
@@ -438,7 +439,7 @@ func (s *Service) StartTrack(ctx context.Context, sc authz.Scope, in TrackInput)
 
 // Track возвращает трек. Право: стратегический срез продукта (статус compliance — часть среза).
 func (s *Service) Track(ctx context.Context, sc authz.Scope, id kernel.ID) (Track, error) {
-	t, err := s.store.Track(ctx, id)
+	t, err := s.store.Track(ctx, sc, id)
 	if err != nil {
 		return Track{}, err
 	}
@@ -453,7 +454,7 @@ func (s *Service) Tracks(ctx context.Context, sc authz.Scope, productID kernel.I
 	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
 		return nil, err
 	}
-	out, err := s.store.Tracks(ctx, TrackFilter{ProductID: productID})
+	out, err := s.store.Tracks(ctx, sc, TrackFilter{ProductID: productID})
 	if err != nil {
 		return nil, fmt.Errorf("list tracks: %w", err)
 	}
@@ -462,7 +463,7 @@ func (s *Service) Tracks(ctx context.Context, sc authz.Scope, productID kernel.I
 
 // loadForWrite читает трек и проверяет право записи и активность.
 func (s *Service) loadForWrite(ctx context.Context, sc authz.Scope, trackID kernel.ID) (Track, error) {
-	t, err := s.store.Track(ctx, trackID)
+	t, err := s.store.Track(ctx, sc, trackID)
 	if err != nil {
 		return Track{}, err
 	}
@@ -515,7 +516,7 @@ func (s *Service) UpdateGate(ctx context.Context, sc authz.Scope, trackID, gateI
 		g.Cost = in.Cost
 	}
 	t.UpdatedAt = s.clock.Now()
-	if err := s.store.SaveTrack(ctx, t); err != nil {
+	if err := s.store.SaveTrack(ctx, sc, t); err != nil {
 		return Track{}, fmt.Errorf("save track: %w", err)
 	}
 	return t, nil
@@ -564,7 +565,7 @@ func (s *Service) CheckItem(ctx context.Context, sc authz.Scope, trackID, gateID
 		g.Status = GateInProgress
 	}
 	t.UpdatedAt = s.clock.Now()
-	if err := s.store.SaveTrack(ctx, t); err != nil {
+	if err := s.store.SaveTrack(ctx, sc, t); err != nil {
 		return Track{}, fmt.Errorf("save track: %w", err)
 	}
 	return t, nil
@@ -639,14 +640,14 @@ func (s *Service) PassGate(ctx context.Context, sc authz.Scope, trackID, gateID 
 		}
 		t.Status, t.BaselineID = TrackCertified, baseline.ID
 	}
-	if err := s.store.SaveTrack(ctx, t); err != nil {
+	if err := s.store.SaveTrack(ctx, sc, t); err != nil {
 		return Track{}, fmt.Errorf("save track: %w", err)
 	}
 	if err := s.emit(ctx, EventGatePassed, t.ID, t.ProductID, sc.Subject(), *g); err != nil {
 		return Track{}, err
 	}
 	if certified {
-		if err := s.store.SaveBaseline(ctx, baseline); err != nil {
+		if err := s.store.SaveBaseline(ctx, sc, baseline); err != nil {
 			return Track{}, fmt.Errorf("save baseline: %w", err)
 		}
 		if err := s.emit(ctx, EventBaselineCreated, baseline.ID, baseline.ProductID, sc.Subject(), baseline); err != nil {
@@ -661,7 +662,7 @@ func (s *Service) newBaseline(ctx context.Context, sc authz.Scope, t Track, g Ga
 	if err != nil {
 		return CertifiedBaseline{}, fmt.Errorf("product: %w", err)
 	}
-	setID, err := s.publishedSet(ctx, g.RequirementSetCode, product.Type)
+	setID, err := s.publishedSet(ctx, sc, g.RequirementSetCode, product.Type)
 	if err != nil {
 		return CertifiedBaseline{}, err
 	}
@@ -702,7 +703,7 @@ func (s *Service) FailGate(ctx context.Context, sc authz.Scope, trackID, gateID 
 	now := s.clock.Now()
 	g.Status = GateFailed
 	t.Status, t.UpdatedAt = TrackFailed, now
-	if err := s.store.SaveTrack(ctx, t); err != nil {
+	if err := s.store.SaveTrack(ctx, sc, t); err != nil {
 		return Track{}, fmt.Errorf("save track: %w", err)
 	}
 	payload := struct {
@@ -778,7 +779,7 @@ func (s *Service) SetEvidenceStatus(ctx context.Context, sc authz.Scope, evidenc
 	var reopened Track
 	if st == EvidenceRejected {
 		var err error
-		reopened, err = s.reopenItems(ctx, prev)
+		reopened, err = s.reopenItems(ctx, sc, prev)
 		if err != nil {
 			return EvidenceItem{}, err
 		}
@@ -792,7 +793,7 @@ func (s *Service) SetEvidenceStatus(ctx context.Context, sc authz.Scope, evidenc
 		return EvidenceItem{}, err
 	}
 	if reopened.ID != kernel.NilID {
-		if err := s.store.SaveTrack(ctx, reopened); err != nil {
+		if err := s.store.SaveTrack(ctx, sc, reopened); err != nil {
 			return EvidenceItem{}, fmt.Errorf("save track: %w", err)
 		}
 	}
@@ -805,11 +806,11 @@ func (s *Service) SetEvidenceStatus(ctx context.Context, sc authz.Scope, evidenc
 // reopenItems снимает отметки у пунктов чек-листа, закрытых доказательством ev, и возвращает
 // изменённый трек (нулевой Track, если менять нечего). Если пункт принадлежит пройденному
 // гейту — kernel.ErrConflict: отклонить такое доказательство нельзя.
-func (s *Service) reopenItems(ctx context.Context, ev EvidenceItem) (Track, error) {
+func (s *Service) reopenItems(ctx context.Context, sc authz.Scope, ev EvidenceItem) (Track, error) {
 	if ev.TrackID == kernel.NilID {
 		return Track{}, nil
 	}
-	t, err := s.store.Track(ctx, ev.TrackID)
+	t, err := s.store.Track(ctx, sc, ev.TrackID)
 	if err != nil {
 		return Track{}, err
 	}
@@ -838,7 +839,7 @@ func (s *Service) reopenItems(ctx context.Context, ev EvidenceItem) (Track, erro
 // (по одной на идентификатор доказательства: последняя по Seq).
 func (s *Service) trackEvidence(ctx context.Context, trackID kernel.ID) (map[kernel.ID]EvidenceItem, error) {
 	out := map[kernel.ID]EvidenceItem{}
-	err := s.evidence.Walk(ctx, func(e EvidenceItem) error {
+	err := s.evidence.Walk(ctx, identityaccess.ServiceScope("journal"), func(e EvidenceItem) error {
 		if e.TrackID == trackID {
 			out[e.ID] = e
 		}
@@ -854,7 +855,7 @@ func (s *Service) trackEvidence(ctx context.Context, trackID kernel.ID) (map[ker
 func (s *Service) latestEvidence(ctx context.Context, id kernel.ID) (EvidenceItem, error) {
 	var found EvidenceItem
 	ok := false
-	err := s.evidence.Walk(ctx, func(e EvidenceItem) error {
+	err := s.evidence.Walk(ctx, identityaccess.ServiceScope("journal"), func(e EvidenceItem) error {
 		if e.ID == id {
 			found, ok = e, true
 		}
@@ -871,7 +872,7 @@ func (s *Service) latestEvidence(ctx context.Context, id kernel.ID) (EvidenceIte
 
 // Evidence возвращает актуальные записи доказательств трека по возрастанию Seq.
 func (s *Service) Evidence(ctx context.Context, sc authz.Scope, trackID kernel.ID) ([]EvidenceItem, error) {
-	t, err := s.store.Track(ctx, trackID)
+	t, err := s.store.Track(ctx, sc, trackID)
 	if err != nil {
 		return nil, err
 	}
@@ -879,7 +880,7 @@ func (s *Service) Evidence(ctx context.Context, sc authz.Scope, trackID kernel.I
 		return nil, err
 	}
 	latest := map[kernel.ID]EvidenceItem{}
-	err = s.evidence.Walk(ctx, func(e EvidenceItem) error {
+	err = s.evidence.Walk(ctx, identityaccess.ServiceScope("journal"), func(e EvidenceItem) error {
 		if e.TrackID == trackID {
 			latest[e.ID] = e
 		}
@@ -912,7 +913,7 @@ func (s *Service) ReleaseReadiness(ctx context.Context, sc authz.Scope, releaseI
 	if !sc.Valid() {
 		return Readiness{}, kernel.ErrForbidden
 	}
-	tracks, err := s.store.Tracks(ctx, TrackFilter{ReleaseID: releaseID})
+	tracks, err := s.store.Tracks(ctx, sc, TrackFilter{ReleaseID: releaseID})
 	if err != nil {
 		return Readiness{}, fmt.Errorf("list tracks: %w", err)
 	}
@@ -977,7 +978,7 @@ func (s *Service) SetImpactClass(ctx context.Context, sc authz.Scope, featureID,
 		ID: kernel.NewID(), FeatureID: featureID, ProductID: productID, Class: class,
 		Justification: strings.TrimSpace(justification), Author: sc.Subject(), At: s.clock.Now(),
 	}
-	if err := s.store.AppendImpact(ctx, a); err != nil {
+	if err := s.store.AppendImpact(ctx, sc, a); err != nil {
 		return ImpactAssessment{}, fmt.Errorf("append impact: %w", err)
 	}
 	if err := s.emit(ctx, EventImpactSet, featureID, productID, sc.Subject(), a); err != nil {
@@ -988,7 +989,7 @@ func (s *Service) SetImpactClass(ctx context.Context, sc authz.Scope, featureID,
 
 // ImpactClass возвращает действующую оценку фичи; kernel.ErrNotFound, если оценок нет.
 func (s *Service) ImpactClass(ctx context.Context, sc authz.Scope, featureID kernel.ID) (ImpactAssessment, error) {
-	hist, err := s.store.ImpactHistory(ctx, featureID)
+	hist, err := s.store.ImpactHistory(ctx, sc, featureID)
 	if err != nil {
 		return ImpactAssessment{}, fmt.Errorf("impact history: %w", err)
 	}
@@ -1004,7 +1005,7 @@ func (s *Service) ImpactClass(ctx context.Context, sc authz.Scope, featureID ker
 
 // ImpactHistory возвращает все оценки фичи в порядке добавления.
 func (s *Service) ImpactHistory(ctx context.Context, sc authz.Scope, featureID kernel.ID) ([]ImpactAssessment, error) {
-	hist, err := s.store.ImpactHistory(ctx, featureID)
+	hist, err := s.store.ImpactHistory(ctx, sc, featureID)
 	if err != nil {
 		return nil, fmt.Errorf("impact history: %w", err)
 	}
@@ -1056,7 +1057,7 @@ func (s *Service) Baselines(ctx context.Context, sc authz.Scope, productID kerne
 	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
 		return nil, err
 	}
-	out, err := s.store.Baselines(ctx, productID)
+	out, err := s.store.Baselines(ctx, sc, productID)
 	if err != nil {
 		return nil, fmt.Errorf("list baselines: %w", err)
 	}
@@ -1105,7 +1106,7 @@ func (s *Service) AffectedBaselines(ctx context.Context, sc authz.Scope, feature
 		if !sc.Allows(authz.ActionReadStrategic, pid) {
 			continue
 		}
-		bls, err := s.store.Baselines(ctx, pid)
+		bls, err := s.store.Baselines(ctx, sc, pid)
 		if err != nil {
 			return nil, fmt.Errorf("list baselines: %w", err)
 		}

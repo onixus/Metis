@@ -41,11 +41,17 @@ func (q *Queries) DeleteFeaturesByProduct(ctx context.Context, productID uuid.UU
 }
 
 const deleteLink = `-- name: DeleteLink :execrows
-DELETE FROM portfoliograph.links WHERE id = $1
+DELETE FROM portfoliograph.links WHERE id = $1 AND from_product_id = $2 AND to_product_id = $3
 `
 
-func (q *Queries) DeleteLink(ctx context.Context, id uuid.UUID) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteLink, id)
+type DeleteLinkParams struct {
+	ID            uuid.UUID
+	FromProductID uuid.UUID
+	ToProductID   uuid.UUID
+}
+
+func (q *Queries) DeleteLink(ctx context.Context, arg DeleteLinkParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteLink, arg.ID, arg.FromProductID, arg.ToProductID)
 	if err != nil {
 		return 0, err
 	}
@@ -80,6 +86,27 @@ DELETE FROM portfoliograph.requirements WHERE product_id = $1
 func (q *Queries) DeleteRequirementsByProduct(ctx context.Context, productID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteRequirementsByProduct, productID)
 	return err
+}
+
+const getLink = `-- name: GetLink :one
+SELECT id, type, from_product_id, to_product_id, from_feature_id, to_feature_id, criticality, contract_id, created_at FROM portfoliograph.links WHERE id = $1
+`
+
+func (q *Queries) GetLink(ctx context.Context, id uuid.UUID) (PortfoliographLink, error) {
+	row := q.db.QueryRow(ctx, getLink, id)
+	var i PortfoliographLink
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.FromProductID,
+		&i.ToProductID,
+		&i.FromFeatureID,
+		&i.ToFeatureID,
+		&i.Criticality,
+		&i.ContractID,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getSettings = `-- name: GetSettings :one
@@ -329,10 +356,11 @@ func (q *Queries) ListRequirements(ctx context.Context) ([]PortfoliographRequire
 	return items, nil
 }
 
-const upsertCapability = `-- name: UpsertCapability :exec
+const upsertCapability = `-- name: UpsertCapability :execrows
 INSERT INTO portfoliograph.capabilities (id, product_id, name)
 VALUES ($1, $2, $3)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, name = EXCLUDED.name
+WHERE portfoliograph.capabilities.product_id = EXCLUDED.product_id
 `
 
 type UpsertCapabilityParams struct {
@@ -341,12 +369,15 @@ type UpsertCapabilityParams struct {
 	Name      string
 }
 
-func (q *Queries) UpsertCapability(ctx context.Context, arg UpsertCapabilityParams) error {
-	_, err := q.db.Exec(ctx, upsertCapability, arg.ID, arg.ProductID, arg.Name)
-	return err
+func (q *Queries) UpsertCapability(ctx context.Context, arg UpsertCapabilityParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertCapability, arg.ID, arg.ProductID, arg.Name)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertContract = `-- name: UpsertContract :exec
+const upsertContract = `-- name: UpsertContract :execrows
 INSERT INTO portfoliograph.contracts (id, name, provider_product_id, consumer_product_id, provider_feature_ids, consumer_feature_ids,
   interface_version, owner, status, criticality, compatibility, signal_value_amount, signal_value_currency, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
@@ -357,6 +388,7 @@ ON CONFLICT (id) DO UPDATE SET
   criticality = EXCLUDED.criticality, compatibility = EXCLUDED.compatibility,
   signal_value_amount = EXCLUDED.signal_value_amount, signal_value_currency = EXCLUDED.signal_value_currency,
   updated_at = EXCLUDED.updated_at
+WHERE portfoliograph.contracts.provider_product_id = EXCLUDED.provider_product_id AND portfoliograph.contracts.consumer_product_id = EXCLUDED.consumer_product_id
 `
 
 type UpsertContractParams struct {
@@ -377,8 +409,8 @@ type UpsertContractParams struct {
 	UpdatedAt           time.Time
 }
 
-func (q *Queries) UpsertContract(ctx context.Context, arg UpsertContractParams) error {
-	_, err := q.db.Exec(ctx, upsertContract,
+func (q *Queries) UpsertContract(ctx context.Context, arg UpsertContractParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertContract,
 		arg.ID,
 		arg.Name,
 		arg.ProviderProductID,
@@ -395,10 +427,13 @@ func (q *Queries) UpsertContract(ctx context.Context, arg UpsertContractParams) 
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertFeature = `-- name: UpsertFeature :exec
+const upsertFeature = `-- name: UpsertFeature :execrows
 INSERT INTO portfoliograph.features (id, product_id, capability_id, name, status, own_value_amount, own_value_currency,
   planned_date, affected, affected_by, implied_date, external_key, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -407,6 +442,7 @@ ON CONFLICT (id) DO UPDATE SET
   status = EXCLUDED.status, own_value_amount = EXCLUDED.own_value_amount, own_value_currency = EXCLUDED.own_value_currency,
   planned_date = EXCLUDED.planned_date, affected = EXCLUDED.affected, affected_by = EXCLUDED.affected_by,
   implied_date = EXCLUDED.implied_date, external_key = EXCLUDED.external_key, updated_at = EXCLUDED.updated_at
+WHERE portfoliograph.features.product_id = EXCLUDED.product_id
 `
 
 type UpsertFeatureParams struct {
@@ -426,8 +462,8 @@ type UpsertFeatureParams struct {
 	UpdatedAt        time.Time
 }
 
-func (q *Queries) UpsertFeature(ctx context.Context, arg UpsertFeatureParams) error {
-	_, err := q.db.Exec(ctx, upsertFeature,
+func (q *Queries) UpsertFeature(ctx context.Context, arg UpsertFeatureParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertFeature,
 		arg.ID,
 		arg.ProductID,
 		arg.CapabilityID,
@@ -443,7 +479,10 @@ func (q *Queries) UpsertFeature(ctx context.Context, arg UpsertFeatureParams) er
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertFeatureValue = `-- name: UpsertFeatureValue :exec
@@ -484,13 +523,14 @@ func (q *Queries) UpsertFeatureValue(ctx context.Context, arg UpsertFeatureValue
 	return err
 }
 
-const upsertLink = `-- name: UpsertLink :exec
+const upsertLink = `-- name: UpsertLink :execrows
 INSERT INTO portfoliograph.links (id, type, from_product_id, to_product_id, from_feature_id, to_feature_id, criticality, contract_id, created_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (id) DO UPDATE SET
   type = EXCLUDED.type, from_product_id = EXCLUDED.from_product_id, to_product_id = EXCLUDED.to_product_id,
   from_feature_id = EXCLUDED.from_feature_id, to_feature_id = EXCLUDED.to_feature_id,
   criticality = EXCLUDED.criticality, contract_id = EXCLUDED.contract_id
+WHERE portfoliograph.links.from_product_id = EXCLUDED.from_product_id AND portfoliograph.links.to_product_id = EXCLUDED.to_product_id
 `
 
 type UpsertLinkParams struct {
@@ -505,8 +545,8 @@ type UpsertLinkParams struct {
 	CreatedAt     time.Time
 }
 
-func (q *Queries) UpsertLink(ctx context.Context, arg UpsertLinkParams) error {
-	_, err := q.db.Exec(ctx, upsertLink,
+func (q *Queries) UpsertLink(ctx context.Context, arg UpsertLinkParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertLink,
 		arg.ID,
 		arg.Type,
 		arg.FromProductID,
@@ -517,7 +557,10 @@ func (q *Queries) UpsertLink(ctx context.Context, arg UpsertLinkParams) error {
 		arg.ContractID,
 		arg.CreatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertProduct = `-- name: UpsertProduct :exec
@@ -560,10 +603,11 @@ func (q *Queries) UpsertProduct(ctx context.Context, arg UpsertProductParams) er
 	return err
 }
 
-const upsertRequirement = `-- name: UpsertRequirement :exec
+const upsertRequirement = `-- name: UpsertRequirement :execrows
 INSERT INTO portfoliograph.requirements (id, product_id, feature_id, text)
 VALUES ($1, $2, $3, $4)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, feature_id = EXCLUDED.feature_id, text = EXCLUDED.text
+WHERE portfoliograph.requirements.product_id = EXCLUDED.product_id
 `
 
 type UpsertRequirementParams struct {
@@ -573,14 +617,17 @@ type UpsertRequirementParams struct {
 	Text      string
 }
 
-func (q *Queries) UpsertRequirement(ctx context.Context, arg UpsertRequirementParams) error {
-	_, err := q.db.Exec(ctx, upsertRequirement,
+func (q *Queries) UpsertRequirement(ctx context.Context, arg UpsertRequirementParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertRequirement,
 		arg.ID,
 		arg.ProductID,
 		arg.FeatureID,
 		arg.Text,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertSettings = `-- name: UpsertSettings :exec

@@ -8,6 +8,7 @@ import (
 
 	"github.com/onixus/metis/internal/discovery"
 	"github.com/onixus/metis/internal/discovery/internal/db"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/pgdb"
 )
@@ -25,7 +26,13 @@ func New(d *pgdb.DB) *Store { return &Store{db: d} }
 func (s *Store) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
 
 // SaveHypothesis создаёт или обновляет гипотезу.
-func (s *Store) SaveHypothesis(ctx context.Context, h discovery.Hypothesis) error {
+func (s *Store) SaveHypothesis(ctx context.Context, sc authz.Scope, h discovery.Hypothesis) error {
+	if h.ProductID == kernel.NilID || sc.Product(h.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteDiscovery, h.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	var custom []byte
 	if h.CustomFields != nil {
 		raw, err := json.Marshal(h.CustomFields)
@@ -34,7 +41,7 @@ func (s *Store) SaveHypothesis(ctx context.Context, h discovery.Hypothesis) erro
 		}
 		custom = raw
 	}
-	err := s.q(ctx).UpsertHypothesis(ctx, db.UpsertHypothesisParams{
+	n, err := s.q(ctx).UpsertHypothesis(ctx, db.UpsertHypothesisParams{
 		ID: h.ID, ProductID: h.ProductID, Title: h.Title, Statement: h.Statement, Assumptions: pgdb.Strings(h.Assumptions),
 		ConfirmationCriterion: h.ConfirmationCriterion, Status: string(h.Status), Resolution: h.Resolution,
 		FeatureID: pgdb.NullID(h.FeatureID), CustomFields: custom, CreatedBy: h.CreatedBy,
@@ -43,20 +50,35 @@ func (s *Store) SaveHypothesis(ctx context.Context, h discovery.Hypothesis) erro
 	if err != nil {
 		return fmt.Errorf("discovery hypothesis %s: %w", h.ID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // Hypothesis возвращает гипотезу.
-func (s *Store) Hypothesis(ctx context.Context, id kernel.ID) (discovery.Hypothesis, error) {
+func (s *Store) Hypothesis(ctx context.Context, sc authz.Scope, id kernel.ID) (discovery.Hypothesis, error) {
+	if !sc.Valid() {
+		return discovery.Hypothesis{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetHypothesis(ctx, id)
 	if err != nil {
 		return discovery.Hypothesis{}, fmt.Errorf("discovery hypothesis %s: %w", id, pgdb.MapError(err))
+	}
+	if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+		return discovery.Hypothesis{}, kernel.ErrForbidden
 	}
 	return hypothesisFromRow(r)
 }
 
 // Hypotheses возвращает гипотезы по фильтру в порядке создания.
-func (s *Store) Hypotheses(ctx context.Context, f discovery.HypothesisFilter) ([]discovery.Hypothesis, error) {
+func (s *Store) Hypotheses(ctx context.Context, sc authz.Scope, f discovery.HypothesisFilter) ([]discovery.Hypothesis, error) {
+	if f.ProductID != kernel.NilID && !sc.Allows(authz.ActionReadPrivate, f.ProductID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	statuses := make([]string, 0, len(f.Statuses))
 	for _, st := range f.Statuses {
 		statuses = append(statuses, string(st))
@@ -67,6 +89,9 @@ func (s *Store) Hypotheses(ctx context.Context, f discovery.HypothesisFilter) ([
 	}
 	out := make([]discovery.Hypothesis, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+			continue
+		}
 		h, err := hypothesisFromRow(r)
 		if err != nil {
 			return nil, err
@@ -91,8 +116,14 @@ func hypothesisFromRow(r db.DiscoveryHypothesis) (discovery.Hypothesis, error) {
 }
 
 // SaveInterview создаёт или обновляет интервью.
-func (s *Store) SaveInterview(ctx context.Context, i discovery.Interview) error {
-	err := s.q(ctx).UpsertInterview(ctx, db.UpsertInterviewParams{
+func (s *Store) SaveInterview(ctx context.Context, sc authz.Scope, i discovery.Interview) error {
+	if i.ProductID == kernel.NilID || sc.Product(i.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteDiscovery, i.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
+	n, err := s.q(ctx).UpsertInterview(ctx, db.UpsertInterviewParams{
 		ID: i.ID, ProductID: i.ProductID, AccountID: i.AccountID, Segment: i.Segment, Date: pgdb.ToDate(i.Date),
 		Participants: pgdb.Strings(i.Participants), Notes: i.Notes, HypothesisIds: pgdb.IDs(i.HypothesisIDs),
 		CreatedBy: i.CreatedBy, CreatedAt: i.CreatedAt.UTC(), UpdatedAt: i.UpdatedAt.UTC(),
@@ -100,26 +131,44 @@ func (s *Store) SaveInterview(ctx context.Context, i discovery.Interview) error 
 	if err != nil {
 		return fmt.Errorf("discovery interview %s: %w", i.ID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // Interview возвращает интервью.
-func (s *Store) Interview(ctx context.Context, id kernel.ID) (discovery.Interview, error) {
+func (s *Store) Interview(ctx context.Context, sc authz.Scope, id kernel.ID) (discovery.Interview, error) {
+	if !sc.Valid() {
+		return discovery.Interview{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetInterview(ctx, id)
 	if err != nil {
 		return discovery.Interview{}, fmt.Errorf("discovery interview %s: %w", id, pgdb.MapError(err))
+	}
+	if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+		return discovery.Interview{}, kernel.ErrForbidden
 	}
 	return interviewFromRow(r), nil
 }
 
 // Interviews возвращает интервью продукта (NilID — все) в порядке создания.
-func (s *Store) Interviews(ctx context.Context, productID kernel.ID) ([]discovery.Interview, error) {
+func (s *Store) Interviews(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]discovery.Interview, error) {
+	if productID != kernel.NilID && !sc.Allows(authz.ActionReadPrivate, productID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListInterviews(ctx, pgdb.NullID(productID))
 	if err != nil {
 		return nil, fmt.Errorf("discovery interviews: %w", pgdb.MapError(err))
 	}
 	out := make([]discovery.Interview, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+			continue
+		}
 		out = append(out, interviewFromRow(r))
 	}
 	return out, nil
@@ -134,8 +183,14 @@ func interviewFromRow(r db.DiscoveryInterview) discovery.Interview {
 }
 
 // SaveInsight создаёт или обновляет инсайт.
-func (s *Store) SaveInsight(ctx context.Context, i discovery.Insight) error {
-	err := s.q(ctx).UpsertInsight(ctx, db.UpsertInsightParams{
+func (s *Store) SaveInsight(ctx context.Context, sc authz.Scope, i discovery.Insight) error {
+	if i.ProductID == kernel.NilID || sc.Product(i.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteDiscovery, i.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
+	n, err := s.q(ctx).UpsertInsight(ctx, db.UpsertInsightParams{
 		ID: i.ID, ProductID: i.ProductID, Text: i.Text, InterviewID: pgdb.NullID(i.InterviewID),
 		HypothesisIds: pgdb.IDs(i.HypothesisIDs), SignalIds: pgdb.IDs(i.SignalIDs), Confidence: string(i.Confidence),
 		CreatedBy: i.CreatedBy, CreatedAt: i.CreatedAt.UTC(), UpdatedAt: i.UpdatedAt.UTC(),
@@ -143,20 +198,35 @@ func (s *Store) SaveInsight(ctx context.Context, i discovery.Insight) error {
 	if err != nil {
 		return fmt.Errorf("discovery insight %s: %w", i.ID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // Insight возвращает инсайт.
-func (s *Store) Insight(ctx context.Context, id kernel.ID) (discovery.Insight, error) {
+func (s *Store) Insight(ctx context.Context, sc authz.Scope, id kernel.ID) (discovery.Insight, error) {
+	if !sc.Valid() {
+		return discovery.Insight{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetInsight(ctx, id)
 	if err != nil {
 		return discovery.Insight{}, fmt.Errorf("discovery insight %s: %w", id, pgdb.MapError(err))
+	}
+	if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+		return discovery.Insight{}, kernel.ErrForbidden
 	}
 	return insightFromRow(r), nil
 }
 
 // Insights возвращает инсайты по фильтру в порядке создания.
-func (s *Store) Insights(ctx context.Context, f discovery.InsightFilter) ([]discovery.Insight, error) {
+func (s *Store) Insights(ctx context.Context, sc authz.Scope, f discovery.InsightFilter) ([]discovery.Insight, error) {
+	if f.ProductID != kernel.NilID && !sc.Allows(authz.ActionReadPrivate, f.ProductID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListInsights(ctx, db.ListInsightsParams{
 		ProductID: pgdb.NullID(f.ProductID), InterviewID: pgdb.NullID(f.InterviewID),
 		HypothesisID: pgdb.NullID(f.HypothesisID), SignalID: pgdb.NullID(f.SignalID),
@@ -166,6 +236,9 @@ func (s *Store) Insights(ctx context.Context, f discovery.InsightFilter) ([]disc
 	}
 	out := make([]discovery.Insight, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+			continue
+		}
 		out = append(out, insightFromRow(r))
 	}
 	return out, nil
@@ -180,8 +253,14 @@ func insightFromRow(r db.DiscoveryInsight) discovery.Insight {
 }
 
 // SaveEvidence создаёт или обновляет evidence.
-func (s *Store) SaveEvidence(ctx context.Context, e discovery.Evidence) error {
-	err := s.q(ctx).UpsertEvidence(ctx, db.UpsertEvidenceParams{
+func (s *Store) SaveEvidence(ctx context.Context, sc authz.Scope, e discovery.Evidence) error {
+	if e.ProductID == kernel.NilID || sc.Product(e.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteDiscovery, e.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
+	n, err := s.q(ctx).UpsertEvidence(ctx, db.UpsertEvidenceParams{
 		ID: e.ID, ProductID: e.ProductID, Source: e.Source, SourceRef: e.SourceRef, Date: pgdb.ToDate(e.Date),
 		Trust: string(e.Trust), Verification: string(e.Verification), Sha256: e.SHA256,
 		HypothesisID: pgdb.NullID(e.HypothesisID), InsightID: pgdb.NullID(e.InsightID), FeatureID: pgdb.NullID(e.FeatureID),
@@ -190,20 +269,35 @@ func (s *Store) SaveEvidence(ctx context.Context, e discovery.Evidence) error {
 	if err != nil {
 		return fmt.Errorf("discovery evidence %s: %w", e.ID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // Evidence возвращает evidence.
-func (s *Store) Evidence(ctx context.Context, id kernel.ID) (discovery.Evidence, error) {
+func (s *Store) Evidence(ctx context.Context, sc authz.Scope, id kernel.ID) (discovery.Evidence, error) {
+	if !sc.Valid() {
+		return discovery.Evidence{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetEvidence(ctx, id)
 	if err != nil {
 		return discovery.Evidence{}, fmt.Errorf("discovery evidence %s: %w", id, pgdb.MapError(err))
+	}
+	if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+		return discovery.Evidence{}, kernel.ErrForbidden
 	}
 	return evidenceFromRow(r), nil
 }
 
 // EvidenceList возвращает evidence по фильтру в порядке создания.
-func (s *Store) EvidenceList(ctx context.Context, f discovery.EvidenceFilter) ([]discovery.Evidence, error) {
+func (s *Store) EvidenceList(ctx context.Context, sc authz.Scope, f discovery.EvidenceFilter) ([]discovery.Evidence, error) {
+	if f.ProductID != kernel.NilID && !sc.Allows(authz.ActionReadPrivate, f.ProductID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListEvidence(ctx, db.ListEvidenceParams{
 		ProductID: pgdb.NullID(f.ProductID), HypothesisID: pgdb.NullID(f.HypothesisID), InsightID: pgdb.NullID(f.InsightID),
 		FeatureID: pgdb.NullID(f.FeatureID), Verification: string(f.Verification),
@@ -213,6 +307,9 @@ func (s *Store) EvidenceList(ctx context.Context, f discovery.EvidenceFilter) ([
 	}
 	out := make([]discovery.Evidence, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+			continue
+		}
 		out = append(out, evidenceFromRow(r))
 	}
 	return out, nil
@@ -228,7 +325,10 @@ func evidenceFromRow(r db.DiscoveryEvidence) discovery.Evidence {
 }
 
 // SaveFieldDef создаёт или обновляет определение поля; ключ уникален в пределах сущности.
-func (s *Store) SaveFieldDef(ctx context.Context, d discovery.CustomFieldDef) error {
+func (s *Store) SaveFieldDef(ctx context.Context, sc authz.Scope, d discovery.CustomFieldDef) error {
+	if !sc.Allows(authz.ActionAdminSettings, kernel.NilID) {
+		return kernel.ErrForbidden
+	}
 	err := s.q(ctx).UpsertFieldDef(ctx, db.UpsertFieldDefParams{
 		ID: d.ID, Entity: string(d.Entity), Key: d.Key, Label: d.Label, Type: string(d.Type), Options: pgdb.Strings(d.Options), Required: d.Required,
 	})
@@ -239,7 +339,10 @@ func (s *Store) SaveFieldDef(ctx context.Context, d discovery.CustomFieldDef) er
 }
 
 // FieldDefs возвращает определения полей сущности в порядке создания.
-func (s *Store) FieldDefs(ctx context.Context, e discovery.Entity) ([]discovery.CustomFieldDef, error) {
+func (s *Store) FieldDefs(ctx context.Context, sc authz.Scope, e discovery.Entity) ([]discovery.CustomFieldDef, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListFieldDefs(ctx, string(e))
 	if err != nil {
 		return nil, fmt.Errorf("discovery field defs %s: %w", e, pgdb.MapError(err))
@@ -255,7 +358,10 @@ func (s *Store) FieldDefs(ctx context.Context, e discovery.Entity) ([]discovery.
 }
 
 // SaveStatusDef создаёт или обновляет пользовательский статус.
-func (s *Store) SaveStatusDef(ctx context.Context, d discovery.CustomStatusDef) error {
+func (s *Store) SaveStatusDef(ctx context.Context, sc authz.Scope, d discovery.CustomStatusDef) error {
+	if !sc.Allows(authz.ActionAdminSettings, kernel.NilID) {
+		return kernel.ErrForbidden
+	}
 	err := s.q(ctx).UpsertStatusDef(ctx, db.UpsertStatusDefParams{Entity: string(d.Entity), Key: d.Key, Label: d.Label, Category: d.Category})
 	if err != nil {
 		return fmt.Errorf("discovery status def %s.%s: %w", d.Entity, d.Key, pgdb.MapError(err))
@@ -264,7 +370,10 @@ func (s *Store) SaveStatusDef(ctx context.Context, d discovery.CustomStatusDef) 
 }
 
 // StatusDefs возвращает пользовательские статусы сущности в порядке создания.
-func (s *Store) StatusDefs(ctx context.Context, e discovery.Entity) ([]discovery.CustomStatusDef, error) {
+func (s *Store) StatusDefs(ctx context.Context, sc authz.Scope, e discovery.Entity) ([]discovery.CustomStatusDef, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListStatusDefs(ctx, string(e))
 	if err != nil {
 		return nil, fmt.Errorf("discovery status defs %s: %w", e, pgdb.MapError(err))

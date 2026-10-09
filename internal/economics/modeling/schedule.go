@@ -38,7 +38,7 @@ func (s *Service) RunScheduledImports(ctx context.Context, sc authz.Scope, templ
 	if len(files) == 0 {
 		return nil, nil
 	}
-	history, err := s.store.Batches(ctx, Period{})
+	history, err := s.store.Batches(ctx, sc, Period{})
 	if err != nil {
 		return nil, fmt.Errorf("batches: %w", err)
 	}

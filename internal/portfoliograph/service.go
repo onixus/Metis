@@ -9,13 +9,14 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
 // CommitmentChecker — порт модуля обязательств (этап 2): какие обязательства нарушает сдвиг.
 type CommitmentChecker interface {
-	AffectedCommitments(ctx context.Context, affected []AffectedFeature, contracts []kernel.ID) ([]kernel.ID, error)
+	AffectedCommitments(ctx context.Context, sc authz.Scope, affected []AffectedFeature, contracts []kernel.ID) ([]kernel.ID, error)
 }
 
 // Auditor — порт журнала аудита (AD-04): изменения дат фиксируются в домене, откуда бы они ни пришли.
@@ -56,7 +57,7 @@ func (s *Service) WithAuditor(a Auditor) *Service {
 
 // Load загружает граф из хранилища в память.
 func (s *Service) Load(ctx context.Context) error {
-	snap, err := s.store.Load(ctx)
+	snap, err := s.store.Load(ctx, identityaccess.ServiceScope("graph-snapshot"))
 	if err != nil {
 		return fmt.Errorf("portfoliograph load: %w", err)
 	}
@@ -203,7 +204,7 @@ func (s *Service) CreateProduct(ctx context.Context, sc authz.Scope, in ProductI
 	if in.Description != nil {
 		p.Description = *in.Description
 	}
-	if err := s.store.SaveProduct(ctx, p); err != nil {
+	if err := s.store.SaveProduct(ctx, sc, p); err != nil {
 		return Product{}, fmt.Errorf("save product: %w", err)
 	}
 	s.g.putProduct(p)
@@ -244,7 +245,7 @@ func (s *Service) UpdateProduct(ctx context.Context, sc authz.Scope, id kernel.I
 	}
 	upd.SSDLCCertified, upd.HubManual = in.SSDLCCertified, in.HubManual
 	upd.UpdatedAt = s.clock.Now()
-	if err := s.store.SaveProduct(ctx, upd); err != nil {
+	if err := s.store.SaveProduct(ctx, sc, upd); err != nil {
 		return Product{}, fmt.Errorf("save product: %w", err)
 	}
 	s.g.putProduct(upd)
@@ -279,7 +280,7 @@ func (s *Service) DeleteProduct(ctx context.Context, sc authz.Scope, id kernel.I
 		sort.Strings(names)
 		return fmt.Errorf("%w: продукт участвует в контрактах: %s", kernel.ErrConflict, strings.Join(names, ", "))
 	}
-	if err := s.store.DeleteProduct(ctx, id); err != nil {
+	if err := s.store.DeleteProduct(ctx, sc, id); err != nil {
 		return fmt.Errorf("delete product: %w", err)
 	}
 	s.g.removeProduct(id)
@@ -384,7 +385,7 @@ func (s *Service) CreateCapability(ctx context.Context, sc authz.Scope, productI
 		return Capability{}, kernel.NotFound("product", productID)
 	}
 	c := Capability{ID: kernel.NewID(), ProductID: productID, Name: name}
-	if err := s.store.SaveCapability(ctx, c); err != nil {
+	if err := s.store.SaveCapability(ctx, sc, c); err != nil {
 		return Capability{}, fmt.Errorf("save capability: %w", err)
 	}
 	s.g.putCapability(c)
@@ -432,7 +433,7 @@ func (s *Service) CreateFeature(ctx context.Context, sc authz.Scope, productID k
 	if f.Status == "" {
 		f.Status = FeatureIdea
 	}
-	if err := s.store.SaveFeature(ctx, f); err != nil {
+	if err := s.store.SaveFeature(ctx, sc, f); err != nil {
 		return Feature{}, fmt.Errorf("save feature: %w", err)
 	}
 	s.g.putFeature(f)
@@ -471,7 +472,7 @@ func (s *Service) UpdateFeature(ctx context.Context, sc authz.Scope, id kernel.I
 		upd.ExternalKey = in.ExternalKey
 	}
 	upd.UpdatedAt = s.clock.Now()
-	if err := s.store.SaveFeature(ctx, upd); err != nil {
+	if err := s.store.SaveFeature(ctx, sc, upd); err != nil {
 		return Feature{}, fmt.Errorf("save feature: %w", err)
 	}
 	s.g.putFeature(upd)
@@ -495,7 +496,7 @@ func (s *Service) SetFeatureOwnValue(ctx context.Context, sc authz.Scope, id ker
 	upd := *f
 	upd.OwnValue = v
 	upd.UpdatedAt = s.clock.Now()
-	if err := s.store.SaveFeature(ctx, upd); err != nil {
+	if err := s.store.SaveFeature(ctx, identityaccess.ServiceScope("signal-value"), upd); err != nil {
 		return fmt.Errorf("save feature: %w", err)
 	}
 	s.g.putFeature(upd)
@@ -598,7 +599,7 @@ func (s *Service) CreateRequirement(ctx context.Context, sc authz.Scope, feature
 		return Requirement{}, err
 	}
 	r := Requirement{ID: kernel.NewID(), ProductID: f.ProductID, FeatureID: featureID, Text: text}
-	if err := s.store.SaveRequirement(ctx, r); err != nil {
+	if err := s.store.SaveRequirement(ctx, sc, r); err != nil {
 		return Requirement{}, fmt.Errorf("save requirement: %w", err)
 	}
 	s.g.putRequirement(r)
@@ -689,7 +690,7 @@ func (s *Service) CreateLink(ctx context.Context, sc authz.Scope, in LinkInput) 
 			return Link{}, &CycleError{Path: path}
 		}
 	}
-	if err := s.store.SaveLink(ctx, l); err != nil {
+	if err := s.store.SaveLink(ctx, sc, l); err != nil {
 		return Link{}, fmt.Errorf("save link: %w", err)
 	}
 	s.g.putLink(l)
@@ -716,7 +717,7 @@ func (s *Service) DeleteLink(ctx context.Context, sc authz.Scope, id kernel.ID) 
 	if err := sc.Require(authz.ActionWriteGraph, l.FromProductID); err != nil {
 		return err
 	}
-	if err := s.store.DeleteLink(ctx, id); err != nil {
+	if err := s.store.DeleteLink(ctx, sc, id); err != nil {
 		return fmt.Errorf("delete link: %w", err)
 	}
 	wasFeature := l.IsFeatureLevel()
@@ -850,12 +851,12 @@ func (s *Service) SaveContract(ctx context.Context, sc authz.Scope, id kernel.ID
 			Criticality: c.Criticality, ContractID: c.ID, CreatedAt: now,
 		})
 	}
-	if err := s.store.SaveContract(ctx, c); err != nil {
+	if err := s.store.SaveContract(ctx, sc, c); err != nil {
 		return IntegrationContract{}, fmt.Errorf("save contract: %w", err)
 	}
 	s.g.putContract(c)
 	for _, l := range newLinks {
-		if err := s.store.SaveLink(ctx, l); err != nil {
+		if err := s.store.SaveLink(ctx, sc, l); err != nil {
 			return IntegrationContract{}, fmt.Errorf("save link: %w", err)
 		}
 		s.g.putLink(l)
@@ -902,7 +903,7 @@ func (s *Service) SetContractSignalValue(ctx context.Context, sc authz.Scope, id
 	upd := *c
 	upd.SignalValue = v
 	upd.UpdatedAt = s.clock.Now()
-	if err := s.store.SaveContract(ctx, upd); err != nil {
+	if err := s.store.SaveContract(ctx, identityaccess.ServiceScope("contract-value"), upd); err != nil {
 		return fmt.Errorf("save contract: %w", err)
 	}
 	s.g.putContract(upd)
@@ -952,7 +953,7 @@ func (s *Service) recomputeLocked(ctx context.Context, actor string) error {
 	if err != nil {
 		return fmt.Errorf("rollup: %w", err)
 	}
-	if err := s.store.SaveRollup(ctx, values); err != nil {
+	if err := s.store.SaveRollup(ctx, identityaccess.ServiceScope("graph-rollup"), values); err != nil {
 		return fmt.Errorf("save rollup: %w", err)
 	}
 	s.rollup = indexRollup(values)
@@ -1046,7 +1047,7 @@ func (s *Service) UpdateSettings(ctx context.Context, sc authz.Scope, st Setting
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if err := s.store.SaveSettings(ctx, st); err != nil {
+	if err := s.store.SaveSettings(ctx, sc, st); err != nil {
 		return fmt.Errorf("save settings: %w", err)
 	}
 	s.g.settings = st
@@ -1082,7 +1083,7 @@ func (s *Service) ShiftFeatureDate(ctx context.Context, sc authz.Scope, id kerne
 	upd.PlannedDate = newDate
 	upd.Affected, upd.AffectedBy, upd.ImpliedDate = false, kernel.NilID, kernel.Date{}
 	upd.UpdatedAt = s.clock.Now()
-	if err := s.store.SaveFeature(ctx, upd); err != nil {
+	if err := s.store.SaveFeature(ctx, sc, upd); err != nil {
 		return ShiftResult{}, fmt.Errorf("save feature: %w", err)
 	}
 	s.g.putFeature(upd)
@@ -1095,7 +1096,7 @@ func (s *Service) ShiftFeatureDate(ctx context.Context, sc authz.Scope, id kerne
 			u := *dep
 			u.Affected, u.AffectedBy, u.ImpliedDate = true, a.ViaFeature, a.ImpliedDate
 			u.UpdatedAt = s.clock.Now()
-			if err := s.store.SaveFeature(ctx, u); err != nil {
+			if err := s.store.SaveFeature(ctx, identityaccess.ServiceScope("graph-propagation"), u); err != nil {
 				return ShiftResult{}, fmt.Errorf("save feature: %w", err)
 			}
 			s.g.putFeature(u)
@@ -1115,7 +1116,7 @@ func (s *Service) ShiftFeatureDate(ctx context.Context, sc authz.Scope, id kerne
 	}
 	sort.Slice(res.Contracts, func(i, j int) bool { return res.Contracts[i].String() < res.Contracts[j].String() })
 	if s.commitments != nil {
-		ids, err := s.commitments.AffectedCommitments(ctx, res.Affected, res.Contracts)
+		ids, err := s.commitments.AffectedCommitments(ctx, sc, res.Affected, res.Contracts)
 		if err != nil {
 			return ShiftResult{}, fmt.Errorf("commitments: %w", err)
 		}

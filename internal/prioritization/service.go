@@ -131,7 +131,7 @@ func (s *Service) CreateModel(ctx context.Context, sc authz.Scope, in ModelInput
 	now := s.clock.Now()
 	m := ScoringModel{ID: kernel.NewID(), ProductID: in.ProductID, Name: in.Name, Type: in.Type,
 		Formula: formula, Inputs: inputs, CreatedAt: now, UpdatedAt: now}
-	if err := s.store.SaveModel(ctx, m); err != nil {
+	if err := s.store.SaveModel(ctx, sc, m); err != nil {
 		return ScoringModel{}, fmt.Errorf("save model: %w", err)
 	}
 	return m, s.emit(ctx, EventModelSaved, m.ID, m.ProductID, sc.Subject(), m)
@@ -142,7 +142,7 @@ func (s *Service) UpdateModel(ctx context.Context, sc authz.Scope, id kernel.ID,
 	if !sc.Valid() {
 		return ScoringModel{}, kernel.ErrForbidden
 	}
-	m, err := s.store.Model(ctx, id)
+	m, err := s.store.Model(ctx, sc, id)
 	if err != nil {
 		return ScoringModel{}, err
 	}
@@ -160,7 +160,7 @@ func (s *Service) UpdateModel(ctx context.Context, sc authz.Scope, id kernel.ID,
 		return ScoringModel{}, err
 	}
 	m.Name, m.Type, m.Formula, m.Inputs, m.UpdatedAt = in.Name, in.Type, formula, inputs, s.clock.Now()
-	if err := s.store.SaveModel(ctx, m); err != nil {
+	if err := s.store.SaveModel(ctx, sc, m); err != nil {
 		return ScoringModel{}, fmt.Errorf("save model: %w", err)
 	}
 	return m, s.emit(ctx, EventModelSaved, m.ID, m.ProductID, sc.Subject(), m)
@@ -171,7 +171,7 @@ func (s *Service) Models(ctx context.Context, sc authz.Scope) ([]ScoringModel, e
 	if !sc.Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	all, err := s.store.Models(ctx)
+	all, err := s.store.Models(ctx, sc)
 	if err != nil {
 		return nil, fmt.Errorf("load models: %w", err)
 	}
@@ -185,8 +185,8 @@ func (s *Service) Models(ctx context.Context, sc authz.Scope) ([]ScoringModel, e
 }
 
 // modelFor возвращает модель, проверяя, что она применима к продукту.
-func (s *Service) modelFor(ctx context.Context, modelID, productID kernel.ID) (ScoringModel, error) {
-	m, err := s.store.Model(ctx, modelID)
+func (s *Service) modelFor(ctx context.Context, sc authz.Scope, modelID, productID kernel.ID) (ScoringModel, error) {
+	m, err := s.store.Model(ctx, sc, modelID)
 	if err != nil {
 		return ScoringModel{}, err
 	}
@@ -203,7 +203,7 @@ func (s *Service) SetFeatureInputs(ctx context.Context, sc authz.Scope, modelID,
 	if err := sc.Require(authz.ActionWritePriority, productID); err != nil {
 		return FeatureScoreInput{}, err
 	}
-	m, err := s.modelFor(ctx, modelID, productID)
+	m, err := s.modelFor(ctx, sc, modelID, productID)
 	if err != nil {
 		return FeatureScoreInput{}, err
 	}
@@ -218,7 +218,7 @@ func (s *Service) SetFeatureInputs(ctx context.Context, sc authz.Scope, modelID,
 	}
 	in := FeatureScoreInput{ModelID: modelID, FeatureID: featureID, ProductID: productID,
 		Values: values, UpdatedAt: s.clock.Now(), UpdatedBy: sc.Subject()}
-	if err := s.store.SaveInputs(ctx, in); err != nil {
+	if err := s.store.SaveInputs(ctx, sc, in); err != nil {
 		return FeatureScoreInput{}, fmt.Errorf("save inputs: %w", err)
 	}
 	return in, s.emit(ctx, EventInputsSet, featureID, productID, sc.Subject(), in)
@@ -307,7 +307,7 @@ func (s *Service) Score(ctx context.Context, sc authz.Scope, modelID, featureID 
 	if !sc.Valid() {
 		return ScoreResult{}, kernel.ErrForbidden
 	}
-	in, err := s.store.Inputs(ctx, modelID, featureID)
+	in, err := s.store.Inputs(ctx, sc, modelID, featureID)
 	if err != nil {
 		if errors.Is(err, kernel.ErrNotFound) {
 			// не раскрываем существование фичи чужого продукта
@@ -318,7 +318,7 @@ func (s *Service) Score(ctx context.Context, sc authz.Scope, modelID, featureID 
 	if err := sc.Require(authz.ActionReadStrategic, in.ProductID); err != nil {
 		return ScoreResult{}, err
 	}
-	m, err := s.modelFor(ctx, modelID, in.ProductID)
+	m, err := s.modelFor(ctx, sc, modelID, in.ProductID)
 	if err != nil {
 		return ScoreResult{}, err
 	}
@@ -345,7 +345,7 @@ func (s *Service) Rank(ctx context.Context, sc authz.Scope, modelID, productID k
 	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
 		return RankingResult{}, err
 	}
-	m, err := s.modelFor(ctx, modelID, productID)
+	m, err := s.modelFor(ctx, sc, modelID, productID)
 	if err != nil {
 		return RankingResult{}, err
 	}
@@ -353,7 +353,7 @@ func (s *Service) Rank(ctx context.Context, sc authz.Scope, modelID, productID k
 	if err != nil {
 		return RankingResult{}, err
 	}
-	inputs, err := s.store.InputsByProduct(ctx, modelID, productID)
+	inputs, err := s.store.InputsByProduct(ctx, sc, modelID, productID)
 	if err != nil {
 		return RankingResult{}, fmt.Errorf("load inputs: %w", err)
 	}
@@ -363,7 +363,7 @@ func (s *Service) Rank(ctx context.Context, sc authz.Scope, modelID, productID k
 		if err != nil {
 			return RankingResult{}, err
 		}
-		mandatory, err := s.isMandatory(ctx, in.FeatureID)
+		mandatory, err := s.isMandatory(ctx, sc, in.FeatureID)
 		if err != nil {
 			return RankingResult{}, err
 		}
@@ -389,8 +389,8 @@ func sortScores(out []ScoreResult) {
 
 // ---- Регуляторно обязательные фичи (PR-04) ----
 
-func (s *Service) isMandatory(ctx context.Context, featureID kernel.ID) (bool, error) {
-	fl, err := s.store.Flags(ctx, featureID)
+func (s *Service) isMandatory(ctx context.Context, sc authz.Scope, featureID kernel.ID) (bool, error) {
+	fl, err := s.store.Flags(ctx, sc, featureID)
 	if err != nil {
 		if kernel.IsNotFound(err) {
 			return false, nil
@@ -412,14 +412,14 @@ func (s *Service) SetRegulatoryMandatory(ctx context.Context, sc authz.Scope, pr
 	if on && strings.TrimSpace(reason) == "" {
 		return FeatureFlags{}, kernel.Invalid("reason", "основание регуляторной обязательности обязательно")
 	}
-	if existing, err := s.store.Flags(ctx, featureID); err == nil && existing.ProductID != productID {
+	if existing, err := s.store.Flags(ctx, sc, featureID); err == nil && existing.ProductID != productID {
 		return FeatureFlags{}, fmt.Errorf("%w: фича %s принадлежит другому продукту", kernel.ErrValidation, featureID)
 	} else if err != nil && !kernel.IsNotFound(err) {
 		return FeatureFlags{}, fmt.Errorf("load flags: %w", err)
 	}
 	fl := FeatureFlags{FeatureID: featureID, ProductID: productID, RegulatoryMandatory: on, Reason: reason,
 		SetBy: sc.Subject(), SetAt: s.clock.Now()}
-	if err := s.store.SaveFlags(ctx, fl); err != nil {
+	if err := s.store.SaveFlags(ctx, sc, fl); err != nil {
 		return FeatureFlags{}, fmt.Errorf("save flags: %w", err)
 	}
 	return fl, s.emit(ctx, EventFlagsSet, featureID, productID, sc.Subject(), fl)
@@ -430,7 +430,7 @@ func (s *Service) Flags(ctx context.Context, sc authz.Scope, productID, featureI
 	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
 		return FeatureFlags{}, err
 	}
-	fl, err := s.store.Flags(ctx, featureID)
+	fl, err := s.store.Flags(ctx, sc, featureID)
 	if err != nil {
 		if kernel.IsNotFound(err) {
 			return FeatureFlags{FeatureID: featureID, ProductID: productID}, nil
@@ -459,7 +459,7 @@ func (s *Service) SetDevCost(ctx context.Context, sc authz.Scope, productID, fea
 	if cost.Amount != 0 && cost.Currency == "" {
 		return FeatureCost{}, kernel.Invalid("dev_cost", "код валюты обязателен")
 	}
-	if err := s.store.SaveDevCost(ctx, productID, featureID, cost); err != nil {
+	if err := s.store.SaveDevCost(ctx, sc, productID, featureID, cost); err != nil {
 		return FeatureCost{}, fmt.Errorf("save dev cost: %w", err)
 	}
 	fc, err := s.cost(ctx, sc, productID, featureID)
@@ -481,7 +481,7 @@ func (s *Service) Cost(ctx context.Context, sc authz.Scope, productID, featureID
 // cost собирает стоимость без проверки прав (вызывающий уже проверил доступ к продукту фичи).
 func (s *Service) cost(ctx context.Context, sc authz.Scope, productID, featureID kernel.ID) (FeatureCost, error) {
 	fc := FeatureCost{FeatureID: featureID, ProductID: productID}
-	dev, err := s.store.DevCost(ctx, featureID)
+	dev, err := s.store.DevCost(ctx, sc, featureID)
 	if err != nil && !kernel.IsNotFound(err) {
 		return FeatureCost{}, fmt.Errorf("load dev cost: %w", err)
 	}

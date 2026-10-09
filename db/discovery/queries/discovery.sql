@@ -1,10 +1,11 @@
--- name: UpsertHypothesis :exec
+-- name: UpsertHypothesis :execrows
 INSERT INTO discovery.hypotheses (id, product_id, title, statement, assumptions, confirmation_criterion, status, resolution, feature_id, custom_fields, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, title = EXCLUDED.title, statement = EXCLUDED.statement,
   assumptions = EXCLUDED.assumptions, confirmation_criterion = EXCLUDED.confirmation_criterion, status = EXCLUDED.status,
   resolution = EXCLUDED.resolution, feature_id = EXCLUDED.feature_id, custom_fields = EXCLUDED.custom_fields,
-  created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at;
+  created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE discovery.hypotheses.product_id = EXCLUDED.product_id;
 
 -- name: GetHypothesis :one
 SELECT * FROM discovery.hypotheses WHERE id = $1;
@@ -16,12 +17,13 @@ WHERE (sqlc.narg('product_id')::uuid IS NULL OR product_id = sqlc.narg('product_
   AND (cardinality(@statuses::text[]) = 0 OR status = ANY(@statuses::text[]))
 ORDER BY created_at, id;
 
--- name: UpsertInterview :exec
+-- name: UpsertInterview :execrows
 INSERT INTO discovery.interviews (id, product_id, account_id, segment, date, participants, notes, hypothesis_ids, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, account_id = EXCLUDED.account_id, segment = EXCLUDED.segment,
   date = EXCLUDED.date, participants = EXCLUDED.participants, notes = EXCLUDED.notes, hypothesis_ids = EXCLUDED.hypothesis_ids,
-  created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at;
+  created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE discovery.interviews.product_id = EXCLUDED.product_id;
 
 -- name: GetInterview :one
 SELECT * FROM discovery.interviews WHERE id = $1;
@@ -31,12 +33,13 @@ SELECT * FROM discovery.interviews
 WHERE (sqlc.narg('product_id')::uuid IS NULL OR product_id = sqlc.narg('product_id')::uuid)
 ORDER BY created_at, id;
 
--- name: UpsertInsight :exec
+-- name: UpsertInsight :execrows
 INSERT INTO discovery.insights (id, product_id, text, interview_id, hypothesis_ids, signal_ids, confidence, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, text = EXCLUDED.text, interview_id = EXCLUDED.interview_id,
   hypothesis_ids = EXCLUDED.hypothesis_ids, signal_ids = EXCLUDED.signal_ids, confidence = EXCLUDED.confidence,
-  created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at;
+  created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE discovery.insights.product_id = EXCLUDED.product_id;
 
 -- name: GetInsight :one
 SELECT * FROM discovery.insights WHERE id = $1;
@@ -49,13 +52,14 @@ WHERE (sqlc.narg('product_id')::uuid IS NULL OR product_id = sqlc.narg('product_
   AND (sqlc.narg('signal_id')::uuid IS NULL OR sqlc.narg('signal_id')::uuid = ANY(signal_ids))
 ORDER BY created_at, id;
 
--- name: UpsertEvidence :exec
+-- name: UpsertEvidence :execrows
 INSERT INTO discovery.evidence (id, product_id, source, source_ref, date, trust, verification, sha256, hypothesis_id, insight_id, feature_id, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, source = EXCLUDED.source, source_ref = EXCLUDED.source_ref,
   date = EXCLUDED.date, trust = EXCLUDED.trust, verification = EXCLUDED.verification, sha256 = EXCLUDED.sha256,
   hypothesis_id = EXCLUDED.hypothesis_id, insight_id = EXCLUDED.insight_id, feature_id = EXCLUDED.feature_id,
-  created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at;
+  created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE discovery.evidence.product_id = EXCLUDED.product_id;
 
 -- name: GetEvidence :one
 SELECT * FROM discovery.evidence WHERE id = $1;

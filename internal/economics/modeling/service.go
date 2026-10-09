@@ -184,7 +184,7 @@ func (s *Service) SaveField(ctx context.Context, sc authz.Scope, in FieldInput) 
 			return Field{}, kernel.Invalid("dimensions", fmt.Sprintf("неизвестное измерение %q", d))
 		}
 	}
-	f, err := s.store.Field(ctx, in.Key)
+	f, err := s.store.Field(ctx, sc, in.Key)
 	switch {
 	case err == nil:
 	case kernel.IsNotFound(err):
@@ -201,7 +201,7 @@ func (s *Service) SaveField(ctx context.Context, sc authz.Scope, in FieldInput) 
 		Version: len(f.Versions) + 1, EffectiveFrom: eff, Name: in.Name, Type: in.Type,
 		Currency: in.Currency, Dimensions: in.Dimensions, Source: in.Source, Actor: sc.Subject(), At: now,
 	})
-	if err := s.store.SaveField(ctx, f); err != nil {
+	if err := s.store.SaveField(ctx, sc, f); err != nil {
 		return Field{}, fmt.Errorf("save field: %w", err)
 	}
 	s.logAccess(ctx, sc, "write", "economics.field:"+f.Key, kernel.NilID, map[string]any{"version": len(f.Versions)})
@@ -216,7 +216,7 @@ func (s *Service) Fields(ctx context.Context, sc authz.Scope) ([]Field, error) {
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.Fields(ctx)
+	return s.store.Fields(ctx, sc)
 }
 
 // ---- Показатели (EC-09, EC-10, EC-11) ----
@@ -246,10 +246,10 @@ func (s *Service) SaveMetric(ctx context.Context, sc authz.Scope, in MetricInput
 	if err != nil {
 		return Metric{}, fmt.Errorf("%w: %w", kernel.ErrValidation, err)
 	}
-	if err := s.checkCycle(ctx, in.Key, prog.Refs()); err != nil {
+	if err := s.checkCycle(ctx, sc, in.Key, prog.Refs()); err != nil {
 		return Metric{}, err
 	}
-	m, err := s.store.Metric(ctx, in.Key)
+	m, err := s.store.Metric(ctx, sc, in.Key)
 	switch {
 	case err == nil:
 	case kernel.IsNotFound(err):
@@ -270,7 +270,7 @@ func (s *Service) SaveMetric(ctx context.Context, sc authz.Scope, in MetricInput
 		Version: len(m.Versions) + 1, EffectiveFrom: eff, Name: in.Name, Expression: in.Expression,
 		Refs: prog.Refs(), Currency: currency, Actor: sc.Subject(), At: now,
 	})
-	if err := s.store.SaveMetric(ctx, m); err != nil {
+	if err := s.store.SaveMetric(ctx, sc, m); err != nil {
 		return Metric{}, fmt.Errorf("save metric: %w", err)
 	}
 	s.cache(in.Expression, prog)
@@ -286,7 +286,7 @@ func (s *Service) Metrics(ctx context.Context, sc authz.Scope) ([]Metric, error)
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.Metrics(ctx)
+	return s.store.Metrics(ctx, sc)
 }
 
 func (s *Service) cache(expr string, p *formula.Program) {
@@ -362,7 +362,7 @@ func (s *Service) Value(ctx context.Context, sc authz.Scope, key string, sl Slic
 	if err := s.requireRead(sc, sl.ProductID, authz.FinanceAggregates); err != nil {
 		return decimal.Zero, err
 	}
-	src := s.source(ctx, nil)
+	src := s.source(ctx, sc, nil)
 	v, err := src.Metric(key, sl.formulaSlice())
 	if err != nil {
 		return decimal.Zero, err
@@ -377,7 +377,7 @@ func (s *Service) Explain(ctx context.Context, sc authz.Scope, key string, sl Sl
 	if err := s.requireRead(sc, sl.ProductID, authz.FinanceFull); err != nil {
 		return Explanation{}, err
 	}
-	src := s.source(ctx, nil)
+	src := s.source(ctx, sc, nil)
 	ex, err := src.explainMetric(key, sl.formulaSlice(), 0)
 	if err != nil {
 		return Explanation{}, err
@@ -391,7 +391,7 @@ func (s *Service) CompareVersions(ctx context.Context, sc authz.Scope, key strin
 	if err := s.requireRead(sc, sl.ProductID, authz.FinanceFull); err != nil {
 		return decimal.Zero, decimal.Zero, err
 	}
-	m, err := s.store.Metric(ctx, key)
+	m, err := s.store.Metric(ctx, sc, key)
 	if err != nil {
 		return decimal.Zero, decimal.Zero, err
 	}
@@ -411,7 +411,7 @@ func (s *Service) CompareVersions(ctx context.Context, sc authz.Scope, key strin
 	if err != nil {
 		return decimal.Zero, decimal.Zero, err
 	}
-	src := s.source(ctx, nil)
+	src := s.source(ctx, sc, nil)
 	ra, err := src.evalExpression(va.Expression, sl.formulaSlice())
 	if err != nil {
 		return decimal.Zero, decimal.Zero, err
@@ -434,7 +434,7 @@ func (s *Service) ClosePeriod(ctx context.Context, sc authz.Scope, p Period) err
 	if p.IsZero() {
 		return kernel.Invalid("period", "период обязателен")
 	}
-	if err := s.store.ClosePeriod(ctx, p, sc.Subject()); err != nil {
+	if err := s.store.ClosePeriod(ctx, sc, p, sc.Subject()); err != nil {
 		return fmt.Errorf("close period: %w", err)
 	}
 	s.logAccess(ctx, sc, "write", "economics.period:"+p.String(), kernel.NilID, map[string]any{"action": "close"})
@@ -442,8 +442,8 @@ func (s *Service) ClosePeriod(ctx context.Context, sc authz.Scope, p Period) err
 }
 
 // PeriodClosed сообщает, закрыт ли период.
-func (s *Service) PeriodClosed(ctx context.Context, p Period) (bool, error) {
-	closed, err := s.store.ClosedPeriods(ctx)
+func (s *Service) PeriodClosed(ctx context.Context, sc authz.Scope, p Period) (bool, error) {
+	closed, err := s.store.ClosedPeriods(ctx, sc)
 	if err != nil {
 		return false, fmt.Errorf("closed periods: %w", err)
 	}
@@ -461,18 +461,18 @@ func (s *Service) Recalculate(ctx context.Context, sc authz.Scope, changed formu
 	if err := s.requireWrite(sc, sl.ProductID); err != nil {
 		return nil, err
 	}
-	closed, err := s.PeriodClosed(ctx, sl.Period)
+	closed, err := s.PeriodClosed(ctx, sc, sl.Period)
 	if err != nil {
 		return nil, err
 	}
 	if closed && !force {
 		return nil, fmt.Errorf("%w: период %s закрыт; пересчёт — только явным действием", kernel.ErrConflict, sl.Period)
 	}
-	keys, err := s.Affected(ctx, changed)
+	keys, err := s.Affected(ctx, sc, changed)
 	if err != nil {
 		return nil, err
 	}
-	src := s.source(ctx, nil)
+	src := s.source(ctx, sc, nil)
 	out := make(map[string]decimal.Decimal, len(keys))
 	for _, k := range keys {
 		v, err := src.Metric(k, sl.formulaSlice())
@@ -505,7 +505,7 @@ func (s *Service) SaveTeam(ctx context.Context, sc authz.Scope, key, name string
 	if strings.TrimSpace(name) == "" {
 		return Team{}, kernel.Invalid("name", "название обязательно")
 	}
-	teams, err := s.store.Teams(ctx)
+	teams, err := s.store.Teams(ctx, sc)
 	if err != nil {
 		return Team{}, fmt.Errorf("teams: %w", err)
 	}
@@ -515,7 +515,7 @@ func (s *Service) SaveTeam(ctx context.Context, sc authz.Scope, key, name string
 		}
 	}
 	t := Team{ID: kernel.NewID(), Key: key, Name: name}
-	if err := s.store.SaveTeam(ctx, t); err != nil {
+	if err := s.store.SaveTeam(ctx, sc, t); err != nil {
 		return Team{}, fmt.Errorf("save team: %w", err)
 	}
 	return t, nil
@@ -526,7 +526,7 @@ func (s *Service) Teams(ctx context.Context, sc authz.Scope) ([]Team, error) {
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.Teams(ctx)
+	return s.store.Teams(ctx, sc)
 }
 
 // SetTeamShares задаёт доли команды по продуктам за период вручную (EC-12).
@@ -556,7 +556,7 @@ func (s *Service) setTeamShares(ctx context.Context, sc authz.Scope, teamID kern
 		out = append(out, TeamShare{TeamID: teamID, ProductID: productID, Period: p, Share: share, Source: source})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ProductID.String() < out[j].ProductID.String() })
-	if err := s.store.SaveTeamShares(ctx, out); err != nil {
+	if err := s.store.SaveTeamShares(ctx, sc, out); err != nil {
 		return fmt.Errorf("save team shares: %w", err)
 	}
 	return nil
@@ -567,7 +567,7 @@ func (s *Service) TeamShares(ctx context.Context, sc authz.Scope, p Period) ([]T
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.TeamShares(ctx, p)
+	return s.store.TeamShares(ctx, sc, p)
 }
 
 func checkShares(shares map[kernel.ID]decimal.Decimal) error {
@@ -620,7 +620,7 @@ func (s *Service) SaveAllocationRule(ctx context.Context, sc authz.Scope, in All
 			return AllocationRule{}, kernel.Invalid("shares", "хаб не распределяет затраты на себя")
 		}
 	}
-	rules, err := s.store.AllocationRules(ctx)
+	rules, err := s.store.AllocationRules(ctx, sc)
 	if err != nil {
 		return AllocationRule{}, fmt.Errorf("allocation rules: %w", err)
 	}
@@ -640,7 +640,7 @@ func (s *Service) SaveAllocationRule(ctx context.Context, sc authz.Scope, in All
 		ID: kernel.NewID(), HubProductID: in.HubProductID, Basis: in.Basis, Shares: in.Shares,
 		Consumers: in.Consumers, Version: version + 1, EffectiveFrom: eff, Actor: sc.Subject(), At: now,
 	}
-	if err := s.store.SaveAllocationRule(ctx, r); err != nil {
+	if err := s.store.SaveAllocationRule(ctx, sc, r); err != nil {
 		return AllocationRule{}, fmt.Errorf("save allocation rule: %w", err)
 	}
 	s.logAccess(ctx, sc, "write", "economics.allocation", in.HubProductID, map[string]any{"version": r.Version, "basis": string(r.Basis)})
@@ -655,7 +655,7 @@ func (s *Service) AllocationRules(ctx context.Context, sc authz.Scope) ([]Alloca
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.AllocationRules(ctx)
+	return s.store.AllocationRules(ctx, sc)
 }
 
 // BundleInput — правило атрибуции выручки бандла.
@@ -676,7 +676,7 @@ func (s *Service) SaveBundleRule(ctx context.Context, sc authz.Scope, in BundleI
 	if err := checkShares(in.Shares); err != nil {
 		return BundleRule{}, err
 	}
-	rules, err := s.store.BundleRules(ctx)
+	rules, err := s.store.BundleRules(ctx, sc)
 	if err != nil {
 		return BundleRule{}, fmt.Errorf("bundle rules: %w", err)
 	}
@@ -690,7 +690,7 @@ func (s *Service) SaveBundleRule(ctx context.Context, sc authz.Scope, in BundleI
 	eff := effectiveFrom(in.EffectiveFrom, version, now)
 	r := BundleRule{ID: kernel.NewID(), BundleKey: in.BundleKey, Shares: in.Shares,
 		Version: version + 1, EffectiveFrom: eff, Actor: sc.Subject(), At: now}
-	if err := s.store.SaveBundleRule(ctx, r); err != nil {
+	if err := s.store.SaveBundleRule(ctx, sc, r); err != nil {
 		return BundleRule{}, fmt.Errorf("save bundle rule: %w", err)
 	}
 	s.logAccess(ctx, sc, "write", "economics.bundle:"+r.BundleKey, kernel.NilID, map[string]any{"version": r.Version})
@@ -702,7 +702,7 @@ func (s *Service) BundleRules(ctx context.Context, sc authz.Scope) ([]BundleRule
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.BundleRules(ctx)
+	return s.store.BundleRules(ctx, sc)
 }
 
 // ---- Строки данных ----
@@ -716,7 +716,7 @@ func (s *Service) Facts(ctx context.Context, sc authz.Scope, f FactFilter) ([]Fa
 	if err := s.requireRead(sc, product, authz.FinanceFull); err != nil {
 		return nil, err
 	}
-	rows, err := s.store.Facts(ctx, f)
+	rows, err := s.store.Facts(ctx, sc, f)
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
 	}
@@ -729,7 +729,7 @@ func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string
 	if err := s.requireWrite(sc, sl.ProductID); err != nil {
 		return FactRow{}, err
 	}
-	f, err := s.store.Field(ctx, key)
+	f, err := s.store.Field(ctx, sc, key)
 	if err != nil {
 		return FactRow{}, err
 	}
@@ -740,7 +740,7 @@ func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string
 	if sl.Period.IsZero() {
 		return FactRow{}, kernel.Invalid("period", "период обязателен")
 	}
-	closed, err := s.PeriodClosed(ctx, sl.Period)
+	closed, err := s.PeriodClosed(ctx, sc, sl.Period)
 	if err != nil {
 		return FactRow{}, err
 	}
@@ -748,7 +748,7 @@ func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string
 		return FactRow{}, fmt.Errorf("%w: период %s закрыт", kernel.ErrConflict, sl.Period)
 	}
 	now := s.clock.Now()
-	version, err := s.nextDataVersion(ctx, sl.Period)
+	version, err := s.nextDataVersion(ctx, sc, sl.Period)
 	if err != nil {
 		return FactRow{}, err
 	}
@@ -758,14 +758,14 @@ func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string
 		Period: sl.Period, Item: sl.Item, Value: value, DataVersion: version}
 	// Строки прежней версии переносятся до записи загрузки: иначе действующей
 	// версией периода уже считалась бы новая, ещё пустая.
-	carried, err := s.carriedRows(ctx, sl.Period, version, batch.ID, key, sl)
+	carried, err := s.carriedRows(ctx, sc, sl.Period, version, batch.ID, key, sl)
 	if err != nil {
 		return FactRow{}, err
 	}
-	if err := s.store.SaveBatch(ctx, batch); err != nil {
+	if err := s.store.SaveBatch(ctx, sc, batch); err != nil {
 		return FactRow{}, fmt.Errorf("save batch: %w", err)
 	}
-	if err := s.store.AppendFacts(ctx, append([]FactRow{row}, carried...)); err != nil {
+	if err := s.store.AppendFacts(ctx, sc, append([]FactRow{row}, carried...)); err != nil {
 		return FactRow{}, fmt.Errorf("append facts: %w", err)
 	}
 	s.logAccess(ctx, sc, "write", "economics.value:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()})
@@ -773,8 +773,8 @@ func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string
 }
 
 // carriedRows переносит действующие строки периода в новую версию данных, кроме заменяемой.
-func (s *Service) carriedRows(ctx context.Context, p Period, version int, batchID kernel.ID, replacedKey string, sl Slice) ([]FactRow, error) {
-	prev, err := s.store.Facts(ctx, FactFilter{Period: &p})
+func (s *Service) carriedRows(ctx context.Context, sc authz.Scope, p Period, version int, batchID kernel.ID, replacedKey string, sl Slice) ([]FactRow, error) {
+	prev, err := s.store.Facts(ctx, sc, FactFilter{Period: &p})
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
 	}
@@ -789,8 +789,8 @@ func (s *Service) carriedRows(ctx context.Context, p Period, version int, batchI
 	return carried, nil
 }
 
-func (s *Service) nextDataVersion(ctx context.Context, p Period) (int, error) {
-	batches, err := s.store.Batches(ctx, p)
+func (s *Service) nextDataVersion(ctx context.Context, sc authz.Scope, p Period) (int, error) {
+	batches, err := s.store.Batches(ctx, sc, p)
 	if err != nil {
 		return 0, fmt.Errorf("batches: %w", err)
 	}

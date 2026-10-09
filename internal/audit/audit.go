@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/onixus/metis/internal/identityaccess"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -54,11 +56,11 @@ type Record struct {
 // Store — хранилище записей. Реализации не имеют UPDATE и DELETE (инвариант 8).
 type Store interface {
 	// Last возвращает последнюю запись; kernel.ErrNotFound, если журнал пуст.
-	Last(ctx context.Context) (Record, error)
+	Last(ctx context.Context, sc authz.Scope) (Record, error)
 	// Insert добавляет запись с заданными Seq, PrevHash и Hash.
-	Insert(ctx context.Context, r Record) error
+	Insert(ctx context.Context, sc authz.Scope, r Record) error
 	// Walk перебирает записи по возрастанию Seq.
-	Walk(ctx context.Context, fn func(Record) error) error
+	Walk(ctx context.Context, sc authz.Scope, fn func(Record) error) error
 }
 
 // Logger добавляет записи в журнал.
@@ -80,7 +82,7 @@ func (l *Logger) Append(ctx context.Context, e Entry) (Record, error) {
 	if e.Actor == "" || e.Action == "" {
 		return Record{}, kernel.Invalid("audit", "actor и action обязательны")
 	}
-	prev, err := l.store.Last(ctx)
+	prev, err := l.store.Last(ctx, identityaccess.ServiceScope("journal"))
 	seq := int64(1)
 	prevHash := GenesisHash
 	switch {
@@ -101,7 +103,7 @@ func (l *Logger) Append(ctx context.Context, e Entry) (Record, error) {
 		return Record{}, err
 	}
 	r.Hash = h
-	if err := l.store.Insert(ctx, r); err != nil {
+	if err := l.store.Insert(ctx, identityaccess.ServiceScope("journal"), r); err != nil {
 		return Record{}, fmt.Errorf("audit insert: %w", err)
 	}
 	return r, nil
@@ -132,7 +134,7 @@ func Verify(ctx context.Context, store Store) (VerifyResult, error) {
 	res := VerifyResult{OK: true}
 	prevHash := GenesisHash
 	var expectSeq int64 = 1
-	err := store.Walk(ctx, func(r Record) error {
+	err := store.Walk(ctx, identityaccess.ServiceScope("journal"), func(r Record) error {
 		if !res.OK {
 			return nil
 		}

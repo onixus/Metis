@@ -461,13 +461,14 @@ func (q *Queries) UpsertEmbedding(ctx context.Context, arg UpsertEmbeddingParams
 	return err
 }
 
-const upsertEvidence = `-- name: UpsertEvidence :exec
+const upsertEvidence = `-- name: UpsertEvidence :execrows
 INSERT INTO discovery.evidence (id, product_id, source, source_ref, date, trust, verification, sha256, hypothesis_id, insight_id, feature_id, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, source = EXCLUDED.source, source_ref = EXCLUDED.source_ref,
   date = EXCLUDED.date, trust = EXCLUDED.trust, verification = EXCLUDED.verification, sha256 = EXCLUDED.sha256,
   hypothesis_id = EXCLUDED.hypothesis_id, insight_id = EXCLUDED.insight_id, feature_id = EXCLUDED.feature_id,
   created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE discovery.evidence.product_id = EXCLUDED.product_id
 `
 
 type UpsertEvidenceParams struct {
@@ -487,8 +488,8 @@ type UpsertEvidenceParams struct {
 	UpdatedAt    time.Time
 }
 
-func (q *Queries) UpsertEvidence(ctx context.Context, arg UpsertEvidenceParams) error {
-	_, err := q.db.Exec(ctx, upsertEvidence,
+func (q *Queries) UpsertEvidence(ctx context.Context, arg UpsertEvidenceParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertEvidence,
 		arg.ID,
 		arg.ProductID,
 		arg.Source,
@@ -504,7 +505,10 @@ func (q *Queries) UpsertEvidence(ctx context.Context, arg UpsertEvidenceParams) 
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertFieldDef = `-- name: UpsertFieldDef :exec
@@ -536,13 +540,14 @@ func (q *Queries) UpsertFieldDef(ctx context.Context, arg UpsertFieldDefParams) 
 	return err
 }
 
-const upsertHypothesis = `-- name: UpsertHypothesis :exec
+const upsertHypothesis = `-- name: UpsertHypothesis :execrows
 INSERT INTO discovery.hypotheses (id, product_id, title, statement, assumptions, confirmation_criterion, status, resolution, feature_id, custom_fields, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, title = EXCLUDED.title, statement = EXCLUDED.statement,
   assumptions = EXCLUDED.assumptions, confirmation_criterion = EXCLUDED.confirmation_criterion, status = EXCLUDED.status,
   resolution = EXCLUDED.resolution, feature_id = EXCLUDED.feature_id, custom_fields = EXCLUDED.custom_fields,
   created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE discovery.hypotheses.product_id = EXCLUDED.product_id
 `
 
 type UpsertHypothesisParams struct {
@@ -561,8 +566,8 @@ type UpsertHypothesisParams struct {
 	UpdatedAt             time.Time
 }
 
-func (q *Queries) UpsertHypothesis(ctx context.Context, arg UpsertHypothesisParams) error {
-	_, err := q.db.Exec(ctx, upsertHypothesis,
+func (q *Queries) UpsertHypothesis(ctx context.Context, arg UpsertHypothesisParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertHypothesis,
 		arg.ID,
 		arg.ProductID,
 		arg.Title,
@@ -577,15 +582,19 @@ func (q *Queries) UpsertHypothesis(ctx context.Context, arg UpsertHypothesisPara
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertInsight = `-- name: UpsertInsight :exec
+const upsertInsight = `-- name: UpsertInsight :execrows
 INSERT INTO discovery.insights (id, product_id, text, interview_id, hypothesis_ids, signal_ids, confidence, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, text = EXCLUDED.text, interview_id = EXCLUDED.interview_id,
   hypothesis_ids = EXCLUDED.hypothesis_ids, signal_ids = EXCLUDED.signal_ids, confidence = EXCLUDED.confidence,
   created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE discovery.insights.product_id = EXCLUDED.product_id
 `
 
 type UpsertInsightParams struct {
@@ -601,8 +610,8 @@ type UpsertInsightParams struct {
 	UpdatedAt     time.Time
 }
 
-func (q *Queries) UpsertInsight(ctx context.Context, arg UpsertInsightParams) error {
-	_, err := q.db.Exec(ctx, upsertInsight,
+func (q *Queries) UpsertInsight(ctx context.Context, arg UpsertInsightParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertInsight,
 		arg.ID,
 		arg.ProductID,
 		arg.Text,
@@ -614,15 +623,19 @@ func (q *Queries) UpsertInsight(ctx context.Context, arg UpsertInsightParams) er
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertInterview = `-- name: UpsertInterview :exec
+const upsertInterview = `-- name: UpsertInterview :execrows
 INSERT INTO discovery.interviews (id, product_id, account_id, segment, date, participants, notes, hypothesis_ids, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, account_id = EXCLUDED.account_id, segment = EXCLUDED.segment,
   date = EXCLUDED.date, participants = EXCLUDED.participants, notes = EXCLUDED.notes, hypothesis_ids = EXCLUDED.hypothesis_ids,
   created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE discovery.interviews.product_id = EXCLUDED.product_id
 `
 
 type UpsertInterviewParams struct {
@@ -639,8 +652,8 @@ type UpsertInterviewParams struct {
 	UpdatedAt     time.Time
 }
 
-func (q *Queries) UpsertInterview(ctx context.Context, arg UpsertInterviewParams) error {
-	_, err := q.db.Exec(ctx, upsertInterview,
+func (q *Queries) UpsertInterview(ctx context.Context, arg UpsertInterviewParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertInterview,
 		arg.ID,
 		arg.ProductID,
 		arg.AccountID,
@@ -653,7 +666,10 @@ func (q *Queries) UpsertInterview(ctx context.Context, arg UpsertInterviewParams
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertStatusDef = `-- name: UpsertStatusDef :exec

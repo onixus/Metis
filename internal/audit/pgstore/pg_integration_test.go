@@ -10,6 +10,7 @@ import (
 
 	"github.com/onixus/metis/internal/audit"
 	"github.com/onixus/metis/internal/audit/pgstore"
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/pgdb"
@@ -99,7 +100,7 @@ func TestAD04_PGAuditChainVerify(t *testing.T) {
 func TestAD04_PGStoreRejectsSubMicrosecondTime(t *testing.T) {
 	db := openTestDB(t)
 	r := audit.Record{Seq: 1, At: time.Date(2026, 9, 17, 0, 0, 0, 1, time.UTC), Actor: "a", Action: "b", PrevHash: audit.GenesisHash, Hash: audit.GenesisHash}
-	if err := pgstore.New(db).Insert(context.Background(), r); err == nil {
+	if err := pgstore.New(db).Insert(context.Background(), identityaccess.ServiceScope("journal"), r); err == nil {
 		t.Fatal("Insert с наносекундами должен быть отклонён")
 	}
 }

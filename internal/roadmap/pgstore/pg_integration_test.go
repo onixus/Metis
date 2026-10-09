@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
@@ -51,22 +52,22 @@ func TestRM01_PGStoreItemsAndReleases(t *testing.T) {
 	cert := roadmap.Release{ID: kernel.NewID(), ProductID: product, Name: "R1-cert", Version: "1.0.1", Status: roadmap.ReleaseReadyForCertification,
 		Branch: roadmap.BranchCertified, BaseReleaseID: base.ID, CreatedAt: now.Add(time.Second), UpdatedAt: now.Add(time.Second)}
 	for _, r := range []roadmap.Release{base, cert} {
-		if err := store.SaveRelease(ctx, r); err != nil {
+		if err := store.SaveRelease(ctx, identityaccess.ServiceScope("roadmap-store-test"), r); err != nil {
 			t.Fatal(err)
 		}
 	}
 	base.CompatibilityMatrix = []roadmap.CompatRow{{ContractID: kernel.NewID()}}
-	if err := store.SaveRelease(ctx, base); err != nil {
+	if err := store.SaveRelease(ctx, identityaccess.ServiceScope("roadmap-store-test"), base); err != nil {
 		t.Fatal(err)
 	}
 	base.CompatibilityMatrix = nil // вычисляемое поле не хранится
-	if got, err := store.Release(ctx, base.ID); err != nil || !reflect.DeepEqual(got, base) {
+	if got, err := store.Release(ctx, identityaccess.ServiceScope("roadmap-store-test"), base.ID); err != nil || !reflect.DeepEqual(got, base) {
 		t.Fatalf("Release:\n got %+v\nwant %+v\nerr=%v", got, base, err)
 	}
-	if got, err := store.Release(ctx, cert.ID); err != nil || !reflect.DeepEqual(got, cert) {
+	if got, err := store.Release(ctx, identityaccess.ServiceScope("roadmap-store-test"), cert.ID); err != nil || !reflect.DeepEqual(got, cert) {
 		t.Fatalf("Release cert:\n got %+v\nwant %+v\nerr=%v", got, cert, err)
 	}
-	if list, err := store.Releases(ctx, product); err != nil || len(list) != 2 || list[0].ID != base.ID {
+	if list, err := store.Releases(ctx, identityaccess.ServiceScope("roadmap-store-test"), product); err != nil || len(list) != 2 || list[0].ID != base.ID {
 		t.Fatalf("Releases: %+v err=%v", list, err)
 	}
 	it := roadmap.RoadmapItem{ID: kernel.NewID(), ProductID: product, FeatureID: feature, Title: "Экспорт", Bucket: roadmap.BucketNow,
@@ -76,30 +77,30 @@ func TestRM01_PGStoreItemsAndReleases(t *testing.T) {
 		Audience: authz.AudienceSalesSafe, Status: roadmap.ItemPlanned, Kind: roadmap.KindFix, CommitmentID: commitment,
 		CreatedAt: now.Add(time.Second), UpdatedAt: now.Add(time.Second)}
 	for _, i := range []roadmap.RoadmapItem{it, fix} {
-		if err := store.SaveItem(ctx, i); err != nil {
+		if err := store.SaveItem(ctx, identityaccess.ServiceScope("roadmap-store-test"), i); err != nil {
 			t.Fatal(err)
 		}
 	}
 	it.Title = "Экспорт CSV"
-	if err := store.SaveItem(ctx, it); err != nil {
+	if err := store.SaveItem(ctx, identityaccess.ServiceScope("roadmap-store-test"), it); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Item(ctx, it.ID); err != nil || !reflect.DeepEqual(got, it) {
+	if got, err := store.Item(ctx, identityaccess.ServiceScope("roadmap-store-test"), it.ID); err != nil || !reflect.DeepEqual(got, it) {
 		t.Fatalf("Item:\n got %+v\nwant %+v\nerr=%v", got, it, err)
 	}
-	if list, err := store.Items(ctx, product); err != nil || len(list) != 2 || list[0].ID != it.ID {
+	if list, err := store.Items(ctx, identityaccess.ServiceScope("roadmap-store-test"), product); err != nil || len(list) != 2 || list[0].ID != it.ID {
 		t.Fatalf("Items: %+v err=%v", list, err)
 	}
-	if list, err := store.ItemsByFeature(ctx, feature); err != nil || len(list) != 1 || list[0].ID != it.ID {
+	if list, err := store.ItemsByFeature(ctx, identityaccess.ServiceScope("roadmap-store-test"), feature); err != nil || len(list) != 1 || list[0].ID != it.ID {
 		t.Fatalf("ItemsByFeature: %+v err=%v", list, err)
 	}
-	if got, err := store.ItemByCommitment(ctx, commitment); err != nil || !reflect.DeepEqual(got, fix) {
+	if got, err := store.ItemByCommitment(ctx, identityaccess.ServiceScope("roadmap-store-test"), commitment); err != nil || !reflect.DeepEqual(got, fix) {
 		t.Fatalf("ItemByCommitment: %+v err=%v", got, err)
 	}
-	if _, err := store.ItemByCommitment(ctx, kernel.NewID()); !kernel.IsNotFound(err) {
+	if _, err := store.ItemByCommitment(ctx, identityaccess.ServiceScope("roadmap-store-test"), kernel.NewID()); !kernel.IsNotFound(err) {
 		t.Fatalf("ItemByCommitment missing: %v", err)
 	}
-	if _, err := store.Item(ctx, kernel.NewID()); !kernel.IsNotFound(err) {
+	if _, err := store.Item(ctx, identityaccess.ServiceScope("roadmap-store-test"), kernel.NewID()); !kernel.IsNotFound(err) {
 		t.Fatalf("Item missing: %v", err)
 	}
 }
@@ -110,6 +111,9 @@ func TestRM03_PGDateHistoryAppendOnly(t *testing.T) {
 	store := pgstore.New(db)
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
 	item, product, event := kernel.NewID(), kernel.NewID(), kernel.NewID()
+	if err := store.SaveItem(ctx, identityaccess.ServiceScope("roadmap-store-test"), roadmap.RoadmapItem{ID: item, ProductID: product, Title: "Synthetic item", Audience: authz.AudienceInternal, CreatedAt: now, UpdatedAt: now}); err != nil {
+		t.Fatal(err)
+	}
 	changes := []roadmap.DateChange{
 		{ID: kernel.NewID(), ItemID: item, ProductID: product, OldStart: kernel.DateOf(2026, 10, 1), OldEnd: kernel.DateOf(2026, 11, 1),
 			NewStart: kernel.DateOf(2026, 10, 15), NewEnd: kernel.DateOf(2026, 11, 15), Reason: "сдвиг", Actor: "pm", At: now},
@@ -118,16 +122,16 @@ func TestRM03_PGDateHistoryAppendOnly(t *testing.T) {
 	}
 	err := db.Transact(ctx, func(ctx context.Context) error {
 		for _, ch := range changes {
-			if err := store.AppendDateChange(ctx, ch); err != nil {
+			if err := store.AppendDateChange(ctx, identityaccess.ServiceScope("roadmap-store-test"), ch); err != nil {
 				return err
 			}
 		}
-		return store.MarkEventProcessed(ctx, event)
+		return store.MarkEventProcessed(ctx, identityaccess.ServiceScope("roadmap-store-test"), event)
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.DateHistory(ctx, item); err != nil || !reflect.DeepEqual(got, changes) {
+	if got, err := store.DateHistory(ctx, identityaccess.ServiceScope("roadmap-store-test"), item); err != nil || !reflect.DeepEqual(got, changes) {
 		t.Fatalf("DateHistory:\n got %+v\nwant %+v\nerr=%v", got, changes, err)
 	}
 	if _, err := db.Pool().Exec(ctx, "UPDATE roadmap.date_history SET reason = 'x' WHERE id = $1", changes[0].ID); err == nil {
@@ -136,13 +140,13 @@ func TestRM03_PGDateHistoryAppendOnly(t *testing.T) {
 	if _, err := db.Pool().Exec(ctx, "DELETE FROM roadmap.date_history WHERE id = $1", changes[0].ID); err == nil {
 		t.Fatal("DELETE FROM roadmap.date_history должен быть отклонён триггером")
 	}
-	if ok, err := store.EventProcessed(ctx, event); err != nil || !ok {
+	if ok, err := store.EventProcessed(ctx, identityaccess.ServiceScope("roadmap-store-test"), event); err != nil || !ok {
 		t.Fatalf("EventProcessed: %v err=%v", ok, err)
 	}
-	if ok, err := store.EventProcessed(ctx, kernel.NewID()); err != nil || ok {
+	if ok, err := store.EventProcessed(ctx, identityaccess.ServiceScope("roadmap-store-test"), kernel.NewID()); err != nil || ok {
 		t.Fatalf("EventProcessed unknown: %v err=%v", ok, err)
 	}
-	if err := store.MarkEventProcessed(ctx, event); err != nil {
+	if err := store.MarkEventProcessed(ctx, identityaccess.ServiceScope("roadmap-store-test"), event); err != nil {
 		t.Fatalf("повторная отметка события должна быть идемпотентной: %v", err)
 	}
 }

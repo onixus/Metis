@@ -41,7 +41,7 @@ func (h *ShiftHandler) Handle(ctx context.Context, ev kernel.Event) error {
 	if !h.sc.Valid() {
 		return kernel.ErrForbidden
 	}
-	done, err := h.svc.store.EventProcessed(ctx, ev.ID)
+	done, err := h.svc.store.EventProcessed(ctx, h.sc, ev.ID)
 	if err != nil {
 		return fmt.Errorf("event processed: %w", err)
 	}
@@ -57,7 +57,7 @@ func (h *ShiftHandler) Handle(ctx context.Context, ev kernel.Event) error {
 	if err != nil {
 		return err
 	}
-	if err := h.svc.store.MarkEventProcessed(ctx, ev.ID); err != nil {
+	if err := h.svc.store.MarkEventProcessed(ctx, h.sc, ev.ID); err != nil {
 		return fmt.Errorf("mark event processed: %w", err)
 	}
 	return nil
@@ -91,7 +91,7 @@ func (h *ShiftHandler) checkFeature(ctx context.Context, featureID kernel.ID, ne
 	if featureID == kernel.NilID || newDate.IsZero() {
 		return nil
 	}
-	list, err := h.svc.store.List(ctx, Filter{FeatureID: featureID, Statuses: []Status{StatusActive}})
+	list, err := h.svc.store.List(ctx, h.sc, Filter{FeatureID: featureID, Statuses: []Status{StatusActive}})
 	if err != nil {
 		return fmt.Errorf("list commitments: %w", err)
 	}
@@ -133,7 +133,7 @@ func (h *ShiftHandler) handleRoadmapChange(ctx context.Context, ev kernel.Event)
 			continue
 		}
 		f.Statuses = []Status{StatusActive}
-		list, err := h.svc.store.List(ctx, f)
+		list, err := h.svc.store.List(ctx, h.sc, f)
 		if err != nil {
 			return fmt.Errorf("list commitments: %w", err)
 		}

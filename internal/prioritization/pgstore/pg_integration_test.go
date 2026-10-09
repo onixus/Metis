@@ -11,6 +11,7 @@ import (
 
 	"github.com/shopspring/decimal"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/pgdb"
@@ -50,43 +51,43 @@ func TestPR01_PGStoreModelsAndInputs(t *testing.T) {
 	custom := prioritization.ScoringModel{ID: kernel.NewID(), ProductID: product, Name: "Custom", Type: prioritization.ModelCustom, Formula: "a * arr",
 		Inputs: []string{"a"}, CreatedAt: now.Add(time.Second), UpdatedAt: now.Add(time.Second)}
 	for _, m := range []prioritization.ScoringModel{portfolio, custom} {
-		if err := store.SaveModel(ctx, m); err != nil {
+		if err := store.SaveModel(ctx, repositoryScope(), m); err != nil {
 			t.Fatal(err)
 		}
 	}
 	custom.Name = "Custom v2"
-	if err := store.SaveModel(ctx, custom); err != nil {
+	if err := store.SaveModel(ctx, repositoryScope(), custom); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Model(ctx, portfolio.ID); err != nil || !reflect.DeepEqual(got, portfolio) {
+	if got, err := store.Model(ctx, repositoryScope(), portfolio.ID); err != nil || !reflect.DeepEqual(got, portfolio) {
 		t.Fatalf("Model portfolio: %+v err=%v", got, err)
 	}
-	if got, err := store.Model(ctx, custom.ID); err != nil || !reflect.DeepEqual(got, custom) {
+	if got, err := store.Model(ctx, repositoryScope(), custom.ID); err != nil || !reflect.DeepEqual(got, custom) {
 		t.Fatalf("Model custom: %+v err=%v", got, err)
 	}
-	if models, err := store.Models(ctx); err != nil || len(models) != 2 || models[0].ID != portfolio.ID {
+	if models, err := store.Models(ctx, repositoryScope()); err != nil || len(models) != 2 || models[0].ID != portfolio.ID {
 		t.Fatalf("Models: %+v err=%v", models, err)
 	}
-	if _, err := store.Model(ctx, kernel.NewID()); !kernel.IsNotFound(err) {
+	if _, err := store.Model(ctx, repositoryScope(), kernel.NewID()); !kernel.IsNotFound(err) {
 		t.Fatalf("Model missing: %v", err)
 	}
 	in := prioritization.FeatureScoreInput{ModelID: custom.ID, FeatureID: feature, ProductID: product,
 		Values: map[string]decimal.Decimal{"a": decimal.RequireFromString("1.25")}, UpdatedAt: now, UpdatedBy: "pm"}
-	if err := store.SaveInputs(ctx, in); err != nil {
+	if err := store.SaveInputs(ctx, repositoryScope(), in); err != nil {
 		t.Fatal(err)
 	}
 	in.Values["a"] = decimal.RequireFromString("2.5")
-	if err := store.SaveInputs(ctx, in); err != nil {
+	if err := store.SaveInputs(ctx, repositoryScope(), in); err != nil {
 		t.Fatal(err)
 	}
-	got, err := store.Inputs(ctx, custom.ID, feature)
+	got, err := store.Inputs(ctx, repositoryScope(), custom.ID, feature)
 	if err != nil || !got.Values["a"].Equal(decimal.RequireFromString("2.5")) || got.UpdatedBy != "pm" || !got.UpdatedAt.Equal(now) {
 		t.Fatalf("Inputs: %+v err=%v", got, err)
 	}
-	if list, err := store.InputsByProduct(ctx, custom.ID, product); err != nil || len(list) != 1 || list[0].FeatureID != feature {
+	if list, err := store.InputsByProduct(ctx, repositoryScope(), custom.ID, product); err != nil || len(list) != 1 || list[0].FeatureID != feature {
 		t.Fatalf("InputsByProduct: %+v err=%v", list, err)
 	}
-	if _, err := store.Inputs(ctx, portfolio.ID, feature); !kernel.IsNotFound(err) {
+	if _, err := store.Inputs(ctx, repositoryScope(), portfolio.ID, feature); !kernel.IsNotFound(err) {
 		t.Fatalf("Inputs missing: %v", err)
 	}
 }
@@ -97,17 +98,17 @@ func TestPR04_PGStoreFlags(t *testing.T) {
 	store := pgstore.New(db)
 	now := time.Date(2026, 9, 17, 10, 30, 0, 0, time.UTC)
 	f := prioritization.FeatureFlags{FeatureID: kernel.NewID(), ProductID: kernel.NewID(), RegulatoryMandatory: true, Reason: "ФЗ", SetBy: "pm", SetAt: now}
-	if _, err := store.Flags(ctx, f.FeatureID); !kernel.IsNotFound(err) {
+	if _, err := store.Flags(ctx, repositoryScope(), f.FeatureID); !kernel.IsNotFound(err) {
 		t.Fatalf("Flags before save: %v", err)
 	}
-	if err := store.SaveFlags(ctx, f); err != nil {
+	if err := store.SaveFlags(ctx, repositoryScope(), f); err != nil {
 		t.Fatal(err)
 	}
 	f.RegulatoryMandatory = false
-	if err := store.SaveFlags(ctx, f); err != nil {
+	if err := store.SaveFlags(ctx, repositoryScope(), f); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Flags(ctx, f.FeatureID); err != nil || !reflect.DeepEqual(got, f) {
+	if got, err := store.Flags(ctx, repositoryScope(), f.FeatureID); err != nil || !reflect.DeepEqual(got, f) {
 		t.Fatalf("Flags: %+v err=%v", got, err)
 	}
 }
@@ -117,16 +118,20 @@ func TestPR05_PGStoreDevCost(t *testing.T) {
 	ctx := context.Background()
 	store := pgstore.New(db)
 	product, feature := kernel.NewID(), kernel.NewID()
-	if _, err := store.DevCost(ctx, feature); !kernel.IsNotFound(err) {
+	if _, err := store.DevCost(ctx, repositoryScope(), feature); !kernel.IsNotFound(err) {
 		t.Fatalf("DevCost before save: %v", err)
 	}
-	if err := store.SaveDevCost(ctx, product, feature, kernel.RUB(500_000_00)); err != nil {
+	if err := store.SaveDevCost(ctx, repositoryScope(), product, feature, kernel.RUB(500_000_00)); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.SaveDevCost(ctx, product, feature, kernel.RUB(600_000_00)); err != nil {
+	if err := store.SaveDevCost(ctx, repositoryScope(), product, feature, kernel.RUB(600_000_00)); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.DevCost(ctx, feature); err != nil || got != kernel.RUB(600_000_00) {
+	if got, err := store.DevCost(ctx, repositoryScope(), feature); err != nil || got != kernel.RUB(600_000_00) {
 		t.Fatalf("DevCost: %+v err=%v", got, err)
 	}
+}
+
+func repositoryScope() authz.Scope {
+	return authz.New(authz.Params{Subject: "repository-fixture", Roles: []authz.Role{authz.RoleAdmin, authz.RoleService}, AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal})
 }

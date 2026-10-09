@@ -76,7 +76,7 @@ func (s *Service) DefineCustomField(ctx context.Context, sc authz.Scope, def Cus
 	if err := def.validate(); err != nil {
 		return CustomFieldDef{}, err
 	}
-	existing, err := s.store.FieldDefs(ctx, def.Entity)
+	existing, err := s.store.FieldDefs(ctx, sc, def.Entity)
 	if err != nil {
 		return CustomFieldDef{}, fmt.Errorf("field defs: %w", err)
 	}
@@ -86,7 +86,7 @@ func (s *Service) DefineCustomField(ctx context.Context, sc authz.Scope, def Cus
 			def.ID = e.ID
 		}
 	}
-	if err := s.store.SaveFieldDef(ctx, def); err != nil {
+	if err := s.store.SaveFieldDef(ctx, sc, def); err != nil {
 		return CustomFieldDef{}, fmt.Errorf("save field def: %w", err)
 	}
 	return def, nil
@@ -100,7 +100,7 @@ func (s *Service) CustomFields(ctx context.Context, sc authz.Scope, entity Entit
 	if !ValidEntity(entity) {
 		return nil, kernel.Invalid("entity", fmt.Sprintf("неизвестная сущность %q", entity))
 	}
-	defs, err := s.store.FieldDefs(ctx, entity)
+	defs, err := s.store.FieldDefs(ctx, sc, entity)
 	if err != nil {
 		return nil, fmt.Errorf("field defs: %w", err)
 	}
@@ -109,11 +109,11 @@ func (s *Service) CustomFields(ctx context.Context, sc authz.Scope, entity Entit
 
 // ValidateCustomFields проверяет значения кастомных полей сущности по текущим определениям.
 // Для hypothesis вызывается при сохранении; для feature и signal — их модулями (следующая волна).
-func (s *Service) ValidateCustomFields(ctx context.Context, entity Entity, values map[string]any) error {
+func (s *Service) ValidateCustomFields(ctx context.Context, sc authz.Scope, entity Entity, values map[string]any) error {
 	if !ValidEntity(entity) {
 		return kernel.Invalid("entity", fmt.Sprintf("неизвестная сущность %q", entity))
 	}
-	defs, err := s.store.FieldDefs(ctx, entity)
+	defs, err := s.store.FieldDefs(ctx, sc, entity)
 	if err != nil {
 		return fmt.Errorf("field defs: %w", err)
 	}
@@ -199,7 +199,7 @@ func (s *Service) DefineCustomStatus(ctx context.Context, sc authz.Scope, def Cu
 	if err := def.validate(); err != nil {
 		return CustomStatusDef{}, err
 	}
-	if err := s.store.SaveStatusDef(ctx, def); err != nil {
+	if err := s.store.SaveStatusDef(ctx, sc, def); err != nil {
 		return CustomStatusDef{}, fmt.Errorf("save status def: %w", err)
 	}
 	return def, nil
@@ -213,7 +213,7 @@ func (s *Service) CustomStatuses(ctx context.Context, sc authz.Scope, entity Ent
 	if !ValidEntity(entity) {
 		return nil, kernel.Invalid("entity", fmt.Sprintf("неизвестная сущность %q", entity))
 	}
-	defs, err := s.store.StatusDefs(ctx, entity)
+	defs, err := s.store.StatusDefs(ctx, sc, entity)
 	if err != nil {
 		return nil, fmt.Errorf("status defs: %w", err)
 	}
@@ -222,11 +222,11 @@ func (s *Service) CustomStatuses(ctx context.Context, sc authz.Scope, entity Ent
 
 // hypothesisCategory отображает статус гипотезы на встроенную категорию: встроенный статус —
 // сам себе категория, пользовательский — по определению; неизвестный — ошибка валидации.
-func (s *Service) hypothesisCategory(ctx context.Context, st HypothesisStatus) (HypothesisStatus, error) {
+func (s *Service) hypothesisCategory(ctx context.Context, sc authz.Scope, st HypothesisStatus) (HypothesisStatus, error) {
 	if BuiltinHypothesisStatus(st) {
 		return st, nil
 	}
-	defs, err := s.store.StatusDefs(ctx, EntityHypothesis)
+	defs, err := s.store.StatusDefs(ctx, sc, EntityHypothesis)
 	if err != nil {
 		return "", fmt.Errorf("status defs: %w", err)
 	}

@@ -72,9 +72,9 @@ func (in Input) validate() error {
 	return nil
 }
 
-// canRead — чтение решения: стратегический срез продукта; портфельные решения — роли cpo/admin (и service).
+// RequireRead — чтение решения: стратегический срез продукта; портфельные решения — роли cpo/admin (и service).
 // TODO(question-20): роли для портфельных решений в ТЗ не заданы.
-func canRead(sc authz.Scope, productID kernel.ID) error {
+func RequireRead(sc authz.Scope, productID kernel.ID) error {
 	if !sc.Valid() {
 		return kernel.ErrForbidden
 	}
@@ -87,8 +87,11 @@ func canRead(sc authz.Scope, productID kernel.ID) error {
 	return sc.Require(authz.ActionReadStrategic, productID)
 }
 
-// canWrite — запись решения: ActionWriteDecisions по продукту (для портфельного — по kernel.NilID).
-func canWrite(sc authz.Scope, productID kernel.ID) error {
+// RequireWrite — запись решения: ActionWriteDecisions по продукту (для портфельного — по kernel.NilID).
+func RequireWrite(sc authz.Scope, productID kernel.ID) error {
+	if productID != kernel.NilID && sc.Product(productID) < authz.AccessPrivate {
+		return kernel.ErrForbidden
+	}
 	return sc.Require(authz.ActionWriteDecisions, productID)
 }
 
@@ -104,7 +107,7 @@ func (s *Service) emit(ctx context.Context, typ string, rec DecisionRecord, acto
 }
 
 func (s *Service) save(ctx context.Context, sc authz.Scope, rec DecisionRecord) error {
-	if err := s.store.Save(ctx, rec); err != nil {
+	if err := s.store.Save(ctx, sc, rec); err != nil {
 		return fmt.Errorf("save decision: %w", err)
 	}
 	return s.emit(ctx, EventRecordSaved, rec, sc.Subject(), rec)
@@ -140,7 +143,7 @@ func (s *Service) Create(ctx context.Context, sc authz.Scope, in Input) (Decisio
 	if err := in.validate(); err != nil {
 		return DecisionRecord{}, err
 	}
-	if err := canWrite(sc, in.ProductID); err != nil {
+	if err := RequireWrite(sc, in.ProductID); err != nil {
 		return DecisionRecord{}, err
 	}
 	now := s.clock.Now()
@@ -161,11 +164,11 @@ func (s *Service) Create(ctx context.Context, sc authz.Scope, in Input) (Decisio
 
 // Update изменяет решение; допускается только в статусе proposed. Продукт решения не меняется.
 func (s *Service) Update(ctx context.Context, sc authz.Scope, id kernel.ID, in Input) (DecisionRecord, error) {
-	rec, err := s.store.Get(ctx, id)
+	rec, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return DecisionRecord{}, err
 	}
-	if err := canWrite(sc, rec.ProductID); err != nil {
+	if err := RequireWrite(sc, rec.ProductID); err != nil {
 		return DecisionRecord{}, err
 	}
 	in.ProductID = rec.ProductID
@@ -185,11 +188,11 @@ func (s *Service) Update(ctx context.Context, sc authz.Scope, id kernel.ID, in I
 
 // Accept принимает решение: требуется выбранный вариант; из proposed в accepted.
 func (s *Service) Accept(ctx context.Context, sc authz.Scope, id kernel.ID) (DecisionRecord, error) {
-	rec, err := s.store.Get(ctx, id)
+	rec, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return DecisionRecord{}, err
 	}
-	if err := canWrite(sc, rec.ProductID); err != nil {
+	if err := RequireWrite(sc, rec.ProductID); err != nil {
 		return DecisionRecord{}, err
 	}
 	if rec.Status != StatusProposed {
@@ -211,11 +214,11 @@ func (s *Service) Accept(ctx context.Context, sc authz.Scope, id kernel.ID) (Dec
 
 // Reject отклоняет предложенное решение.
 func (s *Service) Reject(ctx context.Context, sc authz.Scope, id kernel.ID) (DecisionRecord, error) {
-	rec, err := s.store.Get(ctx, id)
+	rec, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return DecisionRecord{}, err
 	}
-	if err := canWrite(sc, rec.ProductID); err != nil {
+	if err := RequireWrite(sc, rec.ProductID); err != nil {
 		return DecisionRecord{}, err
 	}
 	if rec.Status != StatusProposed {
@@ -235,14 +238,14 @@ func (s *Service) Supersede(ctx context.Context, sc authz.Scope, id, by kernel.I
 	if id == by {
 		return DecisionRecord{}, kernel.Invalid("superseded_by", "решение не может заменять само себя")
 	}
-	rec, err := s.store.Get(ctx, id)
+	rec, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return DecisionRecord{}, err
 	}
-	if err := canWrite(sc, rec.ProductID); err != nil {
+	if err := RequireWrite(sc, rec.ProductID); err != nil {
 		return DecisionRecord{}, err
 	}
-	repl, err := s.store.Get(ctx, by)
+	repl, err := s.store.Get(ctx, sc, by)
 	if err != nil {
 		return DecisionRecord{}, err
 	}
@@ -266,11 +269,11 @@ func (s *Service) Supersede(ctx context.Context, sc authz.Scope, id, by kernel.I
 
 // Get возвращает решение. Право: стратегический срез продукта.
 func (s *Service) Get(ctx context.Context, sc authz.Scope, id kernel.ID) (DecisionRecord, error) {
-	rec, err := s.store.Get(ctx, id)
+	rec, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return DecisionRecord{}, err
 	}
-	if err := canRead(sc, rec.ProductID); err != nil {
+	if err := RequireRead(sc, rec.ProductID); err != nil {
 		return DecisionRecord{}, err
 	}
 	return rec, nil
@@ -281,10 +284,10 @@ func (s *Service) List(ctx context.Context, sc authz.Scope, productID kernel.ID,
 	if status != "" && !ValidStatus(status) {
 		return nil, kernel.Invalid("status", fmt.Sprintf("неизвестный статус %q", status))
 	}
-	if err := canRead(sc, productID); err != nil {
+	if err := RequireRead(sc, productID); err != nil {
 		return nil, err
 	}
-	return s.store.List(ctx, Filter{ProductID: productID, HasProduct: true, Status: status})
+	return s.store.List(ctx, sc, Filter{ProductID: productID, HasProduct: true, Status: status})
 }
 
 // DecisionsFor возвращает решения, связанные с сущностью (DS-04; порт discovery.DecisionLinks).
@@ -299,13 +302,13 @@ func (s *Service) DecisionsFor(ctx context.Context, sc authz.Scope, kind string,
 	if !sc.Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	recs, err := s.store.List(ctx, Filter{Link: &Link{Kind: LinkKind(kind), ID: id}})
+	recs, err := s.store.List(ctx, sc, Filter{Link: &Link{Kind: LinkKind(kind), ID: id}})
 	if err != nil {
 		return nil, fmt.Errorf("list decisions: %w", err)
 	}
 	out := make([]DecisionRef, 0, len(recs))
 	for _, r := range recs {
-		if canRead(sc, r.ProductID) != nil {
+		if RequireRead(sc, r.ProductID) != nil {
 			continue
 		}
 		out = append(out, DecisionRef{ID: r.ID, Title: r.Title})
@@ -327,11 +330,11 @@ func (s *Service) RequestPage(ctx context.Context, sc authz.Scope, id kernel.ID,
 	if strings.TrimSpace(spaceKey) == "" {
 		return kernel.Invalid("space_key", "обязателен")
 	}
-	rec, err := s.store.Get(ctx, id)
+	rec, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return err
 	}
-	if err := canWrite(sc, rec.ProductID); err != nil {
+	if err := RequireWrite(sc, rec.ProductID); err != nil {
 		return err
 	}
 	if rec.PageID != "" {

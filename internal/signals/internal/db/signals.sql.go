@@ -151,7 +151,7 @@ func (q *Queries) ListSignals(ctx context.Context, arg ListSignalsParams) ([]Sig
 	return items, nil
 }
 
-const upsertSignal = `-- name: UpsertSignal :exec
+const upsertSignal = `-- name: UpsertSignal :execrows
 INSERT INTO signals.signals (id, product_id, source, text, external_key, account_id, deal_id, version, segment,
   weight_amount, weight_currency, account_arr_amount, account_arr_currency, blocks_deal, status, due_date,
   feature_id, contract_id, hypothesis_id, merged_into, created_by, created_at, updated_at)
@@ -164,6 +164,7 @@ ON CONFLICT (id) DO UPDATE SET
   blocks_deal = EXCLUDED.blocks_deal, status = EXCLUDED.status, due_date = EXCLUDED.due_date,
   feature_id = EXCLUDED.feature_id, contract_id = EXCLUDED.contract_id, hypothesis_id = EXCLUDED.hypothesis_id,
   merged_into = EXCLUDED.merged_into, created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE signals.signals.product_id = EXCLUDED.product_id
 `
 
 type UpsertSignalParams struct {
@@ -192,8 +193,8 @@ type UpsertSignalParams struct {
 	UpdatedAt          time.Time
 }
 
-func (q *Queries) UpsertSignal(ctx context.Context, arg UpsertSignalParams) error {
-	_, err := q.db.Exec(ctx, upsertSignal,
+func (q *Queries) UpsertSignal(ctx context.Context, arg UpsertSignalParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertSignal,
 		arg.ID,
 		arg.ProductID,
 		arg.Source,
@@ -218,5 +219,8 @@ func (q *Queries) UpsertSignal(ctx context.Context, arg UpsertSignalParams) erro
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

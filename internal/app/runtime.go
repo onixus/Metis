@@ -13,6 +13,7 @@ import (
 	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/discovery"
 	"github.com/onixus/metis/internal/identityaccess"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/outbox"
 	"github.com/onixus/metis/internal/portfoliograph"
@@ -83,11 +84,14 @@ type operationStore struct {
 	app *App
 }
 
-func (s operationStore) Process(ctx context.Context, now time.Time, limit int, fn func(context.Context, outbox.Message) outbox.Outcome) (int, error) {
+func (s operationStore) Process(ctx context.Context, sc authz.Scope, now time.Time, limit int, fn func(context.Context, outbox.Message) outbox.Outcome) (int, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return 0, err
+	}
 	var count int
 	err := s.app.runOperation(ctx, func(ctx context.Context) error {
 		var err error
-		count, err = s.Store.Process(ctx, now, limit, func(ctx context.Context, msg outbox.Message) outbox.Outcome {
+		count, err = s.Store.Process(ctx, sc, now, limit, func(ctx context.Context, msg outbox.Message) outbox.Outcome {
 			if err := s.app.refreshGraph(ctx); err != nil {
 				return outbox.Outcome{Kind: outbox.Retry, NextAttemptAt: now.Add(time.Second), Error: err.Error()}
 			}

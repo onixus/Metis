@@ -1,7 +1,8 @@
--- name: UpsertMapping :exec
+-- name: UpsertMapping :execrows
 INSERT INTO delivery.mappings (feature_id, product_id, epic_key, project, created_at) VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (feature_id) DO UPDATE SET product_id = EXCLUDED.product_id, epic_key = EXCLUDED.epic_key,
-  project = EXCLUDED.project, created_at = EXCLUDED.created_at;
+  project = EXCLUDED.project, created_at = EXCLUDED.created_at
+WHERE delivery.mappings.product_id = EXCLUDED.product_id;
 
 -- name: GetMappingByFeature :one
 SELECT * FROM delivery.mappings WHERE feature_id = $1;
@@ -12,21 +13,23 @@ SELECT * FROM delivery.mappings WHERE epic_key = $1 ORDER BY created_at, feature
 -- name: ListMappings :many
 SELECT * FROM delivery.mappings ORDER BY epic_key, feature_id;
 
--- name: UpsertReleaseMapping :exec
+-- name: UpsertReleaseMapping :execrows
 INSERT INTO delivery.release_mappings (release_id, product_id, project, fix_version, created_at) VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (release_id) DO UPDATE SET product_id = EXCLUDED.product_id, project = EXCLUDED.project,
-  fix_version = EXCLUDED.fix_version, created_at = EXCLUDED.created_at;
+  fix_version = EXCLUDED.fix_version, created_at = EXCLUDED.created_at
+WHERE delivery.release_mappings.product_id = EXCLUDED.product_id;
 
 -- name: ListReleaseMappings :many
 SELECT * FROM delivery.release_mappings ORDER BY fix_version, release_id;
 
--- name: UpsertEpic :exec
+-- name: UpsertEpic :execrows
 INSERT INTO delivery.epics (feature_id, product_id, epic_key, summary, status, due_date, fix_versions, issues, initial_scope, first_seen_at, synced_at, source_event_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 ON CONFLICT (feature_id) DO UPDATE SET product_id = EXCLUDED.product_id, epic_key = EXCLUDED.epic_key, summary = EXCLUDED.summary,
   status = EXCLUDED.status, due_date = EXCLUDED.due_date, fix_versions = EXCLUDED.fix_versions, issues = EXCLUDED.issues,
   initial_scope = EXCLUDED.initial_scope, first_seen_at = EXCLUDED.first_seen_at, synced_at = EXCLUDED.synced_at,
-  source_event_id = EXCLUDED.source_event_id;
+  source_event_id = EXCLUDED.source_event_id
+WHERE delivery.epics.product_id = EXCLUDED.product_id;
 
 -- name: GetEpicByFeature :one
 SELECT * FROM delivery.epics WHERE feature_id = $1;

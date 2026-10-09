@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -90,7 +91,7 @@ func (w *Worker) Run(ctx context.Context) error {
 // RunOnce обрабатывает одну пачку. Возвращает число захваченных сообщений.
 func (w *Worker) RunOnce(ctx context.Context) (int, error) {
 	now := w.clock.Now()
-	n, err := w.store.Process(ctx, now, w.cfg.BatchSize, func(ctx context.Context, m Message) Outcome {
+	n, err := w.store.Process(ctx, identityaccess.ServiceScope("outbox"), now, w.cfg.BatchSize, func(ctx context.Context, m Message) Outcome {
 		return w.handle(ctx, m, now)
 	})
 	if err != nil {
@@ -143,14 +144,16 @@ func (w *Worker) Backoff(attempt int) time.Duration {
 }
 
 // DLQCount — число сообщений в DLQ (для администратора, AD-05).
-func (w *Worker) DLQCount(ctx context.Context) (int64, error) { return w.store.DLQCount(ctx) }
+func (w *Worker) DLQCount(ctx context.Context) (int64, error) {
+	return w.store.DLQCount(ctx, identityaccess.ServiceScope("outbox"))
+}
 
 // DLQList — последние сообщения DLQ.
 func (w *Worker) DLQList(ctx context.Context, limit int) ([]DeadMessage, error) {
-	return w.store.DLQList(ctx, limit)
+	return w.store.DLQList(ctx, identityaccess.ServiceScope("outbox"), limit)
 }
 
 // Requeue возвращает сообщение из DLQ в очередь с нулевым счётчиком попыток.
 func (w *Worker) Requeue(ctx context.Context, id kernel.ID) error {
-	return w.store.Requeue(ctx, id, w.clock.Now())
+	return w.store.Requeue(ctx, identityaccess.ServiceScope("outbox"), id, w.clock.Now())
 }

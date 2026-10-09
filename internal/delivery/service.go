@@ -82,11 +82,15 @@ func (s *Service) MapFeature(ctx context.Context, sc authz.Scope, featureID kern
 	if err := sc.Require(authz.ActionWriteGraph, f.ProductID); err != nil {
 		return Mapping{}, err
 	}
-	if existing, err := s.store.MappingByEpic(ctx, epicKey); err == nil && existing.FeatureID != featureID {
-		return Mapping{}, fmt.Errorf("%w: эпик %s уже привязан к другой фиче", kernel.ErrConflict, epicKey)
+	existing, err := s.store.MappingByEpic(ctx, sc, epicKey)
+	if err != nil && !kernel.IsNotFound(err) {
+		return Mapping{}, err
+	}
+	if err == nil && existing.FeatureID != featureID {
+		return Mapping{}, fmt.Errorf("%w: эпик уже привязан", kernel.ErrConflict)
 	}
 	m := Mapping{FeatureID: featureID, ProductID: f.ProductID, EpicKey: epicKey, Project: project, CreatedAt: s.clock.Now()}
-	if err := s.store.SaveMapping(ctx, m); err != nil {
+	if err := s.store.SaveMapping(ctx, sc, m); err != nil {
 		return Mapping{}, fmt.Errorf("save mapping: %w", err)
 	}
 	if f.ExternalKey != epicKey {
@@ -109,7 +113,7 @@ func (s *Service) MapRelease(ctx context.Context, sc authz.Scope, releaseID, pro
 		return ReleaseMapping{}, kernel.Invalid("fix_version", "обязательна")
 	}
 	m := ReleaseMapping{ReleaseID: releaseID, ProductID: productID, Project: project, FixVersion: fixVersion, CreatedAt: s.clock.Now()}
-	if err := s.store.SaveReleaseMapping(ctx, m); err != nil {
+	if err := s.store.SaveReleaseMapping(ctx, sc, m); err != nil {
 		return ReleaseMapping{}, fmt.Errorf("save release mapping: %w", err)
 	}
 	return m, nil
@@ -120,7 +124,7 @@ func (s *Service) Mappings(ctx context.Context, sc authz.Scope, productID kernel
 	if err := sc.Require(authz.ActionReadPrivate, productID); err != nil {
 		return nil, err
 	}
-	all, err := s.store.Mappings(ctx)
+	all, err := s.store.Mappings(ctx, sc)
 	if err != nil {
 		return nil, fmt.Errorf("mappings: %w", err)
 	}
@@ -150,7 +154,7 @@ func (s *Service) CreateEpicForFeature(ctx context.Context, sc authz.Scope, feat
 	if f.ExternalKey != "" {
 		return fmt.Errorf("%w: фича уже привязана к эпику %s", kernel.ErrConflict, f.ExternalKey)
 	}
-	if _, err := s.store.MappingByFeature(ctx, featureID); err == nil {
+	if _, err := s.store.MappingByFeature(ctx, sc, featureID); err == nil {
 		return fmt.Errorf("%w: фича уже имеет маппинг", kernel.ErrConflict)
 	}
 	req := EpicCreateRequest{FeatureID: featureID, ProductID: f.ProductID, Project: project, Summary: f.Name}
@@ -161,14 +165,14 @@ func (s *Service) CreateEpicForFeature(ctx context.Context, sc authz.Scope, feat
 
 // FeatureProjection возвращает проекцию эпика фичи и состояние синхронизации (признак устаревания, NF-R05).
 func (s *Service) FeatureProjection(ctx context.Context, sc authz.Scope, featureID kernel.ID) (EpicProjection, SyncState, error) {
-	p, err := s.store.EpicByFeature(ctx, featureID)
+	p, err := s.store.EpicByFeature(ctx, sc, featureID)
 	if err != nil {
 		return EpicProjection{}, SyncState{}, err
 	}
 	if err := sc.Require(authz.ActionReadPrivate, p.ProductID); err != nil {
 		return EpicProjection{}, SyncState{}, err
 	}
-	st, err := s.syncState(ctx)
+	st, err := s.syncState(ctx, sc)
 	if err != nil {
 		return EpicProjection{}, SyncState{}, err
 	}
@@ -233,11 +237,11 @@ func (s *Service) SprintStatuses(ctx context.Context, sc authz.Scope, productID 
 	if err := sc.Require(authz.ActionReadPrivate, productID); err != nil {
 		return nil, SyncState{}, err
 	}
-	sp, err := s.store.Sprints(ctx, productID)
+	sp, err := s.store.Sprints(ctx, sc, productID)
 	if err != nil {
 		return nil, SyncState{}, fmt.Errorf("sprints: %w", err)
 	}
-	st, err := s.syncState(ctx)
+	st, err := s.syncState(ctx, sc)
 	if err != nil {
 		return nil, SyncState{}, err
 	}
@@ -245,10 +249,12 @@ func (s *Service) SprintStatuses(ctx context.Context, sc authz.Scope, productID 
 }
 
 // SyncState — состояние синхронизации (NF-R05).
-func (s *Service) SyncState(ctx context.Context) (SyncState, error) { return s.syncState(ctx) }
+func (s *Service) SyncState(ctx context.Context) (SyncState, error) {
+	return s.syncState(ctx, s.cfg.ServiceScope)
+}
 
-func (s *Service) syncState(ctx context.Context) (SyncState, error) {
-	st, err := s.store.SyncState(ctx)
+func (s *Service) syncState(ctx context.Context, sc authz.Scope) (SyncState, error) {
+	st, err := s.store.SyncState(ctx, sc)
 	if err != nil {
 		return SyncState{}, fmt.Errorf("sync state: %w", err)
 	}
@@ -271,20 +277,20 @@ func (s *Service) Sync(ctx context.Context) error {
 		return fmt.Errorf("%w: адаптер delivery выключен", kernel.ErrUnavailable)
 	}
 	now := s.clock.Now()
-	st, err := s.store.SyncState(ctx)
+	st, err := s.store.SyncState(ctx, s.cfg.ServiceScope)
 	if err != nil {
 		return fmt.Errorf("sync state: %w", err)
 	}
 	st.LastAttemptAt = now
 	if err := s.sync(ctx, now); err != nil {
 		st.LastError = err.Error()
-		if saveErr := s.store.SaveSyncState(ctx, st); saveErr != nil {
+		if saveErr := s.store.SaveSyncState(ctx, s.cfg.ServiceScope, st); saveErr != nil {
 			return fmt.Errorf("save sync state: %w", saveErr)
 		}
 		return fmt.Errorf("delivery sync: %w", err)
 	}
 	st.LastSuccessAt, st.LastError = now, ""
-	if err := s.store.SaveSyncState(ctx, st); err != nil {
+	if err := s.store.SaveSyncState(ctx, s.cfg.ServiceScope, st); err != nil {
 		return fmt.Errorf("save sync state: %w", err)
 	}
 	return nil
@@ -300,7 +306,7 @@ func (s *Service) RecordSyncFailure(ctx context.Context, attemptedAt time.Time, 
 	if cause == nil || attemptedAt.IsZero() {
 		return kernel.Invalid("cause", "ошибка и время сверки обязательны")
 	}
-	st, err := s.store.SyncState(ctx)
+	st, err := s.store.SyncState(ctx, s.cfg.ServiceScope)
 	if err != nil {
 		return fmt.Errorf("sync state: %w", err)
 	}
@@ -308,14 +314,14 @@ func (s *Service) RecordSyncFailure(ctx context.Context, attemptedAt time.Time, 
 		return nil // другой воркер уже выполнил более новую сверку
 	}
 	st.LastAttemptAt, st.LastError = attemptedAt.UTC(), cause.Error()
-	if err := s.store.SaveSyncState(ctx, st); err != nil {
+	if err := s.store.SaveSyncState(ctx, s.cfg.ServiceScope, st); err != nil {
 		return fmt.Errorf("save failed sync state: %w", err)
 	}
 	return nil
 }
 
 func (s *Service) sync(ctx context.Context, now time.Time) error {
-	mappings, err := s.store.Mappings(ctx)
+	mappings, err := s.store.Mappings(ctx, s.cfg.ServiceScope)
 	if err != nil {
 		return fmt.Errorf("mappings: %w", err)
 	}
@@ -332,7 +338,7 @@ func (s *Service) sync(ctx context.Context, now time.Time) error {
 			return err
 		}
 	}
-	fm, err := s.store.FieldMapping(ctx)
+	fm, err := s.store.FieldMapping(ctx, s.cfg.ServiceScope)
 	if err != nil {
 		return fmt.Errorf("field mapping: %w", err)
 	}
@@ -341,7 +347,7 @@ func (s *Service) sync(ctx context.Context, now time.Time) error {
 		if err != nil {
 			return fmt.Errorf("sprints %s: %w", board, err)
 		}
-		if err := s.store.SaveSprints(ctx, productID, sprintStatuses(productID, board, sprints, now)); err != nil {
+		if err := s.store.SaveSprints(ctx, s.cfg.ServiceScope, productID, sprintStatuses(productID, board, sprints, now)); err != nil {
 			return fmt.Errorf("save sprints: %w", err)
 		}
 	}
@@ -350,7 +356,7 @@ func (s *Service) sync(ctx context.Context, now time.Time) error {
 
 // applyEpic обновляет проекцию эпика; при изменении due date сдвигает плановую дату фичи (7.7 п.5).
 func (s *Service) applyEpic(ctx context.Context, m Mapping, epic ports.Epic, issues []ports.Issue, now time.Time, sourceEvent string) error {
-	prev, err := s.store.EpicByFeature(ctx, m.FeatureID)
+	prev, err := s.store.EpicByFeature(ctx, s.cfg.ServiceScope, m.FeatureID)
 	first := kernel.IsNotFound(err)
 	if err != nil && !first {
 		return fmt.Errorf("epic projection: %w", err)
@@ -376,7 +382,7 @@ func (s *Service) applyEpic(ctx context.Context, m Mapping, epic ports.Epic, iss
 			p.Issues = prev.Issues
 		}
 	}
-	if err := s.store.SaveEpic(ctx, p); err != nil {
+	if err := s.store.SaveEpic(ctx, s.cfg.ServiceScope, p); err != nil {
 		return fmt.Errorf("save epic: %w", err)
 	}
 	if !p.DueDate.IsZero() && (first || prev.DueDate != p.DueDate) {
@@ -444,14 +450,14 @@ func (s *Service) HandleWebhook(ctx context.Context, ev ports.WebhookEvent) erro
 	if ev.ExternalID == "" || ev.EpicKey == "" {
 		return kernel.Invalid("event", "нужны внешний ключ события и ключ эпика")
 	}
-	fresh, err := s.store.MarkProcessed(ctx, "webhook:"+ev.ExternalID)
+	fresh, err := s.store.MarkProcessed(ctx, s.cfg.ServiceScope, "webhook:"+ev.ExternalID)
 	if err != nil {
 		return fmt.Errorf("mark processed: %w", err)
 	}
 	if !fresh {
 		return nil
 	}
-	m, err := s.store.MappingByEpic(ctx, ev.EpicKey)
+	m, err := s.store.MappingByEpic(ctx, s.cfg.ServiceScope, ev.EpicKey)
 	if kernel.IsNotFound(err) {
 		return nil // эпик не привязан к фиче — событие не для нас
 	}
@@ -461,7 +467,7 @@ func (s *Service) HandleWebhook(ctx context.Context, ev ports.WebhookEvent) erro
 	if ev.Type == ports.WebhookEpicDeleted {
 		return nil // удаление в трекере проекцию не стирает: последняя проекция остаётся (NF-R05)
 	}
-	prev, err := s.store.EpicByFeature(ctx, m.FeatureID)
+	prev, err := s.store.EpicByFeature(ctx, s.cfg.ServiceScope, m.FeatureID)
 	if err != nil && !kernel.IsNotFound(err) {
 		return fmt.Errorf("epic projection: %w", err)
 	}
@@ -487,15 +493,15 @@ func (s *Service) ConnectorStatus(ctx context.Context, sc authz.Scope) (Connecto
 	if err := sc.Require(authz.ActionManageConnects, kernel.NilID); err != nil {
 		return ConnectorStatus{}, err
 	}
-	fm, err := s.store.FieldMapping(ctx)
+	fm, err := s.store.FieldMapping(ctx, sc)
 	if err != nil {
 		return ConnectorStatus{}, fmt.Errorf("field mapping: %w", err)
 	}
-	st, err := s.syncState(ctx)
+	st, err := s.syncState(ctx, sc)
 	if err != nil {
 		return ConnectorStatus{}, err
 	}
-	mappings, err := s.store.Mappings(ctx)
+	mappings, err := s.store.Mappings(ctx, sc)
 	if err != nil {
 		return ConnectorStatus{}, fmt.Errorf("mappings: %w", err)
 	}
@@ -529,7 +535,7 @@ func (s *Service) SetFieldMapping(ctx context.Context, sc authz.Scope, fm FieldM
 	if fm.Boards == nil {
 		fm.Boards = map[kernel.ID]string{}
 	}
-	if err := s.store.SaveFieldMapping(ctx, fm); err != nil {
+	if err := s.store.SaveFieldMapping(ctx, sc, fm); err != nil {
 		return fmt.Errorf("save field mapping: %w", err)
 	}
 	return nil

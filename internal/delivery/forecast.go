@@ -58,7 +58,7 @@ func (s *Service) Forecast(ctx context.Context, sc authz.Scope, featureID kernel
 	if err := sc.Require(authz.ActionReadStrategic, f.ProductID); err != nil {
 		return Forecast{}, err
 	}
-	epic, err := s.store.EpicByFeature(ctx, featureID)
+	epic, err := s.store.EpicByFeature(ctx, sc, featureID)
 	if err != nil {
 		return Forecast{}, err
 	}
@@ -68,7 +68,7 @@ func (s *Service) Forecast(ctx context.Context, sc authz.Scope, featureID kernel
 			remaining++
 		}
 	}
-	sprints, err := s.store.Sprints(ctx, f.ProductID)
+	sprints, err := s.store.Sprints(ctx, sc, f.ProductID)
 	if err != nil {
 		return Forecast{}, fmt.Errorf("sprints: %w", err)
 	}
@@ -90,7 +90,7 @@ func (s *Service) Forecast(ctx context.Context, sc authz.Scope, featureID kernel
 	if from.IsZero() {
 		from = kernel.DateFromTime(s.clock.Now())
 	}
-	state, err := s.syncState(ctx)
+	state, err := s.syncState(ctx, sc)
 	if err != nil {
 		return Forecast{}, err
 	}

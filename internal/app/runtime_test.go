@@ -121,7 +121,7 @@ func TestNFR06_DisabledIntegrationCommandIsRetainedInDLQ(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := a.Outbox.Enqueue(context.Background(), time.Now(), ev); err != nil {
+	if err := a.Outbox.Enqueue(context.Background(), identityaccess.ServiceScope("outbox"), time.Now(), ev); err != nil {
 		t.Fatal(err)
 	}
 	drainWorker(t, a)

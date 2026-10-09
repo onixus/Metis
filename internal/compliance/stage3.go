@@ -88,7 +88,7 @@ func (s *Service) WithPipeline(p ports.SecurityPipeline) *Service {
 // SetBaselineComponents записывает состав поставки сертифицированной версии (CM-08).
 // Состав приходит из SBOM пайплайна безопасности или заводится вручную.
 func (s *Service) SetBaselineComponents(ctx context.Context, sc authz.Scope, baselineID kernel.ID, components []Component) (CertifiedBaseline, error) {
-	b, err := s.store.Baseline(ctx, baselineID)
+	b, err := s.store.Baseline(ctx, sc, baselineID)
 	if err != nil {
 		return CertifiedBaseline{}, err
 	}
@@ -116,7 +116,7 @@ func (s *Service) SetBaselineComponents(ctx context.Context, sc authz.Scope, bas
 		return clean[i].Version < clean[j].Version
 	})
 	b.Components = clean
-	if err := s.store.SaveBaseline(ctx, b); err != nil {
+	if err := s.store.SaveBaseline(ctx, sc, b); err != nil {
 		return CertifiedBaseline{}, fmt.Errorf("baseline %s: %w", b.ID, err)
 	}
 	if err := s.emit(ctx, EventBaselineComponents, b.ID, b.ProductID, sc.Subject(), b); err != nil {
@@ -141,7 +141,7 @@ func (s *Service) ReportVulnerableComponent(ctx context.Context, sc authz.Scope,
 	}
 	component.Key, component.Version = key, strings.TrimSpace(component.Version)
 
-	found, err := s.store.BaselinesWithComponent(ctx, key)
+	found, err := s.store.BaselinesWithComponent(ctx, sc, key)
 	if err != nil {
 		return VulnerabilityImpact{}, fmt.Errorf("baselines по компоненту %q: %w", key, err)
 	}

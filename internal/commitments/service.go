@@ -137,7 +137,7 @@ func (s *Service) Create(ctx context.Context, sc authz.Scope, productID kernel.I
 	now := s.clock.Now()
 	c := Commitment{ID: kernel.NewID(), ProductID: productID, Status: StatusActive, CreatedBy: sc.Subject(), CreatedAt: now, UpdatedAt: now}
 	in.apply(&c)
-	if err := s.store.Save(ctx, c); err != nil {
+	if err := s.store.Save(ctx, sc, c); err != nil {
 		return Commitment{}, fmt.Errorf("save commitment: %w", err)
 	}
 	if err := s.emit(ctx, EventCommitmentCreated, c.ID, c.ProductID, sc.Subject(), c); err != nil {
@@ -151,7 +151,7 @@ func (s *Service) Update(ctx context.Context, sc authz.Scope, id kernel.ID, in I
 	if err := in.validate(); err != nil {
 		return Commitment{}, err
 	}
-	c, err := s.store.Get(ctx, id)
+	c, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return Commitment{}, err
 	}
@@ -163,7 +163,7 @@ func (s *Service) Update(ctx context.Context, sc authz.Scope, id kernel.ID, in I
 	}
 	in.apply(&c)
 	c.UpdatedAt = s.clock.Now()
-	if err := s.store.Save(ctx, c); err != nil {
+	if err := s.store.Save(ctx, sc, c); err != nil {
 		return Commitment{}, fmt.Errorf("save commitment: %w", err)
 	}
 	if err := s.emit(ctx, EventCommitmentUpdated, c.ID, c.ProductID, sc.Subject(), c); err != nil {
@@ -174,7 +174,7 @@ func (s *Service) Update(ctx context.Context, sc authz.Scope, id kernel.ID, in I
 
 // Get возвращает обязательство. Право: стратегический срез продукта (ТЗ 2.4).
 func (s *Service) Get(ctx context.Context, sc authz.Scope, id kernel.ID) (Commitment, error) {
-	c, err := s.store.Get(ctx, id)
+	c, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return Commitment{}, err
 	}
@@ -195,7 +195,7 @@ func (s *Service) List(ctx context.Context, sc authz.Scope, f Filter) ([]Commitm
 			return nil, err
 		}
 	}
-	list, err := s.store.List(ctx, f)
+	list, err := s.store.List(ctx, sc, f)
 	if err != nil {
 		return nil, fmt.Errorf("list commitments: %w", err)
 	}
@@ -219,7 +219,7 @@ func (s *Service) Cancel(ctx context.Context, sc authz.Scope, id kernel.ID) (Com
 }
 
 func (s *Service) close(ctx context.Context, sc authz.Scope, id kernel.ID, st Status, typ string) (Commitment, error) {
-	c, err := s.store.Get(ctx, id)
+	c, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return Commitment{}, err
 	}
@@ -231,7 +231,7 @@ func (s *Service) close(ctx context.Context, sc authz.Scope, id kernel.ID, st St
 	}
 	c.Status = st
 	c.UpdatedAt = s.clock.Now()
-	if err := s.store.Save(ctx, c); err != nil {
+	if err := s.store.Save(ctx, sc, c); err != nil {
 		return Commitment{}, fmt.Errorf("save commitment: %w", err)
 	}
 	if err := s.emit(ctx, typ, c.ID, c.ProductID, sc.Subject(), c); err != nil {
@@ -245,13 +245,13 @@ func (s *Service) close(ctx context.Context, sc authz.Scope, id kernel.ID, st St
 // AffectedCommitments возвращает активные обязательства, привязанные к затронутым фичам,
 // срок которых раньше подразумеваемой даты фичи (ImpliedDate). Вызывается portfoliograph
 // внутри распространения сдвига (PG-08); авторизация выполнена вызывающей стороной.
-func (s *Service) AffectedCommitments(ctx context.Context, affected []portfoliograph.AffectedFeature, _ []kernel.ID) ([]kernel.ID, error) {
+func (s *Service) AffectedCommitments(ctx context.Context, sc authz.Scope, affected []portfoliograph.AffectedFeature, _ []kernel.ID) ([]kernel.ID, error) {
 	var out []kernel.ID
 	for _, a := range affected {
 		if a.ImpliedDate.IsZero() {
 			continue
 		}
-		list, err := s.store.List(ctx, Filter{FeatureID: a.FeatureID, Statuses: []Status{StatusActive}})
+		list, err := s.store.List(ctx, sc, Filter{FeatureID: a.FeatureID, Statuses: []Status{StatusActive}})
 		if err != nil {
 			return nil, fmt.Errorf("list commitments: %w", err)
 		}
@@ -269,7 +269,7 @@ func (s *Service) Alerts(ctx context.Context, sc authz.Scope, productID kernel.I
 	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
 		return nil, err
 	}
-	list, err := s.store.Alerts(ctx, productID, onlyOpen)
+	list, err := s.store.Alerts(ctx, sc, productID, onlyOpen)
 	if err != nil {
 		return nil, fmt.Errorf("list alerts: %w", err)
 	}
@@ -278,7 +278,7 @@ func (s *Service) Alerts(ctx context.Context, sc authz.Scope, productID kernel.I
 
 // AcknowledgeAlert подтверждает алерт. Право: ActionWriteCommitments по продукту.
 func (s *Service) AcknowledgeAlert(ctx context.Context, sc authz.Scope, id kernel.ID) (Alert, error) {
-	a, err := s.store.Alert(ctx, id)
+	a, err := s.store.Alert(ctx, sc, id)
 	if err != nil {
 		return Alert{}, err
 	}
@@ -289,7 +289,7 @@ func (s *Service) AcknowledgeAlert(ctx context.Context, sc authz.Scope, id kerne
 		return a, nil
 	}
 	a.Acknowledged, a.AcknowledgedBy, a.AcknowledgedAt = true, sc.Subject(), s.clock.Now()
-	if err := s.store.Acknowledge(ctx, a); err != nil {
+	if err := s.store.Acknowledge(ctx, sc, a); err != nil {
 		return Alert{}, fmt.Errorf("acknowledge alert: %w", err)
 	}
 	if err := s.emit(ctx, EventAlertAcknowledged, a.ID, a.ProductID, sc.Subject(), a); err != nil {
@@ -311,7 +311,7 @@ func (s *Service) raiseAlert(ctx context.Context, sc authz.Scope, c Commitment, 
 		return false, nil
 	}
 	if eventID != kernel.NilID {
-		switch _, err := s.store.AlertByEvent(ctx, c.ID, eventID); {
+		switch _, err := s.store.AlertByEvent(ctx, sc, c.ID, eventID); {
 		case err == nil:
 			return false, nil
 		case kernel.IsNotFound(err):
@@ -325,7 +325,7 @@ func (s *Service) raiseAlert(ctx context.Context, sc authz.Scope, c Commitment, 
 			newDate, c.Subject, c.Counterparty, c.DueDate, reason),
 		EventID: eventID, NewDate: newDate, DueDate: c.DueDate, RaisedAt: s.clock.Now(),
 	}
-	if err := s.store.AppendAlert(ctx, a); err != nil {
+	if err := s.store.AppendAlert(ctx, sc, a); err != nil {
 		return false, fmt.Errorf("append alert: %w", err)
 	}
 	if err := s.emit(ctx, EventAlertRaised, a.ID, a.ProductID, sc.Subject(), a); err != nil {
@@ -337,8 +337,8 @@ func (s *Service) raiseAlert(ctx context.Context, sc authz.Scope, c Commitment, 
 // ---- CT-04: продление сертификата ----
 
 // Settings возвращает настройки модуля.
-func (s *Service) Settings(ctx context.Context) (Settings, error) {
-	st, err := s.store.Settings(ctx)
+func (s *Service) Settings(ctx context.Context, sc authz.Scope) (Settings, error) {
+	st, err := s.store.Settings(ctx, sc)
 	if err != nil {
 		return Settings{}, fmt.Errorf("settings: %w", err)
 	}
@@ -356,7 +356,7 @@ func (s *Service) UpdateSettings(ctx context.Context, sc authz.Scope, st Setting
 	if st.LeadMonths <= 0 {
 		return kernel.Invalid("lead_months", "срок упреждения должен быть положительным")
 	}
-	if err := s.store.SaveSettings(ctx, st); err != nil {
+	if err := s.store.SaveSettings(ctx, sc, st); err != nil {
 		return fmt.Errorf("save settings: %w", err)
 	}
 	return nil
@@ -382,12 +382,12 @@ func (s *Service) EnsureRenewals(ctx context.Context, sc authz.Scope, now kernel
 	if s.writer == nil {
 		return nil, fmt.Errorf("%w: порт RoadmapWriter не подключён", kernel.ErrUnavailable)
 	}
-	st, err := s.Settings(ctx)
+	st, err := s.Settings(ctx, sc)
 	if err != nil {
 		return nil, err
 	}
 	horizon := kernel.DateFromTime(now.Time().AddDate(0, st.LeadMonths, 0))
-	list, err := s.store.List(ctx, Filter{Kind: KindRegulatory, Subtype: SubtypeCertificateExpiry, Statuses: []Status{StatusActive}, DueBefore: horizon})
+	list, err := s.store.List(ctx, sc, Filter{Kind: KindRegulatory, Subtype: SubtypeCertificateExpiry, Statuses: []Status{StatusActive}, DueBefore: horizon})
 	if err != nil {
 		return nil, fmt.Errorf("list commitments: %w", err)
 	}
@@ -407,7 +407,7 @@ func (s *Service) EnsureRenewals(ctx context.Context, sc authz.Scope, now kernel
 		}
 		c.RenewalItemID = itemID
 		c.UpdatedAt = s.clock.Now()
-		if err := s.store.Save(ctx, c); err != nil {
+		if err := s.store.Save(ctx, sc, c); err != nil {
 			return created, fmt.Errorf("save commitment: %w", err)
 		}
 		if err := s.emit(ctx, EventRenewalPlanned, c.ID, c.ProductID, sc.Subject(), c); err != nil {
@@ -425,7 +425,7 @@ func (s *Service) StartVulnerabilityDeadline(ctx context.Context, sc authz.Scope
 	if strings.TrimSpace(basis) == "" {
 		return Commitment{}, kernel.Invalid("basis", "основание обязательно для автосоздания")
 	}
-	existing, err := s.store.List(ctx, Filter{ProductID: productID, Kind: KindRegulatory,
+	existing, err := s.store.List(ctx, sc, Filter{ProductID: productID, Kind: KindRegulatory,
 		Subtype: SubtypeVulnFixDeadline, Statuses: []Status{StatusActive}})
 	if err != nil {
 		return Commitment{}, fmt.Errorf("commitments list: %w", err)

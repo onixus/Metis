@@ -307,13 +307,14 @@ func (q *Queries) MarkEventProcessed(ctx context.Context, eventID uuid.UUID) err
 	return err
 }
 
-const upsertItem = `-- name: UpsertItem :exec
+const upsertItem = `-- name: UpsertItem :execrows
 INSERT INTO roadmap.items (id, product_id, feature_id, title, bucket, start_date, end_date, release_id, audience, status, kind, commitment_id, created_at, updated_at, launch_tier, launch_date)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, feature_id = EXCLUDED.feature_id, title = EXCLUDED.title,
   bucket = EXCLUDED.bucket, start_date = EXCLUDED.start_date, end_date = EXCLUDED.end_date, release_id = EXCLUDED.release_id,
   audience = EXCLUDED.audience, status = EXCLUDED.status, kind = EXCLUDED.kind, commitment_id = EXCLUDED.commitment_id,
   updated_at = EXCLUDED.updated_at, launch_tier = EXCLUDED.launch_tier, launch_date = EXCLUDED.launch_date
+WHERE roadmap.items.product_id = EXCLUDED.product_id
 `
 
 type UpsertItemParams struct {
@@ -335,8 +336,8 @@ type UpsertItemParams struct {
 	LaunchDate   pgtype.Date
 }
 
-func (q *Queries) UpsertItem(ctx context.Context, arg UpsertItemParams) error {
-	_, err := q.db.Exec(ctx, upsertItem,
+func (q *Queries) UpsertItem(ctx context.Context, arg UpsertItemParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertItem,
 		arg.ID,
 		arg.ProductID,
 		arg.FeatureID,
@@ -354,15 +355,19 @@ func (q *Queries) UpsertItem(ctx context.Context, arg UpsertItemParams) error {
 		arg.LaunchTier,
 		arg.LaunchDate,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertRelease = `-- name: UpsertRelease :exec
+const upsertRelease = `-- name: UpsertRelease :execrows
 INSERT INTO roadmap.releases (id, product_id, name, version, planned_date, status, branch, base_release_id, feature_ids, release_notes, eol, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, name = EXCLUDED.name, version = EXCLUDED.version,
   planned_date = EXCLUDED.planned_date, status = EXCLUDED.status, branch = EXCLUDED.branch, base_release_id = EXCLUDED.base_release_id,
   feature_ids = EXCLUDED.feature_ids, release_notes = EXCLUDED.release_notes, eol = EXCLUDED.eol, updated_at = EXCLUDED.updated_at
+WHERE roadmap.releases.product_id = EXCLUDED.product_id
 `
 
 type UpsertReleaseParams struct {
@@ -381,8 +386,8 @@ type UpsertReleaseParams struct {
 	UpdatedAt     time.Time
 }
 
-func (q *Queries) UpsertRelease(ctx context.Context, arg UpsertReleaseParams) error {
-	_, err := q.db.Exec(ctx, upsertRelease,
+func (q *Queries) UpsertRelease(ctx context.Context, arg UpsertReleaseParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertRelease,
 		arg.ID,
 		arg.ProductID,
 		arg.Name,
@@ -397,5 +402,8 @@ func (q *Queries) UpsertRelease(ctx context.Context, arg UpsertReleaseParams) er
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

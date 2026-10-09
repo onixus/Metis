@@ -63,7 +63,7 @@ func (s *Service) DueForReview(ctx context.Context, sc authz.Scope, productID ke
 	if !sc.Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	all, err := s.store.DueForReview(ctx, kernel.DateFromTime(s.clock.Now()))
+	all, err := s.store.DueForReview(ctx, sc, kernel.DateFromTime(s.clock.Now()))
 	if err != nil {
 		return nil, fmt.Errorf("decisions due for review: %w", err)
 	}
@@ -72,7 +72,7 @@ func (s *Service) DueForReview(ctx context.Context, sc authz.Scope, productID ke
 		if productID != kernel.NilID && rec.ProductID != productID {
 			continue
 		}
-		if canRead(sc, rec.ProductID) != nil {
+		if RequireRead(sc, rec.ProductID) != nil {
 			continue
 		}
 		out = append(out, rec)
@@ -83,11 +83,11 @@ func (s *Service) DueForReview(ctx context.Context, sc authz.Scope, productID ke
 // ReviewDecision сравнивает ожидаемый эффект решения с фактом на дату ревизии (DA-06).
 // Факт берётся у модуля экономики по показателю из измеримого эффекта.
 func (s *Service) ReviewDecision(ctx context.Context, sc authz.Scope, id kernel.ID, comment string) (DecisionRecord, error) {
-	rec, err := s.store.Get(ctx, id)
+	rec, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return DecisionRecord{}, fmt.Errorf("decisions review %s: %w", id, err)
 	}
-	if err := canWrite(sc, rec.ProductID); err != nil {
+	if err := RequireWrite(sc, rec.ProductID); err != nil {
 		return DecisionRecord{}, err
 	}
 	if rec.Effect.IsZero() {
@@ -104,7 +104,7 @@ func (s *Service) ReviewDecision(ctx context.Context, sc authz.Scope, id kernel.
 		Delta: actual.Sub(rec.Effect.Value), Verdict: verdict(rec.Effect.Value, actual), Comment: comment}
 	rec.Review = &r
 	rec.UpdatedAt = r.At
-	if err := s.store.Save(ctx, rec); err != nil {
+	if err := s.store.Save(ctx, sc, rec); err != nil {
 		return DecisionRecord{}, fmt.Errorf("decisions review %s: %w", id, err)
 	}
 	if err := s.emit(ctx, EventRecordReviewed, rec, sc.Subject(), rec); err != nil {

@@ -59,7 +59,13 @@ func (s *Store) SaveSettings(ctx context.Context, sc authz.Scope, settings compl
 }
 
 // SaveRequirementSet создаёт или обновляет набор требований.
-func (s *Store) SaveRequirementSet(ctx context.Context, rs compliance.RequirementSet) error {
+func (s *Store) SaveRequirementSet(ctx context.Context, sc authz.Scope, rs compliance.RequirementSet) error {
+	if err := compliance.RequireCatalog(sc); err != nil {
+		return err
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	items := rs.Items
 	if items == nil {
 		items = []compliance.RequirementItem{}
@@ -79,7 +85,10 @@ func (s *Store) SaveRequirementSet(ctx context.Context, rs compliance.Requiremen
 }
 
 // RequirementSet возвращает набор.
-func (s *Store) RequirementSet(ctx context.Context, id kernel.ID) (compliance.RequirementSet, error) {
+func (s *Store) RequirementSet(ctx context.Context, sc authz.Scope, id kernel.ID) (compliance.RequirementSet, error) {
+	if !sc.Valid() {
+		return compliance.RequirementSet{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetRequirementSet(ctx, id)
 	if err != nil {
 		return compliance.RequirementSet{}, fmt.Errorf("compliance requirement set %s: %w", id, pgdb.MapError(err))
@@ -88,7 +97,10 @@ func (s *Store) RequirementSet(ctx context.Context, id kernel.ID) (compliance.Re
 }
 
 // RequirementSets возвращает наборы по коду (пустой — все) по возрастанию версии.
-func (s *Store) RequirementSets(ctx context.Context, code string) ([]compliance.RequirementSet, error) {
+func (s *Store) RequirementSets(ctx context.Context, sc authz.Scope, code string) ([]compliance.RequirementSet, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListRequirementSets(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("compliance requirement sets: %w", pgdb.MapError(err))
@@ -118,7 +130,13 @@ func setFromRow(r db.ComplianceRequirementSet) (compliance.RequirementSet, error
 }
 
 // SaveTemplate создаёт или обновляет шаблон трека; гейты — jsonb.
-func (s *Store) SaveTemplate(ctx context.Context, t compliance.TrackTemplate) error {
+func (s *Store) SaveTemplate(ctx context.Context, sc authz.Scope, t compliance.TrackTemplate) error {
+	if err := compliance.RequireCatalog(sc); err != nil {
+		return err
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	gates := t.Gates
 	if gates == nil {
 		gates = []compliance.GateTemplate{}
@@ -137,7 +155,10 @@ func (s *Store) SaveTemplate(ctx context.Context, t compliance.TrackTemplate) er
 }
 
 // Template возвращает шаблон.
-func (s *Store) Template(ctx context.Context, id kernel.ID) (compliance.TrackTemplate, error) {
+func (s *Store) Template(ctx context.Context, sc authz.Scope, id kernel.ID) (compliance.TrackTemplate, error) {
+	if !sc.Valid() {
+		return compliance.TrackTemplate{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetTemplate(ctx, id)
 	if err != nil {
 		return compliance.TrackTemplate{}, fmt.Errorf("compliance template %s: %w", id, pgdb.MapError(err))
@@ -146,7 +167,10 @@ func (s *Store) Template(ctx context.Context, id kernel.ID) (compliance.TrackTem
 }
 
 // Templates возвращает шаблоны типа продукта (пустой — все) в порядке создания.
-func (s *Store) Templates(ctx context.Context, pt portfoliograph.ProductType) ([]compliance.TrackTemplate, error) {
+func (s *Store) Templates(ctx context.Context, sc authz.Scope, pt portfoliograph.ProductType) ([]compliance.TrackTemplate, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListTemplates(ctx, string(pt))
 	if err != nil {
 		return nil, fmt.Errorf("compliance templates: %w", pgdb.MapError(err))
@@ -176,7 +200,13 @@ func templateFromRow(r db.ComplianceTrackTemplate) (compliance.TrackTemplate, er
 }
 
 // SaveTrack создаёт или обновляет трек; гейты с чек-листами — jsonb.
-func (s *Store) SaveTrack(ctx context.Context, t compliance.Track) error {
+func (s *Store) SaveTrack(ctx context.Context, sc authz.Scope, t compliance.Track) error {
+	if t.ProductID == kernel.NilID || !sc.Allows(authz.ActionReadStrategic, t.ProductID) || !sc.Allows(authz.ActionWriteCompliance, t.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	gates := make([]compliance.Gate, len(t.Gates))
 	for i, g := range t.Gates {
 		g.PassedAt = g.PassedAt.UTC()
@@ -186,33 +216,51 @@ func (s *Store) SaveTrack(ctx context.Context, t compliance.Track) error {
 	if err != nil {
 		return fmt.Errorf("compliance track %s: gates: %w", t.ID, err)
 	}
-	err = s.q(ctx).UpsertTrack(ctx, db.UpsertTrackParams{
+	n, err := s.q(ctx).UpsertTrack(ctx, db.UpsertTrackParams{
 		ID: t.ID, ProductID: t.ProductID, ReleaseID: t.ReleaseID, Version: t.Version, TemplateID: t.TemplateID, Status: string(t.Status),
 		Gates: raw, BaselineID: pgdb.NullID(t.BaselineID), CreatedBy: t.CreatedBy, CreatedAt: t.CreatedAt.UTC(), UpdatedAt: t.UpdatedAt.UTC(),
 	})
 	if err != nil {
 		return fmt.Errorf("compliance track %s: %w", t.ID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // Track возвращает трек.
-func (s *Store) Track(ctx context.Context, id kernel.ID) (compliance.Track, error) {
+func (s *Store) Track(ctx context.Context, sc authz.Scope, id kernel.ID) (compliance.Track, error) {
+	if !sc.Valid() {
+		return compliance.Track{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetTrack(ctx, id)
 	if err != nil {
 		return compliance.Track{}, fmt.Errorf("compliance track %s: %w", id, pgdb.MapError(err))
+	}
+	if !sc.Allows(authz.ActionReadStrategic, r.ProductID) {
+		return compliance.Track{}, kernel.ErrForbidden
 	}
 	return trackFromRow(r)
 }
 
 // Tracks возвращает треки по фильтру в порядке создания.
-func (s *Store) Tracks(ctx context.Context, f compliance.TrackFilter) ([]compliance.Track, error) {
+func (s *Store) Tracks(ctx context.Context, sc authz.Scope, f compliance.TrackFilter) ([]compliance.Track, error) {
+	if f.ProductID != kernel.NilID && !sc.Allows(authz.ActionReadStrategic, f.ProductID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListTracks(ctx, db.ListTracksParams{ProductID: pgdb.NullID(f.ProductID), ReleaseID: pgdb.NullID(f.ReleaseID)})
 	if err != nil {
 		return nil, fmt.Errorf("compliance tracks: %w", pgdb.MapError(err))
 	}
 	out := make([]compliance.Track, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadStrategic, r.ProductID) {
+			continue
+		}
 		t, err := trackFromRow(r)
 		if err != nil {
 			return nil, err
@@ -243,7 +291,13 @@ func trackFromRow(r db.ComplianceTrack) (compliance.Track, error) {
 }
 
 // AppendImpact добавляет оценку класса влияния (только INSERT).
-func (s *Store) AppendImpact(ctx context.Context, a compliance.ImpactAssessment) error {
+func (s *Store) AppendImpact(ctx context.Context, sc authz.Scope, a compliance.ImpactAssessment) error {
+	if a.ProductID == kernel.NilID || !sc.Allows(authz.ActionReadStrategic, a.ProductID) || !sc.Allows(authz.ActionWriteCompliance, a.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	err := s.q(ctx).InsertImpact(ctx, db.InsertImpactParams{
 		ID: a.ID, FeatureID: a.FeatureID, ProductID: a.ProductID, Class: string(a.Class), Justification: a.Justification,
 		Author: a.Author, At: a.At.UTC(),
@@ -255,13 +309,19 @@ func (s *Store) AppendImpact(ctx context.Context, a compliance.ImpactAssessment)
 }
 
 // ImpactHistory возвращает оценки фичи в порядке добавления.
-func (s *Store) ImpactHistory(ctx context.Context, featureID kernel.ID) ([]compliance.ImpactAssessment, error) {
+func (s *Store) ImpactHistory(ctx context.Context, sc authz.Scope, featureID kernel.ID) ([]compliance.ImpactAssessment, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListImpactHistory(ctx, featureID)
 	if err != nil {
 		return nil, fmt.Errorf("compliance impact history %s: %w", featureID, pgdb.MapError(err))
 	}
 	out := make([]compliance.ImpactAssessment, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadStrategic, r.ProductID) {
+			continue
+		}
 		out = append(out, compliance.ImpactAssessment{
 			ID: r.ID, FeatureID: r.FeatureID, ProductID: r.ProductID, Class: compliance.ImpactClass(r.Class),
 			Justification: r.Justification, Author: r.Author, At: r.At.UTC(),
@@ -271,12 +331,18 @@ func (s *Store) ImpactHistory(ctx context.Context, featureID kernel.ID) ([]compl
 }
 
 // SaveBaseline создаёт или обновляет baseline.
-func (s *Store) SaveBaseline(ctx context.Context, b compliance.CertifiedBaseline) error {
+func (s *Store) SaveBaseline(ctx context.Context, sc authz.Scope, b compliance.CertifiedBaseline) error {
+	if b.ProductID == kernel.NilID || !sc.Allows(authz.ActionReadStrategic, b.ProductID) || !sc.Allows(authz.ActionWriteCompliance, b.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	components, err := marshalComponents(b.Components)
 	if err != nil {
 		return fmt.Errorf("compliance baseline %s: %w", b.ID, err)
 	}
-	err = s.q(ctx).UpsertBaseline(ctx, db.UpsertBaselineParams{
+	n, err := s.q(ctx).UpsertBaseline(ctx, db.UpsertBaselineParams{
 		ID: b.ID, ProductID: b.ProductID, TrackID: pgdb.NullID(b.TrackID), Version: b.Version, RequirementSetID: pgdb.NullID(b.RequirementSetID),
 		CertificateNo: b.CertificateNo, CertifiedAt: pgdb.ToDate(b.CertifiedAt), Eol: pgdb.ToDate(b.EOL), CreatedAt: b.CreatedAt.UTC(),
 		Components: components,
@@ -284,39 +350,63 @@ func (s *Store) SaveBaseline(ctx context.Context, b compliance.CertifiedBaseline
 	if err != nil {
 		return fmt.Errorf("compliance baseline %s: %w", b.ID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // Baseline возвращает baseline.
-func (s *Store) Baseline(ctx context.Context, id kernel.ID) (compliance.CertifiedBaseline, error) {
+func (s *Store) Baseline(ctx context.Context, sc authz.Scope, id kernel.ID) (compliance.CertifiedBaseline, error) {
+	if !sc.Valid() {
+		return compliance.CertifiedBaseline{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetBaseline(ctx, id)
 	if err != nil {
 		return compliance.CertifiedBaseline{}, fmt.Errorf("compliance baseline %s: %w", id, pgdb.MapError(err))
+	}
+	if !sc.Allows(authz.ActionReadStrategic, r.ProductID) {
+		return compliance.CertifiedBaseline{}, kernel.ErrForbidden
 	}
 	return baselineFromRow(r), nil
 }
 
 // Baselines возвращает baseline продукта (NilID — все) в порядке создания.
-func (s *Store) Baselines(ctx context.Context, productID kernel.ID) ([]compliance.CertifiedBaseline, error) {
+func (s *Store) Baselines(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]compliance.CertifiedBaseline, error) {
+	if productID != kernel.NilID && !sc.Allows(authz.ActionReadStrategic, productID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListBaselines(ctx, pgdb.NullID(productID))
 	if err != nil {
 		return nil, fmt.Errorf("compliance baselines: %w", pgdb.MapError(err))
 	}
 	out := make([]compliance.CertifiedBaseline, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadStrategic, r.ProductID) {
+			continue
+		}
 		out = append(out, baselineFromRow(r))
 	}
 	return out, nil
 }
 
 // BaselinesWithComponent возвращает baseline, содержащие компонент с таким ключом (CM-08).
-func (s *Store) BaselinesWithComponent(ctx context.Context, componentKey string) ([]compliance.CertifiedBaseline, error) {
+func (s *Store) BaselinesWithComponent(ctx context.Context, sc authz.Scope, componentKey string) ([]compliance.CertifiedBaseline, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListBaselinesWithComponent(ctx, componentKey)
 	if err != nil {
 		return nil, fmt.Errorf("compliance baselines по компоненту %q: %w", componentKey, pgdb.MapError(err))
 	}
 	out := make([]compliance.CertifiedBaseline, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadStrategic, r.ProductID) {
+			continue
+		}
 		out = append(out, baselineFromRow(r))
 	}
 	return out, nil

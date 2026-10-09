@@ -111,18 +111,18 @@ func (s *Service) SaveScenario(ctx context.Context, sc authz.Scope, in Scenario)
 		return Scenario{}, kernel.Invalid("period", "период обязателен")
 	}
 	for _, o := range in.Overrides {
-		if _, err := s.store.Field(ctx, o.FieldKey); err != nil {
+		if _, err := s.store.Field(ctx, sc, o.FieldKey); err != nil {
 			return Scenario{}, fmt.Errorf("подмена поля %q: %w", o.FieldKey, err)
 		}
 	}
 	now := s.clock.Now()
 	if in.ID == kernel.NilID {
 		in.ID, in.CreatedAt = kernel.NewID(), now
-	} else if _, err := s.store.Scenario(ctx, in.ID); err != nil {
+	} else if _, err := s.store.Scenario(ctx, sc, in.ID); err != nil {
 		return Scenario{}, err
 	}
 	in.Actor, in.UpdatedAt = sc.Subject(), now
-	if err := s.store.SaveScenario(ctx, in); err != nil {
+	if err := s.store.SaveScenario(ctx, sc, in); err != nil {
 		return Scenario{}, fmt.Errorf("save scenario: %w", err)
 	}
 	return in, nil
@@ -133,7 +133,7 @@ func (s *Service) Scenarios(ctx context.Context, sc authz.Scope) ([]Scenario, er
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.Scenarios(ctx)
+	return s.store.Scenarios(ctx, sc)
 }
 
 // RunScenario считает сценарий тем же движком формул с подменой входных значений (EC-13)
@@ -143,21 +143,21 @@ func (s *Service) RunScenario(ctx context.Context, sc authz.Scope, id kernel.ID,
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return ScenarioResult{}, err
 	}
-	sn, err := s.store.Scenario(ctx, id)
+	sn, err := s.store.Scenario(ctx, sc, id)
 	if err != nil {
 		return ScenarioResult{}, err
 	}
 	products := sn.Products
 	if len(products) == 0 {
-		products, err = s.productsWithData(ctx, sn.Period)
+		products, err = s.productsWithData(ctx, sc, sn.Period)
 		if err != nil {
 			return ScenarioResult{}, err
 		}
 	}
 	res := ScenarioResult{Scenario: sn, Metrics: map[string]string{}, BaseMetrics: map[string]string{}}
 
-	base := s.source(ctx, nil)
-	withOverrides := s.source(ctx, sn.Overrides)
+	base := s.source(ctx, sc, nil)
+	withOverrides := s.source(ctx, sc, sn.Overrides)
 	for _, key := range metrics {
 		for _, pid := range products {
 			sl := Slice{ProductID: pid, Period: sn.Period}.formulaSlice()
@@ -174,11 +174,11 @@ func (s *Service) RunScenario(ctx context.Context, sc authz.Scope, id kernel.ID,
 		}
 	}
 	for _, pid := range products {
-		basePnL, err := s.pnl(ctx, pid, sn.Period, nil)
+		basePnL, err := s.pnl(ctx, sc, pid, sn.Period, nil)
 		if err != nil {
 			return ScenarioResult{}, err
 		}
-		scenarioPnL, err := s.pnl(ctx, pid, sn.Period, sn.Overrides)
+		scenarioPnL, err := s.pnl(ctx, sc, pid, sn.Period, sn.Overrides)
 		if err != nil {
 			return ScenarioResult{}, err
 		}
@@ -238,7 +238,7 @@ func (s *Service) trackImpact(ctx context.Context, sc authz.Scope, sn Scenario, 
 	}
 	out := make([]TrackImpact, 0, len(refs))
 	for pid, tracks := range byProduct {
-		budget, err := s.sumField(ctx, s.cfg.BudgetField, pid, sn.Period, nil)
+		budget, err := s.sumField(ctx, sc, s.cfg.BudgetField, pid, sn.Period, nil)
 		if err != nil {
 			return nil, err
 		}

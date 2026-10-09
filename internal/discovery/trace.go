@@ -176,7 +176,7 @@ func (t *tracer) expand(ctx context.Context, ref TraceRef) error {
 				return err
 			}
 		}
-		insights, err := t.s.store.Insights(ctx, InsightFilter{SignalID: ref.ID})
+		insights, err := t.s.store.Insights(ctx, t.sc, InsightFilter{SignalID: ref.ID})
 		if err != nil {
 			return fmt.Errorf("insights: %w", err)
 		}
@@ -187,7 +187,7 @@ func (t *tracer) expand(ctx context.Context, ref TraceRef) error {
 		}
 	case TraceInsight:
 		i := t.nodes[ref]
-		ins, err := t.s.store.Insight(ctx, i.ID)
+		ins, err := t.s.store.Insight(ctx, t.sc, i.ID)
 		if err != nil {
 			return err
 		}
@@ -202,7 +202,7 @@ func (t *tracer) expand(ctx context.Context, ref TraceRef) error {
 			}
 		}
 	case TraceHypothesis:
-		h, err := t.s.store.Hypothesis(ctx, ref.ID)
+		h, err := t.s.store.Hypothesis(ctx, t.sc, ref.ID)
 		if err != nil {
 			return err
 		}
@@ -211,7 +211,7 @@ func (t *tracer) expand(ctx context.Context, ref TraceRef) error {
 				return err
 			}
 		}
-		insights, err := t.s.store.Insights(ctx, InsightFilter{HypothesisID: ref.ID})
+		insights, err := t.s.store.Insights(ctx, t.sc, InsightFilter{HypothesisID: ref.ID})
 		if err != nil {
 			return fmt.Errorf("insights: %w", err)
 		}
@@ -232,7 +232,7 @@ func (t *tracer) expand(ctx context.Context, ref TraceRef) error {
 			}
 		}
 	case TraceFeature:
-		hyps, err := t.s.store.Hypotheses(ctx, HypothesisFilter{FeatureID: ref.ID})
+		hyps, err := t.s.store.Hypotheses(ctx, t.sc, HypothesisFilter{FeatureID: ref.ID})
 		if err != nil {
 			return fmt.Errorf("hypotheses: %w", err)
 		}

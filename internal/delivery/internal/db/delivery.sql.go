@@ -262,13 +262,14 @@ func (q *Queries) MarkProcessed(ctx context.Context, externalID string) (int64, 
 	return result.RowsAffected(), nil
 }
 
-const upsertEpic = `-- name: UpsertEpic :exec
+const upsertEpic = `-- name: UpsertEpic :execrows
 INSERT INTO delivery.epics (feature_id, product_id, epic_key, summary, status, due_date, fix_versions, issues, initial_scope, first_seen_at, synced_at, source_event_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 ON CONFLICT (feature_id) DO UPDATE SET product_id = EXCLUDED.product_id, epic_key = EXCLUDED.epic_key, summary = EXCLUDED.summary,
   status = EXCLUDED.status, due_date = EXCLUDED.due_date, fix_versions = EXCLUDED.fix_versions, issues = EXCLUDED.issues,
   initial_scope = EXCLUDED.initial_scope, first_seen_at = EXCLUDED.first_seen_at, synced_at = EXCLUDED.synced_at,
   source_event_id = EXCLUDED.source_event_id
+WHERE delivery.epics.product_id = EXCLUDED.product_id
 `
 
 type UpsertEpicParams struct {
@@ -286,8 +287,8 @@ type UpsertEpicParams struct {
 	SourceEventID string
 }
 
-func (q *Queries) UpsertEpic(ctx context.Context, arg UpsertEpicParams) error {
-	_, err := q.db.Exec(ctx, upsertEpic,
+func (q *Queries) UpsertEpic(ctx context.Context, arg UpsertEpicParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertEpic,
 		arg.FeatureID,
 		arg.ProductID,
 		arg.EpicKey,
@@ -301,7 +302,10 @@ func (q *Queries) UpsertEpic(ctx context.Context, arg UpsertEpicParams) error {
 		arg.SyncedAt,
 		arg.SourceEventID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertFieldMapping = `-- name: UpsertFieldMapping :exec
@@ -319,10 +323,11 @@ func (q *Queries) UpsertFieldMapping(ctx context.Context, arg UpsertFieldMapping
 	return err
 }
 
-const upsertMapping = `-- name: UpsertMapping :exec
+const upsertMapping = `-- name: UpsertMapping :execrows
 INSERT INTO delivery.mappings (feature_id, product_id, epic_key, project, created_at) VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (feature_id) DO UPDATE SET product_id = EXCLUDED.product_id, epic_key = EXCLUDED.epic_key,
   project = EXCLUDED.project, created_at = EXCLUDED.created_at
+WHERE delivery.mappings.product_id = EXCLUDED.product_id
 `
 
 type UpsertMappingParams struct {
@@ -333,21 +338,25 @@ type UpsertMappingParams struct {
 	CreatedAt time.Time
 }
 
-func (q *Queries) UpsertMapping(ctx context.Context, arg UpsertMappingParams) error {
-	_, err := q.db.Exec(ctx, upsertMapping,
+func (q *Queries) UpsertMapping(ctx context.Context, arg UpsertMappingParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertMapping,
 		arg.FeatureID,
 		arg.ProductID,
 		arg.EpicKey,
 		arg.Project,
 		arg.CreatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertReleaseMapping = `-- name: UpsertReleaseMapping :exec
+const upsertReleaseMapping = `-- name: UpsertReleaseMapping :execrows
 INSERT INTO delivery.release_mappings (release_id, product_id, project, fix_version, created_at) VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (release_id) DO UPDATE SET product_id = EXCLUDED.product_id, project = EXCLUDED.project,
   fix_version = EXCLUDED.fix_version, created_at = EXCLUDED.created_at
+WHERE delivery.release_mappings.product_id = EXCLUDED.product_id
 `
 
 type UpsertReleaseMappingParams struct {
@@ -358,15 +367,18 @@ type UpsertReleaseMappingParams struct {
 	CreatedAt  time.Time
 }
 
-func (q *Queries) UpsertReleaseMapping(ctx context.Context, arg UpsertReleaseMappingParams) error {
-	_, err := q.db.Exec(ctx, upsertReleaseMapping,
+func (q *Queries) UpsertReleaseMapping(ctx context.Context, arg UpsertReleaseMappingParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertReleaseMapping,
 		arg.ReleaseID,
 		arg.ProductID,
 		arg.Project,
 		arg.FixVersion,
 		arg.CreatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertSyncState = `-- name: UpsertSyncState :exec

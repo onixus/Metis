@@ -32,32 +32,32 @@ type Store interface {
 	Settings(ctx context.Context, sc authz.Scope) (Settings, error)
 	SaveSettings(ctx context.Context, sc authz.Scope, settings Settings) error
 
-	SaveRequirementSet(ctx context.Context, rs RequirementSet) error
-	RequirementSet(ctx context.Context, id kernel.ID) (RequirementSet, error)
+	SaveRequirementSet(ctx context.Context, sc authz.Scope, rs RequirementSet) error
+	RequirementSet(ctx context.Context, sc authz.Scope, id kernel.ID) (RequirementSet, error)
 	// RequirementSets возвращает наборы по коду (пустой код — все) по возрастанию версии.
-	RequirementSets(ctx context.Context, code string) ([]RequirementSet, error)
+	RequirementSets(ctx context.Context, sc authz.Scope, code string) ([]RequirementSet, error)
 
-	SaveTemplate(ctx context.Context, t TrackTemplate) error
-	Template(ctx context.Context, id kernel.ID) (TrackTemplate, error)
+	SaveTemplate(ctx context.Context, sc authz.Scope, t TrackTemplate) error
+	Template(ctx context.Context, sc authz.Scope, id kernel.ID) (TrackTemplate, error)
 	// Templates возвращает шаблоны типа продукта (пустой тип — все) в порядке сохранения.
-	Templates(ctx context.Context, pt portfoliograph.ProductType) ([]TrackTemplate, error)
+	Templates(ctx context.Context, sc authz.Scope, pt portfoliograph.ProductType) ([]TrackTemplate, error)
 
-	SaveTrack(ctx context.Context, t Track) error
-	Track(ctx context.Context, id kernel.ID) (Track, error)
-	Tracks(ctx context.Context, f TrackFilter) ([]Track, error)
+	SaveTrack(ctx context.Context, sc authz.Scope, t Track) error
+	Track(ctx context.Context, sc authz.Scope, id kernel.ID) (Track, error)
+	Tracks(ctx context.Context, sc authz.Scope, f TrackFilter) ([]Track, error)
 
 	// AppendImpact добавляет оценку в историю (append-only).
-	AppendImpact(ctx context.Context, a ImpactAssessment) error
+	AppendImpact(ctx context.Context, sc authz.Scope, a ImpactAssessment) error
 	// ImpactHistory — оценки фичи в порядке добавления.
-	ImpactHistory(ctx context.Context, featureID kernel.ID) ([]ImpactAssessment, error)
+	ImpactHistory(ctx context.Context, sc authz.Scope, featureID kernel.ID) ([]ImpactAssessment, error)
 
-	SaveBaseline(ctx context.Context, b CertifiedBaseline) error
-	Baseline(ctx context.Context, id kernel.ID) (CertifiedBaseline, error)
+	SaveBaseline(ctx context.Context, sc authz.Scope, b CertifiedBaseline) error
+	Baseline(ctx context.Context, sc authz.Scope, id kernel.ID) (CertifiedBaseline, error)
 	// Baselines возвращает baseline продукта (NilID — все) в порядке сохранения.
-	Baselines(ctx context.Context, productID kernel.ID) ([]CertifiedBaseline, error)
+	Baselines(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]CertifiedBaseline, error)
 	// BaselinesWithComponent возвращает baseline, в составе которых есть компонент с таким
 	// ключом; версия компонента проверяется вызывающим (CM-08).
-	BaselinesWithComponent(ctx context.Context, componentKey string) ([]CertifiedBaseline, error)
+	BaselinesWithComponent(ctx context.Context, sc authz.Scope, componentKey string) ([]CertifiedBaseline, error)
 }
 
 // MemStore — хранилище в памяти для тестов и стендов без БД.
@@ -83,11 +83,12 @@ func (m *MemStore) Settings(_ context.Context, sc authz.Scope) (Settings, error)
 	if m.settings == nil {
 		return Settings{}, kernel.ErrNotFound
 	}
-	return cloneSettings(*m.settings), nil
+	return kernel.CloneValue(cloneSettings(*m.settings)), nil
 }
 
 // SaveSettings persists validated module settings without retaining caller-owned maps.
 func (m *MemStore) SaveSettings(_ context.Context, sc authz.Scope, st Settings) error {
+	st = kernel.CloneValue(st)
 	if err := sc.Require(authz.ActionAdminSettings, kernel.NilID); err != nil {
 		return err
 	}
@@ -115,7 +116,14 @@ func cloneSettings(st Settings) Settings {
 }
 
 // SaveRequirementSet создаёт или обновляет набор.
-func (m *MemStore) SaveRequirementSet(_ context.Context, rs RequirementSet) error {
+func (m *MemStore) SaveRequirementSet(_ context.Context, sc authz.Scope, rs RequirementSet) error {
+	rs = kernel.CloneValue(rs)
+	if err := RequireCatalog(sc); err != nil {
+		return err
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	rs.Items = append([]RequirementItem(nil), rs.Items...)
@@ -130,19 +138,25 @@ func (m *MemStore) SaveRequirementSet(_ context.Context, rs RequirementSet) erro
 }
 
 // RequirementSet возвращает набор по идентификатору.
-func (m *MemStore) RequirementSet(_ context.Context, id kernel.ID) (RequirementSet, error) {
+func (m *MemStore) RequirementSet(_ context.Context, sc authz.Scope, id kernel.ID) (RequirementSet, error) {
+	if !sc.Valid() {
+		return RequirementSet{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	for _, rs := range m.sets {
 		if rs.ID == id {
-			return cloneSet(rs), nil
+			return kernel.CloneValue(cloneSet(rs)), nil
 		}
 	}
 	return RequirementSet{}, kernel.NotFound("requirement_set", id)
 }
 
 // RequirementSets возвращает наборы по коду.
-func (m *MemStore) RequirementSets(_ context.Context, code string) ([]RequirementSet, error) {
+func (m *MemStore) RequirementSets(_ context.Context, sc authz.Scope, code string) ([]RequirementSet, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]RequirementSet, 0, len(m.sets))
@@ -151,7 +165,7 @@ func (m *MemStore) RequirementSets(_ context.Context, code string) ([]Requiremen
 			out = append(out, cloneSet(rs))
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 func cloneSet(rs RequirementSet) RequirementSet {
@@ -160,7 +174,14 @@ func cloneSet(rs RequirementSet) RequirementSet {
 }
 
 // SaveTemplate создаёт или обновляет шаблон.
-func (m *MemStore) SaveTemplate(_ context.Context, t TrackTemplate) error {
+func (m *MemStore) SaveTemplate(_ context.Context, sc authz.Scope, t TrackTemplate) error {
+	t = kernel.CloneValue(t)
+	if err := RequireCatalog(sc); err != nil {
+		return err
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	t = cloneTemplate(t)
@@ -175,19 +196,26 @@ func (m *MemStore) SaveTemplate(_ context.Context, t TrackTemplate) error {
 }
 
 // Template возвращает шаблон.
-func (m *MemStore) Template(_ context.Context, id kernel.ID) (TrackTemplate, error) {
+func (m *MemStore) Template(_ context.Context, sc authz.Scope, id kernel.ID) (TrackTemplate, error) {
+	if !sc.Valid() {
+		return TrackTemplate{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	for _, t := range m.templates {
 		if t.ID == id {
-			return cloneTemplate(t), nil
+			return kernel.CloneValue(cloneTemplate(t)), nil
 		}
 	}
 	return TrackTemplate{}, kernel.NotFound("track_template", id)
 }
 
 // Templates возвращает шаблоны типа продукта.
-func (m *MemStore) Templates(_ context.Context, pt portfoliograph.ProductType) ([]TrackTemplate, error) {
+func (m *MemStore) Templates(_ context.Context, sc authz.Scope, pt portfoliograph.ProductType) ([]TrackTemplate, error) {
+	pt = kernel.CloneValue(pt)
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]TrackTemplate, 0, len(m.templates))
@@ -196,7 +224,7 @@ func (m *MemStore) Templates(_ context.Context, pt portfoliograph.ProductType) (
 			out = append(out, cloneTemplate(t))
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 func cloneTemplate(t TrackTemplate) TrackTemplate {
@@ -210,12 +238,22 @@ func cloneTemplate(t TrackTemplate) TrackTemplate {
 }
 
 // SaveTrack создаёт или обновляет трек.
-func (m *MemStore) SaveTrack(_ context.Context, t Track) error {
+func (m *MemStore) SaveTrack(_ context.Context, sc authz.Scope, t Track) error {
+	t = kernel.CloneValue(t)
+	if t.ProductID == kernel.NilID || !sc.Allows(authz.ActionReadStrategic, t.ProductID) || !sc.Allows(authz.ActionWriteCompliance, t.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	t = cloneTrack(t)
 	for i := range m.tracks {
 		if m.tracks[i].ID == t.ID {
+			if m.tracks[i].ProductID != t.ProductID {
+				return kernel.ErrForbidden
+			}
 			m.tracks[i] = t
 			return nil
 		}
@@ -225,28 +263,44 @@ func (m *MemStore) SaveTrack(_ context.Context, t Track) error {
 }
 
 // Track возвращает трек.
-func (m *MemStore) Track(_ context.Context, id kernel.ID) (Track, error) {
+func (m *MemStore) Track(_ context.Context, sc authz.Scope, id kernel.ID) (Track, error) {
+	if !sc.Valid() {
+		return Track{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	for _, t := range m.tracks {
 		if t.ID == id {
-			return cloneTrack(t), nil
+			if !sc.Allows(authz.ActionReadStrategic, t.ProductID) {
+				return Track{}, kernel.ErrForbidden
+			}
+			return kernel.CloneValue(cloneTrack(t)), nil
 		}
 	}
 	return Track{}, kernel.NotFound("track", id)
 }
 
 // Tracks возвращает треки по фильтру в порядке сохранения.
-func (m *MemStore) Tracks(_ context.Context, f TrackFilter) ([]Track, error) {
+func (m *MemStore) Tracks(_ context.Context, sc authz.Scope, f TrackFilter) ([]Track, error) {
+	f = kernel.CloneValue(f)
+	if f.ProductID != kernel.NilID && !sc.Allows(authz.ActionReadStrategic, f.ProductID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]Track, 0, len(m.tracks))
 	for _, t := range m.tracks {
+		if !sc.Allows(authz.ActionReadStrategic, t.ProductID) {
+			continue
+		}
 		if f.matches(t) {
 			out = append(out, cloneTrack(t))
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 func cloneTrack(t Track) Track {
@@ -260,7 +314,14 @@ func cloneTrack(t Track) Track {
 }
 
 // AppendImpact добавляет оценку класса влияния.
-func (m *MemStore) AppendImpact(_ context.Context, a ImpactAssessment) error {
+func (m *MemStore) AppendImpact(_ context.Context, sc authz.Scope, a ImpactAssessment) error {
+	a = kernel.CloneValue(a)
+	if a.ProductID == kernel.NilID || !sc.Allows(authz.ActionReadStrategic, a.ProductID) || !sc.Allows(authz.ActionWriteCompliance, a.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.impacts = append(m.impacts, a)
@@ -268,24 +329,40 @@ func (m *MemStore) AppendImpact(_ context.Context, a ImpactAssessment) error {
 }
 
 // ImpactHistory возвращает оценки фичи.
-func (m *MemStore) ImpactHistory(_ context.Context, featureID kernel.ID) ([]ImpactAssessment, error) {
+func (m *MemStore) ImpactHistory(_ context.Context, sc authz.Scope, featureID kernel.ID) ([]ImpactAssessment, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]ImpactAssessment, 0)
 	for _, a := range m.impacts {
+		if !sc.Allows(authz.ActionReadStrategic, a.ProductID) {
+			continue
+		}
 		if a.FeatureID == featureID {
 			out = append(out, a)
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveBaseline создаёт или обновляет baseline.
-func (m *MemStore) SaveBaseline(_ context.Context, b CertifiedBaseline) error {
+func (m *MemStore) SaveBaseline(_ context.Context, sc authz.Scope, b CertifiedBaseline) error {
+	b = kernel.CloneValue(b)
+	if b.ProductID == kernel.NilID || !sc.Allows(authz.ActionReadStrategic, b.ProductID) || !sc.Allows(authz.ActionWriteCompliance, b.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i := range m.baselines {
 		if m.baselines[i].ID == b.ID {
+			if m.baselines[i].ProductID != b.ProductID {
+				return kernel.ErrForbidden
+			}
 			m.baselines[i] = b
 			return nil
 		}
@@ -295,39 +372,60 @@ func (m *MemStore) SaveBaseline(_ context.Context, b CertifiedBaseline) error {
 }
 
 // Baseline возвращает baseline.
-func (m *MemStore) Baseline(_ context.Context, id kernel.ID) (CertifiedBaseline, error) {
+func (m *MemStore) Baseline(_ context.Context, sc authz.Scope, id kernel.ID) (CertifiedBaseline, error) {
+	if !sc.Valid() {
+		return CertifiedBaseline{}, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	for _, b := range m.baselines {
 		if b.ID == id {
-			return b, nil
+			if !sc.Allows(authz.ActionReadStrategic, b.ProductID) {
+				return CertifiedBaseline{}, kernel.ErrForbidden
+			}
+			return kernel.CloneValue(b), nil
 		}
 	}
 	return CertifiedBaseline{}, kernel.NotFound("certified_baseline", id)
 }
 
 // Baselines возвращает baseline продукта.
-func (m *MemStore) Baselines(_ context.Context, productID kernel.ID) ([]CertifiedBaseline, error) {
+func (m *MemStore) Baselines(_ context.Context, sc authz.Scope, productID kernel.ID) ([]CertifiedBaseline, error) {
+	if productID != kernel.NilID && !sc.Allows(authz.ActionReadStrategic, productID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]CertifiedBaseline, 0, len(m.baselines))
 	for _, b := range m.baselines {
+		if !sc.Allows(authz.ActionReadStrategic, b.ProductID) {
+			continue
+		}
 		if productID == kernel.NilID || b.ProductID == productID {
 			out = append(out, b)
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // BaselinesWithComponent возвращает baseline, содержащие компонент с таким ключом (CM-08).
-func (m *MemStore) BaselinesWithComponent(_ context.Context, componentKey string) ([]CertifiedBaseline, error) {
+func (m *MemStore) BaselinesWithComponent(_ context.Context, sc authz.Scope, componentKey string) ([]CertifiedBaseline, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]CertifiedBaseline, 0)
 	for _, b := range m.baselines {
+		if !sc.Allows(authz.ActionReadStrategic, b.ProductID) {
+			continue
+		}
 		if b.HasComponent(Component{Key: componentKey}) {
 			out = append(out, b)
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }

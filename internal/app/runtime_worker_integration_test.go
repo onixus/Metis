@@ -140,7 +140,7 @@ func TestNFR06_PostgresWorkerReloadsGraphAfterFailedHandlerSavepoint(t *testing.
 			if err != nil {
 				return err
 			}
-			if err := worker.Outbox.Enqueue(ctx, first.Add(time.Duration(i)*time.Microsecond), ev); err != nil {
+			if err := worker.Outbox.Enqueue(ctx, identityaccess.ServiceScope("outbox"), first.Add(time.Duration(i)*time.Microsecond), ev); err != nil {
 				return err
 			}
 		}

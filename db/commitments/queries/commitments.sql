@@ -1,10 +1,11 @@
--- name: UpsertCommitment :exec
+-- name: UpsertCommitment :execrows
 INSERT INTO commitments.commitments (id, product_id, kind, subtype, counterparty, subject, due_date, basis, owner, status, feature_id, release_id, renewal_item_id, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, kind = EXCLUDED.kind, subtype = EXCLUDED.subtype,
   counterparty = EXCLUDED.counterparty, subject = EXCLUDED.subject, due_date = EXCLUDED.due_date, basis = EXCLUDED.basis,
   owner = EXCLUDED.owner, status = EXCLUDED.status, feature_id = EXCLUDED.feature_id, release_id = EXCLUDED.release_id,
-  renewal_item_id = EXCLUDED.renewal_item_id, created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at;
+  renewal_item_id = EXCLUDED.renewal_item_id, created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE commitments.commitments.product_id = EXCLUDED.product_id;
 
 -- name: GetCommitment :one
 SELECT * FROM commitments.commitments WHERE id = $1;

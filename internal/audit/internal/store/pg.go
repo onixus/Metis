@@ -12,6 +12,7 @@ import (
 
 	"github.com/onixus/metis/internal/audit"
 	"github.com/onixus/metis/internal/audit/internal/db"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/pgdb"
 )
@@ -28,7 +29,10 @@ func New(d *pgdb.DB) *PG { return &PG{db: d, pageSize: 1000} }
 func (s *PG) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
 
 // Last — последняя запись.
-func (s *PG) Last(ctx context.Context) (audit.Record, error) {
+func (s *PG) Last(ctx context.Context, sc authz.Scope) (audit.Record, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return audit.Record{}, err
+	}
 	row, err := s.q(ctx).LastRecord(ctx)
 	if err != nil {
 		return audit.Record{}, fmt.Errorf("audit last: %w", pgdb.MapError(err))
@@ -38,7 +42,10 @@ func (s *PG) Last(ctx context.Context) (audit.Record, error) {
 
 // Insert добавляет запись. Поле At должно иметь точность timestamptz (микросекунды), иначе
 // хеш, посчитанный до записи, не совпадёт с прочитанным; используйте pgstore.Clock.
-func (s *PG) Insert(ctx context.Context, r audit.Record) error {
+func (s *PG) Insert(ctx context.Context, sc authz.Scope, r audit.Record) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	if !r.At.Equal(r.At.Truncate(time.Microsecond)) {
 		return fmt.Errorf("%w: audit: поле at должно быть с точностью до микросекунды", kernel.ErrValidation)
 	}
@@ -63,7 +70,10 @@ func (s *PG) Insert(ctx context.Context, r audit.Record) error {
 }
 
 // Walk перебирает записи по возрастанию seq постранично.
-func (s *PG) Walk(ctx context.Context, fn func(audit.Record) error) error {
+func (s *PG) Walk(ctx context.Context, sc authz.Scope, fn func(audit.Record) error) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	var after int64
 	for {
 		rows, err := s.q(ctx).RecordsAfter(ctx, db.RecordsAfterParams{Seq: after, Limit: s.pageSize})

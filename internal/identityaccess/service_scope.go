@@ -1,6 +1,9 @@
 package identityaccess
 
-import "github.com/onixus/metis/internal/identityaccess/authz"
+import (
+	"github.com/onixus/metis/internal/identityaccess/authz"
+	"github.com/onixus/metis/internal/kernel"
+)
 
 // ServiceScope — область доступа сервисных компонентов (воркер, коннекторы):
 // роль service, приватный доступ ко всем продуктам, внутренняя аудитория, без финансов.
@@ -23,4 +26,32 @@ func FinanceServiceScope(name string) authz.Scope {
 		Audience:    authz.AudienceInternal,
 		Finance:     authz.FinanceFull,
 	})
+}
+
+// ModelCalculationScope is reserved for the internal aggregate evaluator. It
+// preserves product visibility and grants no roles or write permissions. Raw
+// rows must never escape the evaluator for an aggregates-only caller.
+func ModelCalculationScope(caller authz.Scope) authz.Scope {
+	if !caller.Valid() || caller.Finance() < authz.FinanceAggregates {
+		return authz.Scope{}
+	}
+	products := make(map[kernel.ID]authz.Access)
+	for _, id := range caller.ProductIDs(authz.AccessStrategic) {
+		products[id] = caller.Product(id)
+	}
+	all := authz.AccessNone
+	if caller.SeesAllProducts() {
+		all = caller.Product(kernel.NilID)
+	}
+	return authz.New(authz.Params{Subject: caller.Subject(), Products: products, AllProducts: all, Audience: caller.Audience(), Finance: authz.FinanceFull})
+}
+
+// ProductPnLCalculationScope permits only the fixed cross-product P&L
+// calculation after authorizing its target. Never use it for caller-defined
+// formulas, raw fact responses, or rule listings.
+func ProductPnLCalculationScope(caller authz.Scope, product kernel.ID) (authz.Scope, error) {
+	if product == kernel.NilID || !caller.Allows(authz.ActionReadModelFinance, product) || caller.Finance() < authz.FinanceAggregates {
+		return authz.Scope{}, kernel.ErrForbidden
+	}
+	return authz.New(authz.Params{Subject: "calculation:pnl:" + caller.Subject(), AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal, Finance: authz.FinanceFull}), nil
 }

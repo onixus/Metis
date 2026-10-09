@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/outbox"
 )
@@ -127,7 +128,7 @@ func TestNFR06_UnknownEventRetriesUntilHandlerIsRegistered(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Enqueue(ctx, clock.Now(), ev); err != nil {
+	if err := store.Enqueue(ctx, identityaccess.ServiceScope("outbox"), clock.Now(), ev); err != nil {
 		t.Fatal(err)
 	}
 	w := outbox.NewWorker(store, clock, outbox.Config{}, nil)

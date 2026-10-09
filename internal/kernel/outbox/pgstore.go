@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/outbox/internal/db"
 	"github.com/onixus/metis/internal/kernel/pgdb"
@@ -27,7 +28,10 @@ func NewPGStore(d *pgdb.DB) *PGStore { return &PGStore{db: d} }
 func (s *PGStore) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
 
 // Enqueue пишет события в текущую транзакцию (или напрямую в пул, если транзакции нет).
-func (s *PGStore) Enqueue(ctx context.Context, now time.Time, events ...kernel.Event) error {
+func (s *PGStore) Enqueue(ctx context.Context, sc authz.Scope, now time.Time, events ...kernel.Event) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	q := s.q(ctx)
 	for _, ev := range events {
 		payload := ev.Payload
@@ -47,7 +51,10 @@ func (s *PGStore) Enqueue(ctx context.Context, now time.Time, events ...kernel.E
 
 // Process захватывает пачку под FOR UPDATE SKIP LOCKED и обрабатывает её в одной транзакции.
 // Каждый обработчик выполняется в savepoint: его сбой не ломает транзакцию пачки.
-func (s *PGStore) Process(ctx context.Context, now time.Time, limit int, fn func(ctx context.Context, m Message) Outcome) (int, error) {
+func (s *PGStore) Process(ctx context.Context, sc authz.Scope, now time.Time, limit int, fn func(ctx context.Context, m Message) Outcome) (int, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return 0, err
+	}
 	n := 0
 	err := s.db.Transact(ctx, func(ctx context.Context) error {
 		if err := pgdb.LockApplication(ctx, s.db); err != nil {
@@ -133,7 +140,10 @@ func (s *PGStore) apply(ctx context.Context, q *db.Queries, msg Message, out Out
 }
 
 // DLQCount — число сообщений в DLQ.
-func (s *PGStore) DLQCount(ctx context.Context) (int64, error) {
+func (s *PGStore) DLQCount(ctx context.Context, sc authz.Scope) (int64, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return 0, err
+	}
 	n, err := s.q(ctx).CountDLQ(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("outbox dlq count: %w", err)
@@ -142,7 +152,10 @@ func (s *PGStore) DLQCount(ctx context.Context) (int64, error) {
 }
 
 // DLQList — последние сообщения DLQ.
-func (s *PGStore) DLQList(ctx context.Context, limit int) ([]DeadMessage, error) {
+func (s *PGStore) DLQList(ctx context.Context, sc authz.Scope, limit int) ([]DeadMessage, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return nil, err
+	}
 	rows, err := s.q(ctx).ListDLQ(ctx, clampInt32(limit))
 	if err != nil {
 		return nil, fmt.Errorf("outbox dlq list: %w", err)
@@ -161,7 +174,10 @@ func (s *PGStore) DLQList(ctx context.Context, limit int) ([]DeadMessage, error)
 }
 
 // Requeue переносит сообщение из DLQ в очередь.
-func (s *PGStore) Requeue(ctx context.Context, id kernel.ID, now time.Time) error {
+func (s *PGStore) Requeue(ctx context.Context, sc authz.Scope, id kernel.ID, now time.Time) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	return s.db.Transact(ctx, func(ctx context.Context) error {
 		q := s.q(ctx)
 		n, err := q.RequeueFromDLQ(ctx, db.RequeueFromDLQParams{ID: id, NextAttemptAt: now.UTC()})

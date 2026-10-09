@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -46,13 +47,13 @@ func (f Filter) matches(s Signal) bool {
 }
 
 // Store — хранилище сигналов. Реализации: память (тесты, стенд), PostgreSQL (internal/pg).
-// Авторизация выполняется в Service до вызова хранилища.
+// Scope проверяется также при прямом вызове реализации.
 type Store interface {
-	Save(ctx context.Context, s Signal) error
-	Get(ctx context.Context, id kernel.ID) (Signal, error)
+	Save(ctx context.Context, sc authz.Scope, s Signal) error
+	Get(ctx context.Context, sc authz.Scope, id kernel.ID) (Signal, error)
 	// GetByExternalKey ищет сигнал по ключу внешней системы; kernel.ErrNotFound, если нет.
-	GetByExternalKey(ctx context.Context, key string) (Signal, error)
-	List(ctx context.Context, f Filter) ([]Signal, error)
+	GetByExternalKey(ctx context.Context, sc authz.Scope, key string) (Signal, error)
+	List(ctx context.Context, sc authz.Scope, f Filter) ([]Signal, error)
 }
 
 // MemStore — хранилище в памяти.
@@ -65,11 +66,21 @@ type MemStore struct {
 func NewMemStore() *MemStore { return &MemStore{} }
 
 // Save создаёт или обновляет сигнал.
-func (m *MemStore) Save(_ context.Context, s Signal) error {
+func (m *MemStore) Save(_ context.Context, sc authz.Scope, s Signal) error {
+	s = kernel.CloneValue(s)
+	if err := sc.Require(authz.ActionWriteSignals, s.ProductID); err != nil {
+		return err
+	}
+	if s.ProductID == kernel.NilID || sc.Product(s.ProductID) < authz.AccessPrivate {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i := range m.items {
 		if m.items[i].ID == s.ID {
+			if m.items[i].ProductID != s.ProductID {
+				return kernel.ErrForbidden
+			}
 			m.items[i] = s
 			return nil
 		}
@@ -79,25 +90,37 @@ func (m *MemStore) Save(_ context.Context, s Signal) error {
 }
 
 // Get возвращает сигнал по идентификатору.
-func (m *MemStore) Get(_ context.Context, id kernel.ID) (Signal, error) {
+func (m *MemStore) Get(_ context.Context, sc authz.Scope, id kernel.ID) (Signal, error) {
+	if !sc.Valid() {
+		return Signal{}, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for _, s := range m.items {
 		if s.ID == id {
-			return s, nil
+			if err := sc.Require(authz.ActionReadPrivate, s.ProductID); err != nil {
+				return Signal{}, err
+			}
+			return kernel.CloneValue(s), nil
 		}
 	}
 	return Signal{}, kernel.NotFound("signal", id)
 }
 
 // GetByExternalKey ищет сигнал по внешнему ключу.
-func (m *MemStore) GetByExternalKey(_ context.Context, key string) (Signal, error) {
+func (m *MemStore) GetByExternalKey(_ context.Context, sc authz.Scope, key string) (Signal, error) {
+	if !sc.Valid() {
+		return Signal{}, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if key != "" {
 		for _, s := range m.items {
 			if s.ExternalKey == key {
-				return s, nil
+				if err := sc.Require(authz.ActionReadPrivate, s.ProductID); err != nil {
+					return Signal{}, err
+				}
+				return kernel.CloneValue(s), nil
 			}
 		}
 	}
@@ -105,14 +128,23 @@ func (m *MemStore) GetByExternalKey(_ context.Context, key string) (Signal, erro
 }
 
 // List возвращает сигналы по фильтру в порядке сохранения.
-func (m *MemStore) List(_ context.Context, f Filter) ([]Signal, error) {
+func (m *MemStore) List(_ context.Context, sc authz.Scope, f Filter) ([]Signal, error) {
+	f = kernel.CloneValue(f)
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
+	if f.ProductID != kernel.NilID {
+		if err := sc.Require(authz.ActionReadPrivate, f.ProductID); err != nil {
+			return nil, err
+		}
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]Signal, 0, len(m.items))
 	for _, s := range m.items {
-		if f.matches(s) {
+		if f.matches(s) && sc.Allows(authz.ActionReadPrivate, s.ProductID) {
 			out = append(out, s)
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }

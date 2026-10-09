@@ -77,7 +77,11 @@ func TestCM03_CM08_MergeDatabaseLineages(t *testing.T) {
 				historical[file] = &fstest.MapFile{Data: body}
 			}
 			sqlDB := stdlib.OpenDBFromPool(pool)
-			defer sqlDB.Close()
+			defer func() {
+				if err := sqlDB.Close(); err != nil {
+					t.Error(err)
+				}
+			}()
 			provider, err := goose.NewProvider(goose.DialectPostgres, sqlDB, historical, goose.WithTableName("goose_compliance"))
 			if err != nil {
 				t.Fatal(err)

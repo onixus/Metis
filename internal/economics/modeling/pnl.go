@@ -8,14 +8,15 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/onixus/metis/internal/economics/modeling/formula"
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
 // sumField суммирует значения поля в срезе продукта и периода.
 // overrides — подмена значений сценария (EC-13); nil для фактических данных.
-func (s *Service) sumField(ctx context.Context, key string, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
-	src := s.source(ctx, overrides)
+func (s *Service) sumField(ctx context.Context, sc authz.Scope, key string, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
+	src := s.source(ctx, sc, overrides)
 	sl := Slice{ProductID: product, Period: p}.formulaSlice()
 	vals, err := src.Values(key, formula.Filter{Slice: sl})
 	if err != nil {
@@ -29,8 +30,8 @@ func (s *Service) sumField(ctx context.Context, key string, product kernel.ID, p
 }
 
 // productsWithData возвращает продукты, по которым есть данные за период.
-func (s *Service) productsWithData(ctx context.Context, p Period) ([]kernel.ID, error) {
-	rows, err := s.store.Facts(ctx, FactFilter{Period: &p})
+func (s *Service) productsWithData(ctx context.Context, sc authz.Scope, p Period) ([]kernel.ID, error) {
+	rows, err := s.store.Facts(ctx, identityaccess.ModelCalculationScope(sc), FactFilter{Period: &p})
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
 	}
@@ -48,10 +49,10 @@ func (s *Service) productsWithData(ctx context.Context, p Period) ([]kernel.ID, 
 }
 
 // directCosts — прямые затраты продукта за период: ФОТ, прямые затраты, маркетинг.
-func (s *Service) directCosts(ctx context.Context, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
+func (s *Service) directCosts(ctx context.Context, sc authz.Scope, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
 	out := decimal.Zero
 	for _, key := range []string{s.cfg.PayrollField, s.cfg.DirectCostField, s.cfg.MarketingField} {
-		v, err := s.sumField(ctx, key, product, p, overrides)
+		v, err := s.sumField(ctx, sc, key, product, p, overrides)
 		if err != nil {
 			return decimal.Zero, err
 		}
@@ -61,8 +62,8 @@ func (s *Service) directCosts(ctx context.Context, product kernel.ID, p Period, 
 }
 
 // bundleRevenue — доля продукта в выручке бандлов по правилам атрибуции (EC-04).
-func (s *Service) bundleRevenue(ctx context.Context, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
-	rules, err := s.store.BundleRules(ctx)
+func (s *Service) bundleRevenue(ctx context.Context, sc authz.Scope, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
+	rules, err := s.store.BundleRules(ctx, sc)
 	if err != nil {
 		return decimal.Zero, fmt.Errorf("bundle rules: %w", err)
 	}
@@ -83,7 +84,7 @@ func (s *Service) bundleRevenue(ctx context.Context, product kernel.ID, p Period
 			continue
 		}
 		item := key
-		rows, err := s.store.Facts(ctx, FactFilter{FieldKey: s.cfg.BundleRevenueField, Period: &p, Item: &item, Product: &nilProduct})
+		rows, err := s.store.Facts(ctx, identityaccess.ModelCalculationScope(sc), FactFilter{FieldKey: s.cfg.BundleRevenueField, Period: &p, Item: &item, Product: &nilProduct})
 		if err != nil {
 			return decimal.Zero, fmt.Errorf("facts: %w", err)
 		}
@@ -102,8 +103,8 @@ func (s *Service) bundleRevenue(ctx context.Context, product kernel.ID, p Period
 }
 
 // hubLoad — нагрузка хабов на продукт по правилам аллокации, действующим в периоде (EC-02).
-func (s *Service) hubLoad(ctx context.Context, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
-	rules, err := s.store.AllocationRules(ctx)
+func (s *Service) hubLoad(ctx context.Context, sc authz.Scope, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
+	rules, err := s.store.AllocationRules(ctx, sc)
 	if err != nil {
 		return decimal.Zero, fmt.Errorf("allocation rules: %w", err)
 	}
@@ -121,14 +122,14 @@ func (s *Service) hubLoad(ctx context.Context, product kernel.ID, p Period, over
 		if hub == product {
 			continue
 		}
-		hubCosts, err := s.directCosts(ctx, hub, p, overrides)
+		hubCosts, err := s.directCosts(ctx, sc, hub, p, overrides)
 		if err != nil {
 			return decimal.Zero, err
 		}
 		if hubCosts.IsZero() {
 			continue
 		}
-		share, err := s.allocationShare(ctx, rule, product, p, overrides)
+		share, err := s.allocationShare(ctx, sc, rule, product, p, overrides)
 		if err != nil {
 			return decimal.Zero, err
 		}
@@ -138,14 +139,14 @@ func (s *Service) hubLoad(ctx context.Context, product kernel.ID, p Period, over
 }
 
 // allocationShare — доля продукта в затратах хаба по базе распределения правила (EC-02).
-func (s *Service) allocationShare(ctx context.Context, rule AllocationRule, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
+func (s *Service) allocationShare(ctx context.Context, sc authz.Scope, rule AllocationRule, product kernel.ID, p Period, overrides []Override) (decimal.Decimal, error) {
 	switch rule.Basis {
 	case BasisManual:
 		return rule.Shares[product], nil
 	case BasisRevenue, BasisWorklogs:
 		consumers := rule.Consumers
 		if len(consumers) == 0 {
-			all, err := s.productsWithData(ctx, p)
+			all, err := s.productsWithData(ctx, sc, p)
 			if err != nil {
 				return decimal.Zero, err
 			}
@@ -157,9 +158,9 @@ func (s *Service) allocationShare(ctx context.Context, rule AllocationRule, prod
 		}
 		weight := func(id kernel.ID) (decimal.Decimal, error) {
 			if rule.Basis == BasisRevenue {
-				return s.sumField(ctx, s.cfg.RevenueField, id, p, overrides)
+				return s.sumField(ctx, sc, s.cfg.RevenueField, id, p, overrides)
 			}
-			return s.worklogWeight(ctx, id, p)
+			return s.worklogWeight(ctx, sc, id, p)
 		}
 		total := decimal.Zero
 		own := decimal.Zero
@@ -183,8 +184,8 @@ func (s *Service) allocationShare(ctx context.Context, rule AllocationRule, prod
 }
 
 // worklogWeight — вес продукта по долям команд из worklogs (DL-05, EC-12).
-func (s *Service) worklogWeight(ctx context.Context, product kernel.ID, p Period) (decimal.Decimal, error) {
-	shares, err := s.store.TeamShares(ctx, p)
+func (s *Service) worklogWeight(ctx context.Context, sc authz.Scope, product kernel.ID, p Period) (decimal.Decimal, error) {
+	shares, err := s.store.TeamShares(ctx, sc, p)
 	if err != nil {
 		return decimal.Zero, fmt.Errorf("team shares: %w", err)
 	}
@@ -198,20 +199,27 @@ func (s *Service) worklogWeight(ctx context.Context, product kernel.ID, p Period
 }
 
 // pnl считает P&L продукта за период; overrides — сценарий (nil для фактических данных).
-func (s *Service) pnl(ctx context.Context, product kernel.ID, p Period, overrides []Override) (PnL, error) {
-	revenue, err := s.sumField(ctx, s.cfg.RevenueField, product, p, overrides)
+func (s *Service) pnl(ctx context.Context, sc authz.Scope, product kernel.ID, p Period, overrides []Override) (PnL, error) {
+	// Only this fixed aggregate uses the complete cross-product inputs. The
+	// original caller is checked before any reads; no raw rows escape this method.
+	calculation, err := identityaccess.ProductPnLCalculationScope(sc, product)
 	if err != nil {
 		return PnL{}, err
 	}
-	bundle, err := s.bundleRevenue(ctx, product, p, overrides)
+
+	revenue, err := s.sumField(ctx, calculation, s.cfg.RevenueField, product, p, overrides)
 	if err != nil {
 		return PnL{}, err
 	}
-	costs, err := s.directCosts(ctx, product, p, overrides)
+	bundle, err := s.bundleRevenue(ctx, calculation, product, p, overrides)
 	if err != nil {
 		return PnL{}, err
 	}
-	load, err := s.hubLoad(ctx, product, p, overrides)
+	costs, err := s.directCosts(ctx, calculation, product, p, overrides)
+	if err != nil {
+		return PnL{}, err
+	}
+	load, err := s.hubLoad(ctx, calculation, product, p, overrides)
 	if err != nil {
 		return PnL{}, err
 	}
@@ -235,7 +243,7 @@ func (s *Service) ProductPnL(ctx context.Context, sc authz.Scope, product kernel
 	if p.IsZero() {
 		return PnL{}, kernel.Invalid("period", "период обязателен")
 	}
-	out, err := s.pnl(ctx, product, p, nil)
+	out, err := s.pnl(ctx, sc, product, p, nil)
 	if err != nil {
 		return PnL{}, err
 	}
@@ -251,14 +259,14 @@ func (s *Service) PortfolioPnL(ctx context.Context, sc authz.Scope, p Period) (P
 	if p.IsZero() {
 		return PortfolioPnL{}, kernel.Invalid("period", "период обязателен")
 	}
-	products, err := s.productsWithData(ctx, p)
+	products, err := s.productsWithData(ctx, sc, p)
 	if err != nil {
 		return PortfolioPnL{}, err
 	}
 	out := PortfolioPnL{Period: p, Products: make([]PnL, 0, len(products))}
 	revenue, costs := decimal.Zero, decimal.Zero
 	for _, id := range products {
-		pnl, err := s.pnl(ctx, id, p, nil)
+		pnl, err := s.pnl(ctx, sc, id, p, nil)
 		if err != nil {
 			return PortfolioPnL{}, err
 		}
@@ -278,7 +286,7 @@ func (s *Service) TeamCosts(ctx context.Context, sc authz.Scope, teamID kernel.I
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return TeamCost{}, err
 	}
-	rows, err := s.store.Facts(ctx, FactFilter{FieldKey: s.cfg.PayrollField, Period: &p, Team: &teamID})
+	rows, err := s.store.Facts(ctx, identityaccess.ModelCalculationScope(sc), FactFilter{FieldKey: s.cfg.PayrollField, Period: &p, Team: &teamID})
 	if err != nil {
 		return TeamCost{}, fmt.Errorf("facts: %w", err)
 	}
@@ -286,7 +294,7 @@ func (s *Service) TeamCosts(ctx context.Context, sc authz.Scope, teamID kernel.I
 	for _, r := range rows {
 		total = total.Add(r.Value)
 	}
-	shares, err := s.store.TeamShares(ctx, p)
+	shares, err := s.store.TeamShares(ctx, sc, p)
 	if err != nil {
 		return TeamCost{}, fmt.Errorf("team shares: %w", err)
 	}
@@ -305,7 +313,7 @@ func (s *Service) Matrix(ctx context.Context, sc authz.Scope, p Period) (Matrix,
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return Matrix{}, err
 	}
-	teams, err := s.store.Teams(ctx)
+	teams, err := s.store.Teams(ctx, sc)
 	if err != nil {
 		return Matrix{}, fmt.Errorf("teams: %w", err)
 	}
@@ -347,7 +355,7 @@ func (s *Service) FeatureEconomics(ctx context.Context, sc authz.Scope, product,
 		if !p.IsZero() {
 			filter.Period = &p
 		}
-		rows, err := s.store.Facts(ctx, filter)
+		rows, err := s.store.Facts(ctx, identityaccess.ModelCalculationScope(sc), filter)
 		if err != nil {
 			return decimal.Zero, fmt.Errorf("facts: %w", err)
 		}
@@ -378,7 +386,7 @@ func (s *Service) BranchCosts(ctx context.Context, sc authz.Scope, product kerne
 	if !p.IsZero() {
 		filter.Period = &p
 	}
-	rows, err := s.store.Facts(ctx, filter)
+	rows, err := s.store.Facts(ctx, identityaccess.ModelCalculationScope(sc), filter)
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
 	}
@@ -412,12 +420,12 @@ func (s *Service) CertificationEconomics(ctx context.Context, sc authz.Scope, pr
 		}
 		cost = decimal.NewFromInt(m.Amount)
 	}
-	fromFacts, err := s.sumField(ctx, s.cfg.TrackCostField, product, p, nil)
+	fromFacts, err := s.sumField(ctx, sc, s.cfg.TrackCostField, product, p, nil)
 	if err != nil {
 		return CertificationEconomics{}, err
 	}
 	cost = cost.Add(fromFacts)
-	revenue, err := s.sumField(ctx, s.cfg.CertifiedRevenueField, product, p, nil)
+	revenue, err := s.sumField(ctx, sc, s.cfg.CertifiedRevenueField, product, p, nil)
 	if err != nil {
 		return CertificationEconomics{}, err
 	}

@@ -39,7 +39,7 @@ func (h *ShiftHandler) Handle(ctx context.Context, ev kernel.Event) error {
 	if !h.sc.Valid() {
 		return kernel.ErrForbidden
 	}
-	done, err := h.svc.store.EventProcessed(ctx, ev.ID)
+	done, err := h.svc.store.EventProcessed(ctx, h.sc, ev.ID)
 	if err != nil {
 		return fmt.Errorf("event processed: %w", err)
 	}
@@ -59,7 +59,7 @@ func (h *ShiftHandler) Handle(ctx context.Context, ev kernel.Event) error {
 	}
 
 	// Источник: сдвиг даты окончания на новую дату фичи.
-	src, err := h.svc.store.ItemsByFeature(ctx, p.SourceFeature)
+	src, err := h.svc.store.ItemsByFeature(ctx, h.sc, p.SourceFeature)
 	if err != nil {
 		return fmt.Errorf("items by feature: %w", err)
 	}
@@ -76,7 +76,7 @@ func (h *ShiftHandler) Handle(ctx context.Context, ev kernel.Event) error {
 	// TODO(question-06): затронутые фичи — запись в историю без изменения дат; новую дату подтверждает владелец продукта.
 	affectedReason := fmt.Sprintf("затронуто сдвигом фичи %s: %s", p.SourceFeature, reason)
 	for _, a := range p.Affected {
-		items, err := h.svc.store.ItemsByFeature(ctx, a.FeatureID)
+		items, err := h.svc.store.ItemsByFeature(ctx, h.sc, a.FeatureID)
 		if err != nil {
 			return fmt.Errorf("items by feature: %w", err)
 		}
@@ -86,7 +86,7 @@ func (h *ShiftHandler) Handle(ctx context.Context, ev kernel.Event) error {
 			}
 		}
 	}
-	if err := h.svc.store.MarkEventProcessed(ctx, ev.ID); err != nil {
+	if err := h.svc.store.MarkEventProcessed(ctx, h.sc, ev.ID); err != nil {
 		return fmt.Errorf("mark event processed: %w", err)
 	}
 	return nil

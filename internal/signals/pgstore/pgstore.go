@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/pgdb"
 	"github.com/onixus/metis/internal/signals"
@@ -25,8 +26,14 @@ func New(d *pgdb.DB) *Store { return &Store{db: d} }
 func (s *Store) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
 
 // Save создаёт или обновляет сигнал (upsert по ID).
-func (s *Store) Save(ctx context.Context, sg signals.Signal) error {
-	err := s.q(ctx).UpsertSignal(ctx, db.UpsertSignalParams{
+func (s *Store) Save(ctx context.Context, sc authz.Scope, sg signals.Signal) error {
+	if err := sc.Require(authz.ActionWriteSignals, sg.ProductID); err != nil {
+		return err
+	}
+	if sg.ProductID == kernel.NilID || sc.Product(sg.ProductID) < authz.AccessPrivate {
+		return kernel.ErrForbidden
+	}
+	n, err := s.q(ctx).UpsertSignal(ctx, db.UpsertSignalParams{
 		ID: sg.ID, ProductID: sg.ProductID, Source: string(sg.Source), Text: sg.Text, ExternalKey: sg.ExternalKey,
 		AccountID: sg.AccountID, DealID: sg.DealID, Version: sg.Version, Segment: sg.Segment,
 		WeightAmount: sg.Weight.Amount, WeightCurrency: sg.Weight.Currency,
@@ -39,20 +46,32 @@ func (s *Store) Save(ctx context.Context, sg signals.Signal) error {
 	if err != nil {
 		return fmt.Errorf("signals save %s: %w", sg.ID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // Get возвращает сигнал по идентификатору.
-func (s *Store) Get(ctx context.Context, id kernel.ID) (signals.Signal, error) {
+func (s *Store) Get(ctx context.Context, sc authz.Scope, id kernel.ID) (signals.Signal, error) {
+	if !sc.Valid() {
+		return signals.Signal{}, kernel.ErrForbidden
+	}
 	row, err := s.q(ctx).GetSignal(ctx, id)
 	if err != nil {
 		return signals.Signal{}, fmt.Errorf("signals get %s: %w", id, pgdb.MapError(err))
+	}
+	if err := sc.Require(authz.ActionReadPrivate, row.ProductID); err != nil {
+		return signals.Signal{}, err
 	}
 	return fromRow(row), nil
 }
 
 // GetByExternalKey ищет сигнал по ключу внешней системы; kernel.ErrNotFound, если его нет.
-func (s *Store) GetByExternalKey(ctx context.Context, key string) (signals.Signal, error) {
+func (s *Store) GetByExternalKey(ctx context.Context, sc authz.Scope, key string) (signals.Signal, error) {
+	if !sc.Valid() {
+		return signals.Signal{}, kernel.ErrForbidden
+	}
 	if key == "" {
 		return signals.Signal{}, kernel.ErrNotFound
 	}
@@ -60,11 +79,22 @@ func (s *Store) GetByExternalKey(ctx context.Context, key string) (signals.Signa
 	if err != nil {
 		return signals.Signal{}, fmt.Errorf("signals by external key %q: %w", key, pgdb.MapError(err))
 	}
+	if err := sc.Require(authz.ActionReadPrivate, row.ProductID); err != nil {
+		return signals.Signal{}, err
+	}
 	return fromRow(row), nil
 }
 
 // List возвращает сигналы по фильтру в порядке создания.
-func (s *Store) List(ctx context.Context, f signals.Filter) ([]signals.Signal, error) {
+func (s *Store) List(ctx context.Context, sc authz.Scope, f signals.Filter) ([]signals.Signal, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
+	if f.ProductID != kernel.NilID {
+		if err := sc.Require(authz.ActionReadPrivate, f.ProductID); err != nil {
+			return nil, err
+		}
+	}
 	statuses := make([]string, 0, len(f.Statuses))
 	for _, st := range f.Statuses {
 		statuses = append(statuses, string(st))
@@ -78,6 +108,9 @@ func (s *Store) List(ctx context.Context, f signals.Filter) ([]signals.Signal, e
 	}
 	out := make([]signals.Signal, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+			continue
+		}
 		out = append(out, fromRow(r))
 	}
 	return out, nil

@@ -291,7 +291,7 @@ func TestCT03_AffectedCommitments(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := f.svc.AffectedCommitments(f.ctx, tc.affected, nil)
+			got, err := f.svc.AffectedCommitments(f.ctx, f.cpo, tc.affected, nil)
 			if err != nil {
 				t.Fatalf("affected: %v", err)
 			}
@@ -520,7 +520,7 @@ func TestCT04_EnsureRenewals(t *testing.T) {
 // TestCT04_Settings — настройки: значение по умолчанию, валидация, только admin.
 func TestCT04_Settings(t *testing.T) {
 	f := newFixture(t)
-	st, err := f.svc.Settings(f.ctx)
+	st, err := f.svc.Settings(f.ctx, f.cpo)
 	if err != nil || st.LeadMonths != commitments.DefaultLeadMonths {
 		t.Fatalf("default settings: %v %+v", err, st)
 	}
@@ -533,7 +533,7 @@ func TestCT04_Settings(t *testing.T) {
 	if err := f.svc.UpdateSettings(f.ctx, adminScope(), commitments.Settings{LeadMonths: 12}); err != nil {
 		t.Fatalf("update: %v", err)
 	}
-	if st, _ = f.svc.Settings(f.ctx); st.LeadMonths != 12 {
+	if st, _ = f.svc.Settings(f.ctx, f.cpo); st.LeadMonths != 12 {
 		t.Fatalf("want 12, got %d", st.LeadMonths)
 	}
 	// Без порта RoadmapWriter продление недоступно.
@@ -631,12 +631,12 @@ type failingAppendStore struct {
 	failOn int
 }
 
-func (s *failingAppendStore) AppendAlert(ctx context.Context, a commitments.Alert) error {
+func (s *failingAppendStore) AppendAlert(ctx context.Context, sc authz.Scope, a commitments.Alert) error {
 	s.calls++
 	if s.calls == s.failOn {
 		return errors.New("сбой хранилища алертов")
 	}
-	return s.MemStore.AppendAlert(ctx, a)
+	return s.MemStore.AppendAlert(ctx, sc, a)
 }
 
 // TestCT03_AlertNotDuplicatedOnEventRetry — отметка обработанного события ставится только в конце

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/portfoliograph"
@@ -138,7 +139,7 @@ func (s *Service) Ingest(ctx context.Context, sc authz.Scope, in IngestInput) (S
 		sig.DueDate = kernel.DateFromTime(now).AddDays(s.DefaultTriageDays)
 	}
 	if in.ExternalKey != "" {
-		prev, err := s.store.GetByExternalKey(ctx, in.ExternalKey)
+		prev, err := s.store.GetByExternalKey(ctx, sc, in.ExternalKey)
 		switch {
 		case err == nil:
 			if prev.ProductID != in.ProductID {
@@ -152,7 +153,7 @@ func (s *Service) Ingest(ctx context.Context, sc authz.Scope, in IngestInput) (S
 			return Signal{}, fmt.Errorf("lookup signal: %w", err)
 		}
 	}
-	if err := s.store.Save(ctx, sig); err != nil {
+	if err := s.store.Save(ctx, sc, sig); err != nil {
 		return Signal{}, fmt.Errorf("save signal: %w", err)
 	}
 	if err := s.emit(ctx, EventSignalIngested, sig, sc.Subject()); err != nil {
@@ -239,7 +240,7 @@ func (s *Service) ImportFromCRM(ctx context.Context, sc authz.Scope, crm ports.C
 
 // Signal возвращает сигнал (приватный контур продукта).
 func (s *Service) Signal(ctx context.Context, sc authz.Scope, id kernel.ID) (Signal, error) {
-	sig, err := s.store.Get(ctx, id)
+	sig, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return Signal{}, err
 	}
@@ -255,7 +256,7 @@ func (s *Service) Signals(ctx context.Context, sc authz.Scope, productID kernel.
 		return nil, err
 	}
 	f.ProductID = productID
-	return s.store.List(ctx, f)
+	return s.store.List(ctx, sc, f)
 }
 
 // TriageQueue — очередь разбора продукта: сигналы new и in_review по сроку разбора,
@@ -288,7 +289,7 @@ type TriageInput struct {
 // Triage меняет статус разбора и срок. Допустимые статусы: new, in_review, rejected.
 // linked выставляется только привязкой; merged — слиянием (этап 2).
 func (s *Service) Triage(ctx context.Context, sc authz.Scope, id kernel.ID, in TriageInput) (Signal, error) {
-	sig, err := s.store.Get(ctx, id)
+	sig, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return Signal{}, err
 	}
@@ -317,7 +318,7 @@ func (s *Service) Triage(ctx context.Context, sc authz.Scope, id kernel.ID, in T
 		sig.FeatureID, sig.ContractID, sig.HypothesisID = kernel.NilID, kernel.NilID, kernel.NilID
 	}
 	sig.UpdatedAt = s.clock.Now()
-	if err := s.store.Save(ctx, sig); err != nil {
+	if err := s.store.Save(ctx, sc, sig); err != nil {
 		return Signal{}, fmt.Errorf("save signal: %w", err)
 	}
 	if err := s.emit(ctx, EventSignalTriaged, sig, sc.Subject()); err != nil {
@@ -334,7 +335,7 @@ func (s *Service) Triage(ctx context.Context, sc authz.Scope, id kernel.ID, in T
 // LinkToFeature привязывает сигнал к фиче своего продукта и пересчитывает собственную
 // ценность фичи как сумму весов привязанных сигналов (SG-05, ТЗ 2.4).
 func (s *Service) LinkToFeature(ctx context.Context, sc authz.Scope, id, featureID kernel.ID) (Signal, error) {
-	sig, err := s.store.Get(ctx, id)
+	sig, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return Signal{}, err
 	}
@@ -356,7 +357,7 @@ func (s *Service) LinkToFeature(ctx context.Context, sc authz.Scope, id, feature
 // LinkToContract привязывает сигнал к контракту, одной из сторон которого является продукт
 // сигнала, и пересчитывает ценность контракта как сумму весов привязанных сигналов (SG-05, ТЗ 2.4).
 func (s *Service) LinkToContract(ctx context.Context, sc authz.Scope, id, contractID kernel.ID) (Signal, error) {
-	sig, err := s.store.Get(ctx, id)
+	sig, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return Signal{}, err
 	}
@@ -382,7 +383,7 @@ func (s *Service) LinkToHypothesis(ctx context.Context, sc authz.Scope, id, hypo
 	if hypothesisID == kernel.NilID {
 		return Signal{}, kernel.Invalid("hypothesis_id", "обязателен")
 	}
-	sig, err := s.store.Get(ctx, id)
+	sig, err := s.store.Get(ctx, sc, id)
 	if err != nil {
 		return Signal{}, err
 	}
@@ -400,7 +401,7 @@ func (s *Service) SignalsByHypothesis(ctx context.Context, sc authz.Scope, hypot
 	if !sc.Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	list, err := s.store.List(ctx, Filter{HypothesisID: hypothesisID})
+	list, err := s.store.List(ctx, sc, Filter{HypothesisID: hypothesisID})
 	if err != nil {
 		return nil, fmt.Errorf("list signals: %w", err)
 	}
@@ -420,7 +421,7 @@ func (s *Service) Merge(ctx context.Context, sc authz.Scope, targetID kernel.ID,
 	if len(dupIDs) == 0 {
 		return kernel.Invalid("duplicate_ids", "пустой список")
 	}
-	target, err := s.store.Get(ctx, targetID)
+	target, err := s.store.Get(ctx, sc, targetID)
 	if err != nil {
 		return err
 	}
@@ -440,7 +441,7 @@ func (s *Service) Merge(ctx context.Context, sc authz.Scope, targetID kernel.ID,
 			continue
 		}
 		seen[id] = struct{}{}
-		dup, err := s.store.Get(ctx, id)
+		dup, err := s.store.Get(ctx, sc, id)
 		if err != nil {
 			return err
 		}
@@ -457,7 +458,7 @@ func (s *Service) Merge(ctx context.Context, sc authz.Scope, targetID kernel.ID,
 		dup := prev
 		dup.Status, dup.MergedInto, dup.UpdatedAt = StatusMerged, targetID, now
 		dup.FeatureID, dup.ContractID, dup.HypothesisID = kernel.NilID, kernel.NilID, kernel.NilID
-		if err := s.store.Save(ctx, dup); err != nil {
+		if err := s.store.Save(ctx, sc, dup); err != nil {
 			return fmt.Errorf("save signal: %w", err)
 		}
 		if err := s.emit(ctx, EventSignalMerged, dup, sc.Subject()); err != nil {
@@ -478,7 +479,7 @@ func (s *Service) link(ctx context.Context, sc authz.Scope, prev, sig Signal) (S
 	}
 	sig.Status = StatusLinked
 	sig.UpdatedAt = s.clock.Now()
-	if err := s.store.Save(ctx, sig); err != nil {
+	if err := s.store.Save(ctx, sc, sig); err != nil {
 		return Signal{}, fmt.Errorf("save signal: %w", err)
 	}
 	if err := s.emit(ctx, EventSignalLinked, sig, sc.Subject()); err != nil {
@@ -499,7 +500,7 @@ func (s *Service) link(ctx context.Context, sc authz.Scope, prev, sig Signal) (S
 func (s *Service) recomputeTarget(ctx context.Context, sc authz.Scope, sig Signal) error {
 	switch {
 	case sig.FeatureID != kernel.NilID:
-		total, err := s.sumWeights(ctx, Filter{FeatureID: sig.FeatureID})
+		total, err := s.sumWeights(ctx, sc, Filter{FeatureID: sig.FeatureID})
 		if err != nil {
 			return err
 		}
@@ -507,7 +508,7 @@ func (s *Service) recomputeTarget(ctx context.Context, sc authz.Scope, sig Signa
 			return fmt.Errorf("feature value: %w", err)
 		}
 	case sig.ContractID != kernel.NilID:
-		total, err := s.sumWeights(ctx, Filter{ContractID: sig.ContractID})
+		total, err := s.sumWeights(ctx, identityaccess.ServiceScope("contract-signal-rollup"), Filter{ContractID: sig.ContractID})
 		if err != nil {
 			return err
 		}
@@ -518,9 +519,9 @@ func (s *Service) recomputeTarget(ctx context.Context, sc authz.Scope, sig Signa
 	return nil
 }
 
-func (s *Service) sumWeights(ctx context.Context, f Filter) (kernel.Money, error) {
+func (s *Service) sumWeights(ctx context.Context, sc authz.Scope, f Filter) (kernel.Money, error) {
 	f.Statuses = []Status{StatusLinked}
-	list, err := s.store.List(ctx, f)
+	list, err := s.store.List(ctx, sc, f)
 	if err != nil {
 		return kernel.Money{}, fmt.Errorf("list signals: %w", err)
 	}
@@ -543,7 +544,7 @@ func (s *Service) ARRByFeature(ctx context.Context, sc authz.Scope, featureID ke
 	if err := sc.Require(authz.ActionReadPrivate, f.ProductID); err != nil {
 		return kernel.Money{}, err
 	}
-	list, err := s.store.List(ctx, Filter{FeatureID: featureID, Statuses: []Status{StatusLinked}})
+	list, err := s.store.List(ctx, sc, Filter{FeatureID: featureID, Statuses: []Status{StatusLinked}})
 	if err != nil {
 		return kernel.Money{}, fmt.Errorf("list signals: %w", err)
 	}
@@ -574,7 +575,7 @@ func (s *Service) BlockedDealsByFeature(ctx context.Context, sc authz.Scope, fea
 	if err := sc.Require(authz.ActionReadPrivate, f.ProductID); err != nil {
 		return kernel.Money{}, err
 	}
-	list, err := s.store.List(ctx, Filter{FeatureID: featureID, Statuses: []Status{StatusLinked}})
+	list, err := s.store.List(ctx, sc, Filter{FeatureID: featureID, Statuses: []Status{StatusLinked}})
 	if err != nil {
 		return kernel.Money{}, fmt.Errorf("list signals: %w", err)
 	}

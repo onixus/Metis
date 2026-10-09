@@ -10,6 +10,7 @@ import (
 
 	"github.com/onixus/metis/internal/decisions"
 	"github.com/onixus/metis/internal/decisions/internal/db"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/pgdb"
 )
@@ -27,7 +28,13 @@ func New(d *pgdb.DB) *Store { return &Store{db: d} }
 func (s *Store) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
 
 // Save создаёт или обновляет решение. ProductID == NilID хранится как NULL (портфельное решение).
-func (s *Store) Save(ctx context.Context, r decisions.DecisionRecord) error {
+func (s *Store) Save(ctx context.Context, sc authz.Scope, r decisions.DecisionRecord) error {
+	if err := decisions.RequireWrite(sc, r.ProductID); err != nil {
+		return err
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	var snapshot []byte
 	if r.Snapshot != nil {
 		raw, err := json.Marshal(r.Snapshot)
@@ -60,7 +67,7 @@ func (s *Store) Save(ctx context.Context, r decisions.DecisionRecord) error {
 		}
 		review = raw
 	}
-	err = s.q(ctx).UpsertRecord(ctx, db.UpsertRecordParams{
+	n, err := s.q(ctx).UpsertRecord(ctx, db.UpsertRecordParams{
 		ID: r.ID, ProductID: pgdb.NullID(r.ProductID), Title: r.Title, Context: r.Context, Snapshot: snapshot, Options: rawOptions,
 		ChosenKey: r.ChosenKey, Rationale: r.Rationale, ExpectedEffect: r.ExpectedEffect, ReviewDate: pgdb.ToDate(r.ReviewDate),
 		Status: string(r.Status), SupersededBy: pgdb.NullID(r.SupersededBy), Links: rawLinks, PageID: r.PageID, Author: r.Author,
@@ -70,20 +77,37 @@ func (s *Store) Save(ctx context.Context, r decisions.DecisionRecord) error {
 	if err != nil {
 		return fmt.Errorf("decisions save %s: %w", r.ID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // Get возвращает решение.
-func (s *Store) Get(ctx context.Context, id kernel.ID) (decisions.DecisionRecord, error) {
+func (s *Store) Get(ctx context.Context, sc authz.Scope, id kernel.ID) (decisions.DecisionRecord, error) {
+	if !sc.Valid() {
+		return decisions.DecisionRecord{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetRecord(ctx, id)
 	if err != nil {
 		return decisions.DecisionRecord{}, fmt.Errorf("decisions get %s: %w", id, pgdb.MapError(err))
+	}
+	if err := decisions.RequireRead(sc, r.ProductID.UUID); err != nil {
+		return decisions.DecisionRecord{}, err
 	}
 	return fromRow(r)
 }
 
 // List возвращает решения по фильтру в порядке создания.
-func (s *Store) List(ctx context.Context, f decisions.Filter) ([]decisions.DecisionRecord, error) {
+func (s *Store) List(ctx context.Context, sc authz.Scope, f decisions.Filter) ([]decisions.DecisionRecord, error) {
+	if f.HasProduct {
+		if err := decisions.RequireRead(sc, f.ProductID); err != nil {
+			return nil, err
+		}
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	var link []byte
 	if f.Link != nil {
 		raw, err := json.Marshal([]decisions.Link{*f.Link})
@@ -100,6 +124,9 @@ func (s *Store) List(ctx context.Context, f decisions.Filter) ([]decisions.Decis
 	}
 	out := make([]decisions.DecisionRecord, 0, len(rows))
 	for _, r := range rows {
+		if decisions.RequireRead(sc, r.ProductID.UUID) != nil {
+			continue
+		}
 		rec, err := fromRow(r)
 		if err != nil {
 			return nil, err
@@ -163,13 +190,19 @@ func effectValue(e decisions.MeasurableEffect) string {
 }
 
 // DueForReview возвращает принятые решения с наступившей датой ревизии и без ревизии (DA-06).
-func (s *Store) DueForReview(ctx context.Context, on kernel.Date) ([]decisions.DecisionRecord, error) {
+func (s *Store) DueForReview(ctx context.Context, sc authz.Scope, on kernel.Date) ([]decisions.DecisionRecord, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListRecordsDueForReview(ctx, pgdb.ToDate(on))
 	if err != nil {
 		return nil, fmt.Errorf("decisions due for review: %w", pgdb.MapError(err))
 	}
 	out := make([]decisions.DecisionRecord, 0, len(rows))
 	for _, r := range rows {
+		if decisions.RequireRead(sc, r.ProductID.UUID) != nil {
+			continue
+		}
 		rec, err := fromRow(r)
 		if err != nil {
 			return nil, err
@@ -180,7 +213,10 @@ func (s *Store) DueForReview(ctx context.Context, on kernel.Date) ([]decisions.D
 }
 
 // EventProcessed сообщает, обрабатывалось ли событие.
-func (s *Store) EventProcessed(ctx context.Context, eventID kernel.ID) (bool, error) {
+func (s *Store) EventProcessed(ctx context.Context, sc authz.Scope, eventID kernel.ID) (bool, error) {
+	if !sc.Valid() || !sc.HasRole(authz.RoleService) {
+		return false, kernel.ErrForbidden
+	}
 	ok, err := s.q(ctx).EventProcessed(ctx, eventID)
 	if err != nil {
 		return false, fmt.Errorf("decisions event processed %s: %w", eventID, pgdb.MapError(err))
@@ -189,7 +225,10 @@ func (s *Store) EventProcessed(ctx context.Context, eventID kernel.ID) (bool, er
 }
 
 // MarkEventProcessed отмечает событие обработанным (идемпотентно).
-func (s *Store) MarkEventProcessed(ctx context.Context, eventID kernel.ID) error {
+func (s *Store) MarkEventProcessed(ctx context.Context, sc authz.Scope, eventID kernel.ID) error {
+	if !sc.Valid() || !sc.HasRole(authz.RoleService) {
+		return kernel.ErrForbidden
+	}
 	if err := s.q(ctx).MarkEventProcessed(ctx, eventID); err != nil {
 		return fmt.Errorf("decisions mark event %s: %w", eventID, pgdb.MapError(err))
 	}

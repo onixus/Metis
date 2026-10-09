@@ -7,6 +7,7 @@ import (
 
 	"github.com/onixus/metis/internal/compliance"
 	"github.com/onixus/metis/internal/compliance/internal/db"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/pgdb"
 )
@@ -26,7 +27,10 @@ func NewEvidenceStore(d *pgdb.DB) *EvidenceStore { return &EvidenceStore{db: d, 
 func (s *EvidenceStore) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
 
 // Last — последняя запись; kernel.ErrNotFound, если журнал пуст.
-func (s *EvidenceStore) Last(ctx context.Context) (compliance.EvidenceItem, error) {
+func (s *EvidenceStore) Last(ctx context.Context, sc authz.Scope) (compliance.EvidenceItem, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return compliance.EvidenceItem{}, err
+	}
 	row, err := s.q(ctx).LastEvidence(ctx)
 	if err != nil {
 		return compliance.EvidenceItem{}, fmt.Errorf("compliance evidence last: %w", pgdb.MapError(err))
@@ -36,7 +40,10 @@ func (s *EvidenceStore) Last(ctx context.Context) (compliance.EvidenceItem, erro
 
 // Insert добавляет запись. Поле At должно иметь точность timestamptz (микросекунды), иначе хеш,
 // посчитанный до записи, не совпадёт с прочитанным (вопрос №10); используйте pgstore.Clock.
-func (s *EvidenceStore) Insert(ctx context.Context, e compliance.EvidenceItem) error {
+func (s *EvidenceStore) Insert(ctx context.Context, sc authz.Scope, e compliance.EvidenceItem) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	if !e.At.Equal(e.At.Truncate(time.Microsecond)) {
 		return fmt.Errorf("%w: compliance evidence: поле at должно быть с точностью до микросекунды", kernel.ErrValidation)
 	}
@@ -52,7 +59,10 @@ func (s *EvidenceStore) Insert(ctx context.Context, e compliance.EvidenceItem) e
 }
 
 // Walk перебирает записи по возрастанию seq постранично.
-func (s *EvidenceStore) Walk(ctx context.Context, fn func(compliance.EvidenceItem) error) error {
+func (s *EvidenceStore) Walk(ctx context.Context, sc authz.Scope, fn func(compliance.EvidenceItem) error) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	var after int64
 	for {
 		rows, err := s.q(ctx).EvidenceAfter(ctx, db.EvidenceAfterParams{Seq: after, Lim: s.pageSize})

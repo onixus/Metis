@@ -8,17 +8,19 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/onixus/metis/internal/identityaccess"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
 // EvidenceStore — журнал доказательств. Реализации не имеют UPDATE и DELETE (инвариант 8).
 type EvidenceStore interface {
 	// Last возвращает последнюю запись; kernel.ErrNotFound, если журнал пуст.
-	Last(ctx context.Context) (EvidenceItem, error)
+	Last(ctx context.Context, sc authz.Scope) (EvidenceItem, error)
 	// Insert добавляет запись с заданными Seq, PrevHash и Hash.
-	Insert(ctx context.Context, e EvidenceItem) error
+	Insert(ctx context.Context, sc authz.Scope, e EvidenceItem) error
 	// Walk перебирает записи по возрастанию Seq.
-	Walk(ctx context.Context, fn func(EvidenceItem) error) error
+	Walk(ctx context.Context, sc authz.Scope, fn func(EvidenceItem) error) error
 }
 
 // EvidenceGenesisHash — предыдущий хеш первой записи журнала.
@@ -53,7 +55,7 @@ func ValidSHA256(s string) bool {
 func appendEvidence(ctx context.Context, store EvidenceStore, e EvidenceItem) (EvidenceItem, error) {
 	var lastErr error
 	for attempt := 0; attempt < writeAttempts; attempt++ {
-		prev, err := store.Last(ctx)
+		prev, err := store.Last(ctx, identityaccess.ServiceScope("journal"))
 		seq := int64(1)
 		prevHash := EvidenceGenesisHash
 		switch {
@@ -70,7 +72,7 @@ func appendEvidence(ctx context.Context, store EvidenceStore, e EvidenceItem) (E
 			return EvidenceItem{}, err
 		}
 		e.Hash = h
-		err = store.Insert(ctx, e)
+		err = store.Insert(ctx, identityaccess.ServiceScope("journal"), e)
 		switch {
 		case err == nil:
 			return e, nil
@@ -96,7 +98,7 @@ func VerifyEvidenceLog(ctx context.Context, store EvidenceStore) (VerifyResult, 
 	res := VerifyResult{OK: true}
 	prevHash := EvidenceGenesisHash
 	var expectSeq int64 = 1
-	err := store.Walk(ctx, func(e EvidenceItem) error {
+	err := store.Walk(ctx, identityaccess.ServiceScope("journal"), func(e EvidenceItem) error {
 		if !res.OK {
 			return nil
 		}
@@ -137,7 +139,10 @@ type EvidenceMemStore struct {
 func NewEvidenceMemStore() *EvidenceMemStore { return &EvidenceMemStore{} }
 
 // Last — последняя запись.
-func (m *EvidenceMemStore) Last(context.Context) (EvidenceItem, error) {
+func (m *EvidenceMemStore) Last(_ context.Context, sc authz.Scope) (EvidenceItem, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return EvidenceItem{}, err
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if len(m.recs) == 0 {
@@ -147,7 +152,10 @@ func (m *EvidenceMemStore) Last(context.Context) (EvidenceItem, error) {
 }
 
 // Insert добавляет запись.
-func (m *EvidenceMemStore) Insert(_ context.Context, e EvidenceItem) error {
+func (m *EvidenceMemStore) Insert(_ context.Context, sc authz.Scope, e EvidenceItem) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if len(m.recs) > 0 && m.recs[len(m.recs)-1].Seq >= e.Seq {
@@ -158,7 +166,10 @@ func (m *EvidenceMemStore) Insert(_ context.Context, e EvidenceItem) error {
 }
 
 // Walk перебирает записи.
-func (m *EvidenceMemStore) Walk(_ context.Context, fn func(EvidenceItem) error) error {
+func (m *EvidenceMemStore) Walk(_ context.Context, sc authz.Scope, fn func(EvidenceItem) error) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	m.mu.RLock()
 	snapshot := append([]EvidenceItem(nil), m.recs...)
 	m.mu.RUnlock()

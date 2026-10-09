@@ -11,6 +11,7 @@ import (
 
 	"github.com/onixus/metis/internal/decisions"
 	"github.com/onixus/metis/internal/decisions/pgstore"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/pgdb"
@@ -52,18 +53,18 @@ func TestDA01_PGStoreRoundTrip(t *testing.T) {
 	portfolio := decisions.DecisionRecord{ID: kernel.NewID(), Title: "Портфельное", Status: decisions.StatusAccepted, Author: "cpo",
 		CreatedAt: now.Add(time.Second), UpdatedAt: now.Add(time.Second)}
 	for _, r := range []decisions.DecisionRecord{rec, portfolio} {
-		if err := store.Save(ctx, r); err != nil {
+		if err := store.Save(ctx, repositoryScope(), r); err != nil {
 			t.Fatal(err)
 		}
 	}
 	rec.Status, rec.PageID, rec.SupersededBy = decisions.StatusSuperseded, "page-1", portfolio.ID
-	if err := store.Save(ctx, rec); err != nil {
+	if err := store.Save(ctx, repositoryScope(), rec); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Get(ctx, rec.ID); err != nil || !reflect.DeepEqual(got, rec) {
+	if got, err := store.Get(ctx, repositoryScope(), rec.ID); err != nil || !reflect.DeepEqual(got, rec) {
 		t.Fatalf("Get:\n got %+v\nwant %+v\nerr=%v", got, rec, err)
 	}
-	got, err := store.Get(ctx, portfolio.ID)
+	got, err := store.Get(ctx, repositoryScope(), portfolio.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +89,7 @@ func TestDA01_PGStoreRoundTrip(t *testing.T) {
 		"status+link": {decisions.Filter{Status: decisions.StatusSuperseded, Link: &decisions.Link{Kind: decisions.LinkFeature, ID: feature}}, []kernel.ID{rec.ID}},
 	}
 	for name, c := range cases {
-		list, err := store.List(ctx, c.f)
+		list, err := store.List(ctx, repositoryScope(), c.f)
 		if err != nil {
 			t.Fatalf("List %s: %v", name, err)
 		}
@@ -103,20 +104,24 @@ func TestDA01_PGStoreRoundTrip(t *testing.T) {
 			t.Fatalf("List %s: got %v want %v", name, ids, c.want)
 		}
 	}
-	if _, err := store.Get(ctx, kernel.NewID()); !kernel.IsNotFound(err) {
+	if _, err := store.Get(ctx, repositoryScope(), kernel.NewID()); !kernel.IsNotFound(err) {
 		t.Fatalf("Get missing: %v", err)
 	}
 	event := kernel.NewID()
-	if ok, err := store.EventProcessed(ctx, event); err != nil || ok {
+	if ok, err := store.EventProcessed(ctx, repositoryScope(), event); err != nil || ok {
 		t.Fatalf("EventProcessed before: %v err=%v", ok, err)
 	}
-	if err := store.MarkEventProcessed(ctx, event); err != nil {
+	if err := store.MarkEventProcessed(ctx, repositoryScope(), event); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.MarkEventProcessed(ctx, event); err != nil {
+	if err := store.MarkEventProcessed(ctx, repositoryScope(), event); err != nil {
 		t.Fatalf("повторная отметка должна быть идемпотентной: %v", err)
 	}
-	if ok, err := store.EventProcessed(ctx, event); err != nil || !ok {
+	if ok, err := store.EventProcessed(ctx, repositoryScope(), event); err != nil || !ok {
 		t.Fatalf("EventProcessed after: %v err=%v", ok, err)
 	}
+}
+
+func repositoryScope() authz.Scope {
+	return authz.New(authz.Params{Subject: "repository-fixture", Roles: []authz.Role{authz.RoleAdmin, authz.RoleService}, AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal})
 }

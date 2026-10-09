@@ -531,7 +531,7 @@ func TestAD03_CustomFieldsAndStatuses(t *testing.T) {
 	}
 	for _, c := range values {
 		t.Run(c.name, func(t *testing.T) {
-			if err := f.svc.ValidateCustomFields(f.ctx, discovery.EntityHypothesis, c.v); !errors.Is(err, c.want) {
+			if err := f.svc.ValidateCustomFields(f.ctx, f.cpo, discovery.EntityHypothesis, c.v); !errors.Is(err, c.want) {
 				t.Fatalf("ожидалось %v, получено %v", c.want, err)
 			}
 			_, err := f.svc.SaveHypothesis(f.ctx, f.cpo, discovery.HypothesisInput{ProductID: f.edr, Title: "t", Statement: "s", ConfirmationCriterion: "c", CustomFields: c.v})

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/onixus/metis/internal/delivery"
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	pg "github.com/onixus/metis/internal/portfoliograph"
@@ -285,7 +286,7 @@ func TestDL01_MappingAndEpicCreationGoesThroughOutbox(t *testing.T) {
 	if ft.ExternalKey != key {
 		t.Fatalf("ExternalKey фичи: %q, ожидался %s", ft.ExternalKey, key)
 	}
-	m, err := f.store.MappingByEpic(f.ctx, key)
+	m, err := f.store.MappingByEpic(f.ctx, f.cpo, key)
 	if err != nil || m.FeatureID != conn || m.ProductID != f.soar {
 		t.Fatalf("маппинг: %+v %v", m, err)
 	}
@@ -606,7 +607,7 @@ func TestNFR05_RecordSyncFailureRequiresServiceAndKeepsLastSuccess(t *testing.T)
 	store := delivery.NewMemStore()
 	clock := kernel.FixedClock{T: time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)}
 	previous := clock.Now().Add(-time.Hour)
-	if err := store.SaveSyncState(ctx, delivery.SyncState{LastSuccessAt: previous}); err != nil {
+	if err := store.SaveSyncState(ctx, identityaccess.ServiceScope("test"), delivery.SyncState{LastSuccessAt: previous}); err != nil {
 		t.Fatal(err)
 	}
 	bare := delivery.NewService(store, nil, nil, nil, clock, delivery.Config{})
@@ -621,14 +622,14 @@ func TestNFR05_RecordSyncFailureRequiresServiceAndKeepsLastSuccess(t *testing.T)
 	if err := svc.RecordSyncFailure(ctx, clock.Now(), failure); err != nil {
 		t.Fatal(err)
 	}
-	state, err := store.SyncState(ctx)
+	state, err := store.SyncState(ctx, identityaccess.ServiceScope("test"))
 	if err != nil || state.LastSuccessAt != previous || state.LastAttemptAt != clock.Now() || state.LastError != failure.Error() {
 		t.Fatalf("failure lost projection freshness: %+v %v", state, err)
 	}
 	if err := svc.RecordSyncFailure(ctx, previous, errors.New("older failed attempt")); err != nil {
 		t.Fatal(err)
 	}
-	state, err = store.SyncState(ctx)
+	state, err = store.SyncState(ctx, identityaccess.ServiceScope("test"))
 	if err != nil || state.LastError != failure.Error() {
 		t.Fatalf("older worker overwrote latest sync state: %+v %v", state, err)
 	}

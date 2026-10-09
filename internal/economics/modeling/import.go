@@ -53,7 +53,7 @@ func (s *Service) SaveTemplate(ctx context.Context, sc authz.Scope, in TemplateI
 			return Template{}, kernel.Invalid("columns", "нужна хотя бы одна колонка")
 		}
 		for _, c := range sh.Columns {
-			f, err := s.store.Field(ctx, c.FieldKey)
+			f, err := s.store.Field(ctx, sc, c.FieldKey)
 			if err != nil {
 				return Template{}, fmt.Errorf("колонка %q: %w", c.Column, err)
 			}
@@ -67,13 +67,13 @@ func (s *Service) SaveTemplate(ctx context.Context, sc authz.Scope, in TemplateI
 	if t.ID == kernel.NilID {
 		t.ID, t.CreatedAt = kernel.NewID(), now
 	} else {
-		prev, err := s.store.Template(ctx, t.ID)
+		prev, err := s.store.Template(ctx, sc, t.ID)
 		if err != nil {
 			return Template{}, err
 		}
 		t.CreatedAt = prev.CreatedAt
 	}
-	if err := s.store.SaveTemplate(ctx, t); err != nil {
+	if err := s.store.SaveTemplate(ctx, sc, t); err != nil {
 		return Template{}, fmt.Errorf("save template: %w", err)
 	}
 	return t, nil
@@ -84,7 +84,7 @@ func (s *Service) Templates(ctx context.Context, sc authz.Scope) ([]Template, er
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.Templates(ctx)
+	return s.store.Templates(ctx, sc)
 }
 
 // ImportInput — параметры загрузки финансовых данных (EC-01, EC-07).
@@ -124,7 +124,7 @@ func (s *Service) runImport(ctx context.Context, sc authz.Scope, in ImportInput,
 	if s.reader == nil {
 		return ImportResult{}, fmt.Errorf("%w: адаптер импорта не подключён", kernel.ErrUnavailable)
 	}
-	tpl, err := s.store.Template(ctx, in.TemplateID)
+	tpl, err := s.store.Template(ctx, sc, in.TemplateID)
 	if err != nil {
 		return ImportResult{}, err
 	}
@@ -142,14 +142,14 @@ func (s *Service) runImport(ctx context.Context, sc authz.Scope, in ImportInput,
 		FileName: in.FileName, SHA256: hex.EncodeToString(sum[:]), Actor: sc.Subject(),
 		At: s.clock.Now(), Scheduled: in.Scheduled, Errors: rowErrors(read.Errors),
 	}
-	rows, periods, errs := s.convert(ctx, batch.ID, in.Period, tpl, read.Cells)
+	rows, periods, errs := s.convert(ctx, sc, batch.ID, in.Period, tpl, read.Cells)
 	batch.Errors = append(batch.Errors, errs...)
 	batch.Rows = len(rows)
 	sortRowErrors(batch.Errors)
 	if len(rows) == 0 {
 		batch.Status = BatchRejected
 		if apply {
-			if err := s.store.SaveBatch(ctx, batch); err != nil {
+			if err := s.store.SaveBatch(ctx, sc, batch); err != nil {
 				return ImportResult{}, fmt.Errorf("save batch: %w", err)
 			}
 		}
@@ -166,14 +166,14 @@ func (s *Service) runImport(ctx context.Context, sc authz.Scope, in ImportInput,
 		return ImportResult{Batch: batch, Rows: rows}, nil
 	}
 
-	closed, err := s.PeriodClosed(ctx, batch.Period)
+	closed, err := s.PeriodClosed(ctx, sc, batch.Period)
 	if err != nil {
 		return ImportResult{}, err
 	}
 	if closed && !in.Force {
 		return ImportResult{}, fmt.Errorf("%w: период %s закрыт; загрузка — только явным действием", kernel.ErrConflict, batch.Period)
 	}
-	version, err := s.nextDataVersion(ctx, batch.Period)
+	version, err := s.nextDataVersion(ctx, sc, batch.Period)
 	if err != nil {
 		return ImportResult{}, err
 	}
@@ -185,14 +185,14 @@ func (s *Service) runImport(ctx context.Context, sc authz.Scope, in ImportInput,
 	}
 	// Перенос строк прежней версии считается до записи загрузки: иначе действующей
 	// версией периода уже была бы новая, ещё пустая.
-	carried, err := s.carryForward(ctx, batch, loaded)
+	carried, err := s.carryForward(ctx, sc, batch, loaded)
 	if err != nil {
 		return ImportResult{}, err
 	}
-	if err := s.store.SaveBatch(ctx, batch); err != nil {
+	if err := s.store.SaveBatch(ctx, sc, batch); err != nil {
 		return ImportResult{}, fmt.Errorf("save batch: %w", err)
 	}
-	if err := s.store.AppendFacts(ctx, append(rows, carried...)); err != nil {
+	if err := s.store.AppendFacts(ctx, sc, append(rows, carried...)); err != nil {
 		return ImportResult{}, fmt.Errorf("append facts: %w", err)
 	}
 	s.logAccess(ctx, sc, "write", "economics.import:"+batch.ID.String(), kernel.NilID, map[string]any{
@@ -213,8 +213,8 @@ func (s *Service) runImport(ctx context.Context, sc authz.Scope, in ImportInput,
 
 // carryForward переносит в новую версию данных периода строки полей, которых нет в загрузке:
 // файлы разных статей грузятся по отдельности и не должны затирать друг друга.
-func (s *Service) carryForward(ctx context.Context, batch ImportBatch, loaded map[string]bool) ([]FactRow, error) {
-	prev, err := s.store.Facts(ctx, FactFilter{Period: &batch.Period})
+func (s *Service) carryForward(ctx context.Context, sc authz.Scope, batch ImportBatch, loaded map[string]bool) ([]FactRow, error) {
+	prev, err := s.store.Facts(ctx, sc, FactFilter{Period: &batch.Period})
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
 	}
@@ -230,7 +230,7 @@ func (s *Service) carryForward(ctx context.Context, batch ImportBatch, loaded ma
 }
 
 // convert превращает ячейки файла в строки данных, собирая ошибки по строкам (EC-07).
-func (s *Service) convert(ctx context.Context, batchID kernel.ID, fallback Period, tpl Template,
+func (s *Service) convert(ctx context.Context, sc authz.Scope, batchID kernel.ID, fallback Period, tpl Template,
 	cells []ports.FinanceCell) ([]FactRow, []Period, []RowError) {
 	scale := map[string]bool{} // ключ колонки → значения уже в минорных единицах
 	for _, sh := range tpl.Sheets {
@@ -247,7 +247,7 @@ func (s *Service) convert(ctx context.Context, batchID kernel.ID, fallback Perio
 	for _, c := range cells {
 		f, ok := fields[c.FieldKey]
 		if !ok {
-			loaded, err := s.store.Field(ctx, c.FieldKey)
+			loaded, err := s.store.Field(ctx, sc, c.FieldKey)
 			if err != nil {
 				errs = append(errs, RowError{Sheet: c.Sheet, Row: c.Row, Message: fmt.Sprintf("поле %q не заведено", c.FieldKey)})
 				continue
@@ -273,7 +273,7 @@ func (s *Service) convert(ctx context.Context, batchID kernel.ID, fallback Perio
 			errs = append(errs, RowError{Sheet: c.Sheet, Row: c.Row, Message: fmt.Sprintf("продукт %q: %v", c.ProductKey, err)})
 			continue
 		}
-		team, err := s.teamID(ctx, c.TeamKey)
+		team, err := s.teamID(ctx, sc, c.TeamKey)
 		if err != nil {
 			errs = append(errs, RowError{Sheet: c.Sheet, Row: c.Row, Message: fmt.Sprintf("команда %q: %v", c.TeamKey, err)})
 			continue
@@ -310,11 +310,11 @@ func (s *Service) productID(ctx context.Context, key string) (kernel.ID, error) 
 	return id, nil
 }
 
-func (s *Service) teamID(ctx context.Context, key string) (kernel.ID, error) {
+func (s *Service) teamID(ctx context.Context, sc authz.Scope, key string) (kernel.ID, error) {
 	if strings.TrimSpace(key) == "" {
 		return kernel.NilID, nil
 	}
-	teams, err := s.store.Teams(ctx)
+	teams, err := s.store.Teams(ctx, sc)
 	if err != nil {
 		return kernel.NilID, fmt.Errorf("список команд: %w", err)
 	}
@@ -366,5 +366,5 @@ func (s *Service) Batches(ctx context.Context, sc authz.Scope, p Period) ([]Impo
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.Batches(ctx, p)
+	return s.store.Batches(ctx, sc, p)
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/delivery/internal/db"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/pgdb"
 	"github.com/onixus/metis/internal/ports"
@@ -34,42 +35,69 @@ func New(d *pgdb.DB, clock kernel.Clock) *Store {
 func (s *Store) q(ctx context.Context) *db.Queries { return db.New(pgdb.Querier(ctx, s.db)) }
 
 // SaveMapping сохраняет привязку фичи к эпику.
-func (s *Store) SaveMapping(ctx context.Context, m delivery.Mapping) error {
-	err := s.q(ctx).UpsertMapping(ctx, db.UpsertMappingParams{
+func (s *Store) SaveMapping(ctx context.Context, sc authz.Scope, m delivery.Mapping) error {
+	if m.ProductID == kernel.NilID || sc.Product(m.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteGraph, m.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
+	n, err := s.q(ctx).UpsertMapping(ctx, db.UpsertMappingParams{
 		FeatureID: m.FeatureID, ProductID: m.ProductID, EpicKey: m.EpicKey, Project: m.Project, CreatedAt: m.CreatedAt.UTC(),
 	})
 	if err != nil {
 		return fmt.Errorf("delivery mapping %s: %w", m.FeatureID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // MappingByFeature возвращает привязку по фиче.
-func (s *Store) MappingByFeature(ctx context.Context, featureID kernel.ID) (delivery.Mapping, error) {
+func (s *Store) MappingByFeature(ctx context.Context, sc authz.Scope, featureID kernel.ID) (delivery.Mapping, error) {
+	if !sc.Valid() {
+		return delivery.Mapping{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetMappingByFeature(ctx, featureID)
 	if err != nil {
 		return delivery.Mapping{}, fmt.Errorf("delivery mapping %s: %w", featureID, pgdb.MapError(err))
+	}
+	if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+		return delivery.Mapping{}, kernel.ErrForbidden
 	}
 	return mappingFromRow(r), nil
 }
 
 // MappingByEpic возвращает привязку по ключу эпика.
-func (s *Store) MappingByEpic(ctx context.Context, epicKey string) (delivery.Mapping, error) {
+func (s *Store) MappingByEpic(ctx context.Context, sc authz.Scope, epicKey string) (delivery.Mapping, error) {
+	if !sc.Valid() {
+		return delivery.Mapping{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetMappingByEpic(ctx, epicKey)
 	if err != nil {
 		return delivery.Mapping{}, fmt.Errorf("delivery mapping %s: %w", epicKey, pgdb.MapError(err))
+	}
+	if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+		return delivery.Mapping{}, kernel.ErrForbidden
 	}
 	return mappingFromRow(r), nil
 }
 
 // Mappings возвращает все привязки по ключу эпика.
-func (s *Store) Mappings(ctx context.Context) ([]delivery.Mapping, error) {
+func (s *Store) Mappings(ctx context.Context, sc authz.Scope) ([]delivery.Mapping, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListMappings(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("delivery mappings: %w", pgdb.MapError(err))
 	}
 	out := make([]delivery.Mapping, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+			continue
+		}
 		out = append(out, mappingFromRow(r))
 	}
 	return out, nil
@@ -80,36 +108,57 @@ func mappingFromRow(r db.DeliveryMapping) delivery.Mapping {
 }
 
 // SaveReleaseMapping сохраняет привязку релиза к версии трекера.
-func (s *Store) SaveReleaseMapping(ctx context.Context, m delivery.ReleaseMapping) error {
-	err := s.q(ctx).UpsertReleaseMapping(ctx, db.UpsertReleaseMappingParams{
+func (s *Store) SaveReleaseMapping(ctx context.Context, sc authz.Scope, m delivery.ReleaseMapping) error {
+	if m.ProductID == kernel.NilID || sc.Product(m.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteRoadmap, m.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
+	n, err := s.q(ctx).UpsertReleaseMapping(ctx, db.UpsertReleaseMappingParams{
 		ReleaseID: m.ReleaseID, ProductID: m.ProductID, Project: m.Project, FixVersion: m.FixVersion, CreatedAt: m.CreatedAt.UTC(),
 	})
 	if err != nil {
 		return fmt.Errorf("delivery release mapping %s: %w", m.ReleaseID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // ReleaseMappings возвращает привязки релизов по версии.
-func (s *Store) ReleaseMappings(ctx context.Context) ([]delivery.ReleaseMapping, error) {
+func (s *Store) ReleaseMappings(ctx context.Context, sc authz.Scope) ([]delivery.ReleaseMapping, error) {
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListReleaseMappings(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("delivery release mappings: %w", pgdb.MapError(err))
 	}
 	out := make([]delivery.ReleaseMapping, 0, len(rows))
 	for _, r := range rows {
+		if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+			continue
+		}
 		out = append(out, delivery.ReleaseMapping{ReleaseID: r.ReleaseID, ProductID: r.ProductID, Project: r.Project, FixVersion: r.FixVersion, CreatedAt: r.CreatedAt.UTC()})
 	}
 	return out, nil
 }
 
 // SaveEpic сохраняет проекцию эпика.
-func (s *Store) SaveEpic(ctx context.Context, p delivery.EpicProjection) error {
+func (s *Store) SaveEpic(ctx context.Context, sc authz.Scope, p delivery.EpicProjection) error {
+	if p.ProductID == kernel.NilID || sc.Product(p.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteGraph, p.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() || !sc.HasRole(authz.RoleService) {
+		return kernel.ErrForbidden
+	}
 	issues, err := marshalIssues(p.Issues)
 	if err != nil {
 		return fmt.Errorf("delivery epic %s: %w", p.FeatureID, err)
 	}
-	err = s.q(ctx).UpsertEpic(ctx, db.UpsertEpicParams{
+	n, err := s.q(ctx).UpsertEpic(ctx, db.UpsertEpicParams{
 		FeatureID: p.FeatureID, ProductID: p.ProductID, EpicKey: p.EpicKey, Summary: p.Summary, Status: p.Status,
 		DueDate: pgdb.ToDate(p.DueDate), FixVersions: pgdb.Strings(p.FixVersions), Issues: issues,
 		InitialScope: pgdb.Strings(p.InitialScope), FirstSeenAt: pgdb.ToTime(p.FirstSeenAt), SyncedAt: pgdb.ToTime(p.SyncedAt),
@@ -118,11 +167,17 @@ func (s *Store) SaveEpic(ctx context.Context, p delivery.EpicProjection) error {
 	if err != nil {
 		return fmt.Errorf("delivery epic %s: %w", p.FeatureID, pgdb.MapError(err))
 	}
+	if n == 0 {
+		return kernel.ErrForbidden
+	}
 	return nil
 }
 
 // EpicByFeature возвращает проекцию эпика фичи.
-func (s *Store) EpicByFeature(ctx context.Context, featureID kernel.ID) (delivery.EpicProjection, error) {
+func (s *Store) EpicByFeature(ctx context.Context, sc authz.Scope, featureID kernel.ID) (delivery.EpicProjection, error) {
+	if !sc.Valid() {
+		return delivery.EpicProjection{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetEpicByFeature(ctx, featureID)
 	if err != nil {
 		return delivery.EpicProjection{}, fmt.Errorf("delivery epic %s: %w", featureID, pgdb.MapError(err))
@@ -130,6 +185,9 @@ func (s *Store) EpicByFeature(ctx context.Context, featureID kernel.ID) (deliver
 	issues, err := unmarshalIssues(r.Issues)
 	if err != nil {
 		return delivery.EpicProjection{}, fmt.Errorf("delivery epic %s: %w", featureID, err)
+	}
+	if !sc.Allows(authz.ActionReadPrivate, r.ProductID) {
+		return delivery.EpicProjection{}, kernel.ErrForbidden
 	}
 	return delivery.EpicProjection{
 		FeatureID: r.FeatureID, ProductID: r.ProductID, EpicKey: r.EpicKey, Summary: r.Summary, Status: r.Status,
@@ -140,7 +198,18 @@ func (s *Store) EpicByFeature(ctx context.Context, featureID kernel.ID) (deliver
 }
 
 // SaveSprints заменяет набор спринтов продукта одной транзакцией.
-func (s *Store) SaveSprints(ctx context.Context, productID kernel.ID, sprints []delivery.SprintStatus) error {
+func (s *Store) SaveSprints(ctx context.Context, sc authz.Scope, productID kernel.ID, sprints []delivery.SprintStatus) error {
+	for _, row := range sprints {
+		if row.ProductID != productID {
+			return kernel.ErrForbidden
+		}
+	}
+	if productID == kernel.NilID || !sc.Allows(authz.ActionReadPrivate, productID) {
+		return kernel.ErrForbidden
+	}
+	if !sc.Valid() || !sc.HasRole(authz.RoleService) {
+		return kernel.ErrForbidden
+	}
 	return s.db.Transact(ctx, func(ctx context.Context) error {
 		q := s.q(ctx)
 		if err := q.DeleteSprintsByProduct(ctx, productID); err != nil {
@@ -165,7 +234,13 @@ func (s *Store) SaveSprints(ctx context.Context, productID kernel.ID, sprints []
 }
 
 // Sprints возвращает спринты продукта в порядке сохранения.
-func (s *Store) Sprints(ctx context.Context, productID kernel.ID) ([]delivery.SprintStatus, error) {
+func (s *Store) Sprints(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]delivery.SprintStatus, error) {
+	if productID == kernel.NilID || !sc.Allows(authz.ActionReadPrivate, productID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	rows, err := s.q(ctx).ListSprintsByProduct(ctx, productID)
 	if err != nil {
 		return nil, fmt.Errorf("delivery sprints %s: %w", productID, pgdb.MapError(err))
@@ -186,7 +261,10 @@ func (s *Store) Sprints(ctx context.Context, productID kernel.ID) ([]delivery.Sp
 }
 
 // SaveSyncState сохраняет состояние синхронизации (одна строка).
-func (s *Store) SaveSyncState(ctx context.Context, st delivery.SyncState) error {
+func (s *Store) SaveSyncState(ctx context.Context, sc authz.Scope, st delivery.SyncState) error {
+	if !sc.Valid() || !sc.HasRole(authz.RoleService) {
+		return kernel.ErrForbidden
+	}
 	err := s.q(ctx).UpsertSyncState(ctx, db.UpsertSyncStateParams{
 		LastSuccessAt: pgdb.ToTime(st.LastSuccessAt), LastAttemptAt: pgdb.ToTime(st.LastAttemptAt),
 		LastError: st.LastError, LagNs: int64(st.Lag), Stale: st.Stale,
@@ -198,7 +276,10 @@ func (s *Store) SaveSyncState(ctx context.Context, st delivery.SyncState) error 
 }
 
 // SyncState возвращает состояние синхронизации; пустое, если сверки ещё не было.
-func (s *Store) SyncState(ctx context.Context) (delivery.SyncState, error) {
+func (s *Store) SyncState(ctx context.Context, sc authz.Scope) (delivery.SyncState, error) {
+	if !sc.Valid() {
+		return delivery.SyncState{}, kernel.ErrForbidden
+	}
 	r, err := s.q(ctx).GetSyncState(ctx)
 	if err != nil {
 		if kernel.IsNotFound(pgdb.MapError(err)) {
@@ -213,7 +294,10 @@ func (s *Store) SyncState(ctx context.Context) (delivery.SyncState, error) {
 }
 
 // SaveFieldMapping сохраняет маппинг полей трекера (AD-05).
-func (s *Store) SaveFieldMapping(ctx context.Context, m delivery.FieldMapping) error {
+func (s *Store) SaveFieldMapping(ctx context.Context, sc authz.Scope, m delivery.FieldMapping) error {
+	if !sc.Allows(authz.ActionManageConnects, kernel.NilID) {
+		return kernel.ErrForbidden
+	}
 	raw, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("delivery field mapping: %w", err)
@@ -225,7 +309,10 @@ func (s *Store) SaveFieldMapping(ctx context.Context, m delivery.FieldMapping) e
 }
 
 // FieldMapping возвращает маппинг; без сохранённого — delivery.DefaultFieldMapping().
-func (s *Store) FieldMapping(ctx context.Context) (delivery.FieldMapping, error) {
+func (s *Store) FieldMapping(ctx context.Context, sc authz.Scope) (delivery.FieldMapping, error) {
+	if !sc.Valid() {
+		return delivery.FieldMapping{}, kernel.ErrForbidden
+	}
 	raw, err := s.q(ctx).GetFieldMapping(ctx)
 	if err != nil {
 		if kernel.IsNotFound(pgdb.MapError(err)) {
@@ -241,7 +328,10 @@ func (s *Store) FieldMapping(ctx context.Context) (delivery.FieldMapping, error)
 }
 
 // MarkProcessed запоминает внешний ключ события; false — событие уже обрабатывалось.
-func (s *Store) MarkProcessed(ctx context.Context, externalID string) (bool, error) {
+func (s *Store) MarkProcessed(ctx context.Context, sc authz.Scope, externalID string) (bool, error) {
+	if !sc.Valid() || !sc.HasRole(authz.RoleService) {
+		return false, kernel.ErrForbidden
+	}
 	n, err := s.q(ctx).MarkProcessed(ctx, externalID)
 	if err != nil {
 		return false, fmt.Errorf("delivery mark processed %q: %w", externalID, pgdb.MapError(err))

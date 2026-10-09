@@ -197,7 +197,7 @@ func (s *Server) GetCommitmentSettings(ctx context.Context, _ gen.GetCommitmentS
 	if !scope(ctx).Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	st, err := s.d.Commitments.Settings(ctx)
+	st, err := s.d.Commitments.Settings(ctx, scope(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (s *Server) UpdateCommitmentSettings(ctx context.Context, req gen.UpdateCom
 	if err := s.d.Commitments.UpdateSettings(ctx, scope(ctx), commitments.Settings{LeadMonths: req.Body.LeadMonths}); err != nil {
 		return nil, err
 	}
-	st, err := s.d.Commitments.Settings(ctx)
+	st, err := s.d.Commitments.Settings(ctx, scope(ctx))
 	if err != nil {
 		return nil, err
 	}

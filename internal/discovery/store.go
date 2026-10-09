@@ -5,6 +5,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -35,27 +36,27 @@ type EvidenceFilter struct {
 // Store — хранилище discovery. Реализации: память (тесты, стенд), PostgreSQL (следующая волна).
 // Авторизация выполняется в Service до вызова хранилища.
 type Store interface {
-	SaveHypothesis(ctx context.Context, h Hypothesis) error
-	Hypothesis(ctx context.Context, id kernel.ID) (Hypothesis, error)
-	Hypotheses(ctx context.Context, f HypothesisFilter) ([]Hypothesis, error)
+	SaveHypothesis(ctx context.Context, sc authz.Scope, h Hypothesis) error
+	Hypothesis(ctx context.Context, sc authz.Scope, id kernel.ID) (Hypothesis, error)
+	Hypotheses(ctx context.Context, sc authz.Scope, f HypothesisFilter) ([]Hypothesis, error)
 
-	SaveInterview(ctx context.Context, i Interview) error
-	Interview(ctx context.Context, id kernel.ID) (Interview, error)
-	Interviews(ctx context.Context, productID kernel.ID) ([]Interview, error)
+	SaveInterview(ctx context.Context, sc authz.Scope, i Interview) error
+	Interview(ctx context.Context, sc authz.Scope, id kernel.ID) (Interview, error)
+	Interviews(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]Interview, error)
 
-	SaveInsight(ctx context.Context, i Insight) error
-	Insight(ctx context.Context, id kernel.ID) (Insight, error)
-	Insights(ctx context.Context, f InsightFilter) ([]Insight, error)
+	SaveInsight(ctx context.Context, sc authz.Scope, i Insight) error
+	Insight(ctx context.Context, sc authz.Scope, id kernel.ID) (Insight, error)
+	Insights(ctx context.Context, sc authz.Scope, f InsightFilter) ([]Insight, error)
 
-	SaveEvidence(ctx context.Context, e Evidence) error
-	Evidence(ctx context.Context, id kernel.ID) (Evidence, error)
-	EvidenceList(ctx context.Context, f EvidenceFilter) ([]Evidence, error)
+	SaveEvidence(ctx context.Context, sc authz.Scope, e Evidence) error
+	Evidence(ctx context.Context, sc authz.Scope, id kernel.ID) (Evidence, error)
+	EvidenceList(ctx context.Context, sc authz.Scope, f EvidenceFilter) ([]Evidence, error)
 
 	// Настройки AD-03: определения общие для портфеля (без product_id).
-	SaveFieldDef(ctx context.Context, d CustomFieldDef) error
-	FieldDefs(ctx context.Context, e Entity) ([]CustomFieldDef, error)
-	SaveStatusDef(ctx context.Context, d CustomStatusDef) error
-	StatusDefs(ctx context.Context, e Entity) ([]CustomStatusDef, error)
+	SaveFieldDef(ctx context.Context, sc authz.Scope, d CustomFieldDef) error
+	FieldDefs(ctx context.Context, sc authz.Scope, e Entity) ([]CustomFieldDef, error)
+	SaveStatusDef(ctx context.Context, sc authz.Scope, d CustomStatusDef) error
+	StatusDefs(ctx context.Context, sc authz.Scope, e Entity) ([]CustomStatusDef, error)
 }
 
 // MemStore — хранилище в памяти.
@@ -84,31 +85,59 @@ func upsert[T any](items []T, v T, same func(a, b T) bool) []T {
 }
 
 // SaveHypothesis создаёт или обновляет гипотезу.
-func (m *MemStore) SaveHypothesis(_ context.Context, h Hypothesis) error {
+func (m *MemStore) SaveHypothesis(_ context.Context, sc authz.Scope, h Hypothesis) error {
+	h = kernel.CloneValue(h)
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if h.ProductID == kernel.NilID || sc.Product(h.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteDiscovery, h.ProductID) {
+		return kernel.ErrForbidden
+	}
+	for _, old := range m.hypotheses {
+		if old.ID == h.ID && old.ProductID != h.ProductID {
+			return kernel.ErrForbidden
+		}
+	}
 	m.hypotheses = upsert(m.hypotheses, h, func(a, b Hypothesis) bool { return a.ID == b.ID })
 	return nil
 }
 
 // Hypothesis возвращает гипотезу по идентификатору.
-func (m *MemStore) Hypothesis(_ context.Context, id kernel.ID) (Hypothesis, error) {
+func (m *MemStore) Hypothesis(_ context.Context, sc authz.Scope, id kernel.ID) (Hypothesis, error) {
+	if !sc.Valid() {
+		return Hypothesis{}, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for _, h := range m.hypotheses {
 		if h.ID == id {
-			return h, nil
+			if !sc.Allows(authz.ActionReadPrivate, h.ProductID) {
+				return Hypothesis{}, kernel.ErrForbidden
+			}
+			return kernel.CloneValue(h), nil
 		}
 	}
 	return Hypothesis{}, kernel.NotFound("hypothesis", id)
 }
 
 // Hypotheses возвращает гипотезы по фильтру в порядке сохранения.
-func (m *MemStore) Hypotheses(_ context.Context, f HypothesisFilter) ([]Hypothesis, error) {
+func (m *MemStore) Hypotheses(_ context.Context, sc authz.Scope, f HypothesisFilter) ([]Hypothesis, error) {
+	f = kernel.CloneValue(f)
+	if f.ProductID != kernel.NilID && !sc.Allows(authz.ActionReadPrivate, f.ProductID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]Hypothesis, 0, len(m.hypotheses))
 	for _, h := range m.hypotheses {
+		if !sc.Allows(authz.ActionReadPrivate, h.ProductID) {
+			continue
+		}
 		if f.ProductID != kernel.NilID && h.ProductID != f.ProductID {
 			continue
 		}
@@ -120,68 +149,123 @@ func (m *MemStore) Hypotheses(_ context.Context, f HypothesisFilter) ([]Hypothes
 		}
 		out = append(out, h)
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveInterview создаёт или обновляет интервью.
-func (m *MemStore) SaveInterview(_ context.Context, i Interview) error {
+func (m *MemStore) SaveInterview(_ context.Context, sc authz.Scope, i Interview) error {
+	i = kernel.CloneValue(i)
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if i.ProductID == kernel.NilID || sc.Product(i.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteDiscovery, i.ProductID) {
+		return kernel.ErrForbidden
+	}
+	for _, old := range m.interviews {
+		if old.ID == i.ID && old.ProductID != i.ProductID {
+			return kernel.ErrForbidden
+		}
+	}
 	m.interviews = upsert(m.interviews, i, func(a, b Interview) bool { return a.ID == b.ID })
 	return nil
 }
 
 // Interview возвращает интервью по идентификатору.
-func (m *MemStore) Interview(_ context.Context, id kernel.ID) (Interview, error) {
+func (m *MemStore) Interview(_ context.Context, sc authz.Scope, id kernel.ID) (Interview, error) {
+	if !sc.Valid() {
+		return Interview{}, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for _, i := range m.interviews {
 		if i.ID == id {
-			return i, nil
+			if !sc.Allows(authz.ActionReadPrivate, i.ProductID) {
+				return Interview{}, kernel.ErrForbidden
+			}
+			return kernel.CloneValue(i), nil
 		}
 	}
 	return Interview{}, kernel.NotFound("interview", id)
 }
 
 // Interviews возвращает интервью продукта в порядке сохранения.
-func (m *MemStore) Interviews(_ context.Context, productID kernel.ID) ([]Interview, error) {
+func (m *MemStore) Interviews(_ context.Context, sc authz.Scope, productID kernel.ID) ([]Interview, error) {
+	if productID != kernel.NilID && !sc.Allows(authz.ActionReadPrivate, productID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]Interview, 0, len(m.interviews))
 	for _, i := range m.interviews {
+		if !sc.Allows(authz.ActionReadPrivate, i.ProductID) {
+			continue
+		}
 		if productID == kernel.NilID || i.ProductID == productID {
 			out = append(out, i)
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveInsight создаёт или обновляет инсайт.
-func (m *MemStore) SaveInsight(_ context.Context, i Insight) error {
+func (m *MemStore) SaveInsight(_ context.Context, sc authz.Scope, i Insight) error {
+	i = kernel.CloneValue(i)
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if i.ProductID == kernel.NilID || sc.Product(i.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteDiscovery, i.ProductID) {
+		return kernel.ErrForbidden
+	}
+	for _, old := range m.insights {
+		if old.ID == i.ID && old.ProductID != i.ProductID {
+			return kernel.ErrForbidden
+		}
+	}
 	m.insights = upsert(m.insights, i, func(a, b Insight) bool { return a.ID == b.ID })
 	return nil
 }
 
 // Insight возвращает инсайт по идентификатору.
-func (m *MemStore) Insight(_ context.Context, id kernel.ID) (Insight, error) {
+func (m *MemStore) Insight(_ context.Context, sc authz.Scope, id kernel.ID) (Insight, error) {
+	if !sc.Valid() {
+		return Insight{}, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for _, i := range m.insights {
 		if i.ID == id {
-			return i, nil
+			if !sc.Allows(authz.ActionReadPrivate, i.ProductID) {
+				return Insight{}, kernel.ErrForbidden
+			}
+			return kernel.CloneValue(i), nil
 		}
 	}
 	return Insight{}, kernel.NotFound("insight", id)
 }
 
 // Insights возвращает инсайты по фильтру в порядке сохранения.
-func (m *MemStore) Insights(_ context.Context, f InsightFilter) ([]Insight, error) {
+func (m *MemStore) Insights(_ context.Context, sc authz.Scope, f InsightFilter) ([]Insight, error) {
+	f = kernel.CloneValue(f)
+	if f.ProductID != kernel.NilID && !sc.Allows(authz.ActionReadPrivate, f.ProductID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]Insight, 0, len(m.insights))
 	for _, i := range m.insights {
+		if !sc.Allows(authz.ActionReadPrivate, i.ProductID) {
+			continue
+		}
 		if f.ProductID != kernel.NilID && i.ProductID != f.ProductID {
 			continue
 		}
@@ -196,35 +280,63 @@ func (m *MemStore) Insights(_ context.Context, f InsightFilter) ([]Insight, erro
 		}
 		out = append(out, i)
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveEvidence создаёт или обновляет evidence.
-func (m *MemStore) SaveEvidence(_ context.Context, e Evidence) error {
+func (m *MemStore) SaveEvidence(_ context.Context, sc authz.Scope, e Evidence) error {
+	e = kernel.CloneValue(e)
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if e.ProductID == kernel.NilID || sc.Product(e.ProductID) < authz.AccessPrivate || !sc.Allows(authz.ActionWriteDiscovery, e.ProductID) {
+		return kernel.ErrForbidden
+	}
+	for _, old := range m.evidence {
+		if old.ID == e.ID && old.ProductID != e.ProductID {
+			return kernel.ErrForbidden
+		}
+	}
 	m.evidence = upsert(m.evidence, e, func(a, b Evidence) bool { return a.ID == b.ID })
 	return nil
 }
 
 // Evidence возвращает evidence по идентификатору.
-func (m *MemStore) Evidence(_ context.Context, id kernel.ID) (Evidence, error) {
+func (m *MemStore) Evidence(_ context.Context, sc authz.Scope, id kernel.ID) (Evidence, error) {
+	if !sc.Valid() {
+		return Evidence{}, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for _, e := range m.evidence {
 		if e.ID == id {
-			return e, nil
+			if !sc.Allows(authz.ActionReadPrivate, e.ProductID) {
+				return Evidence{}, kernel.ErrForbidden
+			}
+			return kernel.CloneValue(e), nil
 		}
 	}
 	return Evidence{}, kernel.NotFound("evidence", id)
 }
 
 // EvidenceList возвращает evidence по фильтру в порядке сохранения.
-func (m *MemStore) EvidenceList(_ context.Context, f EvidenceFilter) ([]Evidence, error) {
+func (m *MemStore) EvidenceList(_ context.Context, sc authz.Scope, f EvidenceFilter) ([]Evidence, error) {
+	f = kernel.CloneValue(f)
+	if f.ProductID != kernel.NilID && !sc.Allows(authz.ActionReadPrivate, f.ProductID) {
+		return nil, kernel.ErrForbidden
+	}
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]Evidence, 0, len(m.evidence))
 	for _, e := range m.evidence {
+		if !sc.Allows(authz.ActionReadPrivate, e.ProductID) {
+			continue
+		}
 		if f.ProductID != kernel.NilID && e.ProductID != f.ProductID {
 			continue
 		}
@@ -242,11 +354,15 @@ func (m *MemStore) EvidenceList(_ context.Context, f EvidenceFilter) ([]Evidence
 		}
 		out = append(out, e)
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveFieldDef создаёт или обновляет определение поля; ключ уникален в пределах сущности.
-func (m *MemStore) SaveFieldDef(_ context.Context, d CustomFieldDef) error {
+func (m *MemStore) SaveFieldDef(_ context.Context, sc authz.Scope, d CustomFieldDef) error {
+	d = kernel.CloneValue(d)
+	if !sc.Allows(authz.ActionAdminSettings, kernel.NilID) {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.fields = upsert(m.fields, d, func(a, b CustomFieldDef) bool { return a.Entity == b.Entity && a.Key == b.Key })
@@ -254,7 +370,11 @@ func (m *MemStore) SaveFieldDef(_ context.Context, d CustomFieldDef) error {
 }
 
 // FieldDefs возвращает определения полей сущности в порядке создания.
-func (m *MemStore) FieldDefs(_ context.Context, e Entity) ([]CustomFieldDef, error) {
+func (m *MemStore) FieldDefs(_ context.Context, sc authz.Scope, e Entity) ([]CustomFieldDef, error) {
+	e = kernel.CloneValue(e)
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]CustomFieldDef, 0, len(m.fields))
@@ -263,11 +383,15 @@ func (m *MemStore) FieldDefs(_ context.Context, e Entity) ([]CustomFieldDef, err
 			out = append(out, d)
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }
 
 // SaveStatusDef создаёт или обновляет пользовательский статус.
-func (m *MemStore) SaveStatusDef(_ context.Context, d CustomStatusDef) error {
+func (m *MemStore) SaveStatusDef(_ context.Context, sc authz.Scope, d CustomStatusDef) error {
+	d = kernel.CloneValue(d)
+	if !sc.Allows(authz.ActionAdminSettings, kernel.NilID) {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.statuses = upsert(m.statuses, d, func(a, b CustomStatusDef) bool { return a.Entity == b.Entity && a.Key == b.Key })
@@ -275,7 +399,11 @@ func (m *MemStore) SaveStatusDef(_ context.Context, d CustomStatusDef) error {
 }
 
 // StatusDefs возвращает пользовательские статусы сущности в порядке создания.
-func (m *MemStore) StatusDefs(_ context.Context, e Entity) ([]CustomStatusDef, error) {
+func (m *MemStore) StatusDefs(_ context.Context, sc authz.Scope, e Entity) ([]CustomStatusDef, error) {
+	e = kernel.CloneValue(e)
+	if !sc.Valid() {
+		return nil, kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]CustomStatusDef, 0, len(m.statuses))
@@ -284,5 +412,5 @@ func (m *MemStore) StatusDefs(_ context.Context, e Entity) ([]CustomStatusDef, e
 			out = append(out, d)
 		}
 	}
-	return out, nil
+	return kernel.CloneValue(out), nil
 }

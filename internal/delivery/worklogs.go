@@ -41,7 +41,7 @@ func (s *Service) WorklogCostBase(ctx context.Context, sc authz.Scope, from, to 
 	if s.tracker == nil {
 		return WorklogReport{}, fmt.Errorf("%w: адаптер трекера выключен", kernel.ErrUnavailable)
 	}
-	mappings, err := s.store.Mappings(ctx)
+	mappings, err := s.store.Mappings(ctx, sc)
 	if err != nil {
 		return WorklogReport{}, fmt.Errorf("mappings: %w", err)
 	}
@@ -56,7 +56,7 @@ func (s *Service) WorklogCostBase(ctx context.Context, sc authz.Scope, from, to 
 		if !sc.Allows(authz.ActionReadStrategic, m.ProductID) {
 			continue
 		}
-		epic, err := s.store.EpicByFeature(ctx, m.FeatureID)
+		epic, err := s.store.EpicByFeature(ctx, sc, m.FeatureID)
 		if err != nil {
 			if kernel.IsNotFound(err) {
 				continue
@@ -119,7 +119,7 @@ func (s *Service) WorklogCostBase(ctx context.Context, sc authz.Scope, from, to 
 	}
 	sort.Slice(report.ByProduct, func(i, j int) bool { return report.ByProduct[i].Seconds > report.ByProduct[j].Seconds })
 	sort.Slice(report.ByFeature, func(i, j int) bool { return report.ByFeature[i].Seconds > report.ByFeature[j].Seconds })
-	state, err := s.syncState(ctx)
+	state, err := s.syncState(ctx, sc)
 	if err != nil {
 		return WorklogReport{}, err
 	}

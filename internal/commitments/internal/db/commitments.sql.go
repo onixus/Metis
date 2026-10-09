@@ -299,13 +299,14 @@ func (q *Queries) MarkEventProcessed(ctx context.Context, eventID uuid.UUID) err
 	return err
 }
 
-const upsertCommitment = `-- name: UpsertCommitment :exec
+const upsertCommitment = `-- name: UpsertCommitment :execrows
 INSERT INTO commitments.commitments (id, product_id, kind, subtype, counterparty, subject, due_date, basis, owner, status, feature_id, release_id, renewal_item_id, created_by, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, kind = EXCLUDED.kind, subtype = EXCLUDED.subtype,
   counterparty = EXCLUDED.counterparty, subject = EXCLUDED.subject, due_date = EXCLUDED.due_date, basis = EXCLUDED.basis,
   owner = EXCLUDED.owner, status = EXCLUDED.status, feature_id = EXCLUDED.feature_id, release_id = EXCLUDED.release_id,
   renewal_item_id = EXCLUDED.renewal_item_id, created_by = EXCLUDED.created_by, updated_at = EXCLUDED.updated_at
+WHERE commitments.commitments.product_id = EXCLUDED.product_id
 `
 
 type UpsertCommitmentParams struct {
@@ -327,8 +328,8 @@ type UpsertCommitmentParams struct {
 	UpdatedAt     time.Time
 }
 
-func (q *Queries) UpsertCommitment(ctx context.Context, arg UpsertCommitmentParams) error {
-	_, err := q.db.Exec(ctx, upsertCommitment,
+func (q *Queries) UpsertCommitment(ctx context.Context, arg UpsertCommitmentParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertCommitment,
 		arg.ID,
 		arg.ProductID,
 		arg.Kind,
@@ -346,7 +347,10 @@ func (q *Queries) UpsertCommitment(ctx context.Context, arg UpsertCommitmentPara
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertSettings = `-- name: UpsertSettings :exec

@@ -11,6 +11,7 @@ import (
 
 	"github.com/onixus/metis/internal/discovery"
 	"github.com/onixus/metis/internal/discovery/pgstore"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/kernel/migrate"
 	"github.com/onixus/metis/internal/kernel/pgdb"
@@ -52,30 +53,30 @@ func TestDS01_PGStoreHypotheses(t *testing.T) {
 	h2 := discovery.Hypothesis{ID: kernel.NewID(), ProductID: product, Title: "Другая", Status: discovery.HypothesisDraft, CreatedBy: "pm",
 		CreatedAt: now.Add(time.Second), UpdatedAt: now.Add(time.Second)}
 	for _, x := range []discovery.Hypothesis{h, h2} {
-		if err := store.SaveHypothesis(ctx, x); err != nil {
+		if err := store.SaveHypothesis(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), x); err != nil {
 			t.Fatal(err)
 		}
 	}
 	h.Status, h.Resolution = discovery.HypothesisConfirmed, "подтверждено"
-	if err := store.SaveHypothesis(ctx, h); err != nil {
+	if err := store.SaveHypothesis(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), h); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Hypothesis(ctx, h.ID); err != nil || !reflect.DeepEqual(got, h) {
+	if got, err := store.Hypothesis(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), h.ID); err != nil || !reflect.DeepEqual(got, h) {
 		t.Fatalf("Hypothesis:\n got %+v\nwant %+v\nerr=%v", got, h, err)
 	}
-	if got, err := store.Hypothesis(ctx, h2.ID); err != nil || !reflect.DeepEqual(got, h2) {
+	if got, err := store.Hypothesis(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), h2.ID); err != nil || !reflect.DeepEqual(got, h2) {
 		t.Fatalf("Hypothesis h2:\n got %+v\nwant %+v\nerr=%v", got, h2, err)
 	}
-	if list, err := store.Hypotheses(ctx, discovery.HypothesisFilter{ProductID: product}); err != nil || len(list) != 2 || list[0].ID != h.ID {
+	if list, err := store.Hypotheses(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), discovery.HypothesisFilter{ProductID: product}); err != nil || len(list) != 2 || list[0].ID != h.ID {
 		t.Fatalf("Hypotheses by product: %+v err=%v", list, err)
 	}
-	if list, err := store.Hypotheses(ctx, discovery.HypothesisFilter{FeatureID: feature, Statuses: []discovery.HypothesisStatus{discovery.HypothesisConfirmed}}); err != nil || len(list) != 1 {
+	if list, err := store.Hypotheses(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), discovery.HypothesisFilter{FeatureID: feature, Statuses: []discovery.HypothesisStatus{discovery.HypothesisConfirmed}}); err != nil || len(list) != 1 {
 		t.Fatalf("Hypotheses by feature/status: %+v err=%v", list, err)
 	}
-	if list, err := store.Hypotheses(ctx, discovery.HypothesisFilter{Statuses: []discovery.HypothesisStatus{discovery.HypothesisRejected}}); err != nil || len(list) != 0 {
+	if list, err := store.Hypotheses(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), discovery.HypothesisFilter{Statuses: []discovery.HypothesisStatus{discovery.HypothesisRejected}}); err != nil || len(list) != 0 {
 		t.Fatalf("Hypotheses rejected: %+v err=%v", list, err)
 	}
-	if _, err := store.Hypothesis(ctx, kernel.NewID()); !kernel.IsNotFound(err) {
+	if _, err := store.Hypothesis(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), kernel.NewID()); !kernel.IsNotFound(err) {
 		t.Fatalf("Hypothesis missing: %v", err)
 	}
 }
@@ -87,16 +88,16 @@ func TestDS02_PGStoreInterviewsAndInsights(t *testing.T) {
 	product, hyp, sig := kernel.NewID(), kernel.NewID(), kernel.NewID()
 	iv := discovery.Interview{ID: kernel.NewID(), ProductID: product, AccountID: "acc-1", Segment: "smb", Date: kernel.DateOf(2026, 9, 10),
 		Participants: []string{"CTO"}, Notes: "заметки", HypothesisIDs: []kernel.ID{hyp}, CreatedBy: "pm", CreatedAt: now, UpdatedAt: now}
-	if err := store.SaveInterview(ctx, iv); err != nil {
+	if err := store.SaveInterview(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), iv); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Interview(ctx, iv.ID); err != nil || !reflect.DeepEqual(got, iv) {
+	if got, err := store.Interview(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), iv.ID); err != nil || !reflect.DeepEqual(got, iv) {
 		t.Fatalf("Interview:\n got %+v\nwant %+v\nerr=%v", got, iv, err)
 	}
-	if list, err := store.Interviews(ctx, product); err != nil || len(list) != 1 {
+	if list, err := store.Interviews(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), product); err != nil || len(list) != 1 {
 		t.Fatalf("Interviews: %+v err=%v", list, err)
 	}
-	if list, err := store.Interviews(ctx, kernel.NilID); err != nil || len(list) != 1 {
+	if list, err := store.Interviews(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), kernel.NilID); err != nil || len(list) != 1 {
 		t.Fatalf("Interviews all: %+v err=%v", list, err)
 	}
 	in := discovery.Insight{ID: kernel.NewID(), ProductID: product, Text: "нужен SSO", InterviewID: iv.ID, HypothesisIDs: []kernel.ID{hyp},
@@ -104,24 +105,24 @@ func TestDS02_PGStoreInterviewsAndInsights(t *testing.T) {
 	in2 := discovery.Insight{ID: kernel.NewID(), ProductID: product, Text: "без привязок", Confidence: discovery.ConfidenceLow, CreatedBy: "pm",
 		CreatedAt: now.Add(time.Second), UpdatedAt: now.Add(time.Second)}
 	for _, x := range []discovery.Insight{in, in2} {
-		if err := store.SaveInsight(ctx, x); err != nil {
+		if err := store.SaveInsight(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), x); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if got, err := store.Insight(ctx, in.ID); err != nil || !reflect.DeepEqual(got, in) {
+	if got, err := store.Insight(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), in.ID); err != nil || !reflect.DeepEqual(got, in) {
 		t.Fatalf("Insight:\n got %+v\nwant %+v\nerr=%v", got, in, err)
 	}
-	if got, err := store.Insight(ctx, in2.ID); err != nil || !reflect.DeepEqual(got, in2) {
+	if got, err := store.Insight(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), in2.ID); err != nil || !reflect.DeepEqual(got, in2) {
 		t.Fatalf("Insight in2:\n got %+v\nwant %+v\nerr=%v", got, in2, err)
 	}
 	for name, f := range map[string]discovery.InsightFilter{
 		"hypothesis": {HypothesisID: hyp}, "signal": {SignalID: sig}, "interview": {InterviewID: iv.ID},
 	} {
-		if list, err := store.Insights(ctx, f); err != nil || len(list) != 1 || list[0].ID != in.ID {
+		if list, err := store.Insights(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), f); err != nil || len(list) != 1 || list[0].ID != in.ID {
 			t.Fatalf("Insights by %s: %+v err=%v", name, list, err)
 		}
 	}
-	if list, err := store.Insights(ctx, discovery.InsightFilter{ProductID: product}); err != nil || len(list) != 2 {
+	if list, err := store.Insights(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), discovery.InsightFilter{ProductID: product}); err != nil || len(list) != 2 {
 		t.Fatalf("Insights by product: %+v err=%v", list, err)
 	}
 }
@@ -134,25 +135,25 @@ func TestDS03_PGStoreEvidence(t *testing.T) {
 	e := discovery.Evidence{ID: kernel.NewID(), ProductID: product, Source: discovery.EvidenceSourceInterview, SourceRef: "https://kb/1",
 		Date: kernel.DateOf(2026, 9, 10), Trust: discovery.ConfidenceMedium, Verification: discovery.VerificationUnverified,
 		SHA256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", HypothesisID: hyp, InsightID: insight, FeatureID: feature, CreatedBy: "pm", CreatedAt: now, UpdatedAt: now}
-	if err := store.SaveEvidence(ctx, e); err != nil {
+	if err := store.SaveEvidence(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), e); err != nil {
 		t.Fatal(err)
 	}
 	e.Verification = discovery.VerificationVerified
-	if err := store.SaveEvidence(ctx, e); err != nil {
+	if err := store.SaveEvidence(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), e); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.Evidence(ctx, e.ID); err != nil || !reflect.DeepEqual(got, e) {
+	if got, err := store.Evidence(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), e.ID); err != nil || !reflect.DeepEqual(got, e) {
 		t.Fatalf("Evidence:\n got %+v\nwant %+v\nerr=%v", got, e, err)
 	}
 	for name, f := range map[string]discovery.EvidenceFilter{
 		"product": {ProductID: product}, "hypothesis": {HypothesisID: hyp}, "insight": {InsightID: insight}, "feature": {FeatureID: feature},
 		"verified": {Verification: discovery.VerificationVerified},
 	} {
-		if list, err := store.EvidenceList(ctx, f); err != nil || len(list) != 1 {
+		if list, err := store.EvidenceList(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), f); err != nil || len(list) != 1 {
 			t.Fatalf("EvidenceList by %s: %+v err=%v", name, list, err)
 		}
 	}
-	if list, err := store.EvidenceList(ctx, discovery.EvidenceFilter{Verification: discovery.VerificationRejected}); err != nil || len(list) != 0 {
+	if list, err := store.EvidenceList(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), discovery.EvidenceFilter{Verification: discovery.VerificationRejected}); err != nil || len(list) != 0 {
 		t.Fatalf("EvidenceList rejected: %+v err=%v", list, err)
 	}
 }
@@ -165,29 +166,29 @@ func TestAD03_PGStoreCustomDefs(t *testing.T) {
 	f2 := discovery.CustomFieldDef{ID: kernel.NewID(), Entity: discovery.EntityHypothesis, Key: "score", Label: "Балл", Type: discovery.FieldNumber}
 	f3 := discovery.CustomFieldDef{ID: kernel.NewID(), Entity: discovery.EntitySignal, Key: "region", Label: "Регион", Type: discovery.FieldString}
 	for _, d := range []discovery.CustomFieldDef{f1, f2, f3} {
-		if err := store.SaveFieldDef(ctx, d); err != nil {
+		if err := store.SaveFieldDef(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), d); err != nil {
 			t.Fatal(err)
 		}
 	}
 	f1.Label = "Сегмент клиента"
-	if err := store.SaveFieldDef(ctx, f1); err != nil {
+	if err := store.SaveFieldDef(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), f1); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.FieldDefs(ctx, discovery.EntityHypothesis); err != nil || !reflect.DeepEqual(got, []discovery.CustomFieldDef{f1, f2}) {
+	if got, err := store.FieldDefs(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), discovery.EntityHypothesis); err != nil || !reflect.DeepEqual(got, []discovery.CustomFieldDef{f1, f2}) {
 		t.Fatalf("FieldDefs:\n got %+v\nwant %+v\nerr=%v", got, []discovery.CustomFieldDef{f1, f2}, err)
 	}
 	s1 := discovery.CustomStatusDef{Entity: discovery.EntityHypothesis, Key: "parked", Label: "Отложена", Category: "draft"}
-	if err := store.SaveStatusDef(ctx, s1); err != nil {
+	if err := store.SaveStatusDef(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), s1); err != nil {
 		t.Fatal(err)
 	}
 	s1.Category = "rejected"
-	if err := store.SaveStatusDef(ctx, s1); err != nil {
+	if err := store.SaveStatusDef(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), s1); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := store.StatusDefs(ctx, discovery.EntityHypothesis); err != nil || !reflect.DeepEqual(got, []discovery.CustomStatusDef{s1}) {
+	if got, err := store.StatusDefs(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), discovery.EntityHypothesis); err != nil || !reflect.DeepEqual(got, []discovery.CustomStatusDef{s1}) {
 		t.Fatalf("StatusDefs: %+v err=%v", got, err)
 	}
-	if got, err := store.StatusDefs(ctx, discovery.EntityFeature); err != nil || len(got) != 0 {
+	if got, err := store.StatusDefs(ctx, authz.New(authz.Params{Subject: "store-test", Roles: []authz.Role{authz.RoleAdmin}, AllProducts: authz.AccessPrivate}), discovery.EntityFeature); err != nil || len(got) != 0 {
 		t.Fatalf("StatusDefs feature: %+v err=%v", got, err)
 	}
 }

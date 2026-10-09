@@ -7,6 +7,8 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/onixus/metis/internal/economics/modeling/formula"
+	"github.com/onixus/metis/internal/identityaccess"
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -16,6 +18,7 @@ const maxExplainDepth = 6
 // factSource — источник данных формул поверх хранилища. Сценарии (EC-13, DA-02) подменяют
 // значения через overrides, не изменяя факты.
 type factSource struct {
+	sc        authz.Scope
 	ctx       context.Context
 	svc       *Service
 	overrides []Override
@@ -23,8 +26,8 @@ type factSource struct {
 	memo      map[string]decimal.Decimal
 }
 
-func (s *Service) source(ctx context.Context, overrides []Override) *factSource {
-	return &factSource{ctx: ctx, svc: s, overrides: overrides,
+func (s *Service) source(ctx context.Context, sc authz.Scope, overrides []Override) *factSource {
+	return &factSource{ctx: ctx, sc: identityaccess.ModelCalculationScope(sc), svc: s, overrides: overrides,
 		visiting: map[string]bool{}, memo: map[string]decimal.Decimal{}}
 }
 
@@ -39,7 +42,7 @@ func (f *factSource) Values(key string, flt formula.Filter) ([]decimal.Decimal, 
 	if ov, ok := f.override(key, filter); ok {
 		return []decimal.Decimal{ov}, nil
 	}
-	rows, err := f.svc.store.Facts(f.ctx, filter)
+	rows, err := f.svc.store.Facts(f.ctx, f.sc, filter)
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
 	}
@@ -56,7 +59,7 @@ func (f *factSource) rows(key string, flt formula.Filter) ([]FactRow, error) {
 	if err != nil {
 		return nil, err
 	}
-	rows, err := f.svc.store.Facts(f.ctx, filter)
+	rows, err := f.svc.store.Facts(f.ctx, f.sc, filter)
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
 	}
@@ -166,7 +169,7 @@ func (f *factSource) Metric(key string, sl formula.Slice) (decimal.Decimal, erro
 
 // version выбирает версию формулы, действующую на период среза (EC-11).
 func (f *factSource) version(key string, sl formula.Slice) (MetricVersion, error) {
-	m, err := f.svc.store.Metric(f.ctx, key)
+	m, err := f.svc.store.Metric(f.ctx, f.sc, key)
 	if err != nil {
 		return MetricVersion{}, err
 	}

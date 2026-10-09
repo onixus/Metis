@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -29,7 +30,7 @@ func (p *Publisher) Publish(ctx context.Context, events ...kernel.Event) error {
 			return kernel.Invalid("event", "id и type обязательны")
 		}
 	}
-	if err := p.store.Enqueue(ctx, p.clock.Now(), events...); err != nil {
+	if err := p.store.Enqueue(ctx, identityaccess.ServiceScope("outbox"), p.clock.Now(), events...); err != nil {
 		return fmt.Errorf("outbox publish: %w", err)
 	}
 	return nil

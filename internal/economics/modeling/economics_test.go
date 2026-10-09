@@ -664,7 +664,7 @@ func TestEC10_AffectedMetricsRecalculated(t *testing.T) {
 			t.Fatalf("%s: %v", m.Key, err)
 		}
 	}
-	affected, err := f.svc.Affected(f.ctx, formula.Ref{Kind: formula.RefField, Key: "payroll"})
+	affected, err := f.svc.Affected(f.ctx, f.fin, formula.Ref{Kind: formula.RefField, Key: "payroll"})
 	if err != nil {
 		t.Fatalf("затронутые: %v", err)
 	}

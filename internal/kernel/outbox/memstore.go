@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -22,7 +23,10 @@ func NewMemStore() *MemStore {
 }
 
 // Enqueue добавляет события.
-func (m *MemStore) Enqueue(_ context.Context, now time.Time, events ...kernel.Event) error {
+func (m *MemStore) Enqueue(_ context.Context, sc authz.Scope, now time.Time, events ...kernel.Event) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for _, ev := range events {
@@ -35,7 +39,10 @@ func (m *MemStore) Enqueue(_ context.Context, now time.Time, events ...kernel.Ev
 }
 
 // Process обрабатывает готовые сообщения.
-func (m *MemStore) Process(ctx context.Context, now time.Time, limit int, fn func(ctx context.Context, m Message) Outcome) (int, error) {
+func (m *MemStore) Process(ctx context.Context, sc authz.Scope, now time.Time, limit int, fn func(ctx context.Context, m Message) Outcome) (int, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return 0, err
+	}
 	m.mu.Lock()
 	ready := make([]Message, 0, limit)
 	for _, msg := range m.msgs {
@@ -75,14 +82,20 @@ func (m *MemStore) Process(ctx context.Context, now time.Time, limit int, fn fun
 }
 
 // DLQCount — число сообщений в DLQ.
-func (m *MemStore) DLQCount(context.Context) (int64, error) {
+func (m *MemStore) DLQCount(_ context.Context, sc authz.Scope) (int64, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return 0, err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return int64(len(m.dead)), nil
 }
 
 // DLQList — сообщения DLQ, новые первыми.
-func (m *MemStore) DLQList(_ context.Context, limit int) ([]DeadMessage, error) {
+func (m *MemStore) DLQList(_ context.Context, sc authz.Scope, limit int) ([]DeadMessage, error) {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return nil, err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	out := make([]DeadMessage, 0, len(m.dead))
@@ -97,7 +110,10 @@ func (m *MemStore) DLQList(_ context.Context, limit int) ([]DeadMessage, error) 
 }
 
 // Requeue возвращает сообщение в очередь.
-func (m *MemStore) Requeue(_ context.Context, id kernel.ID, now time.Time) error {
+func (m *MemStore) Requeue(_ context.Context, sc authz.Scope, id kernel.ID, now time.Time) error {
+	if err := authz.RequireInfrastructure(sc); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	d, ok := m.dead[id]

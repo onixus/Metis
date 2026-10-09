@@ -51,14 +51,14 @@ func worklogApp(t *testing.T) (*App, *financeTracker, economics.Snapshot, kernel
 	for i, f := range []portfoliograph.Feature{f1, f2} {
 		key := []string{"SRC-1", "DST-1"}[i]
 		issue := []string{"SRC-2", "DST-2"}[i]
-		if err := store.SaveMapping(ctx, delivery.Mapping{FeatureID: f.ID, ProductID: f.ProductID, EpicKey: key}); err != nil {
+		if err := store.SaveMapping(ctx, sc, delivery.Mapping{FeatureID: f.ID, ProductID: f.ProductID, EpicKey: key}); err != nil {
 			t.Fatal(err)
 		}
-		if err := store.SaveEpic(ctx, delivery.EpicProjection{FeatureID: f.ID, ProductID: f.ProductID, EpicKey: key, SyncedAt: now, Issues: []delivery.IssueSnapshot{{Key: issue}}}); err != nil {
+		if err := store.SaveEpic(ctx, sc, delivery.EpicProjection{FeatureID: f.ID, ProductID: f.ProductID, EpicKey: key, SyncedAt: now, Issues: []delivery.IssueSnapshot{{Key: issue}}}); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if err := store.SaveSyncState(ctx, delivery.SyncState{LastSuccessAt: now}); err != nil {
+	if err := store.SaveSyncState(ctx, sc, delivery.SyncState{LastSuccessAt: now}); err != nil {
 		t.Fatal(err)
 	}
 	start := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)

@@ -158,9 +158,10 @@ func (q *Queries) ListModels(ctx context.Context) ([]PrioritizationModel, error)
 	return items, nil
 }
 
-const upsertDevCost = `-- name: UpsertDevCost :exec
+const upsertDevCost = `-- name: UpsertDevCost :execrows
 INSERT INTO prioritization.dev_costs (feature_id, product_id, amount, currency) VALUES ($1, $2, $3, $4)
 ON CONFLICT (feature_id) DO UPDATE SET product_id = EXCLUDED.product_id, amount = EXCLUDED.amount, currency = EXCLUDED.currency
+WHERE prioritization.dev_costs.product_id IS NOT DISTINCT FROM EXCLUDED.product_id
 `
 
 type UpsertDevCostParams struct {
@@ -170,21 +171,25 @@ type UpsertDevCostParams struct {
 	Currency  string
 }
 
-func (q *Queries) UpsertDevCost(ctx context.Context, arg UpsertDevCostParams) error {
-	_, err := q.db.Exec(ctx, upsertDevCost,
+func (q *Queries) UpsertDevCost(ctx context.Context, arg UpsertDevCostParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertDevCost,
 		arg.FeatureID,
 		arg.ProductID,
 		arg.Amount,
 		arg.Currency,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertFlags = `-- name: UpsertFlags :exec
+const upsertFlags = `-- name: UpsertFlags :execrows
 INSERT INTO prioritization.feature_flags (feature_id, product_id, regulatory_mandatory, reason, set_by, set_at)
 VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (feature_id) DO UPDATE SET product_id = EXCLUDED.product_id, regulatory_mandatory = EXCLUDED.regulatory_mandatory,
   reason = EXCLUDED.reason, set_by = EXCLUDED.set_by, set_at = EXCLUDED.set_at
+WHERE prioritization.feature_flags.product_id IS NOT DISTINCT FROM EXCLUDED.product_id
 `
 
 type UpsertFlagsParams struct {
@@ -196,8 +201,8 @@ type UpsertFlagsParams struct {
 	SetAt               time.Time
 }
 
-func (q *Queries) UpsertFlags(ctx context.Context, arg UpsertFlagsParams) error {
-	_, err := q.db.Exec(ctx, upsertFlags,
+func (q *Queries) UpsertFlags(ctx context.Context, arg UpsertFlagsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertFlags,
 		arg.FeatureID,
 		arg.ProductID,
 		arg.RegulatoryMandatory,
@@ -205,14 +210,18 @@ func (q *Queries) UpsertFlags(ctx context.Context, arg UpsertFlagsParams) error 
 		arg.SetBy,
 		arg.SetAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertInputs = `-- name: UpsertInputs :exec
+const upsertInputs = `-- name: UpsertInputs :execrows
 INSERT INTO prioritization.feature_inputs (model_id, feature_id, product_id, values, updated_at, updated_by)
 VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (model_id, feature_id) DO UPDATE SET product_id = EXCLUDED.product_id, values = EXCLUDED.values,
   updated_at = EXCLUDED.updated_at, updated_by = EXCLUDED.updated_by
+WHERE prioritization.feature_inputs.product_id IS NOT DISTINCT FROM EXCLUDED.product_id
 `
 
 type UpsertInputsParams struct {
@@ -224,8 +233,8 @@ type UpsertInputsParams struct {
 	UpdatedBy string
 }
 
-func (q *Queries) UpsertInputs(ctx context.Context, arg UpsertInputsParams) error {
-	_, err := q.db.Exec(ctx, upsertInputs,
+func (q *Queries) UpsertInputs(ctx context.Context, arg UpsertInputsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertInputs,
 		arg.ModelID,
 		arg.FeatureID,
 		arg.ProductID,
@@ -233,14 +242,18 @@ func (q *Queries) UpsertInputs(ctx context.Context, arg UpsertInputsParams) erro
 		arg.UpdatedAt,
 		arg.UpdatedBy,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const upsertModel = `-- name: UpsertModel :exec
+const upsertModel = `-- name: UpsertModel :execrows
 INSERT INTO prioritization.models (id, product_id, name, type, formula, inputs, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 ON CONFLICT (id) DO UPDATE SET product_id = EXCLUDED.product_id, name = EXCLUDED.name, type = EXCLUDED.type,
   formula = EXCLUDED.formula, inputs = EXCLUDED.inputs, updated_at = EXCLUDED.updated_at
+WHERE prioritization.models.product_id IS NOT DISTINCT FROM EXCLUDED.product_id
 `
 
 type UpsertModelParams struct {
@@ -254,8 +267,8 @@ type UpsertModelParams struct {
 	UpdatedAt time.Time
 }
 
-func (q *Queries) UpsertModel(ctx context.Context, arg UpsertModelParams) error {
-	_, err := q.db.Exec(ctx, upsertModel,
+func (q *Queries) UpsertModel(ctx context.Context, arg UpsertModelParams) (int64, error) {
+	result, err := q.db.Exec(ctx, upsertModel,
 		arg.ID,
 		arg.ProductID,
 		arg.Name,
@@ -265,5 +278,8 @@ func (q *Queries) UpsertModel(ctx context.Context, arg UpsertModelParams) error 
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

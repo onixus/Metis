@@ -79,7 +79,7 @@ func validateDates(start, end kernel.Date) error {
 	return nil
 }
 
-func (s *Service) validateItem(ctx context.Context, productID kernel.ID, in ItemInput) error {
+func (s *Service) validateItem(ctx context.Context, sc authz.Scope, productID kernel.ID, in ItemInput) error {
 	if strings.TrimSpace(in.Title) == "" {
 		return kernel.Invalid("title", "название обязательно")
 	}
@@ -105,7 +105,7 @@ func (s *Service) validateItem(ctx context.Context, productID kernel.ID, in Item
 		return kernel.Invalid("launch_date", "для уровня запуска нужна дата запуска")
 	}
 	if in.ReleaseID != kernel.NilID {
-		r, err := s.store.Release(ctx, in.ReleaseID)
+		r, err := s.store.Release(ctx, sc, in.ReleaseID)
 		if err != nil {
 			return fmt.Errorf("release: %w", err)
 		}
@@ -134,7 +134,7 @@ func (s *Service) CreateItem(ctx context.Context, sc authz.Scope, productID kern
 	if in.Kind == "" {
 		in.Kind = KindFeature
 	}
-	if err := s.validateItem(ctx, productID, in); err != nil {
+	if err := s.validateItem(ctx, sc, productID, in); err != nil {
 		return RoadmapItem{}, err
 	}
 	now := s.clock.Now()
@@ -143,7 +143,7 @@ func (s *Service) CreateItem(ctx context.Context, sc authz.Scope, productID kern
 		StartDate: in.StartDate, EndDate: in.EndDate, ReleaseID: in.ReleaseID, Audience: in.Audience, Status: in.Status,
 		Kind: in.Kind, LaunchTier: in.LaunchTier, LaunchDate: in.LaunchDate, CreatedAt: now, UpdatedAt: now,
 	}
-	if err := s.store.SaveItem(ctx, it); err != nil {
+	if err := s.store.SaveItem(ctx, sc, it); err != nil {
 		return RoadmapItem{}, fmt.Errorf("save item: %w", err)
 	}
 	if err := s.emit(ctx, EventItemSaved, it.ID, it.ProductID, sc.Subject(), it); err != nil {
@@ -157,7 +157,7 @@ func (s *Service) UpdateItem(ctx context.Context, sc authz.Scope, id kernel.ID, 
 	if !sc.Valid() {
 		return RoadmapItem{}, kernel.ErrForbidden
 	}
-	it, err := s.store.Item(ctx, id)
+	it, err := s.store.Item(ctx, sc, id)
 	if err != nil {
 		return RoadmapItem{}, err
 	}
@@ -170,14 +170,14 @@ func (s *Service) UpdateItem(ctx context.Context, sc authz.Scope, id kernel.ID, 
 	if in.Kind == "" {
 		in.Kind = it.Kind
 	}
-	if err := s.validateItem(ctx, it.ProductID, in); err != nil {
+	if err := s.validateItem(ctx, sc, it.ProductID, in); err != nil {
 		return RoadmapItem{}, err
 	}
 	it.FeatureID, it.Title, it.Bucket, it.ReleaseID, it.Audience, it.Status, it.Kind =
 		in.FeatureID, in.Title, in.Bucket, in.ReleaseID, in.Audience, in.Status, in.Kind
 	it.LaunchTier, it.LaunchDate = in.LaunchTier, in.LaunchDate
 	it.UpdatedAt = s.clock.Now()
-	if err := s.store.SaveItem(ctx, it); err != nil {
+	if err := s.store.SaveItem(ctx, sc, it); err != nil {
 		return RoadmapItem{}, fmt.Errorf("save item: %w", err)
 	}
 	if err := s.emit(ctx, EventItemSaved, it.ID, it.ProductID, sc.Subject(), it); err != nil {
@@ -191,7 +191,7 @@ func (s *Service) visibleItems(ctx context.Context, sc authz.Scope, productID ke
 	if err := sc.Require(authz.ActionReadStrategic, productID); err != nil {
 		return nil, err
 	}
-	all, err := s.store.Items(ctx, productID)
+	all, err := s.store.Items(ctx, sc, productID)
 	if err != nil {
 		return nil, fmt.Errorf("items: %w", err)
 	}
@@ -335,7 +335,7 @@ func (s *Service) changeDates(ctx context.Context, sc authz.Scope, itemID kernel
 	if err := validateDates(newStart, newEnd); err != nil {
 		return RoadmapItem{}, err
 	}
-	it, err := s.store.Item(ctx, itemID)
+	it, err := s.store.Item(ctx, sc, itemID)
 	if err != nil {
 		return RoadmapItem{}, err
 	}
@@ -348,10 +348,10 @@ func (s *Service) changeDates(ctx context.Context, sc authz.Scope, itemID kernel
 		Reason: reason, Actor: sc.Subject(), At: s.clock.Now(), EventID: eventID,
 	}
 	it.StartDate, it.EndDate, it.UpdatedAt = newStart, newEnd, ch.At
-	if err := s.store.AppendDateChange(ctx, ch); err != nil {
+	if err := s.store.AppendDateChange(ctx, sc, ch); err != nil {
 		return RoadmapItem{}, fmt.Errorf("append date change: %w", err)
 	}
-	if err := s.store.SaveItem(ctx, it); err != nil {
+	if err := s.store.SaveItem(ctx, sc, it); err != nil {
 		return RoadmapItem{}, fmt.Errorf("save item: %w", err)
 	}
 	if err := s.emit(ctx, EventDatesChanged, it.ID, it.ProductID, sc.Subject(), ch); err != nil {
@@ -366,7 +366,7 @@ func (s *Service) DateHistory(ctx context.Context, sc authz.Scope, itemID kernel
 	if !sc.Valid() {
 		return nil, kernel.ErrForbidden
 	}
-	it, err := s.store.Item(ctx, itemID)
+	it, err := s.store.Item(ctx, sc, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func (s *Service) DateHistory(ctx context.Context, sc authz.Scope, itemID kernel
 	if sc.Audience() != authz.AudienceInternal {
 		return nil, fmt.Errorf("%w: история дат доступна только внутренней аудитории", kernel.ErrForbidden)
 	}
-	hist, err := s.store.DateHistory(ctx, itemID)
+	hist, err := s.store.DateHistory(ctx, sc, itemID)
 	if err != nil {
 		return nil, fmt.Errorf("date history: %w", err)
 	}
@@ -419,14 +419,14 @@ func validateReleaseInput(in ReleaseInput) error {
 }
 
 // validateBase проверяет базовый релиз ветки: существует, того же продукта, не сам релиз.
-func (s *Service) validateBase(ctx context.Context, productID, selfID, baseID kernel.ID) error {
+func (s *Service) validateBase(ctx context.Context, sc authz.Scope, productID, selfID, baseID kernel.ID) error {
 	if baseID == kernel.NilID {
 		return nil
 	}
 	if baseID == selfID {
 		return kernel.Invalid("base_release_id", "релиз не может быть базой самого себя")
 	}
-	base, err := s.store.Release(ctx, baseID)
+	base, err := s.store.Release(ctx, sc, baseID)
 	if err != nil {
 		return fmt.Errorf("base release: %w", err)
 	}
@@ -437,8 +437,8 @@ func (s *Service) validateBase(ctx context.Context, productID, selfID, baseID ke
 }
 
 // versionTaken проверяет уникальность версии среди релизов продукта (кроме exclude).
-func (s *Service) versionTaken(ctx context.Context, productID kernel.ID, version string, exclude kernel.ID) error {
-	existing, err := s.store.Releases(ctx, productID)
+func (s *Service) versionTaken(ctx context.Context, sc authz.Scope, productID kernel.ID, version string, exclude kernel.ID) error {
+	existing, err := s.store.Releases(ctx, sc, productID)
 	if err != nil {
 		return fmt.Errorf("releases: %w", err)
 	}
@@ -464,10 +464,10 @@ func (s *Service) CreateRelease(ctx context.Context, sc authz.Scope, productID k
 	if err := validateReleaseInput(in); err != nil {
 		return Release{}, err
 	}
-	if err := s.validateBase(ctx, productID, kernel.NilID, in.BaseReleaseID); err != nil {
+	if err := s.validateBase(ctx, sc, productID, kernel.NilID, in.BaseReleaseID); err != nil {
 		return Release{}, err
 	}
-	if err := s.versionTaken(ctx, productID, in.Version, kernel.NilID); err != nil {
+	if err := s.versionTaken(ctx, sc, productID, in.Version, kernel.NilID); err != nil {
 		return Release{}, err
 	}
 	now := s.clock.Now()
@@ -517,15 +517,15 @@ func (s *Service) UpdateRelease(ctx context.Context, sc authz.Scope, id kernel.I
 		return Release{}, fmt.Errorf("%w: ветка релиза %s не меняется после выпуска (статус %s)", kernel.ErrConflict, r.Version, r.Status)
 	}
 	if in.Branch == BranchCertified && r.Branch != BranchCertified {
-		if err := s.certifiedAllowed(ctx, r); err != nil {
+		if err := s.certifiedAllowed(ctx, sc, r); err != nil {
 			return Release{}, err
 		}
 	}
-	if err := s.validateBase(ctx, r.ProductID, r.ID, in.BaseReleaseID); err != nil {
+	if err := s.validateBase(ctx, sc, r.ProductID, r.ID, in.BaseReleaseID); err != nil {
 		return Release{}, err
 	}
 	if in.Version != r.Version {
-		if err := s.versionTaken(ctx, r.ProductID, in.Version, r.ID); err != nil {
+		if err := s.versionTaken(ctx, sc, r.ProductID, in.Version, r.ID); err != nil {
 			return Release{}, err
 		}
 	}
@@ -539,8 +539,8 @@ func (s *Service) UpdateRelease(ctx context.Context, sc authz.Scope, id kernel.I
 }
 
 // certifiedAllowed проверяет, что в релизе нет элементов вида feature — иначе перевод в сертифицированную ветку невозможен.
-func (s *Service) certifiedAllowed(ctx context.Context, r Release) error {
-	items, err := s.store.Items(ctx, r.ProductID)
+func (s *Service) certifiedAllowed(ctx context.Context, sc authz.Scope, r Release) error {
+	items, err := s.store.Items(ctx, sc, r.ProductID)
 	if err != nil {
 		return fmt.Errorf("items: %w", err)
 	}
@@ -558,7 +558,7 @@ func (s *Service) writableRelease(ctx context.Context, sc authz.Scope, id kernel
 	if !sc.Valid() {
 		return Release{}, kernel.ErrForbidden
 	}
-	r, err := s.store.Release(ctx, id)
+	r, err := s.store.Release(ctx, sc, id)
 	if err != nil {
 		return Release{}, err
 	}
@@ -569,7 +569,7 @@ func (s *Service) writableRelease(ctx context.Context, sc authz.Scope, id kernel
 }
 
 func (s *Service) saveRelease(ctx context.Context, sc authz.Scope, r Release) error {
-	if err := s.store.SaveRelease(ctx, r); err != nil {
+	if err := s.store.SaveRelease(ctx, sc, r); err != nil {
 		return fmt.Errorf("save release: %w", err)
 	}
 	return s.emit(ctx, EventReleaseSaved, r.ID, r.ProductID, sc.Subject(), r)
@@ -669,7 +669,7 @@ func (s *Service) Release(ctx context.Context, sc authz.Scope, releaseID kernel.
 	if !sc.Valid() {
 		return Release{}, kernel.ErrForbidden
 	}
-	r, err := s.store.Release(ctx, releaseID)
+	r, err := s.store.Release(ctx, sc, releaseID)
 	if err != nil {
 		return Release{}, err
 	}
@@ -691,7 +691,7 @@ func (s *Service) ReleaseProduct(ctx context.Context, sc authz.Scope, releaseID 
 	if !sc.Valid() {
 		return kernel.NilID, kernel.ErrForbidden
 	}
-	r, err := s.store.Release(ctx, releaseID)
+	r, err := s.store.Release(ctx, sc, releaseID)
 	if err != nil {
 		return kernel.NilID, err
 	}
@@ -752,7 +752,7 @@ func (s *Service) compatibility(ctx context.Context, sc authz.Scope, r Release) 
 
 // releasesFor возвращает релизы продукта с матрицами, отсортированные по дате, в проекции аудитории Scope.
 func (s *Service) releasesFor(ctx context.Context, sc authz.Scope, productID kernel.ID) ([]Release, error) {
-	rels, err := s.store.Releases(ctx, productID)
+	rels, err := s.store.Releases(ctx, sc, productID)
 	if err != nil {
 		return nil, fmt.Errorf("releases: %w", err)
 	}
@@ -809,7 +809,7 @@ func (s *Service) EnsureRenewalItem(ctx context.Context, sc authz.Scope, product
 	if commitmentID == kernel.NilID {
 		return kernel.NilID, kernel.Invalid("commitment_id", "идентификатор обязательства обязателен")
 	}
-	existing, err := s.store.ItemByCommitment(ctx, commitmentID)
+	existing, err := s.store.ItemByCommitment(ctx, sc, commitmentID)
 	switch {
 	case err == nil:
 		if existing.ProductID != productID {
@@ -821,13 +821,13 @@ func (s *Service) EnsureRenewalItem(ctx context.Context, sc authz.Scope, product
 	}
 	in := ItemInput{Title: title, Bucket: bucketFor(kernel.DateFromTime(s.clock.Now()), end), StartDate: start, EndDate: end,
 		Audience: authz.AudienceInternal, Status: ItemPlanned, Kind: KindFeature}
-	if err := s.validateItem(ctx, productID, in); err != nil {
+	if err := s.validateItem(ctx, sc, productID, in); err != nil {
 		return kernel.NilID, err
 	}
 	now := s.clock.Now()
 	it := RoadmapItem{ID: kernel.NewID(), ProductID: productID, Title: in.Title, Bucket: in.Bucket, StartDate: start, EndDate: end,
 		Audience: in.Audience, Status: in.Status, Kind: in.Kind, CommitmentID: commitmentID, CreatedAt: now, UpdatedAt: now}
-	if err := s.store.SaveItem(ctx, it); err != nil {
+	if err := s.store.SaveItem(ctx, sc, it); err != nil {
 		return kernel.NilID, fmt.Errorf("save item: %w", err)
 	}
 	if err := s.emit(ctx, EventItemSaved, it.ID, it.ProductID, sc.Subject(), it); err != nil {
@@ -843,7 +843,7 @@ func (s *Service) ItemLinks(ctx context.Context, sc authz.Scope, itemID kernel.I
 	if !sc.Valid() {
 		return kernel.NilID, kernel.NilID, kernel.ErrForbidden
 	}
-	it, err := s.store.Item(ctx, itemID)
+	it, err := s.store.Item(ctx, sc, itemID)
 	if err != nil {
 		return kernel.NilID, kernel.NilID, err
 	}

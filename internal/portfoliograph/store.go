@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 )
 
@@ -21,18 +22,18 @@ type Snapshot struct {
 // Store — хранилище графа. Реализации: память (тесты, стенд), PostgreSQL (internal/pg).
 // Все методы принимают контекст; авторизация выполняется в Service до вызова хранилища.
 type Store interface {
-	Load(ctx context.Context) (Snapshot, error)
-	SaveProduct(ctx context.Context, p Product) error
+	Load(ctx context.Context, sc authz.Scope) (Snapshot, error)
+	SaveProduct(ctx context.Context, sc authz.Scope, p Product) error
 	// DeleteProduct удаляет продукт вместе с его возможностями, фичами, требованиями и связями.
-	DeleteProduct(ctx context.Context, id kernel.ID) error
-	SaveCapability(ctx context.Context, c Capability) error
-	SaveFeature(ctx context.Context, f Feature) error
-	SaveRequirement(ctx context.Context, r Requirement) error
-	SaveLink(ctx context.Context, l Link) error
-	DeleteLink(ctx context.Context, id kernel.ID) error
-	SaveContract(ctx context.Context, c IntegrationContract) error
-	SaveSettings(ctx context.Context, s Settings) error
-	SaveRollup(ctx context.Context, values []FeatureValue) error
+	DeleteProduct(ctx context.Context, sc authz.Scope, id kernel.ID) error
+	SaveCapability(ctx context.Context, sc authz.Scope, c Capability) error
+	SaveFeature(ctx context.Context, sc authz.Scope, f Feature) error
+	SaveRequirement(ctx context.Context, sc authz.Scope, r Requirement) error
+	SaveLink(ctx context.Context, sc authz.Scope, l Link) error
+	DeleteLink(ctx context.Context, sc authz.Scope, id kernel.ID) error
+	SaveContract(ctx context.Context, sc authz.Scope, c IntegrationContract) error
+	SaveSettings(ctx context.Context, sc authz.Scope, s Settings) error
+	SaveRollup(ctx context.Context, sc authz.Scope, values []FeatureValue) error
 }
 
 // MemStore — хранилище в памяти.
@@ -46,7 +47,10 @@ type MemStore struct {
 func NewMemStore() *MemStore { return &MemStore{snap: Snapshot{Settings: DefaultSettings()}} }
 
 // Load возвращает копию снимка.
-func (m *MemStore) Load(context.Context) (Snapshot, error) {
+func (m *MemStore) Load(_ context.Context, sc authz.Scope) (Snapshot, error) {
+	if err := RequireSnapshot(sc); err != nil {
+		return Snapshot{}, err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	s := m.snap
@@ -56,7 +60,7 @@ func (m *MemStore) Load(context.Context) (Snapshot, error) {
 	s.Requirements = append([]Requirement(nil), s.Requirements...)
 	s.Links = append([]Link(nil), s.Links...)
 	s.Contracts = append([]IntegrationContract(nil), s.Contracts...)
-	return s, nil
+	return kernel.CloneValue(s), nil
 }
 
 func upsert[T any](s []T, v T, same func(a, b T) bool) []T {
@@ -70,7 +74,11 @@ func upsert[T any](s []T, v T, same func(a, b T) bool) []T {
 }
 
 // SaveProduct сохраняет продукт.
-func (m *MemStore) SaveProduct(_ context.Context, p Product) error {
+func (m *MemStore) SaveProduct(_ context.Context, sc authz.Scope, p Product) error {
+	p = kernel.CloneValue(p)
+	if err := RequireProductWrite(sc, p.ID); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.snap.Products = upsert(m.snap.Products, p, func(a, b Product) bool { return a.ID == b.ID })
@@ -78,7 +86,10 @@ func (m *MemStore) SaveProduct(_ context.Context, p Product) error {
 }
 
 // DeleteProduct удаляет продукт и всё, что ему принадлежит.
-func (m *MemStore) DeleteProduct(_ context.Context, id kernel.ID) error {
+func (m *MemStore) DeleteProduct(_ context.Context, sc authz.Scope, id kernel.ID) error {
+	if err := RequireProductWrite(sc, id); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	found := false
@@ -105,43 +116,85 @@ func filter[T any](s []T, keep func(T) bool) []T {
 }
 
 // SaveCapability сохраняет возможность.
-func (m *MemStore) SaveCapability(_ context.Context, c Capability) error {
+func (m *MemStore) SaveCapability(_ context.Context, sc authz.Scope, c Capability) error {
+	c = kernel.CloneValue(c)
+	if err := RequireProductWrite(sc, c.ProductID); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	for _, old := range m.snap.Capabilities {
+		if old.ID == c.ID && (old.ProductID != c.ProductID) {
+			return kernel.ErrForbidden
+		}
+	}
 	m.snap.Capabilities = upsert(m.snap.Capabilities, c, func(a, b Capability) bool { return a.ID == b.ID })
 	return nil
 }
 
 // SaveFeature сохраняет фичу.
-func (m *MemStore) SaveFeature(_ context.Context, f Feature) error {
+func (m *MemStore) SaveFeature(_ context.Context, sc authz.Scope, f Feature) error {
+	f = kernel.CloneValue(f)
+	if err := RequireProductWrite(sc, f.ProductID); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	for _, old := range m.snap.Features {
+		if old.ID == f.ID && (old.ProductID != f.ProductID) {
+			return kernel.ErrForbidden
+		}
+	}
 	m.snap.Features = upsert(m.snap.Features, f, func(a, b Feature) bool { return a.ID == b.ID })
 	return nil
 }
 
 // SaveRequirement сохраняет требование.
-func (m *MemStore) SaveRequirement(_ context.Context, r Requirement) error {
+func (m *MemStore) SaveRequirement(_ context.Context, sc authz.Scope, r Requirement) error {
+	r = kernel.CloneValue(r)
+	if err := RequireProductWrite(sc, r.ProductID); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	for _, old := range m.snap.Requirements {
+		if old.ID == r.ID && (old.ProductID != r.ProductID) {
+			return kernel.ErrForbidden
+		}
+	}
 	m.snap.Requirements = upsert(m.snap.Requirements, r, func(a, b Requirement) bool { return a.ID == b.ID })
 	return nil
 }
 
 // SaveLink сохраняет связь.
-func (m *MemStore) SaveLink(_ context.Context, l Link) error {
+func (m *MemStore) SaveLink(_ context.Context, sc authz.Scope, l Link) error {
+	l = kernel.CloneValue(l)
+	if err := RequireLinkWrite(sc, l.FromProductID, l.ToProductID); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	for _, old := range m.snap.Links {
+		if old.ID == l.ID && (old.FromProductID != l.FromProductID || old.ToProductID != l.ToProductID) {
+			return kernel.ErrForbidden
+		}
+	}
 	m.snap.Links = upsert(m.snap.Links, l, func(a, b Link) bool { return a.ID == b.ID })
 	return nil
 }
 
 // DeleteLink удаляет связь.
-func (m *MemStore) DeleteLink(_ context.Context, id kernel.ID) error {
+func (m *MemStore) DeleteLink(_ context.Context, sc authz.Scope, id kernel.ID) error {
+	if !sc.Valid() {
+		return kernel.ErrForbidden
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i, l := range m.snap.Links {
 		if l.ID == id {
+			if err := RequireLinkWrite(sc, l.FromProductID, l.ToProductID); err != nil {
+				return err
+			}
 			m.snap.Links = append(m.snap.Links[:i:i], m.snap.Links[i+1:]...)
 			return nil
 		}
@@ -150,15 +203,28 @@ func (m *MemStore) DeleteLink(_ context.Context, id kernel.ID) error {
 }
 
 // SaveContract сохраняет контракт.
-func (m *MemStore) SaveContract(_ context.Context, c IntegrationContract) error {
+func (m *MemStore) SaveContract(_ context.Context, sc authz.Scope, c IntegrationContract) error {
+	c = kernel.CloneValue(c)
+	if err := RequireLinkWrite(sc, c.ProviderProductID, c.ConsumerProductID); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	for _, old := range m.snap.Contracts {
+		if old.ID == c.ID && (old.ProviderProductID != c.ProviderProductID || old.ConsumerProductID != c.ConsumerProductID) {
+			return kernel.ErrForbidden
+		}
+	}
 	m.snap.Contracts = upsert(m.snap.Contracts, c, func(a, b IntegrationContract) bool { return a.ID == b.ID })
 	return nil
 }
 
 // SaveSettings сохраняет настройки.
-func (m *MemStore) SaveSettings(_ context.Context, s Settings) error {
+func (m *MemStore) SaveSettings(_ context.Context, sc authz.Scope, s Settings) error {
+	s = kernel.CloneValue(s)
+	if err := sc.Require(authz.ActionAdminSettings, kernel.NilID); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.snap.Settings = s
@@ -166,7 +232,11 @@ func (m *MemStore) SaveSettings(_ context.Context, s Settings) error {
 }
 
 // SaveRollup сохраняет результат rollup.
-func (m *MemStore) SaveRollup(_ context.Context, values []FeatureValue) error {
+func (m *MemStore) SaveRollup(_ context.Context, sc authz.Scope, values []FeatureValue) error {
+	values = kernel.CloneValue(values)
+	if err := RequireSnapshot(sc); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.roll = append([]FeatureValue(nil), values...)
@@ -174,8 +244,11 @@ func (m *MemStore) SaveRollup(_ context.Context, values []FeatureValue) error {
 }
 
 // Rollup возвращает последний сохранённый rollup (для тестов).
-func (m *MemStore) Rollup() []FeatureValue {
+func (m *MemStore) Rollup(_ context.Context, sc authz.Scope) ([]FeatureValue, error) {
+	if err := RequireSnapshot(sc); err != nil {
+		return nil, err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return append([]FeatureValue(nil), m.roll...)
+	return kernel.CloneValue(append([]FeatureValue(nil), m.roll...)), nil
 }

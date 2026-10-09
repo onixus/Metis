@@ -670,7 +670,7 @@ func TestCM03_PassGateRejectsWhenEvidenceRejected(t *testing.T) {
 		t.Fatalf("reject: %v", err)
 	}
 	// Рассогласование в обход сервиса: отметка возвращена, доказательство отклонено.
-	stored, err := f.store.Track(f.ctx, tr.ID)
+	stored, err := f.store.Track(f.ctx, f.cmp, tr.ID)
 	if err != nil {
 		t.Fatalf("track: %v", err)
 	}
@@ -681,7 +681,7 @@ func TestCM03_PassGateRejectsWhenEvidenceRejected(t *testing.T) {
 			}
 		}
 	}
-	if err := f.store.SaveTrack(f.ctx, stored); err != nil {
+	if err := f.store.SaveTrack(f.ctx, f.cmp, stored); err != nil {
 		t.Fatalf("save track: %v", err)
 	}
 	_, err = f.svc.PassGate(f.ctx, f.cmp, tr.ID, gateByKey(t, tr, "ssdlc").ID)
@@ -696,7 +696,7 @@ func TestCM03_PassGateRejectsWhenEvidenceRejected(t *testing.T) {
 			}
 		}
 	}
-	if err := f.store.SaveTrack(f.ctx, stored); err != nil {
+	if err := f.store.SaveTrack(f.ctx, f.cmp, stored); err != nil {
 		t.Fatalf("save track: %v", err)
 	}
 	if _, err := f.svc.PassGate(f.ctx, f.cmp, tr.ID, gateByKey(t, tr, "ssdlc").ID); !errors.Is(err, kernel.ErrConflict) {
@@ -746,12 +746,12 @@ type conflictOnceStore struct {
 	rejected bool
 }
 
-func (s *conflictOnceStore) Insert(ctx context.Context, e compliance.EvidenceItem) error {
+func (s *conflictOnceStore) Insert(ctx context.Context, sc authz.Scope, e compliance.EvidenceItem) error {
 	if !s.rejected {
 		s.rejected = true
 		return kernel.ErrConflict
 	}
-	return s.EvidenceMemStore.Insert(ctx, e)
+	return s.EvidenceMemStore.Insert(ctx, sc, e)
 }
 
 // TestCM04_AppendEvidenceRetriesOnSeqConflict — конфликт номера записи не выдаётся пользователю:

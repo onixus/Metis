@@ -39,6 +39,9 @@ type tracer struct {
 const maxTraceNodes = 256
 const maxTraceEdges = 1024
 
+// errTraceLimit stops the entire traversal, preserving its partial result.
+var errTraceLimit = errors.New("trace traversal limit reached")
+
 // Trace строит граф «сигнал → инсайт → гипотеза → фича → решение» вокруг узла, обходя связи
 // в обе стороны (DS-04). Узлы продуктов, на которые нет приватного доступа, не раскрываются.
 // Решения раскрываются через публичный порт DecisionLinks с полномочиями пользователя.
@@ -70,8 +73,14 @@ func (s *Service) Trace(ctx context.Context, sc authz.Scope, kind TraceKind, id 
 		ref := t.queue[0]
 		t.queue = t.queue[1:]
 		if err := t.expand(ctx, ref); err != nil {
+			if errors.Is(err, errTraceLimit) {
+				break
+			}
 			return TraceGraph{}, err
 		}
+	}
+	if err := ctx.Err(); err != nil {
+		return TraceGraph{}, err
 	}
 	g := TraceGraph{Root: root, Nodes: make([]TraceNode, 0, len(t.order)), Edges: make([]TraceEdge, 0, len(t.edges)), Incomplete: t.incomplete, Truncated: t.truncated}
 	for _, ref := range t.order {
@@ -106,12 +115,15 @@ func less(a, b TraceEdge, index map[TraceRef]int) bool {
 
 // link добавляет ребро и оба узла; невидимый узел ребра не создаёт.
 func (t *tracer) link(ctx context.Context, from, to TraceRef) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if _, exists := t.edges[TraceEdge{From: from, To: to}]; exists {
 		return nil
 	}
 	if len(t.edges) >= maxTraceEdges {
 		t.truncated = true
-		return nil
+		return errTraceLimit
 	}
 	for _, ref := range []TraceRef{from, to} {
 		if _, ok := t.nodes[ref]; ok {
@@ -131,7 +143,7 @@ func (t *tracer) link(ctx context.Context, from, to TraceRef) error {
 }
 
 // resolve загружает узел и проверяет доступ; false — узел не видим или не найден.
-// Ошибка возвращается только при отказе хранилища или порта.
+// Ошибка возвращается при отказе хранилища/порта, отмене или превышении лимита.
 func (t *tracer) resolve(ctx context.Context, ref TraceRef) (bool, error) {
 	if err := ctx.Err(); err != nil {
 		return false, err
@@ -144,7 +156,7 @@ func (t *tracer) resolve(ctx context.Context, ref TraceRef) (bool, error) {
 	}
 	if len(t.visited) >= maxTraceNodes {
 		t.truncated = true
-		return false, nil
+		return false, errTraceLimit
 	}
 	t.visited[ref] = true
 	var node TraceNode

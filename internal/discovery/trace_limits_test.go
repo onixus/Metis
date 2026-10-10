@@ -13,9 +13,11 @@ import (
 )
 
 type traceNetwork struct {
-	decisions map[kernel.ID]discovery.DecisionTrace
-	reads     int
-	failure   error
+	decisions       map[kernel.ID]discovery.DecisionTrace
+	reads           int
+	failure         error
+	reverseFailure  error
+	cancelOnReverse context.CancelFunc
 }
 
 func (n *traceNetwork) Decision(_ context.Context, _ authz.Scope, id kernel.ID) (discovery.DecisionTrace, error) {
@@ -31,6 +33,12 @@ func (n *traceNetwork) Decision(_ context.Context, _ authz.Scope, id kernel.ID) 
 }
 func (n *traceNetwork) DecisionsFor(_ context.Context, _ authz.Scope, kind string, id kernel.ID) ([]discovery.DecisionRef, error) {
 	n.reads++
+	if n.cancelOnReverse != nil {
+		n.cancelOnReverse()
+	}
+	if n.reverseFailure != nil {
+		return nil, n.reverseFailure
+	}
 	out := []discovery.DecisionRef{}
 	for _, d := range n.decisions {
 		for _, l := range d.Links {
@@ -83,6 +91,36 @@ func TestDS04_DA01_BoundsDenseEdges(t *testing.T) {
 	g, err := networkService(n).Trace(context.Background(), cpoScope(), discovery.TraceDecision, root)
 	if err != nil || !g.Truncated || len(g.Edges) != 1024 || len(g.Nodes) > 68 {
 		t.Fatalf("dense graph: %d/%d %t %v", len(g.Nodes), len(g.Edges), g.Truncated, err)
+	}
+}
+
+func TestDS04_DA01_StopsQueriesAfterTruncation(t *testing.T) {
+	root := kernel.NewID()
+	links := make([]discovery.TraceRef, 320)
+	for i := range links {
+		links[i] = discovery.TraceRef{Kind: discovery.TraceFeature, ID: kernel.NewID()}
+	}
+	n := &traceNetwork{decisions: map[kernel.ID]discovery.DecisionTrace{
+		root: {Node: discovery.TraceNode{TraceRef: discovery.TraceRef{Kind: discovery.TraceDecision, ID: root}}, Links: links},
+	}, reverseFailure: kernel.ErrUnavailable}
+	g, err := networkService(n).Trace(context.Background(), cpoScope(), discovery.TraceDecision, root)
+	if err != nil || !g.Truncated || len(g.Nodes) != 256 || len(g.Edges) != 255 {
+		t.Fatalf("truncation lost to unnecessary query: %+v %v", g, err)
+	}
+	if n.reads != 256 {
+		t.Fatalf("queries after limit: %d", n.reads)
+	}
+}
+
+func TestDS04_DA01_CancelsOnKnownEdgeAtEndOfQueue(t *testing.T) {
+	root, feature := kernel.NewID(), kernel.NewID()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	n := &traceNetwork{decisions: map[kernel.ID]discovery.DecisionTrace{
+		root: {Node: discovery.TraceNode{TraceRef: discovery.TraceRef{Kind: discovery.TraceDecision, ID: root}}, Links: []discovery.TraceRef{{Kind: discovery.TraceFeature, ID: feature}}},
+	}, cancelOnReverse: cancel}
+	if _, err := networkService(n).Trace(ctx, cpoScope(), discovery.TraceDecision, root); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancelled final query returned a graph: %v", err)
 	}
 }
 func TestDS04_DA01_PropagatesCancellationAndPortFailure(t *testing.T) {

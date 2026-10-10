@@ -131,3 +131,12 @@ sql:
         sql_package: pgx/v5
         emit_json_tags: false
         overrides: *overrides
+  - engine: postgresql
+    schema: db/modeling/migrations
+    queries: db/modeling/queries
+    gen:
+      go:
+        package: db
+        out: internal/economics/modeling/internal/db
+        sql_package: pgx/v5
+        overrides: *overrides

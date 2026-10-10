@@ -119,10 +119,17 @@ func (s *Service) emit(ctx context.Context, typ string, aggregate, product kerne
 }
 
 func (s *Service) logAccess(ctx context.Context, sc authz.Scope, action, object string, product kernel.ID, details map[string]any) {
+	_ = s.logAccessChecked(ctx, sc, action, object, product, details)
+}
+
+func (s *Service) logAccessChecked(ctx context.Context, sc authz.Scope, action, object string, product kernel.ID, details map[string]any) error {
 	if s.audit == nil {
-		return
+		return nil
 	}
-	_ = s.audit.FinanceAccess(ctx, sc.Subject(), action, object, product, details)
+	if err := s.audit.FinanceAccess(ctx, sc.Subject(), action, object, product, details); err != nil {
+		return fmt.Errorf("finance audit: %w", err)
+	}
+	return nil
 }
 
 // ---- Доступ ----
@@ -726,6 +733,19 @@ func (s *Service) Facts(ctx context.Context, sc authz.Scope, f FactFilter) ([]Fa
 
 // SetManualValue записывает значение поля ручного ввода отдельной загрузкой (EC-08).
 func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string, sl Slice, value decimal.Decimal) (FactRow, error) {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		var row FactRow
+		err := tx.Transact(ctx, sc, func(ctx context.Context) error {
+			var err error
+			row, err = s.setManualValue(ctx, sc, key, sl, value)
+			return err
+		})
+		return row, err
+	}
+	return s.setManualValue(ctx, sc, key, sl, value)
+}
+
+func (s *Service) setManualValue(ctx context.Context, sc authz.Scope, key string, sl Slice, value decimal.Decimal) (FactRow, error) {
 	if err := s.requireWrite(sc, sl.ProductID); err != nil {
 		return FactRow{}, err
 	}
@@ -768,7 +788,9 @@ func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string
 	if err := s.store.AppendFacts(ctx, sc, append([]FactRow{row}, carried...)); err != nil {
 		return FactRow{}, fmt.Errorf("append facts: %w", err)
 	}
-	s.logAccess(ctx, sc, "write", "economics.value:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()})
+	if err := s.logAccessChecked(ctx, sc, "write", "economics.value:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()}); err != nil {
+		return FactRow{}, err
+	}
 	return row, nil
 }
 

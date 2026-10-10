@@ -283,6 +283,10 @@ func (s *Service) PortfolioPnL(ctx context.Context, sc authz.Scope, p Period) (P
 // TeamCosts — затраты команды за период с разбивкой по продуктам (EC-12).
 // Доли берутся из worklogs или заданы вручную.
 func (s *Service) TeamCosts(ctx context.Context, sc authz.Scope, teamID kernel.ID, p Period) (TeamCost, error) {
+	// TODO(question-46): allow aggregate team reports only with trusted headcount.
+	if sc.Finance() < authz.FinanceFull || !sc.HasRole(authz.RoleFinance) {
+		return TeamCost{}, kernel.ErrForbidden
+	}
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return TeamCost{}, err
 	}
@@ -310,6 +314,9 @@ func (s *Service) TeamCosts(ctx context.Context, sc authz.Scope, teamID kernel.I
 
 // Matrix — матрица «команда × продукт» за период (EC-12).
 func (s *Service) Matrix(ctx context.Context, sc authz.Scope, p Period) (Matrix, error) {
+	if sc.Finance() < authz.FinanceFull || !sc.HasRole(authz.RoleFinance) {
+		return Matrix{}, kernel.ErrForbidden
+	}
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return Matrix{}, err
 	}

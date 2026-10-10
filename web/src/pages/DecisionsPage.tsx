@@ -91,6 +91,7 @@ export function DecisionsPage() {
             <div className="row wrap-row">
               <h2>{d.title}</h2>
               <Badge tone={TONE[d.status]}>{ru.decisions.statuses[d.status]}</Badge>
+              <Link className="btn btn-sm" to={`/trace/decision/${d.id}`}>{ru.discovery.hypothesis.trace}</Link>
               {!id && d.product_id && (
                 <Link to={`/products/${d.product_id}/decisions`}>{productName.get(d.product_id) ?? d.product_id}</Link>
               )}

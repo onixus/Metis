@@ -5,14 +5,14 @@ import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { ru } from '../i18n/ru'
 
 const KINDS: TraceKind[] = ['signal', 'insight', 'hypothesis', 'feature', 'decision']
-const ROOT_KINDS = new Set(['signal', 'insight', 'hypothesis', 'feature'])
+const ROOT_KINDS = new Set<string>(KINDS)
 
 /** Трассировка DS-04: узлы по типам (колонки в порядке цепочки) и список рёбер. */
 export function TracePage() {
   const { kind = '', id = '' } = useParams()
   const navigate = useNavigate()
   const valid = ROOT_KINDS.has(kind)
-  const trace = useTrace(valid ? (kind as Exclude<TraceKind, 'decision'>) : 'feature', id)
+  const trace = useTrace(valid ? (kind as TraceKind) : 'feature', valid ? id : '')
 
   if (!valid) return <Empty text={ru.app.notFound} />
   if (trace.isPending) return <Loading />
@@ -43,6 +43,8 @@ export function TracePage() {
           {ru.trace.back}
         </button>
       </div>
+      {g.incomplete && <div className="alert">{ru.trace.incomplete}</div>}
+      {g.truncated && <div className="alert">{ru.trace.truncated}</div>}
       <div className="columns">
         {KINDS.map((k) => {
           const nodes = g.nodes.filter((n) => n.kind === k)
@@ -62,6 +64,7 @@ export function TracePage() {
                         <div className="row wrap-row">
                           {to ? <Link to={to}>{n.title}</Link> : <span>{n.title}</span>}
                           {isRoot(n) && <Badge tone="warn">{ru.trace.root}</Badge>}
+                          {!isRoot(n) && <Link className="btn btn-sm" to={`/trace/${n.kind}/${n.id}`} aria-label={`${ru.trace.fromNode}: ${n.title}`}>{ru.trace.fromNode}</Link>}
                         </div>
                         <span className="mono muted">{n.id}</span>
                       </li>

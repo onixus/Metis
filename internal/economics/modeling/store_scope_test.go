@@ -45,3 +45,22 @@ func TestAD02_NFS01_ModelFactsPreserveProductAndFinanceBoundary(t *testing.T) {
 		t.Fatalf("calculation gained writes: %v", err)
 	}
 }
+
+func TestNFS16_ModelingTeamPayrollRefusesAggregateAndNonFinance(t *testing.T) {
+	ctx := context.Background()
+	svc, err := economics.NewService(economics.NewMemStore(), nil, kernel.SystemClock{}, economics.DefaultConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, sc := range []authz.Scope{
+		authz.New(authz.Params{Subject: "aggregate", Roles: []authz.Role{authz.RoleCPO}, AllProducts: authz.AccessPrivate, Finance: authz.FinanceAggregates}),
+		authz.New(authz.Params{Subject: "full-non-finance", Roles: []authz.Role{authz.RoleCPO}, AllProducts: authz.AccessPrivate, Finance: authz.FinanceFull}),
+	} {
+		if _, err := svc.TeamCosts(ctx, sc, kernel.NewID(), economics.PeriodOf(2026, 1)); !errors.Is(err, kernel.ErrForbidden) {
+			t.Fatalf("team payroll: %v", err)
+		}
+		if _, err := svc.Matrix(ctx, sc, economics.PeriodOf(2026, 1)); !errors.Is(err, kernel.ErrForbidden) {
+			t.Fatalf("payroll matrix: %v", err)
+		}
+	}
+}

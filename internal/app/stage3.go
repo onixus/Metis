@@ -166,6 +166,16 @@ func buildLicensing(cfg Config, clock kernel.Clock, auditLog *audit.Logger, log 
 // RunFinanceImports выполняет загрузку финансовых книг по расписанию (EC-01): каталог задаётся
 // METIS_FINANCE_DIR, шаблон — METIS_FINANCE_TEMPLATE. Файл, загруженный раньше, пропускается по SHA-256.
 func (a *App) RunFinanceImports(ctx context.Context) ([]economics.ImportBatch, error) {
+	var batches []economics.ImportBatch
+	err := a.runOperation(ctx, func(ctx context.Context) error {
+		var err error
+		batches, err = a.runFinanceImports(ctx)
+		return err
+	})
+	return batches, err
+}
+
+func (a *App) runFinanceImports(ctx context.Context) ([]economics.ImportBatch, error) {
 	if a.Modeling == nil || a.Cfg.FinanceDir == "" || a.Cfg.FinanceTemplate == "" {
 		return nil, nil
 	}

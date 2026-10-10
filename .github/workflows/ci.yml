@@ -128,4 +128,4 @@ jobs:
           oapi-codegen -config api/oapi-server.yaml api/openapi.yaml
           oapi-codegen -config api/oapi-types.yaml api/openapi.yaml
           sqlc generate
-          git diff --exit-code -- internal/httpapi/gen tests/e2e/client internal/*/internal/db
+          git diff --exit-code -- internal/httpapi/gen tests/e2e/client internal/*/internal/db internal/economics/modeling/internal/db

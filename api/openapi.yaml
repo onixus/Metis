@@ -1375,7 +1375,7 @@ paths:
       - name: kind
         in: path
         required: true
-        schema: { type: string, enum: [signal, insight, hypothesis, feature] }
+        schema: { type: string, enum: [signal, insight, hypothesis, feature, decision] }
       - name: id
         in: path
         required: true
@@ -4362,6 +4362,12 @@ components:
       type: object
       required: [root, nodes, edges]
       properties:
+        incomplete:
+          type: boolean
+          description: Часть связанных источников недоступна или отсутствует; сведения о них не раскрываются
+        truncated:
+          type: boolean
+          description: Достигнут предел обхода; ответ содержит часть доступной цепочки
         root: { $ref: "#/components/schemas/TraceRef" }
         nodes:
           type: array

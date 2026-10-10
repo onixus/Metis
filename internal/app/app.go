@@ -590,6 +590,9 @@ func (r readinessAdapter) ReleaseReadiness(ctx context.Context, sc authz.Scope, 
 type decisionLinks struct{ d *decisions.Service }
 
 func (l decisionLinks) DecisionsFor(ctx context.Context, sc authz.Scope, kind string, id kernel.ID) ([]discovery.DecisionRef, error) {
+	if !decisions.ValidLinkKind(decisions.LinkKind(kind)) {
+		return []discovery.DecisionRef{}, nil
+	}
 	refs, err := l.d.DecisionsFor(ctx, sc, kind, id)
 	if err != nil {
 		return nil, err
@@ -597,6 +600,24 @@ func (l decisionLinks) DecisionsFor(ctx context.Context, sc authz.Scope, kind st
 	out := make([]discovery.DecisionRef, 0, len(refs))
 	for _, r := range refs {
 		out = append(out, discovery.DecisionRef{ID: r.ID, Title: r.Title})
+	}
+	return out, nil
+}
+
+func (l decisionLinks) Decision(ctx context.Context, sc authz.Scope, id kernel.ID) (discovery.DecisionTrace, error) {
+	r, err := l.d.Get(ctx, sc, id)
+	if err != nil {
+		return discovery.DecisionTrace{}, err
+	}
+	out := discovery.DecisionTrace{
+		Node:  discovery.TraceNode{TraceRef: discovery.TraceRef{Kind: discovery.TraceDecision, ID: r.ID}, ProductID: r.ProductID, Title: r.Title},
+		Links: make([]discovery.TraceRef, 0, len(r.Links)),
+	}
+	for _, link := range r.Links {
+		kind := discovery.TraceKind(link.Kind)
+		if discovery.ValidTraceKind(kind) {
+			out.Links = append(out.Links, discovery.TraceRef{Kind: kind, ID: link.ID})
+		}
 	}
 	return out, nil
 }

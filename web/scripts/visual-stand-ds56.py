@@ -36,7 +36,7 @@ for name, role, products, finance in profiles:
                                            '-roles', role, '-products', products, '-finance', finance,
                                            '-ttl', '2h'], env=env, text=True).strip()
 token_file = temp / 'tokens.json'
-with token_file.open('w', opener=lambda name, flags: os.open(name, flags, 0o600)) as handle:
+with open(token_file, 'w', opener=lambda name, flags: os.open(name, flags, 0o600)) as handle:
     json.dump(tokens, handle)
 base = f'http://127.0.0.1:{args.port}'
 with (temp / 'api.log').open('w') as log:

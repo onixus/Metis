@@ -3,6 +3,7 @@ const { chromium } = require(process.env.METIS_PLAYWRIGHT_MODULE || 'playwright'
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
+const { verifiedProbe } = require('./acceptance-probe-ds56.cjs');
 const base = process.env.METIS_ACCEPTANCE_URL || 'http://127.0.0.1:18057';
 if (!['127.0.0.1', 'localhost'].includes(new URL(base).hostname))
     throw Error('Acceptance requires an isolated loopback stand');
@@ -110,10 +111,8 @@ async function contextFor(browser, role, theme, mobile = false) {
                 }
                 for (const [apiPath, allowed] of [[`/products/${ids.soar}/signals`, !['pm-other', 'presale'].includes(role)], [`/products/${ids.edr}/economics/2026-09`, role === 'finance'], ['/decisions', ['cpo', 'admin'].includes(role)]]) {
                     const response = await ctx.request.get(base + '/api/v1' + apiPath, { headers: { Authorization: 'Bearer ' + tokens[role] } });
-                    apiChecks.push({ role, path: apiPath, status: response.status() });
-                    // Financial raw access always requires finance+full, even for administrators.
-                    if (apiPath.includes('/economics/') || role === 'presale' && apiPath.endsWith('/signals') || role === 'pm-other' && apiPath.endsWith('/signals'))
-                        assert.equal(response.status(), allowed ? 200 : 403, `${role} ${apiPath}`);
+                    // Every recorded GET must match the role contract, including decisions/signals.
+                    apiChecks.push(verifiedProbe(role, apiPath, response.status(), allowed));
                 }
                 if (['pm-other', 'presale'].includes(role)) {
                     const response = await ctx.request.post(base + `/api/v1/products/${ids.soar}/signals`, { headers: { Authorization: 'Bearer ' + tokens[role] }, data: { source: 'manual', text: 'Synthetic forbidden write DS56' } });
@@ -155,19 +154,27 @@ async function contextFor(browser, role, theme, mobile = false) {
                 await page.goto(base + url);
                 await settle(page);
                 const labels = await page.getByRole('tab').allTextContents();
+                const expectedTabs = { admin: ['Аудит', 'Наборы требований', 'Шаблоны треков', 'Кастомные поля', 'Интеграции'], discovery: ['Гипотезы', 'Интервью', 'Инсайты', 'Evidence'], roadmap: ['Таймлайн', 'Now / Next / Later', 'По релизам', 'Релизы'] };
+                assert.deepEqual(labels, expectedTabs[name], `${name} tab coverage`);
                 for (const label of labels) {
                     await page.getByRole('tab', { name: label, exact: true }).click();
                     await settle(page);
                     await inspectResponsive(page, 'admin', `${name}-tab-${labels.indexOf(label)}`, theme, errors);
-                    const buttons = page.locator('main button').filter({ hasText: /^(Новая гипотеза|Новое интервью|Новый инсайт|Добавить evidence|Новая версия набора|Новый шаблон|Добавить поле|Новый релиз)$/i });
-                    for (let i = 0; i < await buttons.count(); i++) {
-                        const button = buttons.nth(i);
-                        if (await button.isVisible()) {
-                            await button.click();
-                            await settle(page);
-                            await inspectResponsive(page, 'admin', `${name}-form-${labels.indexOf(label)}-${i}`, theme, errors);
-                        }
+                    const actions = {
+                        admin: { 'Наборы требований': 'Новая версия набора', 'Шаблоны треков': 'Новый шаблон' },
+                        discovery: { 'Гипотезы': 'Новая гипотеза', 'Интервью': 'Новое интервью', 'Инсайты': 'Новый инсайт', 'Evidence': 'Добавить evidence' },
+                        roadmap: { 'Релизы': 'Новый релиз' },
+                    };
+                    const action = actions[name][label];
+                    if (action) {
+                        const button = page.getByRole('button', { name: action, exact: true });
+                        assert.equal(await button.count(), 1, `Expected ${name}/${label} form action`);
+                        await button.click();
+                        await settle(page);
+                        await inspectResponsive(page, 'admin', `${name}-form-${labels.indexOf(label)}-0`, theme, errors);
                     }
+                    if (name === 'admin' && label === 'Кастомные поля')
+                        assert.equal(await page.getByRole('button', { name: 'Определить поле', exact: true }).count(), 1, 'Expected inline custom-field form');
                 }
                 await page.getByRole('tab').first().focus();
                 await page.keyboard.press('End');
@@ -180,11 +187,10 @@ async function contextFor(browser, role, theme, mobile = false) {
                 await page.goto(base + url);
                 await settle(page);
                 const btn = page.getByRole('button', { name: button, exact: true });
-                if (await btn.count()) {
-                    await btn.click();
-                    await settle(page);
-                    await inspectResponsive(page, 'admin', `${name}-create-form`, theme, errors);
-                }
+                assert.equal(await btn.count(), 1, `Expected form action: ${button}`);
+                await btn.click();
+                await settle(page);
+                await inspectResponsive(page, 'admin', `${name}-create-form`, theme, errors);
             }
             for (const button of ['Новая фича', 'Новый сигнал', 'Новая модель оценки', 'Оценить фичу', 'Подробнее', 'Сдвинуть дату', 'Разобрать']) {
                 await page.goto(base + `/products/${ids.soar}`);
@@ -195,23 +201,21 @@ async function contextFor(browser, role, theme, mobile = false) {
                 await settle(page);
                 await inspectResponsive(page, 'admin', 'product-form-' + ['Новая фича', 'Новый сигнал', 'Новая модель оценки', 'Оценить фичу', 'Подробнее', 'Сдвинуть дату', 'Разобрать'].indexOf(button), theme, errors);
             }
-            for (const button of ['Приложить доказательство', 'Изменить']) {
+            for (const button of ['Приложить доказательство', 'Владелец / срок / затраты']) {
                 await page.goto(base + `/products/${ids.soar}/compliance`);
                 await settle(page);
                 const control = page.getByRole('button', { name: button, exact: true }).first();
-                if (await control.count()) {
-                    await control.click();
-                    await settle(page);
-                    await inspectResponsive(page, 'admin', 'compliance-form-' + (button === 'Изменить' ? 'gate' : 'evidence'), theme, errors);
-                }
+                assert.equal(await control.count(), 1, `Expected compliance action: ${button}`);
+                await control.click();
+                await settle(page);
+                await inspectResponsive(page, 'admin', 'compliance-form-' + (button === 'Владелец / срок / затраты' ? 'gate' : 'evidence'), theme, errors);
             }
             await page.goto(base + '/delivery');
             await settle(page);
             const deliveryForm = page.getByRole('button', { name: 'Привязать или создать эпик', exact: true });
-            if (await deliveryForm.count()) {
-                await deliveryForm.click();
-                await inspectResponsive(page, 'admin', 'delivery-link-form', theme, errors);
-            }
+            assert.equal(await deliveryForm.count(), 1, 'Expected delivery link form action');
+            await deliveryForm.click();
+            await inspectResponsive(page, 'admin', 'delivery-link-form', theme, errors);
             await ctx.close();
             const finance = await contextFor(browser, 'finance', theme);
             const p = await finance.newPage();

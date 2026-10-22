@@ -1,0 +1,39 @@
+{
+  "frontendSourceCommit": "68d5deef209c550fe54876893d41f0c857fca805",
+  "standAndMainRunnerCommit": "c37f1d8",
+  "cases": 893,
+  "explicitHTTPProbes": 98,
+  "mainFindings": 0,
+  "stand": "synthetic memory/HMAC real API; external adapters disabled",
+  "matrixSHA256": "1ce646a9effbd830d568b2e03ee24a680027516d8332ffe661d1884bb7b8c266",
+  "supplementalSHA256": "485d49da3570ddcb61dc7c7b47c6b48114c65589a98c38254b3623a630d3fbe7",
+  "distSHA256": {
+    "index.html": "182a737ae3c395c18f933750df4ca1df90d08c9a579e71053b63fcf533c4cb17",
+    "icons.svg": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a",
+    "favicon.svg": "61bc9a161de58248288e6905425d7180f0624c2865007b97d763fdac12043a66",
+    "licenses/jetbrains-mono-OFL-1.1.txt": "403581b69dac5cff4079205e01c6b467e56af449ecbd7247693ddb1baafa005b",
+    "licenses/inter-OFL-1.1.txt": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345",
+    "assets/jetbrains-mono-latin-wght-normal-B9CIFXIH.woff2": "18be452724bfdc236c074ca94a249a7f41a86752c7d04ab258ce9ed5651f6a7e",
+    "assets/inter-greek-wght-normal-CkhJZR-_.woff2": "1be3448e292fbf05ffe176fe1e43f135013d50b1e7d324ad1a558f623d3bb6f6",
+    "assets/jetbrains-mono-greek-wght-normal-Bw9x6K1M.woff2": "ee863198077f3093ffa81c072581cc4bd608a04e60a8a9c0b846396ce4f14109",
+    "assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
+    "assets/jetbrains-mono-cyrillic-wght-normal-D73BlboJ.woff2": "d274604c40757f98f07df623a8b8fb5194508a6fa4f5413a7a107f09e3b7452a",
+    "assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2": "5c66f9e07e90c6d4ac4922cc68d60de26c17b1858e677fb5e603fce3952b3ff2",
+    "assets/GraphPage-DLioOiRN.css": "b0cb7bd6fec5951c9c8f5808821438206604b1629a912c96009ac427f38e7d69",
+    "assets/GraphPage-CPnQaX58.js": "b1eae02980d37ecdb3e527cf34bccee783a1b0475f5dc61d6978962c4061f886",
+    "assets/jetbrains-mono-vietnamese-wght-normal-Bt-aOZkq.woff2": "2288795da89dd97e648954b96e22b4501bd85dfc453264460b252f888b582ca2",
+    "assets/inter-cyrillic-wght-normal-DqGufNeO.woff2": "71d5ee93cc1e9f1d520a3a8b66456de18c7879d8df09d57fcd2eaff75fef0075",
+    "assets/index-D2dNhkv7.css": "b3f68956082880f27fb0b5fa987ac9b9886daa02722f7d17b346a9b457458615",
+    "assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956",
+    "assets/inter-latin-wght-normal-Dx4kXJAl.woff2": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+    "assets/index-DvRJmVcj.js": "95f20b91a2c6d6f09cab833a01ba131cd1c021c368f5f0dcfbac6a19ac2f6d1c",
+    "assets/inter-greek-ext-wght-normal-DlzME5K_.woff2": "6e9e020a25f9b56d418f2c085b1d3c09725a4da23fe693a5b463064606732190",
+    "assets/jetbrains-mono-latin-ext-wght-normal-DBQx-q_a.woff2": "79bfdab9ba467e26eea4122e6f2567e188dd8a09a8c730d501fc487c4ab99c6e"
+  },
+  "print": {
+    "pagesPerPDF": 2,
+    "bothThemesTextIdentical": true,
+    "bothThemesRasterIdentical": true
+  },
+  "screenshots": "Curated full-size screenshots plus contact sheets are retained. matrix.json screenshot names also identify local captures reproducible by the runner."
+}

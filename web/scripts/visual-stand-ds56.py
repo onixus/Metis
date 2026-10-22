@@ -55,7 +55,8 @@ with (temp / 'api.log').open('w') as log:
         else:
             raise RuntimeError('API startup timed out')
         fixture_env = dict(os.environ, METIS_ACCEPTANCE_URL=base, METIS_ACCEPTANCE_TEMP=str(temp))
-        subprocess.run(['python3', str(repo / 'web/scripts/seed-visual-ds56.py')], env=fixture_env, check=True)
+        for fixture in ['seed-visual-ds56.py', 'seed-finance-visual-ds56.py']:
+            subprocess.run(['python3', str(repo / 'web/scripts' / fixture)], env=fixture_env, check=True)
         print(f'DS56 stand ready at {base}; private role credentials in {temp}. Rebuild dist BEFORE starting the stand.', flush=True)
         server.wait()
     finally:

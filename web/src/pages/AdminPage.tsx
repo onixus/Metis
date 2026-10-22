@@ -201,7 +201,7 @@ function RequirementSetsTab({ canWrite }: { canWrite: boolean }) {
                     {canWrite && (
                       <div className="row">
                         {s.status === 'draft' && (
-                          <button type="button" className="btn btn-sm btn-primary" disabled={setStatus.isPending} onClick={() => setStatus.mutate({ id: s.id, status: 'published' })}>
+                          <button type="button" className="btn btn-sm" disabled={setStatus.isPending} onClick={() => setStatus.mutate({ id: s.id, status: 'published' })}>
                             {ru.admin2.rs.publish}
                           </button>
                         )}
@@ -258,6 +258,7 @@ function TrackTemplatesTab({ canWrite }: { canWrite: boolean }) {
               </button>
             )}
           </div>
+          <div className="table-wrap template-table">
           <table className="table table-compact">
             <thead>
               <tr>
@@ -286,6 +287,7 @@ function TrackTemplatesTab({ canWrite }: { canWrite: boolean }) {
                 ))}
             </tbody>
           </table>
+          </div>
         </div>
       ))}
     </div>

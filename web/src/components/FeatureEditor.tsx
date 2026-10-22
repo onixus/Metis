@@ -29,6 +29,6 @@ export function FeatureEditor({ productId, feature, onDone }: { productId: strin
     {feature?.external_key && <p className="muted">{ru.workflow.externalStatus} <span className="mono">{feature.external_key}</span></p>}
     {validation && <div className="alert alert-error" role="alert">{validation}</div>}
     {save.isError && <ErrorBox error={save.error} />}
-    <div className="row"><button className="btn btn-primary" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={onDone}>{ru.app.cancel}</button></div>
+    <div className="row"><button className="btn" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={onDone}>{ru.app.cancel}</button></div>
   </form>
 }

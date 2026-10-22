@@ -62,7 +62,7 @@ export function SimilarSignals({ productId, signal, onClose }: { productId: stri
           <div className="row">
             <button
               type="button"
-              className="btn btn-sm btn-primary"
+              className="btn btn-sm"
               disabled={mergeable.length === 0 || merge.isPending}
               onClick={() => merge.mutate({ signalId: signal.id, duplicate_ids: mergeable }, { onSuccess: () => setPicked([]) })}
             >

@@ -205,7 +205,7 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 @media print {
-  :root { color-scheme: light; }
+  :root { color-scheme: light !important; }
   .theme-switch, .me, .nav, .react-flow__controls { display: none; }
   body, .card, .graph-canvas { background: var(--surface-1); color: var(--text); }
 }
@@ -224,4 +224,43 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
 @media print {
   .app { display: block; } .topbar { height: auto; }
   .content { width: 100%; max-width: none; }
+  .brand { width: auto; max-width: none; }
 }
+
+/* DS56 acceptance: nested layout items must shrink within the viewport. */
+.stack, .row > *, .card, .page-head > *, .table-wrap { min-width: 0; }
+.segmented { flex-wrap: wrap; max-width: 100%; align-self: flex-start; }
+.segmented button { min-height: 32px; overflow-wrap: anywhere; }
+.segmented button:focus-visible { outline-offset: -2px; }
+.mono, .kv dd, .item { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .columns, .finance-grid, .builder .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .kv { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .kv dd { margin-bottom: 8px; }
+  .grow { min-width: min(200px, 100%); }
+  .field { max-width: 100%; }
+  .field input, .field select, .field textarea { max-width: 100%; }
+}
+@media print {
+  .app { min-height: 0; }
+  .topbar { display: block; }
+  .table-wrap { overflow: visible; }
+  .table { table-layout: fixed; }
+  .table th, .table td { white-space: normal; overflow-wrap: anywhere; }
+  .card, .item { break-inside: avoid; box-shadow: none; }
+  .graph-canvas { min-height: 0; height: 650px; }
+}
+
+.error-box { color: var(--danger); background: var(--danger-subtle); border: 1px solid currentColor; padding: 8px 12px; border-radius: 6px; }
+
+/* Controls outside .field (release notes and gate evidence) share the same palette. */
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  font: inherit; color: var(--text); background: var(--surface-2);
+  border: 1px solid var(--border-control); border-radius: 6px; padding: 6px 8px; max-width: 100%;
+}
+input[type="checkbox"], input[type="radio"] { box-shadow: 0 0 0 1px var(--border-control); }
+
+.template-table .table { min-width: 720px; }
+@media print { .template-table .table { min-width: 0; } }
+
+.field .mono { font-family: 'JetBrains Mono Variable', monospace; }

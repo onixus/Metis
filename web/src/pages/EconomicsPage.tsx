@@ -1,3 +1,4 @@
+import { Tabs } from '../components/Tabs'
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap, errorMessage } from '../api/client'
@@ -57,7 +58,7 @@ function EconomicsBook({ productId, period, products }: { productId: string; per
   } })
   return <>
     {history.isPending && <Loading />}{history.isError && <ErrorBox error={history.error} />}
-    <div className="row"><button className={`btn ${tab === 'report' ? 'btn-primary' : ''}`} onClick={() => setTab('report')}>P&amp;L и сценарии</button><button className={`btn ${tab === 'import' ? 'btn-primary' : ''}`} onClick={() => setTab('import')}>Загрузить данные</button><button className={`btn ${tab === 'rules' ? 'btn-primary' : ''}`} disabled={!selected} onClick={() => setTab('rules')}>Правила и показатели</button><button className={`btn ${tab === 'source' ? 'btn-primary' : ''}`} disabled={!selected} onClick={() => setTab('source')}>Исходные строки</button></div>
+    <Tabs<'report' | 'import' | 'rules' | 'source'> label="Раздел финансовой книги" tabs={[{ key: 'report', label: 'P&L и сценарии' }, { key: 'import', label: 'Загрузить данные' }, { key: 'rules', label: 'Правила и показатели', disabled: !selected }, { key: 'source', label: 'Исходные строки', disabled: !selected }]} value={tab} onChange={setTab} />
     {latest > 0 && <div className="card row"><label className="field"><span>Версия данных</span><select value={version} onChange={e => setVersion(Number(e.target.value))}><option value={0}>Последняя · v{latest}</option>{history.data?.map(v => <option key={v.id} value={v.version}>v{v.version} · {v.closed ? 'закрыта' : 'открыта'} · {fmtDateTime(v.created_at)}</option>)}</select></label><label className="field"><span>Сравнить с версией</span><select value={compare} onChange={e => setCompare(Number(e.target.value))}><option value={0}>Без сравнения</option>{history.data?.filter(v => v.version !== selected).map(v => <option key={v.id} value={v.version}>v{v.version}</option>)}</select></label><Badge tone={snapshot.data?.closed ? 'ok' : 'warn'}>{snapshot.data?.closed ? 'Период закрыт' : 'Период открыт'}</Badge>{!snapshot.data?.closed && selected === latest && <button className="btn" disabled={close.isPending} onClick={() => close.mutate()}>Закрыть период</button>}</div>}
     {close.isError && <ErrorBox error={close.error} />}{snapshot.isError && <ErrorBox error={snapshot.error} />}
     {tab === 'import' && <ImportForm productId={productId} period={period} expectedVersion={latest} closed={history.data?.at(-1)?.closed ?? false} onDone={async () => { await changed(); setTab('report') }} />}

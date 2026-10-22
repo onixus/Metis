@@ -1,3 +1,4 @@
+import { Tabs } from '../components/Tabs'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { errorMessage } from '../api/client'
@@ -92,20 +93,7 @@ export function RoadmapPage() {
           </h1>
           <Link to={`/products/${id}`}>{ru.product.open}</Link>
         </div>
-        <div className="segmented" role="tablist">
-          {visibleViews.map((v) => (
-            <button
-              key={v.key}
-              type="button"
-              role="tab"
-              aria-selected={view === v.key}
-              className={view === v.key ? 'active' : undefined}
-              onClick={() => setView(v.key)}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
+        <Tabs<View> label="Представление roadmap" tabs={visibleViews} value={view} onChange={setView} />
       </div>
       {canWrite && <div><button type="button" className="btn btn-primary" onClick={() => { setCreating(!creating); setSaved(false) }}>{ru.workflow.createItem}</button></div>}
       {canWrite && creating && <RoadmapEditor productId={id} featureId={search.get('feature') ?? undefined} onDone={(success) => { setCreating(false); setSearch({}, { replace: true }); if (success) { setSaved(true); setView('now-next-later') } }} />}
@@ -295,7 +283,7 @@ function ChangeDatesForm({ productId, row, onDone }: { productId: string; row: R
       {validation && <div className="alert alert-error">{validation}</div>}
       {change.isError && <div className="alert alert-error">{errorMessage(change.error)}</div>}
       <div className="row">
-        <button type="submit" className="btn btn-primary btn-sm" disabled={change.isPending}>
+        <button type="submit" className="btn btn-sm" disabled={change.isPending}>
           {ru.app.save}
         </button>
       </div>

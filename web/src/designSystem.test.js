@@ -42,7 +42,7 @@ test('DS56_system_changes_cross_tab_reset_and_storage_failure', () => {
 
 const tokens = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8')
 const blocks = [...tokens.matchAll(/(?:^|\n)(:root[^{}]*)\{([^{}]*)\}/g)]
-const palette = (label) => Object.fromEntries([...blocks.find(([_, selector]) => selector.includes(label))[2].matchAll(/--([\w-]+):\s*(#[0-9a-f]{6});/g)].map(([, name, color]) => [name, color]))
+const palette = (label) => Object.fromEntries([...blocks.find(block => block[1].includes(label))[2].matchAll(/--([\w-]+):\s*(#[0-9a-f]{6});/g)].map(([, name, color]) => [name, color]))
 function luminance(hex) {
   const rgb = hex.slice(1).match(/../g).map(x => parseInt(x, 16) / 255).map(x => x <= .04045 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4)
   return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722

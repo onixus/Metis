@@ -209,3 +209,19 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1
   .theme-switch, .me, .nav, .react-flow__controls { display: none; }
   body, .card, .graph-canvas { background: var(--surface-1); color: var(--text); }
 }
+
+/* Desktop shell: 56px header and 240px product navigation. */
+@media (min-width: 1000px) {
+  .app { display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-rows: 56px 1fr; position: relative; }
+  .topbar { grid-column: 1 / -1; height: 56px; min-height: 56px; flex-wrap: nowrap; }
+  .brand { width: 216px; min-width: 0; }
+  .brand-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav { position: absolute; top: 56px; bottom: 0; left: 0; width: 240px; padding: 16px 12px; flex-direction: column; gap: 4px; background: var(--bg-sunken); border-right: 1px solid var(--border); }
+  .nav a { min-height: 40px; }
+  .me { margin-left: auto; }
+  .content { grid-column: 2; min-width: 0; }
+}
+@media print {
+  .app { display: block; } .topbar { height: auto; }
+  .content { width: 100%; max-width: none; }
+}

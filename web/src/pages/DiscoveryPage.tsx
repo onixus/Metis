@@ -100,7 +100,7 @@ function Hypotheses({ productId, canWrite }: { productId: string; canWrite: bool
       <div className="row wrap-row">
         <h2>{ru.discovery.tabs.hypotheses}</h2>
         {canWrite && (
-          <button type="button" className="btn btn-sm" onClick={() => setCreating((v) => !v)}>
+          <button type="button" className="btn btn-sm" onClick={() => { setChanging(null); setCreating((v) => !v) }}>
             {ru.discovery.hypothesis.create}
           </button>
         )}
@@ -165,7 +165,7 @@ function Hypotheses({ productId, canWrite }: { productId: string; canWrite: bool
                         {ru.discovery.hypothesis.trace}
                       </Link>
                       {canWrite && (
-                        <button type="button" className="btn btn-sm" onClick={() => setChanging(changing?.id === h.id ? null : h)}>
+                        <button type="button" className="btn btn-sm" onClick={() => { setCreating(false); setChanging(changing?.id === h.id ? null : h) }}>
                           {ru.discovery.hypothesis.changeStatus}
                         </button>
                       )}

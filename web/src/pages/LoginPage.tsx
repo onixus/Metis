@@ -1,3 +1,4 @@
+import { ThemeSwitch } from '../components/ThemeSwitch'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
@@ -46,7 +47,7 @@ export function LoginPage() {
   return (
     <div className="login">
       <div className="card login-card">
-        <h1>{ru.app.title}</h1>
+        <div className="page-head"><h1>{ru.app.title}</h1><ThemeSwitch /></div>
         <h2>{ru.auth.loginTitle}</h2>
         {error !== null && <ErrorBox error={error} />}
         {mode === 'token' ? (

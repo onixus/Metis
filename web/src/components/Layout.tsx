@@ -1,3 +1,5 @@
+import { Boxes, Network, Layers, Truck, ChartNoAxesCombined, BriefcaseBusiness, ListChecks, ShieldCheck, Settings } from 'lucide-react'
+import { ThemeSwitch } from './ThemeSwitch'
 import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -27,17 +29,18 @@ export function Layout() {
           <span className="brand-sub">{ru.app.subtitle}</span>
         </div>
         <nav className="nav">
-          <NavLink to="/" end>{ru.nav.products}</NavLink>
-          <NavLink to="/graph">{ru.nav.graph}</NavLink>
-          <NavLink to="/hub">{ru.nav.hub}</NavLink>
-          <NavLink to="/delivery">{ru.nav.delivery}</NavLink>
-          {me.data?.roles.includes('finance') && me.data.finance === 'full' && <NavLink to="/economics">Экономика</NavLink>}
-          {canSeeFinance(me.data) && <NavLink to="/portfolio">{ru.nav2.portfolio}</NavLink>}
-          {canReadPortfolioDecisions(me.data) && <NavLink to="/decisions">{ru.nav2.decisions}</NavLink>}
-          {canSeeCompliance(me.data) && <NavLink to="/compliance">{ru.nav2.compliance}</NavLink>}
-          {admin && <NavLink to="/admin">{ru.nav.admin}</NavLink>}
+          <NavLink to="/" end><Boxes aria-hidden="true" />{ru.nav.products}</NavLink>
+          <NavLink to="/graph"><Network aria-hidden="true" />{ru.nav.graph}</NavLink>
+          <NavLink to="/hub"><Layers aria-hidden="true" />{ru.nav.hub}</NavLink>
+          <NavLink to="/delivery"><Truck aria-hidden="true" />{ru.nav.delivery}</NavLink>
+          {me.data?.roles.includes('finance') && me.data.finance === 'full' && <NavLink to="/economics"><ChartNoAxesCombined aria-hidden="true" />Экономика</NavLink>}
+          {canSeeFinance(me.data) && <NavLink to="/portfolio"><BriefcaseBusiness aria-hidden="true" />{ru.nav2.portfolio}</NavLink>}
+          {canReadPortfolioDecisions(me.data) && <NavLink to="/decisions"><ListChecks aria-hidden="true" />{ru.nav2.decisions}</NavLink>}
+          {canSeeCompliance(me.data) && <NavLink to="/compliance"><ShieldCheck aria-hidden="true" />{ru.nav2.compliance}</NavLink>}
+          {admin && <NavLink to="/admin"><Settings aria-hidden="true" />{ru.nav.admin}</NavLink>}
         </nav>
         <div className="me">
+          <ThemeSwitch />
           {me.data && (
             <>
               <span className="me-subject">{me.data.subject}</span>

@@ -54,6 +54,6 @@ function RoadmapForm({ productId, item, features, releases, initialFeatureId, on
       {!item && <><label className="field"><span>{ru.roadmap.start}</span><input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></label><label className="field"><span>{ru.roadmap.end}</span><input type="date" min={start || undefined} value={end} onChange={(e) => setEnd(e.target.value)} /></label></>}
     </div>
     {validation && <div className="alert alert-error" role="alert">{validation}</div>}{save.isError && <ErrorBox error={save.error} />}
-    <div className="row"><button className="btn btn-primary" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={() => onDone()}>{ru.app.cancel}</button></div>
+    <div className="row"><button className="btn" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={() => onDone()}>{ru.app.cancel}</button></div>
   </form>
 }

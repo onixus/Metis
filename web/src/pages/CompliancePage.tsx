@@ -164,7 +164,7 @@ function StartTrackForm({ productId, productType, onDone }: { productId: string;
       </div>
       {start.isError && <div className="alert alert-error">{errorMessage(start.error)}</div>}
       <div className="row">
-        <button type="submit" className="btn btn-primary" disabled={start.isPending}>
+        <button type="submit" className="btn" disabled={start.isPending}>
           {ru.compliance.startTrack}
         </button>
         <button type="button" className="btn" onClick={onDone}>
@@ -296,7 +296,7 @@ function GateRow({ track, gate, evidence, canWrite }: { track: Track; gate: Gate
       )}
       {editable && (
         <div className="row">
-          <button type="button" className="btn btn-sm btn-primary" disabled={pass.isPending} onClick={() => pass.mutate({ trackId: track.id, gateId: gate.id })}>
+          <button type="button" className="btn btn-sm" disabled={pass.isPending} onClick={() => pass.mutate({ trackId: track.id, gateId: gate.id })}>
             {ru.compliance.pass}
           </button>
           <button type="button" className="btn btn-sm btn-danger" onClick={() => setMode(mode === 'fail' ? 'none' : 'fail')}>
@@ -358,7 +358,7 @@ function GateRow({ track, gate, evidence, canWrite }: { track: Track; gate: Gate
             </span>
             <input type="number" min={0} step={MONEY_INPUT_STEP} value={amount} onChange={(e) => setAmount(e.target.value)} />
           </label>
-          <button type="submit" className="btn btn-sm btn-primary" disabled={update.isPending}>
+          <button type="submit" className="btn btn-sm" disabled={update.isPending}>
             {ru.app.save}
           </button>
         </form>
@@ -443,7 +443,7 @@ function EvidenceLog({
           </div>
           {append.isError && <div className="alert alert-error">{errorMessage(append.error)}</div>}
           <div className="row">
-            <button type="submit" className="btn btn-primary btn-sm" disabled={append.isPending}>
+            <button type="submit" className="btn btn-sm" disabled={append.isPending}>
               {ru.common.add}
             </button>
             <button type="button" className="btn btn-sm" onClick={() => setAdding(false)}>
@@ -580,7 +580,7 @@ export function ComplianceDashboardPage() {
           <h2>{ru.compliance.verify}</h2>
           <p className="muted">{ru.compliance.verifyHint}</p>
           <div className="row">
-            <button type="button" className="btn btn-primary" disabled={verify.isPending} onClick={() => verify.mutate()}>
+            <button type="button" className="btn" disabled={verify.isPending} onClick={() => verify.mutate()}>
               {verify.isPending ? ru.admin.auditRunning : ru.compliance.verify}
             </button>
           </div>

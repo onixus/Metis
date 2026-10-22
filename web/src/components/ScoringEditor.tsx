@@ -21,7 +21,7 @@ export function ScoringModelForm({ productId, onDone }: { productId: string; onD
       <label className="field"><span>{ru.workflow.modelType}</span><select value={type} onChange={(e) => setType(e.target.value as typeof type)}><option value="rice">RICE</option><option value="wsjf">WSJF</option></select></label>
     </div>
     {validation && <div className="alert alert-error">{validation}</div>}{save.isError && <ErrorBox error={save.error} />}
-    <div className="row"><button className="btn btn-primary" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={() => onDone()}>{ru.app.cancel}</button></div>
+    <div className="row"><button className="btn" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={() => onDone()}>{ru.app.cancel}</button></div>
   </form>
 }
 
@@ -60,6 +60,6 @@ function ScoreInputsForm({ productId, featureId, model, score }: { productId: st
     </label>)}</div>
     {validation && <div className="alert alert-error" role="alert">{validation}</div>}{save.isError && <ErrorBox error={save.error} />}
     {save.isSuccess && <div className="alert alert-ok" role="status">{ru.workflow.scoreSaved}: {save.data.score}</div>}
-    <div><button className="btn btn-primary" disabled={save.isPending}>{ru.workflow.scoreSave}</button></div>
+    <div><button className="btn" disabled={save.isPending}>{ru.workflow.scoreSave}</button></div>
   </form>
 }

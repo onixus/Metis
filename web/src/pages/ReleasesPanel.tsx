@@ -81,7 +81,7 @@ export function ReleasesPanel({ productId, canWrite }: { productId: string; canW
     <div className="stack">
       {canWrite && (
         <div className="row">
-          <button type="button" className="btn btn-primary" onClick={() => setCreating((v) => !v)}>
+          <button type="button" className="btn" onClick={() => setCreating((v) => !v)}>
             {ru.release.create}
           </button>
         </div>
@@ -177,7 +177,7 @@ function ReleaseForm({
       {form.branch === 'certified' && <p className="muted">{ru.release.certifiedHint}</p>}
       {m.isError && <div className="alert alert-error">{errorMessage(m.error)}</div>}
       <div className="row">
-        <button type="submit" className="btn btn-primary" disabled={m.isPending}>
+        <button type="submit" className="btn" disabled={m.isPending}>
           {ru.app.save}
         </button>
         <button type="button" className="btn" onClick={onDone}>
@@ -253,7 +253,7 @@ function ReleaseCard({
       <h3>{ru.release.notes}</h3>
       {canWrite ? (
         <div className="stack">
-          <textarea rows={3} value={notes} onChange={(e) => setNotesText(e.target.value)} />
+          <textarea aria-label={ru.release.notes} rows={3} value={notes} onChange={(e) => setNotesText(e.target.value)} />
           <div className="row">
             <button type="button" className="btn btn-sm" disabled={setNotes.isPending} onClick={() => setNotes.mutate({ id: r.id, release_notes: notes })}>
               {ru.release.saveNotes}
@@ -280,7 +280,7 @@ function ReleaseCard({
           {r.status === 'planned' && (
             <button
               type="button"
-              className="btn btn-sm btn-primary"
+              className="btn btn-sm"
               disabled={markReady.isPending}
               onClick={() => markReady.mutate(r.id, { onError: () => setShowReadiness(true) })}
             >

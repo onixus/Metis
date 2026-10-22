@@ -1,0 +1,104 @@
+/* TODO(question-48): replace local issue #56 values with @onixus/apex-tokens. */
+:root, :root[data-theme="dark"] {
+  --bg-canvas: #080b11;
+  --bg-sunken: #06090e;
+  --surface-1: #0d131f;
+  --surface-2: #131b2c;
+  --surface-3: #1a253e;
+  --border-subtle: #1e293b;
+  --border-control: #64748b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #8291a7;
+  --accent: #38bdf8;
+  --on-accent: #04121f;
+  --focus-ring: #7dd3fc;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+  --sev-critical: #fb7185;
+  --sev-high: #fb923c;
+  --sev-medium: #facc15;
+  --sev-low: #60a5fa;
+  --sev-info: #94a3b8;
+  --viz-1: #0284c7;
+  --viz-2: #ea580c;
+  --viz-3: #059669;
+  --viz-4: #8b5cf6;
+  --viz-5: #a16207;
+  --viz-6: #db2777;
+  --viz-7: #6366f1;
+  --viz-8: #0d9488;
+}
+:root[data-theme="light"] {
+  --bg-canvas: #f5f7fb;
+  --bg-sunken: #eef2f7;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --border-subtle: #e2e8f0;
+  --border-control: #76859b;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #5b6b80;
+  --accent: #0369a1;
+  --on-accent: #ffffff;
+  --focus-ring: #0284c7;
+  --success: #047857;
+  --warning: #b45309;
+  --danger: #be123c;
+  --sev-critical: #be123c;
+  --sev-high: #c2410c;
+  --sev-medium: #8f5b04;
+  --sev-low: #1d4ed8;
+  --sev-info: #475569;
+  --viz-1: #0284c7;
+  --viz-2: #ea580c;
+  --viz-3: #059669;
+  --viz-4: #7c3aed;
+  --viz-5: #a16207;
+  --viz-6: #db2777;
+  --viz-7: #4f46e5;
+  --viz-8: #0d9488;
+}
+ :root {
+  --bg: var(--bg-canvas); --surface: var(--surface-1); --text: var(--text-primary);
+  --muted: var(--text-secondary); --border: var(--border-subtle);
+  --primary: var(--accent); --primary-text: var(--on-accent);
+  --ok: var(--success); --warn: var(--warning); --info: var(--accent); --hub: var(--viz-5);
+  --success-subtle: var(--surface-2); --warning-subtle: var(--surface-2); --danger-subtle: var(--surface-2);
+  --info-subtle: var(--surface-2); --shadow: #00000040;
+}
+@media print {
+:root, :root[data-theme="dark"], :root[data-theme="light"] {
+  --bg-canvas: #f5f7fb;
+  --bg-sunken: #eef2f7;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --border-subtle: #e2e8f0;
+  --border-control: #76859b;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #5b6b80;
+  --accent: #0369a1;
+  --on-accent: #ffffff;
+  --focus-ring: #0284c7;
+  --success: #047857;
+  --warning: #b45309;
+  --danger: #be123c;
+  --sev-critical: #be123c;
+  --sev-high: #c2410c;
+  --sev-medium: #8f5b04;
+  --sev-low: #1d4ed8;
+  --sev-info: #475569;
+  --viz-1: #0284c7;
+  --viz-2: #ea580c;
+  --viz-3: #059669;
+  --viz-4: #7c3aed;
+  --viz-5: #a16207;
+  --viz-6: #db2777;
+  --viz-7: #4f46e5;
+  --viz-8: #0d9488;
+}
+}

@@ -129,7 +129,7 @@ export function ProductPage() {
                 {features.map((f) => (
                   <tr key={f.id}>
                     <td>{f.name}</td>
-                    <td>{pick(ru.feature.statuses, f.status)}</td>
+                    <td><Badge tone={STATUS_TONE[f.status]}>{pick(ru.feature.statuses, f.status)}</Badge></td>
                     <td className="num">{fmtMoney(f.total_value)}</td>
                     <td>{fmtDate(f.planned_date)}</td>
                     <td>{f.affected ? <Badge tone="danger">{ru.app.yes}</Badge> : ru.app.no}</td>
@@ -375,7 +375,7 @@ function ShiftDateForm({ productId, feature, onClose }: { productId: string; fea
         </div>
       )}
       <div className="row">
-        <button type="submit" className="btn btn-primary" disabled={shift.isPending}>
+        <button type="submit" className="btn" disabled={shift.isPending}>
           {ru.app.save}
         </button>
         <button type="button" className="btn" onClick={onClose}>

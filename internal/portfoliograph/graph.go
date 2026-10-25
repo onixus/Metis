@@ -48,7 +48,7 @@ func (g *Graph) putProduct(p Product)              { c := p; g.products[p.ID] = 
 func (g *Graph) putCapability(c Capability)        { v := c; g.capabilities[c.ID] = &v }
 func (g *Graph) putFeature(f Feature)              { v := f; g.features[f.ID] = &v }
 func (g *Graph) putRequirement(r Requirement)      { v := r; g.requirements[r.ID] = &v }
-func (g *Graph) putContract(c IntegrationContract) { v := c; g.contracts[c.ID] = &v }
+func (g *Graph) putContract(c IntegrationContract) { v := kernel.CloneValue(c); g.contracts[c.ID] = &v }
 
 func (g *Graph) putLink(l Link) {
 	v := l
@@ -279,38 +279,40 @@ func (g *Graph) linkCriticality(from, to kernel.ID) Criticality {
 }
 
 // PropagateShift находит фичи, затронутые сдвигом даты поставщика (PG-08).
-// Затронуты все транзитивные потребители; ImpliedDate = max(своя дата, новая дата поставщика).
+// Затронуты все транзитивные потребители; ImpliedDate — максимум текущего плана
+// и эффективных дат всех поставщиков, включая ограничения источника.
 func (g *Graph) PropagateShift(source kernel.ID, newDate kernel.Date) []AffectedFeature {
-	type item struct {
-		id    kernel.ID
-		via   kernel.ID
-		depth int
-	}
-	seen := map[kernel.ID]bool{source: true}
-	queue := []item{}
-	for _, c := range g.in[source] {
-		queue = append(queue, item{id: c, via: source, depth: 1})
-	}
-	var out []AffectedFeature
+	// Discover the affected subgraph, then evaluate suppliers before consumers.
+	depth := map[kernel.ID]int{source: 0}
+	parent := map[kernel.ID]kernel.ID{}
+	queue := []kernel.ID{source}
 	for len(queue) > 0 {
 		cur := queue[0]
 		queue = queue[1:]
-		if seen[cur.id] {
-			continue
-		}
-		seen[cur.id] = true
-		f := g.features[cur.id]
-		if f == nil {
-			continue
-		}
-		implied := kernel.MaxDate(f.PlannedDate, newDate)
-		out = append(out, AffectedFeature{
-			FeatureID: f.ID, ProductID: f.ProductID, PlannedDate: f.PlannedDate, ImpliedDate: implied, ViaFeature: cur.via, Depth: cur.depth,
-		})
-		for _, c := range g.in[cur.id] {
-			queue = append(queue, item{id: c, via: cur.id, depth: cur.depth + 1})
+		for _, consumer := range g.in[cur] {
+			if _, ok := depth[consumer]; !ok {
+				depth[consumer] = depth[cur] + 1
+				parent[consumer] = cur
+				queue = append(queue, consumer)
+			}
 		}
 	}
+	effective, via, err := g.effectiveDates(source, newDate)
+	if err != nil {
+		return nil
+	}
+	out := make([]AffectedFeature, 0, len(depth)-1)
+	for id, d := range depth {
+		if id == source {
+			continue
+		}
+		f := g.features[id]
+		if via[id] == kernel.NilID {
+			via[id] = parent[id]
+		}
+		out = append(out, AffectedFeature{FeatureID: id, ProductID: f.ProductID, PlannedDate: f.PlannedDate, ImpliedDate: effective[id], ViaFeature: via[id], Depth: d})
+	}
+
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Depth != out[j].Depth {
 			return out[i].Depth < out[j].Depth
@@ -318,6 +320,33 @@ func (g *Graph) PropagateShift(source kernel.ID, newDate kernel.Date) []Affected
 		return out[i].FeatureID.String() < out[j].FeatureID.String()
 	})
 	return out
+}
+
+// effectiveDates derives dependency constraints from current plans, never from a
+// previous propagation result. This lets an earlier supplier date release delays.
+func (g *Graph) effectiveDates(source kernel.ID, newDate kernel.Date) (map[kernel.ID]kernel.Date, map[kernel.ID]kernel.ID, error) {
+	order, err := g.topoOrder()
+	if err != nil {
+		return nil, nil, err
+	}
+	effective := make(map[kernel.ID]kernel.Date, len(g.features))
+	via := make(map[kernel.ID]kernel.ID, len(g.features))
+	for i := len(order) - 1; i >= 0; i-- {
+		id := order[i]
+		date := g.features[id].PlannedDate
+		if id == source {
+			date = newDate
+		}
+		for _, supplier := range g.out[id] {
+			candidate := effective[supplier]
+			if candidate.After(date) {
+				date = candidate
+				via[id] = supplier
+			}
+		}
+		effective[id] = date
+	}
+	return effective, via, nil
 }
 
 // ContractReadyDate — срок готовности контракта: максимум сроков его фич на обеих сторонах (ТЗ 2.4).
@@ -381,5 +410,22 @@ func (g *Graph) LinkedProducts(id kernel.ID) []kernel.ID {
 		out = append(out, p)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].String() < out[j].String() })
+	return out
+}
+
+func (g *Graph) cloneWithoutContract(id kernel.ID) *Graph {
+	out := NewGraph()
+	out.settings = g.settings
+	for _, p := range g.products {
+		out.putProduct(*p)
+	}
+	for _, f := range g.features {
+		out.putFeature(*f)
+	}
+	for _, l := range g.links {
+		if l.ContractID != id {
+			out.putLink(*l)
+		}
+	}
 	return out
 }

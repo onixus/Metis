@@ -379,3 +379,32 @@ func fromDate(d pgtype.Date) kernel.Date {
 	}
 	return kernel.DateFromTime(time.Date(d.Time.Year(), d.Time.Month(), d.Time.Day(), 0, 0, 0, 0, time.UTC))
 }
+
+// ReplaceContract commits the contract and its generated dependencies together.
+func (s *PG) ReplaceContract(ctx context.Context, sc authz.Scope, c portfoliograph.IntegrationContract, links []portfoliograph.Link) error {
+	if err := portfoliograph.ValidateContractReplacement(sc, c, links); err != nil {
+		return err
+	}
+	return s.db.Transact(ctx, func(ctx context.Context) error {
+		if err := s.SaveContract(ctx, sc, c); err != nil {
+			return err
+		}
+		old, err := s.q(ctx).ListLinks(ctx)
+		if err != nil {
+			return fmt.Errorf("contract links: %w", err)
+		}
+		for _, l := range old {
+			if l.ContractID.Valid && l.ContractID.UUID == c.ID {
+				if err := s.DeleteLink(ctx, sc, l.ID); err != nil {
+					return err
+				}
+			}
+		}
+		for _, l := range links {
+			if err := s.SaveLink(ctx, sc, l); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}

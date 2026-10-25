@@ -410,11 +410,16 @@ func TestPG08_ShiftPropagatesToDependentsAndContract(t *testing.T) {
 	if _, err := f.svc.ShiftFeatureDate(f.ctx, f.cpo, conn, d(2027, 1, 1), ""); !errors.Is(err, kernel.ErrValidation) {
 		t.Fatalf("без причины — ошибка: %v", err)
 	}
-	// Сдвиг раньше не помечает зависимые.
-	res, _ = f.svc.ShiftFeatureDate(f.ctx, f.cpo, conn, d(2026, 10, 1), "ускорили")
-	if len(res.Affected) != 0 {
-		t.Fatal("сдвиг раньше не затрагивает зависимые")
+	// Earlier supplier completion releases stale dependent constraints (PG-08).
+	res, err = f.svc.ShiftFeatureDate(f.ctx, f.cpo, conn, d(2026, 10, 1), "ускорили")
+	if err != nil || len(res.Affected) != 1 || res.Affected[0].ImpliedDate != d(2026, 11, 1) {
+		t.Fatalf("earlier shift: %+v %v", res, err)
 	}
+	apiF, err = f.svc.Feature(f.ctx, f.cpo, api)
+	if err != nil || apiF.Affected || !apiF.ImpliedDate.IsZero() || apiF.AffectedBy != kernel.NilID {
+		t.Fatalf("stale dependent warning: %+v %v", apiF, err)
+	}
+
 }
 
 func TestPG08_ShiftPropagatesTransitively(t *testing.T) {

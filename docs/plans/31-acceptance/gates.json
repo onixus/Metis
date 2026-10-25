@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-25",
+  "base_commit": "41acf6905f2e11ac35cb59a36e83e3ad31913f84",
+  "branch": "codex/portfolio-graph-completion",
+  "checks": {
+    "go-race-integration": {
+      "result": "PASS",
+      "log_sha256": "b42f3f5be0902713306d14f0954d75866c5f6259a0c8a501ce183cbd53ce6b2a",
+      "raw_log_sha256": "b42f3f5be0902713306d14f0954d75866c5f6259a0c8a501ce183cbd53ce6b2a"
+    },
+    "go-vet": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "go-lint": {
+      "result": "PASS",
+      "log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47",
+      "raw_log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47"
+    },
+    "go-build": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "web-lint": {
+      "result": "PASS",
+      "log_sha256": "9e10bda535322c54540d22df8e7c5890c3dda4105da79047b07d80b39db1af68",
+      "raw_log_sha256": "dcd9583afe60055dee95b5c471f931627a1abfb30222ddcad615b153cfcf6b3e"
+    },
+    "web-typecheck": {
+      "result": "PASS",
+      "log_sha256": "ff631680aa36c4970ca9f93809f7b23b30e1a3885782957f2518a4ad9d03beb4",
+      "raw_log_sha256": "c2ba0b89e3f74389666056715710c2d30ac1bc604e97e1a88a09b33cb3b947ee"
+    },
+    "web-tests": {
+      "result": "PASS",
+      "log_sha256": "c030d71d1797cb87b70b4afb2b1bb5a990e523be9e2642ce37a0a328cb0637ca",
+      "raw_log_sha256": "c030d71d1797cb87b70b4afb2b1bb5a990e523be9e2642ce37a0a328cb0637ca"
+    },
+    "web-build": {
+      "result": "PASS",
+      "log_sha256": "58578696ac67ec80d6f613fcba0bcd9a4d48f4b6e60cdd4db9a66e7b2c85c2ee",
+      "raw_log_sha256": "97d190d0ccb8bac571f6bee549a695d9f7eda58c828bc0ad5df4b0a51bba031f"
+    },
+    "go-licenses": {
+      "result": "PASS",
+      "log_sha256": "73d45980e3ef281ed9f6378350c6298c2e39e84dc1a59e570b543ee637fdfc76",
+      "raw_log_sha256": "73d45980e3ef281ed9f6378350c6298c2e39e84dc1a59e570b543ee637fdfc76"
+    },
+    "gitleaks": {
+      "result": "PASS",
+      "log_sha256": "f1f2a418b57e2247db0f97b729858133468c841c25eed806877df23b2fc3c14b",
+      "raw_log_sha256": "f1f2a418b57e2247db0f97b729858133468c841c25eed806877df23b2fc3c14b"
+    },
+    "gitleaks-working-tree": {
+      "result": "PASS",
+      "log_sha256": "f3c64965566c2f3bc091059f35886febe7b31427c6b4fe9d75046cd83c4af00a",
+      "raw_log_sha256": "f3c64965566c2f3bc091059f35886febe7b31427c6b4fe9d75046cd83c4af00a"
+    },
+    "generation": {
+      "result": "PASS",
+      "log_sha256": "1af1adb1ba9c76deb37c6621bbdb04e8600e1d09560d6077d3760b908c4bcdf3",
+      "raw_log_sha256": "1af1adb1ba9c76deb37c6621bbdb04e8600e1d09560d6077d3760b908c4bcdf3"
+    }
+  },
+  "go_exit_codes": {
+    "race-integration": 0,
+    "vet": 0,
+    "lint": 0,
+    "build": 0
+  },
+  "web_exit_codes": {
+    "lint": 0,
+    "typecheck": 0,
+    "tests": 0,
+    "build": 0
+  },
+  "generation": {
+    "exit_code": 0,
+    "files": 40,
+    "changed": []
+  },
+  "source_sha256": {
+    "api/openapi.yaml": "e18a96d1f50c45d6d5c0dc725a5435ec9b6cb5a440ba73afd33f8ef37614bc84",
+    "internal/httpapi/gen/server.gen.go": "8141957e1f2087a7aed64421eb48c36d9c8b3fbaa78184950c3d10e29e07401d",
+    "internal/httpapi/graph_handlers.go": "25a5111025e4e64e4d683fd0ac39119602693ada19ad891ef00fa06505da4521",
+    "internal/httpapi/hierarchy_test.go": "4edff5bda4e593539c9b0ec523f4d163d975bbc501dede325b6200900d377a4a",
+    "internal/portfoliograph/completion_test.go": "54fa6ac4716b5733533f3661e9094f34ac8f55a7f2e7e124611e552409f840b9",
+    "internal/portfoliograph/graph.go": "39f8e49949d1c357bc1ab5e1b4a7a8acd4b898aaf9ea083ba091103a03172d1f",
+    "internal/portfoliograph/hierarchy.go": "e0fc724f4f91fb57287f807b284841c777a8a21e81aa0940a59c5c7fba3ffc65",
+    "internal/portfoliograph/internal/pgstore/pg.go": "fd31e0d249513bc70853f5ce72ce2c9a928ba51da563d0cc0d4996c0d539930b",
+    "internal/portfoliograph/model.go": "ff25febf63c7f2495fa4466ee85f28ae696c9828fb5ce9435fcdf94e6579d789",
+    "internal/portfoliograph/pgstore/pg_integration_test.go": "5d1923083d0c211ef05e43e80589ab43e71b106b2cf16631eccc4fc5c8691956",
+    "internal/portfoliograph/portfoliograph_test.go": "00680210bf264b6ede75511cc1b8cda1d45e023cb69a088bfff2b8c2d23b2479",
+    "internal/portfoliograph/service.go": "4a3c6018971c05196d02b160784e9130f3e5a8141f2d7c8ae2f0efe829c6e528",
+    "internal/portfoliograph/store.go": "5d57f6ad1234974e6dfe0a215bfdaa081e206217ce2dfdd609429fe73b37386a",
+    "tests/e2e/client/client.gen.go": "2db72733c25c51ec40323a130091833d2fdfd11a5462f45d709c69f73b082430",
+    "web/package.json": "04ad40c73c143aae58d1e18c4229c3ecb61e4ad2fe0738a38acd3cb05995e982",
+    "web/scripts/acceptance-graph31.cjs": "ff8271990846e5546d73e7a57f1679a74718f75a31a5660ef9f29905d7631cd9",
+    "web/scripts/acceptance-portfolio31.cjs": "51352e928f2b0a6dfcbd476fd68fed08320dfd71a81e36cda0fbc91e96cad403",
+    "web/src/api/hooks.ts": "670aec4f4631c94acdef0b5591ba5aaa65ca3bbd4e4720cead3de5a4be3b5d3a",
+    "web/src/api/portfolio.ts": "8758be42a245eb21554ace879f1856e4fe8febf7bb32ea6eb73c112ef616dd49",
+    "web/src/api/schema.d.ts": "a79d9c21ce670795790f6410ef7d8c3a5eda5da309219eb6fafeebaf31fcb522",
+    "web/src/components/ContractsPanel.tsx": "52f7dd3b6d6d4c2fd26e4109cb7d857214c20c5dc471840723ba7d737c6e06cf",
+    "web/src/components/FeatureEditor.tsx": "0f8ea9d7ada36f349f61335c6d2826842b69b0494b935d9cf681b94f65ea0ed3",
+    "web/src/components/Layout.tsx": "0e3d0400f7f381f9005919a004d71d0d5e27ed99bfc0c6c69c4df48c3b51c995",
+    "web/src/components/ProductHierarchy.tsx": "6a7f88a7bc5740e3d0d33568a7b216fa6c5c595f46c471395d6aacae2170acfd",
+    "web/src/i18n/ru.ts": "a9b39ed265c1880933bdfe612d3169d696f26c839b0da9745168e43f21b8de38",
+    "web/src/lib/graph.test.ts": "946bacc9d6f682e0b546825b313a387aeab60d785146f780fa13d136292cb4a2",
+    "web/src/lib/graph.ts": "3edd69eb5e426bd0ca21610b1fc09f8631beecd25ffb35848a08935c188e071f",
+    "web/src/lib/portfolio.test.ts": "47ebd5ae3b107c90a0bc9986b8d471a8b2c2c62366455a0164e2d3bc8c240bd4",
+    "web/src/lib/portfolio.ts": "b6f99e04c693a3a4a094b54aa436f52759c49b15ca0d1270d188edf0943d7480",
+    "web/src/pages/GraphPage.tsx": "0f563befdbe4e75196ea29a0942adba13bbcd72c715ff85c9626123b7af0a976",
+    "web/src/pages/PortfolioPage.tsx": "b315fce9961c4ff2aea52ff48c9ab611554066a535b7f382e9664ed200238cdc",
+    "web/src/pages/ProductBuilderPage.tsx": "609a4a2607d9d2b6f7d008e850dd5040dc197bb21bb0d87736fe3b01a1c5e353",
+    "web/src/pages/ProductPage.tsx": "e694a561bc3a53f1f8cd04ceb391842d83e657978908de66c48f7e49016a38cc",
+    "web/src/pages/ProductsPage.tsx": "ef91d520a4cb9f423dd0c2e0e2a834372072d4f8f7eb0251a4ca77c422c3c974"
+  },
+  "not_run": [
+    "updated govulncheck",
+    "remote CI at packaging time",
+    "external OIDC/Atlassian",
+    "human review",
+    "merge/deployment"
+  ],
+  "log_format": "Stored logs normalize trailing whitespace and blank EOF lines; raw_log_sha256 preserves original console bytes."
+}

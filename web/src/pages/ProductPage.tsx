@@ -13,6 +13,8 @@ import {
   useStrategic,
 } from '../api/hooks'
 import type { Contract, Feature, FeatureValue, Me } from '../api/types'
+import { ContractsPanel } from '../components/ContractsPanel'
+import { ProductHierarchy } from '../components/ProductHierarchy'
 import { FeatureEditor } from '../components/FeatureEditor'
 import { SignalsPanel } from '../components/SignalsPanel'
 import { FeatureDetails } from '../components/FeatureDetails'
@@ -40,6 +42,7 @@ export function ProductPage() {
   const del = useDeleteProduct()
   const navigate = useNavigate()
   const [deleteError, setDeleteError] = useState('')
+  const canEdit = canWriteRoadmap(me.data, level)
   const canManage = (me.data?.roles ?? []).some((r) => r === 'cpo' || r === 'admin')
 
   if (me.isPending || strategic.isPending) return <Loading />
@@ -76,11 +79,9 @@ export function ProductPage() {
           <Link className="btn" to={`/products/${id}/decisions`}>
             {ru.productLinks.decisions}
           </Link>
+          {canEdit && <Link className="btn" to={`/products/${id}/edit`}>{ru.product.edit}</Link>}
           {canManage && (
             <>
-              <Link className="btn" to={`/products/${id}/edit`}>
-                {ru.product.edit}
-              </Link>
               <button
                 type="button"
                 className="btn btn-danger"
@@ -139,9 +140,10 @@ export function ProductPage() {
             </table>
           </div>
         )}
-        <h3>{ru.productPage.contracts}</h3>
-        <ContractsTable contracts={contracts} />
+
       </div>
+
+      <ContractsPanel productId={id} />
 
       {isPrivate ? (
         <>
@@ -151,6 +153,7 @@ export function ProductPage() {
             <a className="btn" href="#ranking">{ru.workflow.rankingStep}</a>
             <Link className="btn" to={`/products/${id}/roadmap`}>{ru.workflow.roadmapStep}</Link>
           </nav>
+          <ProductHierarchy productId={id} canWrite={canEdit} />
           <Backlog productId={id} me={me.data} />
           <RankingBlock productId={id} />
           <SignalsPanel productId={id} me={me.data} />
@@ -340,6 +343,8 @@ function FeatureRows({ expanded, details, children }: { expanded: boolean; detai
 
 function ShiftDateForm({ productId, feature, onClose }: { productId: string; feature: Feature; onClose: () => void }) {
   const shift = useShiftDate(productId)
+  const products = useProducts()
+  const features = useFeatures(productId)
   const [date, setDate] = useState(feature.planned_date ?? '')
   const [reason, setReason] = useState('')
   const [validation, setValidation] = useState<string | null>(null)
@@ -360,18 +365,24 @@ function ShiftDateForm({ productId, feature, onClose }: { productId: string; fea
       <div className="row">
         <label className="field">
           <span>{ru.feature.newDate}</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          <input type="date" value={date} onChange={(e) => { setDate(e.target.value); shift.reset() }} required />
         </label>
         <label className="field grow">
           <span>{ru.feature.reason}</span>
-          <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} required />
+          <input type="text" value={reason} onChange={(e) => { setReason(e.target.value); shift.reset() }} required />
         </label>
       </div>
       {validation && <div className="alert alert-error">{validation}</div>}
       {shift.isError && <div className="alert alert-error">{errorMessage(shift.error)}</div>}
       {shift.isSuccess && (
         <div className="alert alert-ok">
-          {ru.feature.shiftDone(shift.data.affected.length, shift.data.contracts.length)}
+          <p>{ru.feature.shiftDone(shift.data.affected.length, shift.data.contracts.length)}</p>
+          {shift.data.affected.length > 0 && <ul>{shift.data.affected.map(affected => <li key={affected.feature_id}>
+            <Link to={`/products/${affected.product_id}`}>{products.data?.find(product => product.id === affected.product_id)?.name ?? affected.product_id}</Link>
+            {' · '}{features.data?.find(item => item.id === affected.feature_id)?.name ?? affected.feature_id}
+            {' · '}план: {fmtDate(affected.planned_date)}; не раньше: {fmtDate(affected.implied_date)}
+          </li>)}</ul>}
+          {shift.data.commitments.length > 0 && <><p>Затронутые обязательства</p><ul>{shift.data.commitments.map(commitmentId => <li key={commitmentId}><Link to={`/trace/commitment/${commitmentId}`}>{commitmentId}</Link></li>)}</ul></>}
         </div>
       )}
       <div className="row">

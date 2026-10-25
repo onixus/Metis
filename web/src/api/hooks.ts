@@ -145,7 +145,7 @@ export function useTriageQueue(id: string, enabled = true) {
   })
 }
 
-export function useShiftDate(productId: string) {
+export function useShiftDate(_productId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { featureId: string; planned_date: string; reason: string }) =>
@@ -156,8 +156,8 @@ export function useShiftDate(productId: string) {
         }),
       ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: keys.features(productId) })
-      void qc.invalidateQueries({ queryKey: keys.strategic(productId) })
+      // A shift propagates beyond the origin product; graph and strategic projections must refetch too.
+      void qc.invalidateQueries({ queryKey: keys.products })
       void qc.invalidateQueries({ queryKey: keys.contracts })
     },
   })
@@ -282,11 +282,13 @@ export interface GraphFeature {
 export interface ExpandedFeatures {
   data: GraphFeature[] | undefined
   isPending: boolean
+  error: unknown
+  refetch: () => unknown
 }
 
 /** Стабильная функция combine: результат мемоизируется TanStack, пока данные запросов не меняются. */
-const combineExpanded = (results: { data: GraphFeature[] | undefined; isPending: boolean }[]): ExpandedFeatures[] =>
-  results.map((r) => ({ data: r.data, isPending: r.isPending }))
+const combineExpanded = (results: { data: GraphFeature[] | undefined; isPending: boolean; error: unknown; refetch: () => unknown }[]): ExpandedFeatures[] =>
+  results.map((r) => ({ data: r.data, isPending: r.isPending, error: r.error, refetch: r.refetch }))
 
 export function useExpandedFeatures(ids: string[]) {
   return useQueries({

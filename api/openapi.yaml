@@ -132,6 +132,19 @@ paths:
   /products/{productId}/capabilities:
     parameters:
       - $ref: "#/components/parameters/productId"
+    get:
+      tags: [features]
+      operationId: listCapabilities
+      summary: Прочитать иерархию продукта (PG-02)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Capability" }
+        default: { $ref: "#/components/responses/Problem" }
     post:
       tags: [features]
       operationId: createCapability
@@ -233,6 +246,19 @@ paths:
   /features/{featureId}/requirements:
     parameters:
       - $ref: "#/components/parameters/featureId"
+    get:
+      tags: [features]
+      operationId: listRequirements
+      summary: Прочитать иерархию продукта (PG-02)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Requirement" }
+        default: { $ref: "#/components/responses/Problem" }
     post:
       tags: [features]
       operationId: createRequirement

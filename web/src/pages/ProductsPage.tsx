@@ -22,6 +22,7 @@ export function ProductsPage() {
       <div className="page-head">
         <h1>{ru.products.title}</h1>
         <span className="muted">{ru.products.count(list.length)}</span>
+        <Link className="btn btn-sm" to="/portfolio">Обзор портфеля</Link>
         {canCreate && (
           <Link className="btn btn-primary btn-sm" to="/products/new">
             {ru.products.create}

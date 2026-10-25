@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-25",
+  "postgres": "16.14 UTF8 en_US.UTF-8, isolated loopback, non-owner metis_app runtime",
+  "checks": {
+    "go-race-integration": {
+      "result": "PASS",
+      "log_sha256": "44b3da4af0d468edfd83b5d262d6b6887542bafabbd531f4bd6e0d62d3068d15"
+    },
+    "go-lint": {
+      "result": "PASS",
+      "log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47"
+    },
+    "go-vet": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "go-build": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "web-lint": {
+      "result": "PASS",
+      "log_sha256": "dcd9583afe60055dee95b5c471f931627a1abfb30222ddcad615b153cfcf6b3e"
+    },
+    "web-typecheck": {
+      "result": "PASS",
+      "log_sha256": "c2ba0b89e3f74389666056715710c2d30ac1bc604e97e1a88a09b33cb3b947ee"
+    },
+    "web-tests": {
+      "result": "PASS",
+      "log_sha256": "76130831fa1228b75cd91d7b14e7c5f8807628e1046fe38c2fa8623ae67f6b26"
+    },
+    "web-build": {
+      "result": "PASS",
+      "log_sha256": "4844d41ae8509faaf1f9396e37c0e297bcee7a5e3812078e183268d48c7515d6"
+    },
+    "go-licenses": {
+      "result": "PASS",
+      "log_sha256": "6c375c2b2e70b178167674e2099fefdff688b445fdccc7114e18c8a27a89cf02"
+    },
+    "web-licenses": {
+      "result": "PASS",
+      "log_sha256": "3b4c9721bde73a75f8bd49bfdfbf4cd17d3565f61bd360a6e3fecb40aae3ab69"
+    },
+    "gitleaks": {
+      "result": "PASS",
+      "log_sha256": "506d4b897cd255ca760e2b6d4576a9b8cbca48d68af2fe40eeba67c813542632"
+    },
+    "generation": {
+      "result": "PASS",
+      "log_sha256": "25c7f58632410cdaa2c45bacd2c0dae02e6dd9dc1b7091f0049c031c321cda4f"
+    }
+  },
+  "generation": {
+    "files": 40,
+    "changed": []
+  },
+  "source_sha256": {
+    "api/openapi.yaml": "1e2d7d980b7a318bd239eb7575d2817b49884471b17528a175fd9cf3defd76c8",
+    "internal/httpapi/graph_handlers.go": "25a5111025e4e64e4d683fd0ac39119602693ada19ad891ef00fa06505da4521",
+    "internal/httpapi/hierarchy_test.go": "4edff5bda4e593539c9b0ec523f4d163d975bbc501dede325b6200900d377a4a",
+    "internal/portfoliograph/graph.go": "39f8e49949d1c357bc1ab5e1b4a7a8acd4b898aaf9ea083ba091103a03172d1f",
+    "internal/portfoliograph/service.go": "4a3c6018971c05196d02b160784e9130f3e5a8141f2d7c8ae2f0efe829c6e528",
+    "internal/portfoliograph/store.go": "5d57f6ad1234974e6dfe0a215bfdaa081e206217ce2dfdd609429fe73b37386a",
+    "internal/portfoliograph/hierarchy.go": "e0fc724f4f91fb57287f807b284841c777a8a21e81aa0940a59c5c7fba3ffc65",
+    "internal/portfoliograph/internal/pgstore/pg.go": "fd31e0d249513bc70853f5ce72ce2c9a928ba51da563d0cc0d4996c0d539930b",
+    "internal/portfoliograph/completion_test.go": "54fa6ac4716b5733533f3661e9094f34ac8f55a7f2e7e124611e552409f840b9",
+    "internal/portfoliograph/pgstore/pg_integration_test.go": "5d1923083d0c211ef05e43e80589ab43e71b106b2cf16631eccc4fc5c8691956",
+    "web/src/pages/PortfolioPage.tsx": "b315fce9961c4ff2aea52ff48c9ab611554066a535b7f382e9664ed200238cdc",
+    "web/src/pages/GraphPage.tsx": "0f563befdbe4e75196ea29a0942adba13bbcd72c715ff85c9626123b7af0a976",
+    "web/src/pages/ProductPage.tsx": "e694a561bc3a53f1f8cd04ceb391842d83e657978908de66c48f7e49016a38cc",
+    "web/src/pages/ProductBuilderPage.tsx": "609a4a2607d9d2b6f7d008e850dd5040dc197bb21bb0d87736fe3b01a1c5e353",
+    "web/src/components/ContractsPanel.tsx": "52f7dd3b6d6d4c2fd26e4109cb7d857214c20c5dc471840723ba7d737c6e06cf",
+    "web/src/components/ProductHierarchy.tsx": "6a7f88a7bc5740e3d0d33568a7b216fa6c5c595f46c471395d6aacae2170acfd",
+    "web/src/components/FeatureEditor.tsx": "0f8ea9d7ada36f349f61335c6d2826842b69b0494b935d9cf681b94f65ea0ed3",
+    "web/src/api/hooks.ts": "670aec4f4631c94acdef0b5591ba5aaa65ca3bbd4e4720cead3de5a4be3b5d3a",
+    "web/src/api/portfolio.ts": "8758be42a245eb21554ace879f1856e4fe8febf7bb32ea6eb73c112ef616dd49",
+    "web/src/lib/graph.ts": "3edd69eb5e426bd0ca21610b1fc09f8631beecd25ffb35848a08935c188e071f",
+    "web/src/lib/graph.test.ts": "946bacc9d6f682e0b546825b313a387aeab60d785146f780fa13d136292cb4a2",
+    "web/src/lib/portfolio.ts": "b6f99e04c693a3a4a094b54aa436f52759c49b15ca0d1270d188edf0943d7480",
+    "web/src/lib/portfolio.test.ts": "47ebd5ae3b107c90a0bc9986b8d471a8b2c2c62366455a0164e2d3bc8c240bd4",
+    "web/scripts/acceptance-graph28.cjs": "9942002cb890987230ef4b4348d2c72d96850148facbae1686648b18ad7f1c37",
+    "web/scripts/acceptance-portfolio28.cjs": "5cd0209e44441651474371f8c861ce1636c1c6a0b77010b9aabf22f018c19b2e"
+  },
+  "not_run": [
+    "remote CI",
+    "updated govulncheck (AGENTS registry-only network)",
+    "external OIDC/Atlassian",
+    "human review",
+    "publication/merge/deployment"
+  ]
+}

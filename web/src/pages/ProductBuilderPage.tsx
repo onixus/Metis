@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useCreateFeature, useCreateLink, useCreateProduct, useMe, useProduct, useProducts, useUpdateProduct, type ProductInput } from '../api/hooks'
+import { accessLevel, useCreateFeature, useCreateLink, useCreateProduct, useMe, useProduct, useProducts, useUpdateProduct, type ProductInput } from '../api/hooks'
 import { errorMessage } from '../api/client'
 import type { Criticality, Lifecycle, LinkType, Product } from '../api/types'
 import { ErrorBox, Loading } from '../components/Status'
+import { canWriteRoadmap } from '../lib/roles'
 import { ru } from '../i18n/ru'
 
-type Kind = 'product' | 'platform'
 type ProductType = ProductInput['type']
 
 const TYPES: ProductType[] = ['security', 'infrastructure', 'platform', 'other']
@@ -27,8 +27,7 @@ interface LinkDraft {
   criticality: Criticality
 }
 
-let seq = 0
-const nextId = () => `d${++seq}`
+const nextId = () => crypto.randomUUID()
 
 export function ProductBuilderPage() {
   const { id: editId = '' } = useParams()
@@ -41,12 +40,13 @@ export function ProductBuilderPage() {
   if (me.isPending || products.isPending || (editing && existing.isPending)) return <Loading />
   if (products.isError) return <ErrorBox error={products.error} onRetry={() => void products.refetch()} />
   if (editing && existing.isError) return <ErrorBox error={existing.error} onRetry={() => void existing.refetch()} />
-  if (!canCreate) return <p className="muted">{ru.builder.forbidden}</p>
+  const canEdit = editing && canWriteRoadmap(me.data, accessLevel(me.data, editId))
+  if (!canCreate && !canEdit) return <p className="muted">{ru.builder.forbidden}</p>
   // key перезапускает форму при смене продукта, поэтому состояние инициализируется из initial без эффектов.
-  return <BuilderForm key={editId || 'new'} editId={editId} initial={editing ? existing.data : undefined} products={products.data} />
+  return <BuilderForm key={editId || 'new'} editId={editId} initial={editing ? existing.data : undefined} products={products.data} canAssignHub={canCreate} />
 }
 
-function BuilderForm({ editId, initial, products }: { editId: string; initial: Product | undefined; products: Product[] }) {
+function BuilderForm({ editId, initial, products, canAssignHub }: { editId: string; initial: Product | undefined; products: Product[]; canAssignHub: boolean }) {
   const editing = editId !== ''
   const createProduct = useCreateProduct()
   const updateProduct = useUpdateProduct()
@@ -54,7 +54,6 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
   const createLink = useCreateLink()
   const navigate = useNavigate()
 
-  const [kind, setKind] = useState<Kind>(initial?.type === 'platform' && initial.hub_manual ? 'platform' : 'product')
   const [key, setKey] = useState(initial?.key ?? '')
   const [name, setName] = useState(initial?.name ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
@@ -69,8 +68,8 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
   const [busy, setBusy] = useState(false)
   const [created, setCreated] = useState<Product | null>(null)
 
-  const effectiveType: ProductType = kind === 'platform' ? 'platform' : type
-  const effectiveHub = kind === 'platform' ? true : hub
+  const effectiveType = type
+  const effectiveHub = hub
 
   const validate = (): string[] => {
     const out: string[] = []
@@ -180,16 +179,7 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
       >
         <div className="card stack">
           <h2>{ru.builder.section.product}</h2>
-          <fieldset className="filter-group">
-            <legend>{ru.builder.kind}</legend>
-            <label className="check">
-              <input type="radio" name="kind" checked={kind === 'product'} onChange={() => setKind('product')} /> {ru.builder.kindProduct}
-            </label>
-            <label className="check">
-              <input type="radio" name="kind" checked={kind === 'platform'} onChange={() => setKind('platform')} /> {ru.builder.kindPlatform}
-            </label>
-          </fieldset>
-          {kind === 'platform' && <p className="muted">{ru.builder.kindHint}</p>}
+          <p className="muted">Хаб — роль продукта в портфеле. Она не меняет его тип; хабом может быть любой продукт.</p>
           <label className="field">
             <span>Назначение, границы и источники</span>
             <textarea rows={8} maxLength={12000} value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -206,7 +196,7 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
             </label>
             <label className="field">
               <span>{ru.product.type}</span>
-              <select value={effectiveType} disabled={kind === 'platform'} onChange={(e) => setType(e.target.value as ProductType)}>
+              <select value={effectiveType} onChange={(e) => setType(e.target.value as ProductType)}>
                 {TYPES.map((t) => (
                   <option key={t} value={t}>
                     {ru.product.types[t]}
@@ -234,7 +224,7 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
                 <input type="checkbox" checked={ssdlc} onChange={(e) => setSsdlc(e.target.checked)} /> {ru.builder.ssdlcCertified}
               </label>
               <label className="check">
-                <input type="checkbox" checked={effectiveHub} disabled={kind === 'platform'} onChange={(e) => setHub(e.target.checked)} /> {ru.builder.hubManual}
+                <input type="checkbox" checked={effectiveHub} disabled={!canAssignHub} onChange={(e) => setHub(e.target.checked)} /> {ru.builder.hubManual}
               </label>
             </div>
           </div>
@@ -324,7 +314,7 @@ function BuilderForm({ editId, initial, products }: { editId: string; initial: P
               onClick={() =>
                 setLinks({
                   ...links,
-                  [nextId()]: { peer: '', direction: kind === 'platform' ? 'provider' : 'consumer', type: 'integration', criticality: 'blocks' },
+                  [nextId()]: { peer: '', direction: hub ? 'provider' : 'consumer', type: 'integration', criticality: 'blocks' },
                 })
               }
             >

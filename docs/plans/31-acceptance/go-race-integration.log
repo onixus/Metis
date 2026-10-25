@@ -1,0 +1,78 @@
+?   	github.com/onixus/metis/api	[no test files]
+?   	github.com/onixus/metis/cmd/api	[no test files]
+ok  	github.com/onixus/metis/cmd/dev-token	4.637s
+?   	github.com/onixus/metis/cmd/migrate	[no test files]
+?   	github.com/onixus/metis/cmd/worker	[no test files]
+?   	github.com/onixus/metis/db	[no test files]
+ok  	github.com/onixus/metis/internal/adapters/bitrix	1.850s
+ok  	github.com/onixus/metis/internal/adapters/confluence	2.954s
+ok  	github.com/onixus/metis/internal/adapters/crmfile	3.161s
+ok  	github.com/onixus/metis/internal/adapters/financefile	3.582s
+ok  	github.com/onixus/metis/internal/adapters/financexlsx	2.424s
+ok  	github.com/onixus/metis/internal/adapters/jira	5.016s
+ok  	github.com/onixus/metis/internal/adapters/onec	3.994s
+?   	github.com/onixus/metis/internal/adapters/securityfile	[no test files]
+ok  	github.com/onixus/metis/internal/analytics	4.276s
+ok  	github.com/onixus/metis/internal/app	9.928s
+ok  	github.com/onixus/metis/internal/architecture	4.585s
+ok  	github.com/onixus/metis/internal/audit	4.119s
+?   	github.com/onixus/metis/internal/audit/internal/db	[no test files]
+?   	github.com/onixus/metis/internal/audit/internal/store	[no test files]
+ok  	github.com/onixus/metis/internal/audit/pgstore	5.445s
+ok  	github.com/onixus/metis/internal/commitments	5.880s
+?   	github.com/onixus/metis/internal/commitments/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/commitments/pgstore	6.959s
+ok  	github.com/onixus/metis/internal/compliance	6.465s
+?   	github.com/onixus/metis/internal/compliance/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/compliance/pgstore	6.124s
+ok  	github.com/onixus/metis/internal/decisions	7.286s
+?   	github.com/onixus/metis/internal/decisions/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/decisions/pgstore	8.000s
+ok  	github.com/onixus/metis/internal/delivery	8.065s
+?   	github.com/onixus/metis/internal/delivery/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/delivery/pgstore	8.624s
+ok  	github.com/onixus/metis/internal/discovery	9.186s
+?   	github.com/onixus/metis/internal/discovery/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/discovery/pgstore	9.215s
+ok  	github.com/onixus/metis/internal/economics	9.431s
+?   	github.com/onixus/metis/internal/economics/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/economics/modeling	12.137s
+ok  	github.com/onixus/metis/internal/economics/modeling/formula	7.924s
+?   	github.com/onixus/metis/internal/economics/modeling/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/economics/modeling/pgstore	13.017s
+ok  	github.com/onixus/metis/internal/economics/pgstore	8.315s
+ok  	github.com/onixus/metis/internal/economics/sources	8.511s
+ok  	github.com/onixus/metis/internal/economics/sources/pgstore	9.014s
+ok  	github.com/onixus/metis/internal/httpapi	9.060s
+?   	github.com/onixus/metis/internal/httpapi/gen	[no test files]
+?   	github.com/onixus/metis/internal/httpapi/request	[no test files]
+ok  	github.com/onixus/metis/internal/identityaccess	9.139s
+ok  	github.com/onixus/metis/internal/identityaccess/authz	8.706s
+?   	github.com/onixus/metis/internal/identityaccess/internal/oidc	[no test files]
+ok  	github.com/onixus/metis/internal/kernel	8.763s
+ok  	github.com/onixus/metis/internal/kernel/migrate	9.888s
+ok  	github.com/onixus/metis/internal/kernel/outbox	9.187s
+?   	github.com/onixus/metis/internal/kernel/outbox/internal/db	[no test files]
+?   	github.com/onixus/metis/internal/kernel/pgdb	[no test files]
+ok  	github.com/onixus/metis/internal/knowledgedocs	8.891s
+ok  	github.com/onixus/metis/internal/licensing	9.227s
+ok  	github.com/onixus/metis/internal/marketing	9.063s
+ok  	github.com/onixus/metis/internal/observability	8.759s
+ok  	github.com/onixus/metis/internal/portfoliograph	11.529s
+?   	github.com/onixus/metis/internal/portfoliograph/internal/db	[no test files]
+?   	github.com/onixus/metis/internal/portfoliograph/internal/pgstore	[no test files]
+ok  	github.com/onixus/metis/internal/portfoliograph/pgstore	7.831s
+?   	github.com/onixus/metis/internal/ports	[no test files]
+ok  	github.com/onixus/metis/internal/prioritization	7.385s
+?   	github.com/onixus/metis/internal/prioritization/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/prioritization/pgstore	7.424s
+ok  	github.com/onixus/metis/internal/roadmap	7.743s
+?   	github.com/onixus/metis/internal/roadmap/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/roadmap/pgstore	8.129s
+ok  	github.com/onixus/metis/internal/seed	8.349s
+ok  	github.com/onixus/metis/internal/signals	8.265s
+?   	github.com/onixus/metis/internal/signals/internal/db	[no test files]
+ok  	github.com/onixus/metis/internal/signals/pgstore	7.834s
+ok  	github.com/onixus/metis/internal/webui	7.647s
+ok  	github.com/onixus/metis/tests/e2e	10.281s
+?   	github.com/onixus/metis/tests/e2e/client	[no test files]

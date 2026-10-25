@@ -32,6 +32,7 @@ type Store interface {
 	SaveLink(ctx context.Context, sc authz.Scope, l Link) error
 	DeleteLink(ctx context.Context, sc authz.Scope, id kernel.ID) error
 	SaveContract(ctx context.Context, sc authz.Scope, c IntegrationContract) error
+	ReplaceContract(ctx context.Context, sc authz.Scope, c IntegrationContract, links []Link) error
 	SaveSettings(ctx context.Context, sc authz.Scope, s Settings) error
 	SaveRollup(ctx context.Context, sc authz.Scope, values []FeatureValue) error
 }
@@ -251,4 +252,40 @@ func (m *MemStore) Rollup(_ context.Context, sc authz.Scope) ([]FeatureValue, er
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return kernel.CloneValue(append([]FeatureValue(nil), m.roll...)), nil
+}
+
+// ReplaceContract atomically replaces only edges owned by the contract.
+func (m *MemStore) ReplaceContract(_ context.Context, sc authz.Scope, c IntegrationContract, links []Link) error {
+	if err := ValidateContractReplacement(sc, c, links); err != nil {
+		return err
+	}
+	c = kernel.CloneValue(c)
+	links = kernel.CloneValue(links)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, old := range m.snap.Contracts {
+		if old.ID == c.ID && (old.ProviderProductID != c.ProviderProductID || old.ConsumerProductID != c.ConsumerProductID) {
+			return kernel.ErrForbidden
+		}
+	}
+	m.snap.Contracts = upsert(m.snap.Contracts, c, func(a, b IntegrationContract) bool { return a.ID == b.ID })
+	m.snap.Links = filter(m.snap.Links, func(l Link) bool { return l.ContractID != c.ID })
+	m.snap.Links = append(m.snap.Links, links...)
+	return nil
+}
+
+// ValidateContractReplacement preserves ownership and endpoint authorization.
+func ValidateContractReplacement(sc authz.Scope, c IntegrationContract, links []Link) error {
+	if err := RequireLinkWrite(sc, c.ProviderProductID, c.ConsumerProductID); err != nil {
+		return err
+	}
+	if c.ID == kernel.NilID {
+		return kernel.Invalid("contract_id", "обязателен")
+	}
+	for _, l := range links {
+		if l.ContractID != c.ID || l.FromProductID != c.ConsumerProductID || l.ToProductID != c.ProviderProductID || l.Type != LinkIntegration {
+			return kernel.Invalid("links", "рёбра должны принадлежать контракту")
+		}
+	}
+	return nil
 }

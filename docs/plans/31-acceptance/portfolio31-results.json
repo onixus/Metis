@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "checks": [
+    "PG01",
+    "PG02",
+    "PG06",
+    "PG08",
+    "PG10"
+  ],
+  "themes": [
+    "dark",
+    "light"
+  ],
+  "errors": []
+}

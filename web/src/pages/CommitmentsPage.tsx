@@ -280,7 +280,7 @@ function CommitmentForm({
       </div>
       {m.isError && <div className="alert alert-error">{errorMessage(m.error)}</div>}
       <div className="row">
-        <button type="submit" className="btn btn-primary" disabled={m.isPending}>
+        <button type="submit" className="btn" disabled={m.isPending}>
           {ru.app.save}
         </button>
         <button type="button" className="btn" onClick={onDone}>

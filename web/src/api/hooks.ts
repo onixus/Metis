@@ -519,8 +519,9 @@ export function useUpdateEvidence(productId: string) {
   })
 }
 
-export function useTrace(kind: Exclude<TraceKind, 'decision'>, id: string) {
+export function useTrace(kind: TraceKind, id: string) {
   return useQuery({
+    enabled: Boolean(id),
     queryKey: keys2.trace(kind, id),
     queryFn: async () => unwrap(await api.GET('/trace/{kind}/{id}', { params: { path: { kind, id } } })),
   })

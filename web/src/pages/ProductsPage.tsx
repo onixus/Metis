@@ -58,7 +58,7 @@ export function ProductsPage() {
                       <Link to={`/products/${p.id}`}>{p.name}</Link>
                     </td>
                     <td>{pick(ru.product.types, p.type)}</td>
-                    <td>{pick(ru.product.lifecycles, p.lifecycle)}</td>
+                    <td><Badge>{pick(ru.product.lifecycles, p.lifecycle)}</Badge></td>
                     <td>{p.owner ?? ru.app.dash}</td>
                     <td>
                       {hub?.manual && <Badge tone="warn">{ru.product.hubManual}</Badge>}{' '}

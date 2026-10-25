@@ -108,14 +108,16 @@ func (s operationStore) Process(ctx context.Context, sc authz.Scope, now time.Ti
 
 // RunWorker исполняет outbox и периодическую сверку. Задания запускаются сразу
 // после старта, затем по интервалу; ошибки сохраняются в логах и повторяются.
-func (a *App) RunWorker(ctx context.Context) error {
+func (a *App) RunWorker(ctx context.Context) (result error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	done := make(chan error, 1)
 	go func() { done <- a.Worker.Run(ctx) }()
 	defer func() {
 		cancel()
-		<-done
+		if err := <-done; err != nil {
+			result = fmt.Errorf("outbox worker: %w", err)
+		}
 	}()
 	syncInterval := a.Cfg.DeliverySyncInterval
 	if syncInterval <= 0 {

@@ -91,6 +91,7 @@ export function DecisionsPage() {
             <div className="row wrap-row">
               <h2>{d.title}</h2>
               <Badge tone={TONE[d.status]}>{ru.decisions.statuses[d.status]}</Badge>
+              <Link className="btn btn-sm" to={`/trace/decision/${d.id}`}>{ru.discovery.hypothesis.trace}</Link>
               {!id && d.product_id && (
                 <Link to={`/products/${d.product_id}/decisions`}>{productName.get(d.product_id) ?? d.product_id}</Link>
               )}
@@ -155,7 +156,7 @@ export function DecisionsPage() {
               <div className="row">
                 {d.status === 'proposed' && (
                   <>
-                    <button type="button" className="btn btn-sm btn-primary" disabled={accept.isPending} onClick={() => accept.mutate(d.id)}>
+                    <button type="button" className="btn btn-sm" disabled={accept.isPending} onClick={() => accept.mutate(d.id)}>
                       {ru.decisions.accept}
                     </button>
                     <button type="button" className="btn btn-sm btn-danger" disabled={reject.isPending} onClick={() => reject.mutate(d.id)}>
@@ -204,7 +205,7 @@ export function DecisionsPage() {
                       ))}
                   </select>
                 </label>
-                <button type="submit" className="btn btn-sm btn-primary" disabled={supersede.isPending}>
+                <button type="submit" className="btn btn-sm" disabled={supersede.isPending}>
                   {ru.decisions.supersede}
                 </button>
               </form>
@@ -363,7 +364,7 @@ function DecisionForm({ productId, onDone }: { productId: string | undefined; on
       {validation && <div className="alert alert-error">{validation}</div>}
       {create.isError && <div className="alert alert-error">{errorMessage(create.error)}</div>}
       <div className="row">
-        <button type="submit" className="btn btn-primary" disabled={create.isPending}>
+        <button type="submit" className="btn" disabled={create.isPending}>
           {ru.common.create}
         </button>
         <button type="button" className="btn" onClick={onDone}>

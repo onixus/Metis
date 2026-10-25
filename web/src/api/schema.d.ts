@@ -1044,7 +1044,7 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                kind: "signal" | "insight" | "hypothesis" | "feature";
+                kind: "signal" | "insight" | "hypothesis" | "feature" | "decision";
                 id: string;
             };
             cookie?: never;
@@ -3366,6 +3366,10 @@ export interface components {
             to: components["schemas"]["TraceRef"];
         };
         TraceGraph: {
+            /** @description Часть связанных источников недоступна или отсутствует; сведения о них не раскрываются */
+            incomplete?: boolean;
+            /** @description Достигнут предел обхода; ответ содержит часть доступной цепочки */
+            truncated?: boolean;
             root: components["schemas"]["TraceRef"];
             nodes: components["schemas"]["TraceNode"][];
             edges: components["schemas"]["TraceEdge"][];
@@ -6666,7 +6670,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "signal" | "insight" | "hypothesis" | "feature";
+                kind: "signal" | "insight" | "hypothesis" | "feature" | "decision";
                 id: string;
             };
             cookie?: never;

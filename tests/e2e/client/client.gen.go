@@ -4100,8 +4100,14 @@ type TraceEdge struct {
 // TraceGraph defines model for TraceGraph.
 type TraceGraph struct {
 	Edges []TraceEdge `json:"edges"`
-	Nodes []TraceNode `json:"nodes"`
-	Root  TraceRef    `json:"root"`
+
+	// Incomplete Часть связанных источников недоступна или отсутствует; сведения о них не раскрываются
+	Incomplete *bool       `json:"incomplete,omitempty"`
+	Nodes      []TraceNode `json:"nodes"`
+	Root       TraceRef    `json:"root"`
+
+	// Truncated Достигнут предел обхода; ответ содержит часть доступной цепочки
+	Truncated *bool `json:"truncated,omitempty"`
 }
 
 // TraceNode defines model for TraceNode.

@@ -382,6 +382,12 @@ func (s *Server) GetTrace(ctx context.Context, req gen.GetTraceRequestObject) (g
 		return nil, err
 	}
 	out := gen.TraceGraph{Root: toTraceRef(g.Root), Nodes: make([]gen.TraceNode, 0, len(g.Nodes)), Edges: make([]gen.TraceEdge, 0, len(g.Edges))}
+	if g.Incomplete {
+		out.Incomplete = &g.Incomplete
+	}
+	if g.Truncated {
+		out.Truncated = &g.Truncated
+	}
 	for _, n := range g.Nodes {
 		out.Nodes = append(out.Nodes, gen.TraceNode{Kind: gen.TraceNodeKind(n.Kind), Id: n.ID, ProductId: idPtr(n.ProductID), Title: n.Title})
 	}

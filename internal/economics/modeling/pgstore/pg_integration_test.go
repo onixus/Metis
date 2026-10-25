@@ -348,3 +348,112 @@ func TestNFS02_NFS16_AD02_PostgresScopeBeforeIOAndProductIsolation(t *testing.T)
 		t.Fatal(err)
 	}
 }
+
+func TestEC11_NFS02_PostgresDefinitionFailureRollsBackHistory(t *testing.T) {
+	d := database(t)
+	ctx, sc := context.Background(), identityaccess.FinanceServiceScope("definition-rollback")
+	for _, kind := range []string{"field", "metric"} {
+		for _, failure := range []string{"audit", "publisher"} {
+			t.Run(kind+"/"+failure, func(t *testing.T) {
+				key := "rollback_" + strings.ReplaceAll(kernel.NewID().String(), "-", "_")
+				broken := service(t, d, nil)
+				if failure == "audit" {
+					broken.WithAuditor(failAuditor{})
+				} else {
+					broken = service(t, d, failPublisher{})
+				}
+				var err error
+				if kind == "field" {
+					_, err = broken.SaveField(ctx, sc, economics.FieldInput{Key: key, Name: "Synthetic", Type: economics.FieldNumber, Source: economics.SourceManual})
+				} else {
+					_, err = broken.SaveMetric(ctx, sc, economics.MetricInput{Key: key, Name: "Synthetic", Expression: `d("1")`})
+				}
+				if !errors.Is(err, kernel.ErrUnavailable) {
+					t.Errorf("failure swallowed: %v", err)
+				}
+				reader := pgstore.New(database(t))
+				if kind == "field" {
+					_, err = reader.Field(ctx, sc, key)
+				} else {
+					_, err = reader.Metric(ctx, sc, key)
+				}
+				if !errors.Is(err, kernel.ErrNotFound) {
+					t.Fatalf("failed definition persisted: %v", err)
+				}
+			})
+		}
+	}
+}
+
+type synchronizedMetrics struct {
+	*pgstore.Store
+	arrived chan<- struct{}
+	release <-chan struct{}
+}
+
+func (s synchronizedMetrics) Metrics(ctx context.Context, sc authz.Scope) ([]economics.Metric, error) {
+	rows, err := s.Store.Metrics(ctx, sc)
+	// Capture both stale snapshots deterministically on the old path. A correctly
+	// transactional service holds the application lock before reading dependencies.
+	if !pgdb.InTx(ctx) {
+		s.arrived <- struct{}{}
+		select {
+		case <-s.release:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	return rows, err
+}
+
+func TestEC10_PostgresConcurrentMetricsCannotCreateCycle(t *testing.T) {
+	d := database(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	sc := identityaccess.FinanceServiceScope("cycle-test")
+	seed := service(t, d, nil)
+	keys := []string{"a_" + strings.ReplaceAll(kernel.NewID().String(), "-", "_"), "b_" + strings.ReplaceAll(kernel.NewID().String(), "-", "_")}
+	for _, key := range keys {
+		if _, err := seed.SaveMetric(ctx, sc, economics.MetricInput{Key: key, Name: "Synthetic", Expression: `d("1")`}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	arrived, release := make(chan struct{}, 2), make(chan struct{})
+	go func() {
+		select {
+		case <-arrived:
+		case <-ctx.Done():
+			return
+		}
+		select {
+		case <-arrived:
+			close(release)
+		case <-ctx.Done():
+		}
+	}()
+	results := make(chan error, 2)
+	for i, d := range []*pgdb.DB{d, database(t)} {
+		svc, err := economics.NewService(synchronizedMetrics{pgstore.New(d), arrived, release}, nil, kernel.SystemClock{}, economics.DefaultConfig())
+		if err != nil {
+			t.Fatal(err)
+		}
+		go func(i int) {
+			_, err := svc.SaveMetric(ctx, sc, economics.MetricInput{Key: keys[i], Name: "Synthetic", Expression: `metric("` + keys[1-i] + `")`})
+			results <- err
+		}(i)
+	}
+	success, conflict := 0, 0
+	for range 2 {
+		err := <-results
+		if err == nil {
+			success++
+		} else if errors.Is(err, kernel.ErrConflict) {
+			conflict++
+		} else {
+			t.Fatal(err)
+		}
+	}
+	if success != 1 || conflict != 1 {
+		t.Fatalf("concurrent cycle accepted: success=%d conflict=%d", success, conflict)
+	}
+}

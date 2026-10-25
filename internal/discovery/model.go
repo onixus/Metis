@@ -234,9 +234,17 @@ type TraceEdge struct {
 
 // TraceGraph — результат трассировки (DS-04). Root — узел, от которого шёл обход.
 type TraceGraph struct {
-	Root  TraceRef    `json:"root"`
-	Nodes []TraceNode `json:"nodes"`
-	Edges []TraceEdge `json:"edges"`
+	Root       TraceRef    `json:"root"`
+	Nodes      []TraceNode `json:"nodes"`
+	Edges      []TraceEdge `json:"edges"`
+	Incomplete bool        `json:"incomplete,omitempty"`
+	Truncated  bool        `json:"truncated,omitempty"`
+}
+
+// DecisionTrace — разрешённое решение и его ссылки из публичного порта.
+type DecisionTrace struct {
+	Node  TraceNode
+	Links []TraceRef
 }
 
 // DecisionRef — ссылка на решение (DA-01) из порта DecisionLinks.

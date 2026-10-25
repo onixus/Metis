@@ -42,10 +42,10 @@ const CRITICALITIES: Criticality[] = ['blocks', 'accelerates', 'desirable']
 const LIFECYCLES: Lifecycle[] = ['idea', 'active', 'sunset', 'retired']
 
 const LINK_COLORS: Record<LinkType, string> = {
-  integration: '#2f6fed',
-  shared_component: '#8e44ad',
-  commercial: '#1e9e63',
-  bundled: '#e67e22',
+  integration: 'var(--viz-1)',
+  shared_component: 'var(--viz-4)',
+  commercial: 'var(--viz-3)',
+  bundled: 'var(--viz-2)',
 }
 
 const CRIT_WIDTH: Record<Criticality, number> = { blocks: 3, accelerates: 2, desirable: 1 }
@@ -75,9 +75,9 @@ const ProductNodeView = memo(function ProductNodeView({ id, data }: NodeProps<Pr
     <div>
       <Handle type="target" position={Position.Top} id="p:in" className="handle-product" />
       <div className="node-head">
-        <span className="node-title" onClick={() => data.onOpen(id)} title={ru.graph.open}>
+        <button type="button" className="node-title nodrag" onClick={() => data.onOpen(id)} title={ru.graph.open}>
           {data.product.name}
-        </span>
+        </button>
         <button
           type="button"
           className="node-btn nodrag"
@@ -169,6 +169,12 @@ export function GraphPage() {
 
 function GraphInner() {
   const rf = useReactFlow()
+  const [theme, setTheme] = useState(document.documentElement.dataset.theme)
+  useEffect(() => {
+    const observer = new MutationObserver(() => setTheme(document.documentElement.dataset.theme))
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
   const nodesReady = useNodesInitialized()
   const products = useProducts()
   const links = useLinks()
@@ -251,7 +257,7 @@ function GraphInner() {
   // После смены раскладки подгоняем вид под все узлы.
   useEffect(() => {
     if (!nodesReady) return
-    const t = window.setTimeout(() => void rf.fitView({ padding: 0.15, duration: 300 }), 120)
+    const t = window.setTimeout(() => void rf.fitView({ padding: 0.15, duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300 }), 120)
     return () => window.clearTimeout(t)
   }, [structureKey, nodesReady, rf])
 
@@ -292,7 +298,7 @@ function GraphInner() {
   useEffect(() => {
     setEdges(
       visible.links.map((l) => {
-        const color = LINK_COLORS[l.type]
+        const color = getComputedStyle(document.documentElement).getPropertyValue(LINK_COLORS[l.type].slice(4, -1)).trim()
         const featureLevel = !!l.from_feature_id && !!l.to_feature_id
         const bothExpanded = featureLevel && expanded.has(l.from_product_id) && expanded.has(l.to_product_id)
         const critLabel = ru.link.criticality[l.criticality]
@@ -314,11 +320,11 @@ function GraphInner() {
           style: { stroke: color, strokeWidth: CRIT_WIDTH[l.criticality], strokeDasharray: featureLevel && !bothExpanded ? '6 3' : undefined },
           labelStyle: { fill: color, fontSize: 11 },
           markerEnd: { type: MarkerType.ArrowClosed, color },
-          animated: l.criticality === 'blocks',
+          animated: false,
         }
       }),
     )
-  }, [visible.links, expanded, featureNames, contracts.data, setEdges])
+  }, [visible.links, expanded, featureNames, contracts.data, setEdges, theme])
 
   const onNodeDragStop = useCallback((_e: unknown, node: Node) => {
     positions.current.set(node.id, node.position)

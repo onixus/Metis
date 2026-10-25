@@ -28,25 +28,35 @@ type tracer struct {
 	order []TraceRef
 	queue []TraceRef
 	// hidden — причина, по которой последний узел не раскрыт (нет доступа или не найден).
-	hidden error
+	hidden     error
+	visited    map[TraceRef]bool
+	decisions  map[TraceRef]DecisionTrace
+	incomplete bool
+	truncated  bool
 }
+
+// TODO(question-47): tune limits after measuring real portfolio sizes.
+const maxTraceNodes = 256
+const maxTraceEdges = 1024
+
+// errTraceLimit stops the entire traversal, preserving its partial result.
+var errTraceLimit = errors.New("trace traversal limit reached")
 
 // Trace строит граф «сигнал → инсайт → гипотеза → фича → решение» вокруг узла, обходя связи
 // в обе стороны (DS-04). Узлы продуктов, на которые нет приватного доступа, не раскрываются.
-// Решения — листья через порт DecisionLinks; без порта они не включаются. Обход от решения
-// требует обратного порта модуля decisions (см. вопрос 13 в docs/questions.md).
+// Решения раскрываются через публичный порт DecisionLinks с полномочиями пользователя.
 func (s *Service) Trace(ctx context.Context, sc authz.Scope, kind TraceKind, id kernel.ID) (TraceGraph, error) {
 	if !ValidTraceKind(kind) {
 		return TraceGraph{}, kernel.Invalid("kind", fmt.Sprintf("неизвестный вид узла %q", kind))
 	}
-	if kind == TraceDecision {
-		return TraceGraph{}, kernel.Invalid("kind", "трассировка от решения — через модуль decisions")
+	if !sc.Valid() {
+		return TraceGraph{}, kernel.ErrForbidden
 	}
 	if id == kernel.NilID {
 		return TraceGraph{}, kernel.Invalid("id", "обязателен")
 	}
 	root := TraceRef{Kind: kind, ID: id}
-	t := &tracer{s: s, sc: sc, nodes: map[TraceRef]TraceNode{}, edges: map[TraceEdge]struct{}{}}
+	t := &tracer{s: s, sc: sc, nodes: map[TraceRef]TraceNode{}, edges: map[TraceEdge]struct{}{}, visited: map[TraceRef]bool{}, decisions: map[TraceRef]DecisionTrace{}}
 	// Корень должен быть видим субъекту; иначе — ошибка, а не пустой граф.
 	visible, err := t.resolve(ctx, root)
 	if err != nil {
@@ -57,13 +67,22 @@ func (s *Service) Trace(ctx context.Context, sc authz.Scope, kind TraceKind, id 
 	}
 	t.queue = append(t.queue, root)
 	for len(t.queue) > 0 {
+		if err := ctx.Err(); err != nil {
+			return TraceGraph{}, err
+		}
 		ref := t.queue[0]
 		t.queue = t.queue[1:]
 		if err := t.expand(ctx, ref); err != nil {
+			if errors.Is(err, errTraceLimit) {
+				break
+			}
 			return TraceGraph{}, err
 		}
 	}
-	g := TraceGraph{Root: root, Nodes: make([]TraceNode, 0, len(t.order)), Edges: make([]TraceEdge, 0, len(t.edges))}
+	if err := ctx.Err(); err != nil {
+		return TraceGraph{}, err
+	}
+	g := TraceGraph{Root: root, Nodes: make([]TraceNode, 0, len(t.order)), Edges: make([]TraceEdge, 0, len(t.edges)), Incomplete: t.incomplete, Truncated: t.truncated}
 	for _, ref := range t.order {
 		g.Nodes = append(g.Nodes, t.nodes[ref])
 	}
@@ -96,6 +115,16 @@ func less(a, b TraceEdge, index map[TraceRef]int) bool {
 
 // link добавляет ребро и оба узла; невидимый узел ребра не создаёт.
 func (t *tracer) link(ctx context.Context, from, to TraceRef) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if _, exists := t.edges[TraceEdge{From: from, To: to}]; exists {
+		return nil
+	}
+	if len(t.edges) >= maxTraceEdges {
+		t.truncated = true
+		return errTraceLimit
+	}
 	for _, ref := range []TraceRef{from, to} {
 		if _, ok := t.nodes[ref]; ok {
 			continue
@@ -114,11 +143,22 @@ func (t *tracer) link(ctx context.Context, from, to TraceRef) error {
 }
 
 // resolve загружает узел и проверяет доступ; false — узел не видим или не найден.
-// Ошибка возвращается только при отказе хранилища или порта.
+// Ошибка возвращается при отказе хранилища/порта, отмене или превышении лимита.
 func (t *tracer) resolve(ctx context.Context, ref TraceRef) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
 	if _, ok := t.nodes[ref]; ok {
 		return true, nil
 	}
+	if t.visited[ref] {
+		return false, nil
+	}
+	if len(t.visited) >= maxTraceNodes {
+		t.truncated = true
+		return false, errTraceLimit
+	}
+	t.visited[ref] = true
 	var node TraceNode
 	var err error
 	switch ref.Kind {
@@ -145,12 +185,19 @@ func (t *tracer) resolve(ctx context.Context, ref TraceRef) (bool, error) {
 		err = ferr
 		node = TraceNode{TraceRef: ref, ProductID: f.ProductID, Title: f.Name}
 	case TraceDecision:
-		// Решения добавляются через addDecisions с заголовком из порта.
-		return false, nil
+		if t.s.decisions == nil {
+			return false, unavailable("decisions")
+		}
+		var d DecisionTrace
+		d, err = t.s.decisions.Decision(ctx, t.sc, ref.ID)
+		node = d.Node
+		node.TraceRef = ref
+		t.decisions[ref] = d
 	}
 	if err != nil {
 		if errors.Is(err, kernel.ErrForbidden) || kernel.IsNotFound(err) {
 			t.hidden = err
+			t.incomplete = true
 			return false, nil
 		}
 		return false, fmt.Errorf("узел %s %s: %w", ref.Kind, ref.ID, err)
@@ -241,11 +288,17 @@ func (t *tracer) expand(ctx context.Context, ref TraceRef) error {
 				return err
 			}
 		}
+	case TraceDecision:
+		for _, source := range t.decisions[ref].Links {
+			if err := t.link(ctx, source, ref); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
 
-// addDecisions добавляет решения, ссылающиеся на узел, как листья.
+// addDecisions добавляет решения, ссылающиеся на узел, в общую очередь обхода.
 func (t *tracer) addDecisions(ctx context.Context, ref TraceRef) error {
 	if t.s.decisions == nil || ref.Kind == TraceDecision {
 		return nil
@@ -255,12 +308,9 @@ func (t *tracer) addDecisions(ctx context.Context, ref TraceRef) error {
 		return fmt.Errorf("decisions: %w", err)
 	}
 	for _, d := range refs {
-		dref := TraceRef{Kind: TraceDecision, ID: d.ID}
-		if _, ok := t.nodes[dref]; !ok {
-			t.nodes[dref] = TraceNode{TraceRef: dref, ProductID: t.nodes[ref].ProductID, Title: d.Title}
-			t.order = append(t.order, dref)
+		if err := t.link(ctx, ref, TraceRef{Kind: TraceDecision, ID: d.ID}); err != nil {
+			return err
 		}
-		t.edges[TraceEdge{From: ref, To: dref}] = struct{}{}
 	}
 	return nil
 }

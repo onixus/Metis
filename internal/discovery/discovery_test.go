@@ -40,6 +40,24 @@ func (m *memDecisions) DecisionsFor(_ context.Context, _ authz.Scope, kind strin
 	return m.links[discovery.TraceRef{Kind: discovery.TraceKind(kind), ID: id}], nil
 }
 
+func (m *memDecisions) Decision(_ context.Context, _ authz.Scope, id kernel.ID) (discovery.DecisionTrace, error) {
+	var out discovery.DecisionTrace
+	found := false
+	for source, refs := range m.links {
+		for _, ref := range refs {
+			if ref.ID == id {
+				out.Node = discovery.TraceNode{TraceRef: discovery.TraceRef{Kind: discovery.TraceDecision, ID: id}, Title: ref.Title}
+				out.Links = append(out.Links, source)
+				found = true
+			}
+		}
+	}
+	if !found {
+		return out, kernel.ErrNotFound
+	}
+	return out, nil
+}
+
 type fixture struct {
 	t     *testing.T
 	ctx   context.Context
@@ -371,8 +389,8 @@ func TestDS04_TraceBothDirections(t *testing.T) {
 	if err != nil || len(g.Nodes) != 2 || kinds(g)[discovery.TraceDecision] != 0 || g.Nodes[1].ID != hh.ID {
 		t.Fatalf("без решений: %+v %v", g, err)
 	}
-	if _, err := f.svc.Trace(f.ctx, f.cpo, discovery.TraceDecision, decision.ID); !errors.Is(err, kernel.ErrValidation) {
-		t.Fatalf("от решения: %v", err)
+	if g, err := f.svc.Trace(f.ctx, f.cpo, discovery.TraceDecision, decision.ID); err != nil || len(g.Nodes) != 6 || len(g.Edges) != 5 {
+		t.Fatalf("от решения: %+v %v", g, err)
 	}
 	if _, err := f.svc.Trace(f.ctx, f.cpo, discovery.TraceHypothesis, kernel.NewID()); !errors.Is(err, kernel.ErrNotFound) {
 		t.Fatalf("неизвестный корень: %v", err)

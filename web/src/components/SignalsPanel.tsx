@@ -32,7 +32,7 @@ export function SignalsPanel({ productId, me }: { productId: string; me?: Me }) 
   const rows = (signals.data ?? []).filter((s) => filter === 'all' || s.status === 'new' || s.status === 'in_review')
     .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999') || a.created_at.localeCompare(b.created_at))
   return <section className="card stack" id="signals">
-    <div className="page-head"><h2>{ru.workflow.signals}</h2>{canWrite && <button type="button" className="btn btn-primary" onClick={() => setCreating(!creating)}>{ru.workflow.createSignal}</button>}</div>
+    <div className="page-head"><h2>{ru.workflow.signals}</h2>{canWrite && <button type="button" className="btn" onClick={() => setCreating(!creating)}>{ru.workflow.createSignal}</button>}</div>
     {creating && canWrite && <SignalForm productId={productId} onDone={() => setCreating(false)} />}
     <div className="segmented" role="group" aria-label={ru.workflow.signals}>
       <button type="button" className={filter === 'queue' ? 'active' : ''} onClick={() => setFilter('queue')}>{ru.workflow.queue}</button>
@@ -100,7 +100,7 @@ function SignalForm({ productId, onDone }: { productId: string; onDone: () => vo
     <p className="muted">{ru.workflow.moneyHint}</p>
     <label className="check"><input type="checkbox" checked={blocks} onChange={(e) => setBlocks(e.target.checked)} />{ru.signal.blocksDeal}</label>
     {validation && <div className="alert alert-error" role="alert">{validation}</div>}{save.isError && <ErrorBox error={save.error} />}
-    <div className="row"><button className="btn btn-primary" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={onDone}>{ru.app.cancel}</button></div>
+    <div className="row"><button className="btn" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={onDone}>{ru.app.cancel}</button></div>
   </form>
 }
 
@@ -130,7 +130,7 @@ function SignalReview({ signal, targets, onDone }: { signal: Signal; targets: Re
       <label className="field grow"><span>{labels[kind]}</span><select required value={target} onChange={(e) => setTarget(e.target.value)}><option value="">{ru.workflow.chooseTarget}</option>
         {targets[kind].map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
       </select></label>
-      <button className="btn btn-primary" disabled={!target || link.isPending || triage.isPending}>{ru.signal.linkSubmit}</button>
+      <button className="btn" disabled={!target || link.isPending || triage.isPending}>{ru.signal.linkSubmit}</button>
     </form>
     {triage.isError && <ErrorBox error={triage.error} />}{link.isError && <ErrorBox error={link.error} />}
   </div>

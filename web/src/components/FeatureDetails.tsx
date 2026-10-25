@@ -84,7 +84,7 @@ export function FeatureDetails({
               <span>{ru.compliance.impact.justification}</span>
               <input value={just} onChange={(e) => setJust(e.target.value)} required />
             </label>
-            <button type="submit" className="btn btn-sm btn-primary" disabled={setImpact.isPending}>
+            <button type="submit" className="btn btn-sm" disabled={setImpact.isPending}>
               {ru.compliance.impact.set}
             </button>
           </form>

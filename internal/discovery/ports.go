@@ -36,6 +36,7 @@ type FeatureReader interface {
 // kind — TraceKind в строковом виде. Nil-порт допустим: трассировка без решений.
 type DecisionLinks interface {
 	DecisionsFor(ctx context.Context, sc authz.Scope, kind string, id kernel.ID) ([]DecisionRef, error)
+	Decision(ctx context.Context, sc authz.Scope, id kernel.ID) (DecisionTrace, error)
 }
 
 // SimilarityIndex — индекс похожести текстов (SG-04). Реализации: MemIndex (TF-IDF, память),

@@ -60,7 +60,7 @@ export function RankingBlock({ productId }: { productId: string }) {
       <div className="row wrap-row">
         <h2>{ru.rank.title}</h2>
         {canWrite && <button type="button" className="btn" onClick={() => setCreating(!creating)}>{ru.workflow.createModel}</button>}
-        {canWrite && model && <button type="button" className="btn btn-primary" onClick={() => setScoring(!scoring)}>{ru.workflow.scoreFeature}</button>}
+        {canWrite && model && <button type="button" className="btn" onClick={() => setScoring(!scoring)}>{ru.workflow.scoreFeature}</button>}
         {applicable.length > 0 && (
           <label className="field">
             <span>{ru.rank.model}</span>

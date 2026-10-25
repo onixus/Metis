@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -22,6 +23,43 @@ import (
 	"github.com/onixus/metis/internal/ports"
 	"github.com/shopspring/decimal"
 )
+
+// isolateDatabase keeps closure of global modeling periods local to this test.
+// Cleanup is registered before database() handles, so every pool closes first.
+func isolateDatabase(t *testing.T) {
+	t.Helper()
+	original := os.Getenv("METIS_TEST_DATABASE_URL")
+	if original == "" {
+		return
+	} // database() reports the documented missing-environment skip.
+	parsed, err := url.Parse(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base, err := pgdb.Open(context.Background(), original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	name := "metis_model_" + strings.ReplaceAll(kernel.NewID().String(), "-", "")
+	if _, err := base.Pool().Exec(context.Background(), "CREATE DATABASE "+name); err != nil {
+		base.Close()
+		t.Fatal(err)
+	}
+	base.Close()
+	t.Cleanup(func() {
+		base, err := pgdb.Open(context.Background(), original)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer base.Close()
+		if _, err := base.Pool().Exec(context.Background(), "DROP DATABASE "+name); err != nil {
+			t.Error(err)
+		}
+	})
+	parsed.Path, parsed.RawPath = "/"+name, ""
+	t.Setenv("METIS_TEST_DATABASE_URL", parsed.String())
+}
 
 func database(t *testing.T) *pgdb.DB {
 	t.Helper()
@@ -49,6 +87,7 @@ func service(t *testing.T, d *pgdb.DB, p kernel.Publisher) *economics.Service {
 }
 
 func TestEC08_EC09_EC10_EC11_PostgresHistoryAndConcurrentRevision(t *testing.T) {
+	isolateDatabase(t)
 	d := database(t)
 	ctx := context.Background()
 	sc := identityaccess.FinanceServiceScope("test")
@@ -113,6 +152,7 @@ func TestEC08_EC09_EC10_EC11_PostgresHistoryAndConcurrentRevision(t *testing.T) 
 }
 
 func TestEC07_EC12_PostgresAllObjectsAndFactVersions(t *testing.T) {
+	isolateDatabase(t)
 	d := database(t)
 	ctx := context.Background()
 	sc := identityaccess.FinanceServiceScope("test")
@@ -236,6 +276,7 @@ func (failAuditor) FinanceAccess(context.Context, string, string, string, kernel
 }
 
 func TestEC07_EC11_PostgresImportRollbackAndManualRollback(t *testing.T) {
+	isolateDatabase(t)
 	d := database(t)
 	ctx := context.Background()
 	sc := identityaccess.FinanceServiceScope("test")
@@ -285,7 +326,7 @@ func TestEC07_EC11_PostgresImportRollbackAndManualRollback(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.WithAuditor(failAuditor{})
-	if _, err := s.SetManualValue(ctx, sc, manualKey, economics.Slice{Period: economics.PeriodOf(2092, 1)}, decimal.NewFromInt(1)); !errors.Is(err, kernel.ErrUnavailable) {
+	if _, err := s.SetManualValue(ctx, sc, manualKey, economics.Slice{ProductID: kernel.NewID(), Period: economics.PeriodOf(2092, 1)}, decimal.NewFromInt(1)); !errors.Is(err, kernel.ErrUnavailable) {
 		t.Fatal(err)
 	}
 	rows, err := store.Facts(ctx, sc, economics.FactFilter{FieldKey: manualKey})
@@ -295,6 +336,7 @@ func TestEC07_EC11_PostgresImportRollbackAndManualRollback(t *testing.T) {
 }
 
 func TestNFS02_NFS16_AD02_PostgresScopeBeforeIOAndProductIsolation(t *testing.T) {
+	isolateDatabase(t)
 	ctx := context.Background()
 	s := pgstore.New(nil)
 	for _, sc := range []authz.Scope{{}, authz.New(authz.Params{Subject: "no-finance", AllProducts: authz.AccessPrivate})} {
@@ -350,6 +392,7 @@ func TestNFS02_NFS16_AD02_PostgresScopeBeforeIOAndProductIsolation(t *testing.T)
 }
 
 func TestEC11_NFS02_PostgresDefinitionFailureRollsBackHistory(t *testing.T) {
+	isolateDatabase(t)
 	d := database(t)
 	ctx, sc := context.Background(), identityaccess.FinanceServiceScope("definition-rollback")
 	for _, kind := range []string{"field", "metric"} {
@@ -407,6 +450,7 @@ func (s synchronizedMetrics) Metrics(ctx context.Context, sc authz.Scope) ([]eco
 }
 
 func TestEC10_PostgresConcurrentMetricsCannotCreateCycle(t *testing.T) {
+	isolateDatabase(t)
 	d := database(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -455,5 +499,59 @@ func TestEC10_PostgresConcurrentMetricsCannotCreateCycle(t *testing.T) {
 	}
 	if success != 1 || conflict != 1 {
 		t.Fatalf("concurrent cycle accepted: success=%d conflict=%d", success, conflict)
+	}
+}
+
+func TestAD04_EC02_EC04_EC11_PostgresRuleAndCloseAuditRollback(t *testing.T) {
+	isolateDatabase(t)
+	d := database(t)
+	ctx, sc := context.Background(), identityaccess.FinanceServiceScope("rule-audit-rollback")
+	hub, product := kernel.NewID(), kernel.NewID()
+	bundle := "synthetic_" + kernel.NewID().String()
+	broken := service(t, d, nil).WithAuditor(failAuditor{})
+	if _, err := broken.SaveAllocationRule(ctx, sc, economics.AllocationInput{HubProductID: hub, Basis: economics.BasisManual, Shares: map[kernel.ID]decimal.Decimal{product: decimal.NewFromInt(1)}}); !errors.Is(err, kernel.ErrUnavailable) {
+		t.Fatalf("allocation audit failure: %v", err)
+	}
+	if _, err := broken.SaveBundleRule(ctx, sc, economics.BundleInput{BundleKey: bundle, Shares: map[kernel.ID]decimal.Decimal{product: decimal.NewFromInt(1)}}); !errors.Is(err, kernel.ErrUnavailable) {
+		t.Fatalf("bundle audit failure: %v", err)
+	}
+	reader := pgstore.New(database(t))
+	allocations, err := reader.AllocationRules(ctx, sc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rule := range allocations {
+		if rule.HubProductID == hub {
+			t.Fatal("failed allocation committed")
+		}
+	}
+	bundles, err := reader.BundleRules(ctx, sc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rule := range bundles {
+		if rule.BundleKey == bundle {
+			t.Fatal("failed bundle committed")
+		}
+	}
+	// Select a currently open synthetic period, including on repeated local runs.
+	p := economics.PeriodOf(2200, time.January)
+	valid := service(t, d, nil)
+	for {
+		closed, err := valid.PeriodClosed(ctx, sc, p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !closed {
+			break
+		}
+		p = economics.PeriodOf(p.Year+1, time.January)
+	}
+	if err := broken.ClosePeriod(ctx, sc, p); !errors.Is(err, kernel.ErrUnavailable) {
+		t.Fatalf("close audit failure: %v", err)
+	}
+	closed, err := service(t, database(t), nil).PeriodClosed(ctx, sc, p)
+	if err != nil || closed {
+		t.Fatalf("failed close committed: closed=%v err=%v", closed, err)
 	}
 }

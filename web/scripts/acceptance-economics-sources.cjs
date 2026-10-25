@@ -1,0 +1,111 @@
+// EC09/EC10/EC13: real API source snapshots and scenario provenance; no browser response mocks.
+const { chromium } = require(process.env.METIS_PLAYWRIGHT_MODULE || 'playwright');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const base = process.env.METIS_ACCEPTANCE_URL;
+assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname));
+const root = process.env.METIS_ACCEPTANCE_TEMP;
+const tokens = JSON.parse(fs.readFileSync(path.join(root, 'tokens.json')));
+const productId = process.env.METIS_SOURCE_PRODUCT_ID;
+assert.ok(productId, 'METIS_SOURCE_PRODUCT_ID must identify a product in the canonical finance book');
+const period = process.env.METIS_SOURCE_PERIOD || '2026-09';
+const source = process.env.METIS_SOURCE_KIND || 'headcount';
+assert.ok(['headcount', 'worklogs', 'crm_revenue'].includes(source));
+const unavailable = process.env.METIS_EXPECT_UNAVAILABLE_SOURCE || '';
+const expectedValue = process.env.METIS_SOURCE_EXPECTED_VALUE;
+(async () => {
+  const browser = await chromium.launch({ headless: true, ...(process.env.METIS_CHROMIUM_PATH ? { executablePath: process.env.METIS_CHROMIUM_PATH } : {}) });
+  const results = [];
+  try {
+    for (const theme of ['dark', 'light']) {
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: theme });
+      await ctx.addInitScript(({ token, theme }) => { sessionStorage.setItem('metis.access_token', token); localStorage.setItem('apex.theme', theme); }, { token: tokens.finance, theme });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', error => errors.push(error.message));
+      const run = Date.now();
+      const metric = `source_${theme}_${run}`;
+      await page.goto(base + '/economics');
+      await page.getByLabel('Период', { exact: true }).fill(period);
+      await page.getByLabel('Владелец финансовой книги').selectOption(productId);
+      await page.getByRole('tab', { name: 'Конструктор модели', exact: true }).click();
+      await page.getByRole('tab', { name: 'Формулы и версии', exact: true }).click();
+      await page.getByLabel('Ключ показателя', { exact: true }).fill(metric);
+      await page.getByLabel('Название показателя', { exact: true }).fill('Проверка прямого источника');
+      await page.getByLabel('Дата действия формулы', { exact: true }).fill(`${period}-01`);
+      await page.getByRole('button', { name: `Вставить ${source}()`, exact: true }).click();
+      assert.equal(await page.getByLabel('Выражение формулы', { exact: true }).inputValue(), `${source}()`);
+      await page.getByRole('button', { name: 'Сохранить показатель', exact: true }).click();
+      const response = page.waitForResponse(r => r.url().includes(`/economics/metrics/${metric}/explain`) && r.request().method() === 'GET');
+      await page.getByRole('button', { name: `Рассчитать и объяснить ${metric}`, exact: true }).click();
+      const explained = await response;
+      assert.equal(explained.status(), 200);
+      const explanation = await explained.json();
+      assert.ok(explanation.inputs?.[0]?.sources?.length, 'source provenance absent');
+      if (expectedValue !== undefined) assert.equal(explanation.value, expectedValue, 'fixture aggregate does not match source');
+      const observation = explanation.inputs[0].sources[0];
+      assert.equal(observation.kind, source);
+      assert.equal(observation.captured_value, explanation.value);
+      assert.ok(observation.snapshot_id && observation.as_of && observation.provenance.length);
+      await page.getByText(`${metric}: ${explanation.value}`, { exact: true }).waitFor();
+      await page.locator('code').filter({ hasText: observation.snapshot_id }).first().waitFor();
+      await page.getByRole('tab', { name: 'Сценарии бюджета и capacity', exact: true }).click();
+      const scenarioName = `Source scenario ${theme} ${run}`;
+      const override = String(BigInt(explanation.value) + 3n);
+      await page.getByLabel('Название сценария', { exact: true }).fill(scenarioName);
+      await page.getByRole('button', { name: 'Добавить подмену входа', exact: true }).click();
+      await page.getByLabel('Поле подмены 1', { exact: true }).selectOption(`source:${source}`);
+      await page.getByLabel('Новое значение входа 1', { exact: true }).fill(override);
+      const saveRequest = page.waitForRequest(r => r.url().endsWith('/scenarios') && r.method() === 'POST');
+      await page.getByRole('button', { name: 'Сохранить сценарий', exact: true }).click();
+      const savedInput = (await saveRequest).postDataJSON();
+      assert.equal(savedInput.overrides[0].source, source);
+      assert.equal(savedInput.overrides[0].field_key, undefined);
+      assert.equal(savedInput.overrides[0].value, override);
+      await page.getByRole('button', { name: `Рассчитать сценарий ${scenarioName}`, exact: true }).waitFor();
+      await page.getByRole('checkbox', { name: metric, exact: true }).check();
+      const runResponse = page.waitForResponse(r => r.url().endsWith('/run') && r.request().method() === 'POST');
+      await page.getByRole('button', { name: `Рассчитать сценарий ${scenarioName}`, exact: true }).click();
+      const responseRun = await runResponse;
+      assert.equal(responseRun.status(), 200);
+      const scenario = await responseRun.json();
+      const key = `${metric}@${productId}`;
+      assert.equal(scenario.base_metrics[key], explanation.value);
+      assert.equal(scenario.metrics[key], override);
+      const sourceBase = scenario.base_explanations[key].inputs[0].sources[0];
+      const sourceScenario = scenario.explanations[key].inputs[0].sources[0];
+      assert.equal(sourceScenario.snapshot_id, sourceBase.snapshot_id);
+      assert.equal(sourceScenario.captured_value, explanation.value);
+      assert.equal(sourceScenario.overridden, true);
+      await page.getByRole('heading', { name: 'Закреплённые входы расчёта', exact: true }).waitFor();
+      await page.getByText(`${key} · исходные данные и подмены`, { exact: true }).click();
+      await page.getByText('Фактическое значение снимка:', { exact: false }).first().waitFor();
+      const sourceOverrideText = await page.getByText('сценарная подмена:', { exact: false }).innerText();
+      assert.ok(sourceOverrideText.includes(override) && sourceOverrideText.includes(explanation.value));
+      for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.getByText('сценарная подмена:', { exact: false }).scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(root, `sources-${source}-${theme}-${width}.png`), fullPage: false });
+        const overflow = await page.evaluate(() => ({ has: document.documentElement.scrollWidth > innerWidth + 1, nodes: [...document.querySelectorAll('main *')].filter(el => el.getBoundingClientRect().right > innerWidth + 1 && el.getBoundingClientRect().width > 0).slice(0, 12).map(el => ({ tag: el.tagName, cls: el.className, text: el.textContent.slice(0, 160), width: el.getBoundingClientRect().width })) }));
+        assert.equal(overflow.has, false, 'source provenance overflows viewport: ' + JSON.stringify(overflow.nodes));
+      }
+      if (unavailable) {
+        await page.getByRole('tab', { name: 'Формулы и версии', exact: true }).click();
+        const missing = `missing_${theme}_${run}`;
+        await page.getByLabel('Ключ показателя', { exact: true }).fill(missing);
+        await page.getByLabel('Название показателя', { exact: true }).fill('Недоступный источник');
+        await page.getByLabel('Дата действия формулы', { exact: true }).fill(`${period}-01`);
+        await page.getByLabel('Выражение формулы', { exact: true }).fill(`${unavailable}()`);
+        await page.getByRole('button', { name: 'Сохранить показатель', exact: true }).click();
+        const rejected = page.waitForResponse(r => r.url().includes(`/economics/metrics/${missing}/explain`) && r.request().method() === 'GET');
+        await page.getByRole('button', { name: `Рассчитать и объяснить ${missing}`, exact: true }).click();
+        assert.equal((await rejected).status(), 503, 'missing source must not silently become zero');
+      }
+      assert.deepEqual(errors, []);
+      results.push({ theme, source, value: explanation.value, exactScenarioOverride: override, snapshotProvenance: 'PASS', baselineSnapshotId: sourceBase.snapshot_id, scenarioSnapshotId: sourceScenario.snapshot_id, capturedValue: sourceScenario.captured_value, overridden: sourceScenario.overridden, capturedAt: sourceScenario.as_of, stableBaselineSnapshot: 'PASS', mobile: 'PASS', ...(unavailable ? { unavailable: `${unavailable}:503` } : {}) });
+      await ctx.close();
+    }
+    fs.writeFileSync(path.join(root, `sources-${source}-acceptance.json`), JSON.stringify({ testedAt: new Date().toISOString(), results }, null, 2));
+  } finally { await browser.close(); }
+})().catch(error => { process.stderr.write(error.stack + '\n'); process.exitCode = 1; });

@@ -377,5 +377,12 @@ func (s *Service) Batches(ctx context.Context, sc authz.Scope, p Period) ([]Impo
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
-	return s.store.Batches(ctx, sc, p)
+	out, err := s.store.Batches(ctx, sc, p)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.batches", kernel.NilID, map[string]any{"period": p.String()}); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

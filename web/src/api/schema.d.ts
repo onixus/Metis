@@ -1867,6 +1867,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/products/{productId}/economics/{period}/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Сверка повторного импорта с сохранением правил (EC-07/11) */
+        post: operations["previewFinanceReconciliation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/products/{productId}/economics/{period}/import": {
         parameters: {
             query?: never;
@@ -1878,6 +1895,23 @@ export interface paths {
         put?: never;
         /** Импорт файла в новую версию периода (EC-01/07) */
         post: operations["importFinanceFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/metrics/{metricKey}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Формула конструктора на закреплённой версии книги (EC-09/10/11) */
+        get: operations["evaluateBookMetric"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2035,6 +2069,87 @@ export interface paths {
         put?: never;
         /** Распределить затраты по Jira worklogs и явному соответствию авторов командам (DL-05/EC-12) */
         post: operations["applyFinanceWorklogs"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/economics/fields/{fieldKey}/manual-value": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Новая версия ручного значения поля модели (EC-08/11) */
+        post: operations["setManualFinancialValue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/unification/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewEconomicsUnification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/unification/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["applyEconomicsUnification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/unification/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getEconomicsUnificationStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/economics/{period}/unification/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getEconomicsUnificationArchive"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3922,11 +4037,46 @@ export interface components {
             source_hash: string;
             sheet: string;
         };
+        ImportReconciliation: {
+            matched: number;
+            added: number;
+            changed: number;
+            removed: number;
+            totals: components["schemas"]["ImportCategoryTotal"][];
+        };
+        ImportCategoryTotal: {
+            category: string;
+            /** @description Сумма в минорных единицах */
+            previous: string;
+            /** @description Сумма в минорных единицах */
+            current: string;
+            /** @description Изменение в минорных единицах */
+            delta: string;
+        };
+        BookMetricResult: {
+            snapshot: components["schemas"]["EconomicsSnapshotInfo"];
+            metric: components["schemas"]["Explanation"];
+        };
+        ManualFinancialValue: {
+            /** Format: uuid */
+            product_id: string;
+            period: string;
+            /** Format: uuid */
+            team_id?: string;
+            item?: string;
+            /** @description Точное число; деньги в минорных единицах */
+            value: string;
+        };
         FinanceFileInput: {
             filename: string;
             content_base64: string;
             template: components["schemas"]["FinanceTemplate"];
             expected_version: number;
+            /**
+             * @description Сохранить правила и ручные значения однозначно сопоставленных строк; неоднозначности отклоняются.
+             * @default false
+             */
+            preserve_rules: boolean;
             recalculate?: boolean;
         };
         EconomicsSource: {
@@ -3942,6 +4092,8 @@ export interface components {
             share: string;
         };
         EconomicsRow: {
+            /** @description Срез статьи ручного значения общего конструктора */
+            model_item?: string;
             /** Format: uuid */
             id: string;
             /** Format: uuid */
@@ -4007,13 +4159,28 @@ export interface components {
             rows: components["schemas"]["EconomicsRow"][];
             fields: components["schemas"]["EconomicsField"][];
         };
+        EconomicsSourceSnapshotRef: {
+            kind: string;
+            snapshot_id: string;
+            /** Format: date-time */
+            as_of: string;
+            captured_value: string;
+            overridden: boolean;
+            currency: string;
+        };
         EconomicsLineage: {
+            source_snapshots?: components["schemas"]["EconomicsSourceSnapshotRef"][];
             formula: string;
             dependencies: string[];
             row_ids: string[];
             sources: components["schemas"]["EconomicsSource"][];
         };
         EconomicsProductReport: {
+            /**
+             * Format: int64
+             * @description Распределённая часть выручки строк бандлов; уже включена в revenue
+             */
+            bundle_revenue?: number;
             /** Format: uuid */
             product_id: string;
             amounts: {
@@ -4147,6 +4314,11 @@ export interface components {
             effective_from?: string | null;
         };
         MetricVersion: {
+            /**
+             * @description Сохранённый тип перенесённого показателя книги; последующие версии формулы сохраняют этот тип
+             * @enum {string}
+             */
+            readonly result_type?: "money" | "number" | "percent";
             version: number;
             /** Format: date */
             effective_from?: string | null;
@@ -4183,6 +4355,11 @@ export interface components {
             value_b: string;
         };
         FactRow: {
+            /**
+             * Format: uuid
+             * @description Для факта книги batch_id обозначает snapshot ID, data_version — версию книги; отсутствие поля означает исходную версию modeling
+             */
+            book_product_id?: string;
             /** Format: uuid */
             id: string;
             /** Format: uuid */
@@ -4202,11 +4379,112 @@ export interface components {
         Explanation: {
             key: string;
             /** @enum {string} */
-            kind: "field" | "metric";
+            kind: "field" | "metric" | "source";
             expression?: string;
             value: string;
             inputs?: components["schemas"]["Explanation"][];
+            sources?: components["schemas"]["FormulaSourceObservation"][];
             rows?: components["schemas"]["FactRow"][];
+        };
+        HistoryUnificationStatus: {
+            active: boolean;
+            period: string;
+            digest?: string;
+            /** Format: uuid */
+            book_product_id?: string;
+            field_keys?: {
+                [key: string]: string;
+            };
+            metric_keys?: {
+                [key: string]: string;
+            };
+        };
+        HistoryUnificationRequest: {
+            expected_book_version: number;
+            expected_model_version: number;
+            /** @description Контрольная сумма подтверждённого предпросмотра; обязательна при применении */
+            digest?: string;
+        };
+        HistoryUnificationPreview: {
+            digest: string;
+            /** Format: uuid */
+            book_product_id: string;
+            period: string;
+            book_versions: number;
+            model_versions: number;
+            canonical_version: number;
+            model_version?: number;
+            previous_pnl?: components["schemas"]["PnL"][];
+            canonical_pnl?: components["schemas"]["PnL"][];
+            excluded_model_fields?: string[];
+            definition_keys: string[];
+            definition_mappings?: {
+                [key: string]: string;
+            };
+            warnings: string[];
+            applied: boolean;
+        };
+        HistoricalFacts: {
+            batch: components["schemas"]["ImportBatch"];
+            facts: components["schemas"]["FactRow"][];
+        };
+        HistoricalTeamShare: {
+            /** Format: uuid */
+            team_id: string;
+            /** Format: uuid */
+            product_id: string;
+            period: string;
+            share: string;
+            source: string;
+        };
+        HistoryArchive: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            book_product_id: string;
+            period: string;
+            digest: string;
+            book_versions: components["schemas"]["EconomicsSnapshot"][];
+            model_versions: components["schemas"]["HistoricalFacts"][];
+            fields: components["schemas"]["FinancialField"][];
+            metrics: components["schemas"]["Metric"][];
+            allocations: components["schemas"]["AllocationRule"][];
+            bundles: components["schemas"]["BundleRule"][];
+            teams: components["schemas"]["Team"][];
+            shares: components["schemas"]["HistoricalTeamShare"][];
+            closed: boolean;
+            field_keys: {
+                [key: string]: string;
+            };
+            metric_keys: {
+                [key: string]: string;
+            };
+            actor: string;
+            /** Format: date-time */
+            at: string;
+        };
+        FormulaSourceObservation: {
+            /** @enum {string} */
+            kind: "worklogs" | "crm_revenue" | "headcount";
+            /** Format: uuid */
+            product_id?: string;
+            /** Format: uuid */
+            team_id?: string;
+            period: string;
+            item?: string;
+            currency?: string;
+            snapshot_id: string;
+            /** @description Фактическое значение закреплённого снимка */
+            captured_value: string;
+            /** @description Результат источника подменён только внутри сценария */
+            overridden: boolean;
+            /** Format: date-time */
+            as_of: string;
+            provenance: {
+                source: string;
+                record_id: string;
+                version: string;
+            }[];
         };
         ImportColumn: {
             column: string;
@@ -4381,9 +4659,16 @@ export interface components {
             balance: components["schemas"]["Money"];
         };
         ScenarioOverride: {
-            field_key: string;
+            field_key?: string;
+            /**
+             * @description Альтернатива field_key для сценарной подмены прямого источника
+             * @enum {string}
+             */
+            source?: "worklogs" | "crm_revenue" | "headcount";
             /** Format: uuid */
             product_id?: string;
+            /** Format: uuid */
+            team_id?: string;
             period?: string;
             value: string;
         };
@@ -4424,8 +4709,20 @@ export interface components {
                 /** Format: date */
                 due_date?: string | null;
                 regulatory?: boolean;
+                /** Format: date */
+                planned_date?: string | null;
+                planning_source?: string;
+                planning_status?: string;
             };
             breached: boolean;
+            /** @description Плановая дата и срок известны */
+            known: boolean;
+            baseline_breached: boolean;
+            newly_breached: boolean;
+            /** Format: date */
+            baseline_date?: string | null;
+            /** Format: date */
+            scenario_date?: string | null;
             reason?: string;
         };
         TrackImpact: {
@@ -4444,6 +4741,12 @@ export interface components {
             reason?: string;
         };
         ScenarioResult: {
+            base_explanations?: {
+                [key: string]: components["schemas"]["Explanation"];
+            };
+            explanations?: {
+                [key: string]: components["schemas"]["Explanation"];
+            };
             scenario: components["schemas"]["Scenario"];
             metrics?: {
                 [key: string]: string;
@@ -8146,6 +8449,34 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    previewFinanceReconciliation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FinanceFileInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReconciliation"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
     importFinanceFile: {
         parameters: {
             query?: never;
@@ -8169,6 +8500,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EconomicsSnapshot"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    evaluateBookMetric: {
+        parameters: {
+            query: {
+                version: number;
+                filter_product_id?: string;
+                team?: string;
+            };
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+                metricKey: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Расчёт без изменения книги или данных модели */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookMetricResult"];
                 };
             };
             default: components["responses"]["Problem"];
@@ -8437,6 +8797,137 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EconomicsSnapshot"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setManualFinancialValue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fieldKey: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualFinancialValue"];
+            };
+        };
+        responses: {
+            /** @description Значение сохранено */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FactRow"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    previewEconomicsUnification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HistoryUnificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Проверяемое объединение без удаления исторических записей */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryUnificationPreview"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    applyEconomicsUnification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HistoryUnificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Проверяемое объединение без удаления исторических записей */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryUnificationPreview"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getEconomicsUnificationStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Состояние единого источника периода */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryUnificationStatus"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getEconomicsUnificationArchive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Проверяемое объединение без удаления исторических записей */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryArchive"];
                 };
             };
             default: components["responses"]["Problem"];

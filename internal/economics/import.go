@@ -23,18 +23,40 @@ type ImportTemplate struct {
 
 // Import accepts previews produced by the trusted Finance port, never client-provided parsed rows.
 func (s *Service) Import(ctx context.Context, sc authz.Scope, product kernel.ID, period string, preview ports.FinancePreview, expectedVersion int, recalculate bool) (Snapshot, error) {
-	if err := sc.Require(authz.ActionWriteFinance, product); err != nil {
+	return s.importFinance(ctx, sc, product, period, preview, expectedVersion, recalculate, false)
+}
+
+// ImportReconciled explicitly retains rules for uniquely matched source facts.
+func (s *Service) ImportReconciled(ctx context.Context, sc authz.Scope, product kernel.ID, period string, preview ports.FinancePreview, expectedVersion int, recalculate bool) (Snapshot, error) {
+	return s.importFinance(ctx, sc, product, period, preview, expectedVersion, recalculate, true)
+}
+
+func (s *Service) importFinance(ctx context.Context, sc authz.Scope, product kernel.ID, period string, preview ports.FinancePreview, expectedVersion int, recalculate, preserve bool) (Snapshot, error) {
+	input, previous, err := s.prepareImport(ctx, sc, product, period, preview, expectedVersion, recalculate)
+	if err != nil {
 		return Snapshot{}, err
+	}
+	if preserve {
+		if _, err := reconcileImport(previous, &input); err != nil {
+			return Snapshot{}, err
+		}
+	}
+	return s.Save(ctx, sc, input)
+}
+
+func (s *Service) prepareImport(ctx context.Context, sc authz.Scope, product kernel.ID, period string, preview ports.FinancePreview, expectedVersion int, recalculate bool) (SaveInput, Snapshot, error) {
+	if err := sc.Require(authz.ActionWriteFinance, product); err != nil {
+		return SaveInput{}, Snapshot{}, err
 	}
 	if err := validatePeriod(period); err != nil {
-		return Snapshot{}, err
+		return SaveInput{}, Snapshot{}, err
 	}
 	if len(preview.Errors) > 0 || len(preview.Rows) == 0 {
-		return Snapshot{}, kernel.Invalid("import", "a nonempty preview without row errors is required")
+		return SaveInput{}, Snapshot{}, kernel.Invalid("import", "a nonempty preview without row errors is required")
 	}
 	previous, err := s.store.Snapshot(ctx, sc, product, period, 0)
 	if err != nil && !errors.Is(err, kernel.ErrNotFound) {
-		return Snapshot{}, err
+		return SaveInput{}, Snapshot{}, err
 	}
 	input := SaveInput{ProductID: product, Period: period, Currency: preview.Rows[0].Amount.Currency, ExpectedVersion: expectedVersion, Recalculate: recalculate,
 		Source: "import", SourceHash: preview.SourceHash, Fields: previous.Fields, Rows: make([]Row, 0, len(preview.Rows))}
@@ -48,27 +70,33 @@ func (s *Service) Import(ctx context.Context, sc authz.Scope, product kernel.ID,
 		input.Source = "1c"
 	}
 	if len(preview.SourceHashes) > 100 {
-		return Snapshot{}, kernel.Invalid("source_hashes", "too many financial sources")
+		return SaveInput{}, Snapshot{}, kernel.Invalid("source_hashes", "too many financial sources")
 	}
 	allowedHashes := map[string]bool{preview.SourceHash: true}
 	for _, hash := range preview.SourceHashes {
 		if hash == "" || len(hash) > 128 {
-			return Snapshot{}, kernel.Invalid("source_hashes", "invalid financial source hash")
+			return SaveInput{}, Snapshot{}, kernel.Invalid("source_hashes", "invalid financial source hash")
 		}
 		allowedHashes[hash] = true
 	}
 	for _, row := range preview.Rows {
 		if row.Period != period {
-			return Snapshot{}, kernel.Invalid("period", "import contains another period")
+			return SaveInput{}, Snapshot{}, kernel.Invalid("period", "import contains another period")
 		}
 		if preview.SourceHash != "" && !allowedHashes[row.Source.Hash] {
-			return Snapshot{}, kernel.Invalid("source_hash", "source lineage hash mismatch")
+			return SaveInput{}, Snapshot{}, kernel.Invalid("source_hash", "source lineage hash mismatch")
 		}
 		input.Rows = append(input.Rows, Row{ID: kernel.NewID(), ProductID: row.ProductID, Category: row.Category, Amount: row.Amount, TeamID: row.TeamID, Headcount: row.Headcount,
 			FeatureID: row.FeatureID, CertificationTrackID: row.CertificationTrackID, Branch: row.Branch, BundleID: row.BundleID, Description: row.Description,
 			Source: Source{File: row.Source.File, Sheet: row.Source.Sheet, Row: row.Source.Row, Hash: row.Source.Hash}, Allocations: []Allocation{}, Values: map[string]string{}})
 	}
-	return s.Save(ctx, sc, input)
+	if previous.Version != expectedVersion {
+		return SaveInput{}, Snapshot{}, kernel.ErrConflict
+	}
+	if err := validateInput(sc, input); err != nil {
+		return SaveInput{}, Snapshot{}, err
+	}
+	return input, previous, nil
 }
 
 func (s *Service) SaveTemplate(ctx context.Context, sc authz.Scope, template ImportTemplate) (ImportTemplate, error) {

@@ -86,3 +86,26 @@ func TestAD04_CEFFormat(t *testing.T) {
 		t.Fatalf("расширение: %s", line)
 	}
 }
+
+// Concurrent financial reads must append one valid chain without spurious conflicts.
+func TestAD04_NFS05_ConcurrentFinanceReadsKeepAuditChain(t *testing.T) {
+	ctx := context.Background()
+	store := audit.NewMemStore()
+	loggers := []*audit.Logger{audit.NewLogger(store, kernel.SystemClock{}), audit.NewLogger(store, kernel.SystemClock{})}
+	results := make(chan error, 64)
+	for i := 0; i < 64; i++ {
+		go func(logger *audit.Logger) {
+			_, err := logger.Append(ctx, audit.Entry{Actor: "synthetic-finance", Action: audit.ActionViewFinance, ObjectType: "economics.report"})
+			results <- err
+		}(loggers[i%len(loggers)])
+	}
+	for i := 0; i < 64; i++ {
+		if err := <-results; err != nil {
+			t.Fatalf("concurrent append: %v", err)
+		}
+	}
+	result, err := audit.Verify(ctx, store)
+	if err != nil || !result.OK || result.Checked != 64 {
+		t.Fatalf("audit chain: %+v %v", result, err)
+	}
+}

@@ -22,6 +22,40 @@ func (s *Server) requireEconomics() error {
 	return nil
 }
 
+// SetManualFinancialValue exposes the same versioned path used by model imports.
+func (s *Server) SetManualFinancialValue(ctx context.Context, req gen.SetManualFinancialValueRequestObject) (gen.SetManualFinancialValueResponseObject, error) {
+	if err := s.requireEconomics(); err != nil {
+		return nil, err
+	}
+	if req.Body == nil {
+		return nil, kernel.Invalid("body", "обязательно")
+	}
+	b := req.Body
+	if len(b.Value) == 0 || len(b.Value) > 512 {
+		return nil, kernel.Invalid("value", "число должно содержать от 1 до 512 символов")
+	}
+	p, err := economics.ParsePeriod(b.Period)
+	if err != nil {
+		return nil, err
+	}
+	v, err := parseDec(b.Value)
+	if err != nil {
+		return nil, err
+	}
+	if v.Exponent() < -128 || v.Exponent() > 128 {
+		return nil, kernel.Invalid("value", "порядок числа превышает предел")
+	}
+	sl := economics.Slice{ProductID: b.ProductId, Period: p, Item: strOrEmpty(b.Item)}
+	if b.TeamId != nil {
+		sl.TeamID = *b.TeamId
+	}
+	r, err := s.d.Modeling.SetManualValue(ctx, scope(ctx), req.FieldKey, sl, v)
+	if err != nil {
+		return nil, err
+	}
+	return gen.SetManualFinancialValue201JSONResponse(toFactRow(r)), nil
+}
+
 // ---- преобразования ----
 
 func decStr(d decimal.Decimal) string { return d.String() }
@@ -109,9 +143,14 @@ func toMetric(m economics.Metric) gen.Metric {
 				Kind *string `json:"kind,omitempty"`
 			}{Key: &key, Kind: &kind})
 		}
+		var resultType *gen.MetricVersionResultType
+		if v.ResultType != "" {
+			typ := gen.MetricVersionResultType(v.ResultType)
+			resultType = &typ
+		}
 		at, actor, currency := v.At, v.Actor, v.Currency
 		versions = append(versions, gen.MetricVersion{
-			Version: v.Version, EffectiveFrom: datePtr(v.EffectiveFrom), Name: v.Name,
+			Version: v.Version, ResultType: resultType, EffectiveFrom: datePtr(v.EffectiveFrom), Name: v.Name,
 			Expression: v.Expression, Refs: &refs, Currency: &currency, Actor: &actor, At: &at,
 		})
 	}
@@ -124,7 +163,7 @@ func toFactRow(r economics.FactRow) gen.FactRow {
 	batch := r.BatchID
 	item := r.Item
 	return gen.FactRow{
-		Id: r.ID, BatchId: &batch, FieldKey: r.FieldKey, ProductId: idPtr(r.ProductID), TeamId: idPtr(r.TeamID),
+		Id: r.ID, BookProductId: idPtr(r.BookProductID), BatchId: &batch, FieldKey: r.FieldKey, ProductId: idPtr(r.ProductID), TeamId: idPtr(r.TeamID),
 		Period: r.Period.String(), Item: &item, Value: decStr(r.Value), DataVersion: &version,
 		Sheet: &sheet, Row: &row,
 	}
@@ -132,6 +171,26 @@ func toFactRow(r economics.FactRow) gen.FactRow {
 
 func toExplanation(e economics.Explanation) gen.Explanation {
 	out := gen.Explanation{Key: e.Key, Kind: gen.ExplanationKind(e.Kind), Value: decStr(e.Value)}
+	if len(e.Sources) > 0 {
+		sources := make([]gen.FormulaSourceObservation, 0, len(e.Sources))
+		for _, source := range e.Sources {
+			provenance := make([]struct {
+				RecordId string `json:"record_id"`
+				Source   string `json:"source"`
+				Version  string `json:"version"`
+			}, 0, len(source.Provenance))
+			for _, p := range source.Provenance {
+				provenance = append(provenance, struct {
+					RecordId string `json:"record_id"`
+					Source   string `json:"source"`
+					Version  string `json:"version"`
+				}{RecordId: p.RecordID, Source: p.Source, Version: p.Version})
+			}
+			currency, item := source.Currency, source.Item
+			sources = append(sources, gen.FormulaSourceObservation{Kind: gen.FormulaSourceObservationKind(source.Kind), ProductId: idPtr(source.ProductID), TeamId: idPtr(source.TeamID), Period: source.Period, Item: &item, Currency: &currency, SnapshotId: source.SnapshotID, AsOf: source.AsOf, Provenance: provenance, CapturedValue: source.CapturedValue, Overridden: source.Overridden})
+		}
+		out.Sources = &sources
+	}
 	if e.Expression != "" {
 		expr := e.Expression
 		out.Expression = &expr

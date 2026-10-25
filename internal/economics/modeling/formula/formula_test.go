@@ -160,3 +160,58 @@ func TestEC09_DivisionByZeroIsError(t *testing.T) {
 		t.Fatalf("ожидалась ошибка деления на ноль, получено %v", err)
 	}
 }
+
+func TestEC09_FormulaRejectsUnboundedDecimalWork(t *testing.T) {
+	eng, err := formula.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expr := range []string{
+		`d("1e100000000")`,
+		`d("1e-100000000")`,
+		`d("1e300") * d("1e300")`,
+		`d("1e511") + d("1e-510")`,
+		`d("` + strings.Repeat("9", 513) + `")`,
+	} {
+		t.Run(expr[:min(len(expr), 50)], func(t *testing.T) {
+			p, err := eng.Compile(expr)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := p.Eval(&stubSource{}, formula.Slice{}); err == nil {
+				t.Fatalf("unbounded decimal accepted: %s", expr)
+			}
+		})
+	}
+	if _, err := eng.Compile(strings.Repeat(" ", 8193) + `d("1")`); err == nil {
+		t.Fatal("oversized formula accepted")
+	}
+	for _, expr := range []string{`field("bad")`, `sum("bad")`, `avg("bad")`, `min("bad")`, `count("bad")`, `metric("bad")`} {
+		p, err := eng.Compile(expr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		bad := decimal.New(1, 100000000)
+		if _, err := p.Eval(&stubSource{fields: map[string][]decimal.Decimal{"bad": {bad}}, metrics: map[string]decimal.Decimal{"bad": bad}}, formula.Slice{}); err == nil {
+			t.Fatalf("unbounded source accepted: %s", expr)
+		}
+	}
+}
+
+func TestEC09_BoundedDecimalRetainsIntegersAboveFloatPrecision(t *testing.T) {
+	eng, err := formula.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := eng.Compile(`(d("9007199254740993") + d("1")) * d("0.1")`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := p.Eval(&stubSource{}, formula.Slice{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Equal(dec("900719925474099.4")) {
+		t.Fatalf("exact decimal changed: %s", got)
+	}
+}

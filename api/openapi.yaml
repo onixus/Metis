@@ -2386,6 +2386,35 @@ paths:
                 $ref: '#/components/schemas/FinancePreview'
         default:
           $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/reconciliation:
+    post:
+      tags:
+        - economics
+      operationId: previewFinanceReconciliation
+      summary: Сверка повторного импорта с сохранением правил (EC-07/11)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceFileInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportReconciliation'
+        default:
+          $ref: '#/components/responses/Problem'
   /products/{productId}/economics/{period}/import:
     post:
       tags:
@@ -2413,6 +2442,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EconomicsSnapshot'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/metrics/{metricKey}:
+    get:
+      tags: [economics]
+      operationId: evaluateBookMetric
+      summary: Формула конструктора на закреплённой версии книги (EC-09/10/11)
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+        - name: metricKey
+          in: path
+          required: true
+          schema: { type: string }
+        - name: version
+          in: query
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - name: filter_product_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: team
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Расчёт без изменения книги или данных модели
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookMetricResult'
         default:
           $ref: '#/components/responses/Problem'
   /products/{productId}/economics/{period}/versions:
@@ -2702,6 +2765,113 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /economics/fields/{fieldKey}/manual-value:
+    post:
+      tags: [economics]
+      operationId: setManualFinancialValue
+      summary: Новая версия ручного значения поля модели (EC-08/11)
+      parameters:
+        - name: fieldKey
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualFinancialValue'
+      responses:
+        '201':
+          description: Значение сохранено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactRow'
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/unification/preview:
+    post:
+      tags: [economics]
+      operationId: previewEconomicsUnification
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HistoryUnificationRequest' }
+      responses:
+        '200':
+          description: Проверяемое объединение без удаления исторических записей
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HistoryUnificationPreview' }
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/unification/apply:
+    post:
+      tags: [economics]
+      operationId: applyEconomicsUnification
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HistoryUnificationRequest' }
+      responses:
+        '200':
+          description: Проверяемое объединение без удаления исторических записей
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HistoryUnificationPreview' }
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/unification/status:
+    get:
+      tags: [economics]
+      operationId: getEconomicsUnificationStatus
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+      responses:
+        '200':
+          description: Состояние единого источника периода
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HistoryUnificationStatus' }
+        default:
+          $ref: '#/components/responses/Problem'
+  /products/{productId}/economics/{period}/unification/archive:
+    get:
+      tags: [economics]
+      operationId: getEconomicsUnificationArchive
+      parameters:
+        - $ref: '#/components/parameters/productId'
+        - name: period
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+      responses:
+        '200':
+          description: Проверяемое объединение без удаления исторических записей
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HistoryArchive' }
+        default:
+          $ref: '#/components/responses/Problem'
   /economics/fields:
     get:
       tags: [economics]
@@ -3151,6 +3321,7 @@ paths:
               properties:
                 metrics:
                   type: array
+                  maxItems: 64
                   items: { type: string }
       responses:
         "200":
@@ -5289,6 +5460,46 @@ components:
       x-go-type: ports.FinancePreview
       x-go-type-import:
         path: github.com/onixus/metis/internal/ports
+    ImportReconciliation:
+      type: object
+      required: [matched, added, changed, removed, totals]
+      properties:
+        matched: { type: integer }
+        added: { type: integer }
+        changed: { type: integer }
+        removed: { type: integer }
+        totals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportCategoryTotal'
+      x-go-type: economics.ImportReconciliation
+      x-go-type-import:
+        path: github.com/onixus/metis/internal/economics
+    ImportCategoryTotal:
+      type: object
+      required: [category, previous, current, delta]
+      properties:
+        category: { type: string }
+        previous: { type: string, description: Сумма в минорных единицах }
+        current: { type: string, description: Сумма в минорных единицах }
+        delta: { type: string, description: Изменение в минорных единицах }
+    BookMetricResult:
+      type: object
+      required: [snapshot, metric]
+      properties:
+        snapshot:
+          $ref: '#/components/schemas/EconomicsSnapshotInfo'
+        metric:
+          $ref: '#/components/schemas/Explanation'
+    ManualFinancialValue:
+      type: object
+      required: [product_id, period, value]
+      properties:
+        product_id: { type: string, format: uuid }
+        period: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+        team_id: { type: string, format: uuid }
+        item: { type: string, maxLength: 256 }
+        value: { type: string, maxLength: 512, description: Точное число; деньги в минорных единицах }
     FinanceFileInput:
       type: object
       required:
@@ -5308,6 +5519,10 @@ components:
         expected_version:
           type: integer
           minimum: 0
+        preserve_rules:
+          type: boolean
+          default: false
+          description: Сохранить правила и ручные значения однозначно сопоставленных строк; неоднозначности отклоняются.
         recalculate:
           type: boolean
     EconomicsSource:
@@ -5355,6 +5570,10 @@ components:
         - allocations
         - values
       properties:
+        model_item:
+          type: string
+          maxLength: 256
+          description: Срез статьи ручного значения общего конструктора
         id:
           type: string
           format: uuid
@@ -5525,6 +5744,16 @@ components:
       x-go-type: economics.Snapshot
       x-go-type-import:
         path: github.com/onixus/metis/internal/economics
+    EconomicsSourceSnapshotRef:
+      type: object
+      required: [kind, snapshot_id, as_of, captured_value, overridden, currency]
+      properties:
+        kind: { type: string }
+        snapshot_id: { type: string }
+        as_of: { type: string, format: date-time }
+        captured_value: { type: string }
+        overridden: { type: boolean }
+        currency: { type: string }
     EconomicsLineage:
       type: object
       required:
@@ -5533,6 +5762,9 @@ components:
         - row_ids
         - sources
       properties:
+        source_snapshots:
+          type: array
+          items: { $ref: '#/components/schemas/EconomicsSourceSnapshotRef' }
         formula:
           type: string
         dependencies:
@@ -5564,6 +5796,10 @@ components:
         - metrics
         - lineage
       properties:
+        bundle_revenue:
+          type: integer
+          format: int64
+          description: Распределённая часть выручки строк бандлов; уже включена в revenue
         product_id:
           type: string
           format: uuid
@@ -5835,7 +6071,7 @@ components:
       properties:
         key: { type: string }
         name: { type: string }
-        expression: { type: string }
+        expression: { type: string, maxLength: 8192 }
         currency: { type: string }
         effective_from: { type: string, format: date, nullable: true }
 
@@ -5843,6 +6079,11 @@ components:
       type: object
       required: [version, name, expression]
       properties:
+        result_type:
+          type: string
+          enum: [money, number, percent]
+          readOnly: true
+          description: Сохранённый тип перенесённого показателя книги; последующие версии формулы сохраняют этот тип
         version: { type: integer }
         effective_from: { type: string, format: date, nullable: true }
         name: { type: string }
@@ -5891,6 +6132,10 @@ components:
       type: object
       required: [id, field_key, period, value]
       properties:
+        book_product_id:
+          type: string
+          format: uuid
+          description: Для факта книги batch_id обозначает snapshot ID, data_version — версию книги; отсутствие поля означает исходную версию modeling
         id: { type: string, format: uuid }
         batch_id: { type: string, format: uuid }
         field_key: { type: string }
@@ -5908,16 +6153,121 @@ components:
       required: [key, kind, value]
       properties:
         key: { type: string }
-        kind: { type: string, enum: [field, metric] }
+        kind: { type: string, enum: [field, metric, source] }
         expression: { type: string }
         value: { type: string }
         inputs:
           type: array
           items: { $ref: "#/components/schemas/Explanation" }
+        sources:
+          type: array
+          items: { $ref: '#/components/schemas/FormulaSourceObservation' }
         rows:
           type: array
           items: { $ref: "#/components/schemas/FactRow" }
 
+    HistoryUnificationStatus:
+      type: object
+      required: [active, period]
+      properties:
+        active: { type: boolean }
+        period: { type: string }
+        digest: { type: string }
+        book_product_id: { type: string, format: uuid }
+        field_keys: { type: object, additionalProperties: { type: string } }
+        metric_keys: { type: object, additionalProperties: { type: string } }
+    HistoryUnificationRequest:
+      type: object
+      required: [expected_book_version, expected_model_version]
+      properties:
+        expected_book_version: { type: integer, minimum: 1 }
+        expected_model_version: { type: integer, minimum: 0 }
+        digest: { type: string, maxLength: 64, description: Контрольная сумма подтверждённого предпросмотра; обязательна при применении }
+    HistoryUnificationPreview:
+      type: object
+      required: [digest, book_product_id, period, book_versions, model_versions, canonical_version, definition_keys, warnings, applied]
+      properties:
+        digest: { type: string }
+        book_product_id: { type: string, format: uuid }
+        period: { type: string }
+        book_versions: { type: integer }
+        model_versions: { type: integer }
+        canonical_version: { type: integer }
+        model_version: { type: integer }
+        previous_pnl: { type: array, items: { $ref: '#/components/schemas/PnL' } }
+        canonical_pnl: { type: array, items: { $ref: '#/components/schemas/PnL' } }
+        excluded_model_fields: { type: array, items: { type: string } }
+        definition_keys: { type: array, items: { type: string } }
+        definition_mappings: { type: object, additionalProperties: { type: string } }
+        warnings: { type: array, items: { type: string } }
+        applied: { type: boolean }
+      x-go-type: modeling.HistoryUnificationPreview
+      x-go-type-import:
+        name: modeling
+        path: github.com/onixus/metis/internal/economics/modeling
+    HistoricalFacts:
+      type: object
+      required: [batch, facts]
+      properties:
+        batch: { $ref: '#/components/schemas/ImportBatch' }
+        facts: { type: array, items: { $ref: '#/components/schemas/FactRow' } }
+    HistoricalTeamShare:
+      type: object
+      required: [team_id, product_id, period, share, source]
+      properties:
+        team_id: { type: string, format: uuid }
+        product_id: { type: string, format: uuid }
+        period: { type: string }
+        share: { type: string }
+        source: { type: string }
+    HistoryArchive:
+      type: object
+      required: [id, book_product_id, period, digest, book_versions, model_versions, fields, metrics, allocations, bundles, teams, shares, closed, field_keys, metric_keys, actor, at]
+      properties:
+        id: { type: string, format: uuid }
+        book_product_id: { type: string, format: uuid }
+        period: { type: string }
+        digest: { type: string }
+        book_versions: { type: array, items: { $ref: '#/components/schemas/EconomicsSnapshot' } }
+        model_versions: { type: array, items: { $ref: '#/components/schemas/HistoricalFacts' } }
+        fields: { type: array, items: { $ref: '#/components/schemas/FinancialField' } }
+        metrics: { type: array, items: { $ref: '#/components/schemas/Metric' } }
+        allocations: { type: array, items: { $ref: '#/components/schemas/AllocationRule' } }
+        bundles: { type: array, items: { $ref: '#/components/schemas/BundleRule' } }
+        teams: { type: array, items: { $ref: '#/components/schemas/Team' } }
+        shares: { type: array, items: { $ref: '#/components/schemas/HistoricalTeamShare' } }
+        closed: { type: boolean }
+        field_keys: { type: object, additionalProperties: { type: string } }
+        metric_keys: { type: object, additionalProperties: { type: string } }
+        actor: { type: string }
+        at: { type: string, format: date-time }
+      x-go-type: modeling.HistoryArchive
+      x-go-type-import:
+        name: modeling
+        path: github.com/onixus/metis/internal/economics/modeling
+    FormulaSourceObservation:
+      type: object
+      required: [kind, period, snapshot_id, as_of, provenance, captured_value, overridden]
+      properties:
+        kind: { type: string, enum: [worklogs, crm_revenue, headcount] }
+        product_id: { type: string, format: uuid }
+        team_id: { type: string, format: uuid }
+        period: { type: string }
+        item: { type: string }
+        currency: { type: string }
+        snapshot_id: { type: string }
+        captured_value: { type: string, description: Фактическое значение закреплённого снимка }
+        overridden: { type: boolean, description: Результат источника подменён только внутри сценария }
+        as_of: { type: string, format: date-time }
+        provenance:
+          type: array
+          items:
+            type: object
+            required: [source, record_id, version]
+            properties:
+              source: { type: string }
+              record_id: { type: string }
+              version: { type: string }
     ImportColumn:
       type: object
       required: [column, field_key]
@@ -6142,12 +6492,14 @@ components:
 
     ScenarioOverride:
       type: object
-      required: [field_key, value]
+      required: [value]
       properties:
         field_key: { type: string }
+        source: { type: string, enum: [worklogs, crm_revenue, headcount], description: Альтернатива field_key для сценарной подмены прямого источника }
         product_id: { type: string, format: uuid }
+        team_id: { type: string, format: uuid }
         period: { type: string }
-        value: { type: string }
+        value: { type: string, maxLength: 512 }
 
     ScenarioInput:
       type: object
@@ -6159,11 +6511,13 @@ components:
         period: { type: string }
         products:
           type: array
+          maxItems: 10000
           items: { type: string, format: uuid }
         overrides:
           type: array
+          maxItems: 128
           items: { $ref: "#/components/schemas/ScenarioOverride" }
-        capacity_shift_days: { type: integer }
+        capacity_shift_days: { type: integer, minimum: -36500, maximum: 36500 }
         budget_delta: { $ref: "#/components/schemas/Money" }
 
     Scenario:
@@ -6180,7 +6534,7 @@ components:
         overrides:
           type: array
           items: { $ref: "#/components/schemas/ScenarioOverride" }
-        capacity_shift_days: { type: integer }
+        capacity_shift_days: { type: integer, minimum: -36500, maximum: 36500 }
         budget_delta: { $ref: "#/components/schemas/Money" }
         actor: { type: string }
         created_at: { type: string, format: date-time }
@@ -6188,7 +6542,7 @@ components:
 
     CommitmentImpact:
       type: object
-      required: [commitment, breached]
+      required: [commitment, breached, known, baseline_breached, newly_breached]
       properties:
         commitment:
           type: object
@@ -6198,7 +6552,15 @@ components:
             title: { type: string }
             due_date: { type: string, format: date, nullable: true }
             regulatory: { type: boolean }
+            planned_date: { type: string, format: date, nullable: true }
+            planning_source: { type: string }
+            planning_status: { type: string }
         breached: { type: boolean }
+        known: { type: boolean, description: Плановая дата и срок известны }
+        baseline_breached: { type: boolean }
+        newly_breached: { type: boolean }
+        baseline_date: { type: string, format: date, nullable: true }
+        scenario_date: { type: string, format: date, nullable: true }
         reason: { type: string }
 
     TrackImpact:
@@ -6221,6 +6583,12 @@ components:
       type: object
       required: [scenario]
       properties:
+        base_explanations:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/Explanation' }
+        explanations:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/Explanation' }
         scenario: { $ref: "#/components/schemas/Scenario" }
         metrics:
           type: object

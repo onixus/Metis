@@ -1,0 +1,15 @@
+{
+  "environment": "Actual PostgreSQL16.14, loopback API, synthetic HMAC finance/full; real CRM CSV adapter, canonical-book headcount; Delivery/Jira disabled; Chromium installed. No browser response mocks.",
+  "api_binary_sha256": "4f30cd086f0a06c06403ab832d38ee139e325c86c013ce09f7efa6a10de15b8e",
+  "web_index_sha256": "7a801df0ce5212b9e2604ee64fe01ddaa8372129fd1567304dd869e5ce31b26a",
+  "runner_sha256": "7e2920ed2d18a7be29ea42746c773ade5486e5d5db09282ae7fe48a9da2b0d41",
+  "source_files": {
+    "web/scripts/acceptance-economics-sources.cjs": "7e2920ed2d18a7be29ea42746c773ade5486e5d5db09282ae7fe48a9da2b0d41",
+    "web/src/pages/EconomicsModelPanel.tsx": "9af0c4eb1fa584e7e06dc88bb87603f3ce39996c2a0d42cd896fd36cfc3800f1",
+    "web/src/pages/EconomicsScenariosPanel.tsx": "bb8b73b60465fc8490e58e100c1749394b54d5fb08f8222486ceb9c6e8586bc1",
+    "web/src/pages/EconomicsExplanation.tsx": "cb4e65ec9af15a1733b4f51b0e45535482f0a66cdb28616b5863c7cf2ad21060",
+    "web/src/lib/economicsModel.ts": "d72e59a0c14e1596e9937e87364f9ad701f1b70b4e7917370c1fd554b9510f4e",
+    "web/src/api/schema.d.ts": "d4a3fbdc78f2b51e674b6cffdbfd187956189777d2716e9aa7429ea69eb4516f"
+  },
+  "tested_cases": "Headcount8→11 and CRM123456→123459 with exact source override, same baseline/scenario source snapshot, provenance and unavailable worklogs503; dark/light, desktop1440/mobile390."
+}

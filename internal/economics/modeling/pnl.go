@@ -31,6 +31,7 @@ func (s *Service) sumField(ctx context.Context, sc authz.Scope, key string, prod
 
 // productsWithData возвращает продукты, по которым есть данные за период.
 func (s *Service) productsWithData(ctx context.Context, sc authz.Scope, p Period) ([]kernel.ID, error) {
+	ctx = WithCanonicalReadScope(ctx, sc)
 	rows, err := s.store.Facts(ctx, identityaccess.ModelCalculationScope(sc), FactFilter{Period: &p})
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
@@ -200,6 +201,9 @@ func (s *Service) worklogWeight(ctx context.Context, sc authz.Scope, product ker
 
 // pnl считает P&L продукта за период; overrides — сценарий (nil для фактических данных).
 func (s *Service) pnl(ctx context.Context, sc authz.Scope, product kernel.ID, p Period, overrides []Override) (PnL, error) {
+	if out, bound, err := s.canonicalPnL(ctx, sc, product, p, overrides); bound || err != nil {
+		return out, err
+	}
 	// Only this fixed aggregate uses the complete cross-product inputs. The
 	// original caller is checked before any reads; no raw rows escape this method.
 	calculation, err := identityaccess.ProductPnLCalculationScope(sc, product)
@@ -247,7 +251,9 @@ func (s *Service) ProductPnL(ctx context.Context, sc authz.Scope, product kernel
 	if err != nil {
 		return PnL{}, err
 	}
-	s.logAccess(ctx, sc, "read", "economics.pnl", product, map[string]any{"period": p.String()})
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.pnl", product, map[string]any{"period": p.String()}); err != nil {
+		return PnL{}, err
+	}
 	return out, nil
 }
 
@@ -258,6 +264,15 @@ func (s *Service) PortfolioPnL(ctx context.Context, sc authz.Scope, p Period) (P
 	}
 	if p.IsZero() {
 		return PortfolioPnL{}, kernel.Invalid("period", "период обязателен")
+	}
+	if out, bound, err := s.canonicalPortfolio(ctx, sc, p); bound || err != nil {
+		if err != nil {
+			return PortfolioPnL{}, err
+		}
+		if err := s.logAccessChecked(ctx, sc, "read", "economics.pnl.portfolio", kernel.NilID, map[string]any{"period": p.String(), "canonical": true}); err != nil {
+			return PortfolioPnL{}, err
+		}
+		return out, nil
 	}
 	products, err := s.productsWithData(ctx, sc, p)
 	if err != nil {
@@ -276,7 +291,9 @@ func (s *Service) PortfolioPnL(ctx context.Context, sc authz.Scope, p Period) (P
 	}
 	out.Revenue, out.Costs = s.money(revenue), s.money(costs)
 	out.Profit = s.money(revenue.Sub(costs))
-	s.logAccess(ctx, sc, "read", "economics.pnl.portfolio", kernel.NilID, map[string]any{"period": p.String()})
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.pnl.portfolio", kernel.NilID, map[string]any{"period": p.String()}); err != nil {
+		return PortfolioPnL{}, err
+	}
 	return out, nil
 }
 
@@ -290,7 +307,16 @@ func (s *Service) TeamCosts(ctx context.Context, sc authz.Scope, teamID kernel.I
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return TeamCost{}, err
 	}
-	rows, err := s.store.Facts(ctx, identityaccess.ModelCalculationScope(sc), FactFilter{FieldKey: s.cfg.PayrollField, Period: &p, Team: &teamID})
+	if out, bound, err := s.canonicalTeamCosts(ctx, sc, p, teamID); bound || err != nil {
+		if err != nil {
+			return TeamCost{}, err
+		}
+		if err := s.logAccessChecked(ctx, sc, "read", "economics.team", kernel.NilID, map[string]any{"period": p.String(), "canonical": true}); err != nil {
+			return TeamCost{}, err
+		}
+		return out, nil
+	}
+	rows, err := s.store.Facts(WithCanonicalReadScope(ctx, sc), identityaccess.ModelCalculationScope(sc), FactFilter{FieldKey: s.cfg.PayrollField, Period: &p, Team: &teamID})
 	if err != nil {
 		return TeamCost{}, fmt.Errorf("facts: %w", err)
 	}
@@ -309,6 +335,9 @@ func (s *Service) TeamCosts(ctx context.Context, sc authz.Scope, teamID kernel.I
 		}
 		out.ByProduct[sh.ProductID] = s.money(total.Mul(sh.Share))
 	}
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.team", kernel.NilID, map[string]any{"team": teamID.String(), "period": p.String()}); err != nil {
+		return TeamCost{}, err
+	}
 	return out, nil
 }
 
@@ -319,6 +348,15 @@ func (s *Service) Matrix(ctx context.Context, sc authz.Scope, p Period) (Matrix,
 	}
 	if err := s.requireRead(sc, kernel.NilID, authz.FinanceAggregates); err != nil {
 		return Matrix{}, err
+	}
+	if out, bound, err := s.canonicalMatrix(ctx, sc, p); bound || err != nil {
+		if err != nil {
+			return Matrix{}, err
+		}
+		if err := s.logAccessChecked(ctx, sc, "read", "economics.matrix", kernel.NilID, map[string]any{"period": p.String(), "canonical": true}); err != nil {
+			return Matrix{}, err
+		}
+		return out, nil
 	}
 	teams, err := s.store.Teams(ctx, sc)
 	if err != nil {
@@ -341,7 +379,9 @@ func (s *Service) Matrix(ctx context.Context, sc authz.Scope, p Period) (Matrix,
 		}
 	}
 	sort.Slice(out.Products, func(i, j int) bool { return out.Products[i].String() < out.Products[j].String() })
-	s.logAccess(ctx, sc, "read", "economics.matrix", kernel.NilID, map[string]any{"period": p.String()})
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.matrix", kernel.NilID, map[string]any{"period": p.String()}); err != nil {
+		return Matrix{}, err
+	}
 	return out, nil
 }
 
@@ -353,6 +393,7 @@ func BranchItem(branch string) string { return "branch:" + branch }
 
 // FeatureEconomics — инвестиции в фичу против привязанной выручки (EC-05).
 func (s *Service) FeatureEconomics(ctx context.Context, sc authz.Scope, product, feature kernel.ID, p Period) (FeatureEconomics, error) {
+	ctx = WithCanonicalReadScope(ctx, sc)
 	if err := s.requireRead(sc, product, authz.FinanceAggregates); err != nil {
 		return FeatureEconomics{}, err
 	}
@@ -380,12 +421,16 @@ func (s *Service) FeatureEconomics(ctx context.Context, sc authz.Scope, product,
 	if err != nil {
 		return FeatureEconomics{}, err
 	}
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.feature", product, map[string]any{"feature": feature.String(), "period": p.String()}); err != nil {
+		return FeatureEconomics{}, err
+	}
 	return FeatureEconomics{FeatureID: feature, Investment: s.money(investment),
 		Revenue: s.money(revenue), Balance: s.money(revenue.Sub(investment))}, nil
 }
 
 // BranchCosts — стоимость поддержки веток версий продукта (EC-05).
 func (s *Service) BranchCosts(ctx context.Context, sc authz.Scope, product kernel.ID, p Period) ([]BranchCost, error) {
+	ctx = WithCanonicalReadScope(ctx, sc)
 	if err := s.requireRead(sc, product, authz.FinanceAggregates); err != nil {
 		return nil, err
 	}
@@ -410,6 +455,9 @@ func (s *Service) BranchCosts(ctx context.Context, sc authz.Scope, product kerne
 		out = append(out, BranchCost{ProductID: product, Branch: branch, Cost: s.money(v)})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Branch < out[j].Branch })
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.branches", product, map[string]any{"period": p.String()}); err != nil {
+		return nil, err
+	}
 	return out, nil
 }
 
@@ -436,7 +484,9 @@ func (s *Service) CertificationEconomics(ctx context.Context, sc authz.Scope, pr
 	if err != nil {
 		return CertificationEconomics{}, err
 	}
-	s.logAccess(ctx, sc, "read", "economics.certification", product, map[string]any{"period": p.String()})
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.certification", product, map[string]any{"period": p.String()}); err != nil {
+		return CertificationEconomics{}, err
+	}
 	return CertificationEconomics{ProductID: product, Period: p, TrackCost: s.money(cost),
 		CertifiedRevenue: s.money(revenue), Balance: s.money(revenue.Sub(cost))}, nil
 }

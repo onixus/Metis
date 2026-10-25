@@ -68,18 +68,19 @@ type TransactionalStore interface {
 
 // MemStore — хранилище в памяти (тесты, стенд).
 type MemStore struct {
-	mu        sync.RWMutex
-	fields    map[string]Field
-	metrics   map[string]Metric
-	templates map[kernel.ID]Template
-	batches   map[kernel.ID]ImportBatch
-	facts     []FactRow
-	alloc     []AllocationRule
-	bundles   []BundleRule
-	teams     map[kernel.ID]Team
-	shares    []TeamShare
-	closed    map[string]Period
-	scenarios map[kernel.ID]Scenario
+	unifications map[string]HistoryArchive
+	mu           sync.RWMutex
+	fields       map[string]Field
+	metrics      map[string]Metric
+	templates    map[kernel.ID]Template
+	batches      map[kernel.ID]ImportBatch
+	facts        []FactRow
+	alloc        []AllocationRule
+	bundles      []BundleRule
+	teams        map[kernel.ID]Team
+	shares       []TeamShare
+	closed       map[string]Period
+	scenarios    map[kernel.ID]Scenario
 }
 
 // NewMemStore создаёт пустое хранилище.

@@ -1,0 +1,35 @@
+{
+  "testedAt": "2026-10-25T13:55:01.920Z",
+  "results": [
+    {
+      "theme": "dark",
+      "source": "crm_revenue",
+      "value": "123456",
+      "exactScenarioOverride": "123459",
+      "snapshotProvenance": "PASS",
+      "baselineSnapshotId": "01a17355-8bbd-7e92-a81e-82ff4d4be6aa",
+      "scenarioSnapshotId": "01a17355-8bbd-7e92-a81e-82ff4d4be6aa",
+      "capturedValue": "123456",
+      "overridden": true,
+      "capturedAt": "2026-10-25T13:52:28.605563Z",
+      "stableBaselineSnapshot": "PASS",
+      "mobile": "PASS",
+      "unavailable": "worklogs:503"
+    },
+    {
+      "theme": "light",
+      "source": "crm_revenue",
+      "value": "123456",
+      "exactScenarioOverride": "123459",
+      "snapshotProvenance": "PASS",
+      "baselineSnapshotId": "01a17355-8bbd-7e92-a81e-82ff4d4be6aa",
+      "scenarioSnapshotId": "01a17355-8bbd-7e92-a81e-82ff4d4be6aa",
+      "capturedValue": "123456",
+      "overridden": true,
+      "capturedAt": "2026-10-25T13:52:28.605563Z",
+      "stableBaselineSnapshot": "PASS",
+      "mobile": "PASS",
+      "unavailable": "worklogs:503"
+    }
+  ]
+}

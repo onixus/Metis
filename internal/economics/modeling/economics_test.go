@@ -880,12 +880,12 @@ func TestDA02_ScenarioShowsCommitmentAndTrackImpact(t *testing.T) {
 		FileName: "budget.xlsx", Data: data}); err != nil {
 		t.Fatalf("загрузка бюджета: %v", err)
 	}
-	soon := kernel.DateOf(2026, time.March, 1) // в окне сдвига 30 дней от 10 февраля
-	later := kernel.DateOf(2026, time.June, 1) // вне окна
+	soon := kernel.DateOf(2026, time.March, 1) // linked delivery shifted beyond this deadline
+	later := kernel.DateOf(2026, time.June, 1) // linked delivery remains before this deadline
 	svc := f.svc.
 		WithCommitments(commitmentsStub{items: []economics.CommitmentRef{
-			{ID: kernel.NewID(), ProductID: f.edr, Title: "Поставка ГОСТ-криптографии", DueDate: soon, Regulatory: false},
-			{ID: kernel.NewID(), ProductID: f.edr, Title: "Сертификат 4.0", DueDate: later, Regulatory: true},
+			{ID: kernel.NewID(), ProductID: f.edr, Title: "Поставка ГОСТ-криптографии", DueDate: soon, PlannedDate: kernel.DateOf(2026, time.February, 20), PlanningStatus: "known", Regulatory: false},
+			{ID: kernel.NewID(), ProductID: f.edr, Title: "Сертификат 4.0", DueDate: later, PlannedDate: kernel.DateOf(2026, time.April, 1), PlanningStatus: "known", Regulatory: true},
 		}}).
 		WithTracks(tracksStub{items: []economics.TrackRef{
 			{ID: kernel.NewID(), ProductID: f.edr, Name: "Сертификация 4.0",

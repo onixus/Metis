@@ -26,10 +26,12 @@ type ReferenceReader interface {
 }
 
 type Service struct {
-	store      Store
-	audit      Auditor
-	clock      kernel.Clock
-	references ReferenceReader
+	store            Store
+	audit            Auditor
+	clock            kernel.Clock
+	references       ReferenceReader
+	definitionPolicy DefinitionPolicy
+	reportEvaluator  ReportEvaluator
 }
 
 func (s *Service) WithReferences(references ReferenceReader) *Service {
@@ -119,7 +121,7 @@ func validateInput(sc authz.Scope, in SaveInput) error {
 			return kernel.Invalid("rows", "duplicate row id")
 		}
 		ids[r.ID] = true
-		if len(r.Description) > 2000 || len(r.TeamID) > 128 || len(r.Branch) > 128 || len(r.BundleID) > 128 || r.Headcount < 0 || r.Headcount > 1000000 || len(r.Source.File) > 512 || len(r.Source.Sheet) > 256 || len(r.Source.Hash) > 128 || r.Source.Row < 0 || r.Source.Row > 1048576 {
+		if len(r.ModelItem) > 256 || len(r.Description) > 2000 || len(r.TeamID) > 128 || len(r.Branch) > 128 || len(r.BundleID) > 128 || r.Headcount < 0 || r.Headcount > 1000000 || len(r.Source.File) > 512 || len(r.Source.Sheet) > 256 || len(r.Source.Hash) > 128 || r.Source.Row < 0 || r.Source.Row > 1048576 {
 			return kernel.Invalid("rows", "row metadata limit")
 		}
 		if r.Category == Payroll && (r.TeamID == "" || r.Headcount < 1) {
@@ -244,28 +246,17 @@ func (s *Service) Save(ctx context.Context, sc authz.Scope, in SaveInput) (Snaps
 	if err := validateInput(sc, in); err != nil {
 		return Snapshot{}, err
 	}
-	if s.references == nil {
-		return Snapshot{}, fmt.Errorf("%w: financial reference validation is required", kernel.ErrUnavailable)
-	}
-	if err := s.references.ValidateFinanceProduct(ctx, sc, in.ProductID); err != nil {
+	if err := s.validateReferences(ctx, sc, in); err != nil {
 		return Snapshot{}, err
-	}
-	for _, row := range in.Rows {
-		if err := s.references.ValidateFinanceProduct(ctx, sc, row.ProductID); err != nil {
-			return Snapshot{}, err
-		}
-		if err := s.references.ValidateFinanceRow(ctx, sc, row); err != nil {
-			return Snapshot{}, err
-		}
-		for _, allocation := range row.Allocations {
-			if err := s.references.ValidateFinanceProduct(ctx, sc, allocation.ProductID); err != nil {
-				return Snapshot{}, err
-			}
-		}
 	}
 	previous, err := s.store.Snapshot(ctx, sc, in.ProductID, in.Period, 0)
 	if err != nil && !errors.Is(err, kernel.ErrNotFound) {
 		return Snapshot{}, err
+	}
+	if s.definitionPolicy != nil {
+		if err := s.definitionPolicy.ValidateFinanceDefinitions(ctx, sc, in.ProductID, in.Period, previous.Fields, in.Fields); err != nil {
+			return Snapshot{}, err
+		}
 	}
 	if previous.Version != in.ExpectedVersion {
 		return Snapshot{}, kernel.ErrConflict
@@ -288,8 +279,21 @@ func (s *Service) Save(ctx context.Context, sc authz.Scope, in SaveInput) (Snaps
 			snapshot.Rows[i].ID = kernel.NewID()
 		}
 	}
-	if _, err := calculate(snapshot, ReportInput{}); err != nil {
+	validationCtx := context.WithValue(ctx, candidateSnapshotKey{}, snapshot)
+	if _, err := s.calculateSnapshot(validationCtx, sc, snapshot, ReportInput{}); err != nil {
 		return Snapshot{}, err
+	}
+	common, err := s.usesCommonDefinitions(validationCtx, sc, snapshot)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	if common {
+		if s.reportEvaluator == nil {
+			return Snapshot{}, fmt.Errorf("%w: common financial evaluator is required", kernel.ErrUnavailable)
+		}
+		if _, err := s.Report(validationCtx, sc, ReportInput{ProductID: snapshot.ProductID, Period: snapshot.Period, Version: snapshot.Version}); err != nil {
+			return Snapshot{}, err
+		}
 	}
 	if err := s.record(ctx, sc, in.ProductID, in.Period, snapshot.Version, audit.ActionRuleChange); err != nil {
 		return Snapshot{}, err
@@ -304,7 +308,7 @@ func (s *Service) Snapshot(ctx context.Context, sc authz.Scope, product kernel.I
 	if err := validatePeriod(period); err != nil {
 		return Snapshot{}, err
 	}
-	snapshot, err := s.store.Snapshot(ctx, sc, product, period, version)
+	snapshot, err := s.readSnapshot(ctx, sc, product, period, version)
 	if err != nil {
 		return Snapshot{}, err
 	}
@@ -339,6 +343,12 @@ func (s *Service) Close(ctx context.Context, sc authz.Scope, product kernel.ID, 
 	if snapshot.Version != expectedVersion || snapshot.Closed {
 		return Snapshot{}, kernel.ErrConflict
 	}
+	// Validate/capture all common direct-source dependencies while the book is still open.
+	if s.reportEvaluator != nil {
+		if _, err := s.Report(ctx, sc, ReportInput{ProductID: product, Period: period, Version: snapshot.Version}); err != nil {
+			return Snapshot{}, err
+		}
+	}
 	snapshot.ID, snapshot.Version, snapshot.Closed = kernel.NewID(), expectedVersion+1, true
 	snapshot.CreatedAt, snapshot.CreatedBy = s.clock.Now().UTC(), sc.Subject()
 	if err := s.record(ctx, sc, product, period, snapshot.Version, audit.ActionRuleChange); err != nil {
@@ -351,16 +361,30 @@ func (s *Service) Close(ctx context.Context, sc authz.Scope, product kernel.ID, 
 }
 
 func (s *Service) Report(ctx context.Context, sc authz.Scope, in ReportInput) (Report, error) {
+	report, err := s.ReportRaw(ctx, sc, in)
+	if err != nil {
+		return Report{}, err
+	}
+	if s.reportEvaluator != nil {
+		if err := s.reportEvaluator.EnrichFinanceReport(ctx, sc, in, &report); err != nil {
+			return Report{}, err
+		}
+	}
+	return report, nil
+}
+
+// ReportRaw is the immutable calculator used by the canonical source adapter; it never recursively enriches.
+func (s *Service) ReportRaw(ctx context.Context, sc authz.Scope, in ReportInput) (Report, error) {
 	if in.FilterProductID != kernel.NilID {
 		if err := sc.Require(authz.ActionReadFinance, in.FilterProductID); err != nil {
 			return Report{}, err
 		}
 	}
-	snapshot, err := s.store.Snapshot(ctx, sc, in.ProductID, in.Period, in.Version)
+	snapshot, err := s.readSnapshot(ctx, sc, in.ProductID, in.Period, in.Version)
 	if err != nil {
 		return Report{}, err
 	}
-	report, err := calculate(snapshot, in)
+	report, err := s.calculateSnapshot(ctx, sc, snapshot, in)
 	if err != nil {
 		return Report{}, err
 	}
@@ -372,4 +396,27 @@ func (s *Service) Report(ctx context.Context, sc authz.Scope, in ReportInput) (R
 		return Report{}, err
 	}
 	return report, nil
+}
+
+func (s *Service) validateReferences(ctx context.Context, sc authz.Scope, in SaveInput) error {
+	if s.references == nil {
+		return fmt.Errorf("%w: financial reference validation is required", kernel.ErrUnavailable)
+	}
+	if err := s.references.ValidateFinanceProduct(ctx, sc, in.ProductID); err != nil {
+		return err
+	}
+	for _, row := range in.Rows {
+		if err := s.references.ValidateFinanceProduct(ctx, sc, row.ProductID); err != nil {
+			return err
+		}
+		if err := s.references.ValidateFinanceRow(ctx, sc, row); err != nil {
+			return err
+		}
+		for _, allocation := range row.Allocations {
+			if err := s.references.ValidateFinanceProduct(ctx, sc, allocation.ProductID); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

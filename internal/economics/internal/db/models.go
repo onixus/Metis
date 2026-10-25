@@ -10,6 +10,18 @@ import (
 	"github.com/google/uuid"
 )
 
+type EconomicsFormulaSource struct {
+	ID        uuid.UUID
+	ProductID uuid.UUID
+	Period    string
+	Kind      string
+	TeamID    uuid.UUID
+	Portfolio bool
+	Version   int32
+	Body      []byte
+	CreatedAt time.Time
+}
+
 type EconomicsImportTemplate struct {
 	ProductID uuid.UUID
 	Name      string

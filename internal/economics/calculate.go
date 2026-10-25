@@ -74,6 +74,12 @@ type selectedRow struct {
 }
 
 func calculate(snapshot Snapshot, in ReportInput) (Report, error) {
+	return calculateMode(snapshot, in, false)
+}
+
+// calculateMode retains structural validation and the full cost budget even when
+// common definitions own calculated fields and the archived DSL must not execute.
+func calculateMode(snapshot Snapshot, in ReportInput, inputsOnly bool) (Report, error) {
 	_, _, err := compileFields(snapshot.Fields)
 	if err != nil {
 		return Report{}, err
@@ -166,7 +172,7 @@ func calculate(snapshot Snapshot, in ReportInput) (Report, error) {
 	report := Report{ProductID: snapshot.ProductID, Period: snapshot.Period, Currency: snapshot.Currency, Version: snapshot.Version, Closed: snapshot.Closed,
 		Scenario: len(in.Overrides) > 0, Products: []ProductReport{}, Teams: []TeamCost{}, Investments: []Investment{}}
 	for product, rows := range byProduct {
-		pr, err := productReport(product, rows, snapshot.Fields, in.Overrides)
+		pr, err := productReportMode(product, rows, snapshot.Fields, in.Overrides, inputsOnly)
 		if err != nil {
 			return Report{}, err
 		}
@@ -175,7 +181,7 @@ func calculate(snapshot Snapshot, in ReportInput) (Report, error) {
 	sort.Slice(report.Products, func(i, j int) bool {
 		return report.Products[i].ProductID.String() < report.Products[j].ProductID.String()
 	})
-	report.Total, err = productReport(kernel.NilID, all, snapshot.Fields, in.Overrides)
+	report.Total, err = productReportMode(kernel.NilID, all, snapshot.Fields, in.Overrides, inputsOnly)
 	if err != nil {
 		return Report{}, err
 	}
@@ -200,6 +206,10 @@ func calculate(snapshot Snapshot, in ReportInput) (Report, error) {
 }
 
 func productReport(product kernel.ID, rows []selectedRow, fields []Field, overrides map[string]string) (ProductReport, error) {
+	return productReportMode(product, rows, fields, overrides, false)
+}
+
+func productReportMode(product kernel.ID, rows []selectedRow, fields []Field, overrides map[string]string, inputsOnly bool) (ProductReport, error) {
 	definitions, order, err := compileFields(fields)
 	if err != nil {
 		return ProductReport{}, err
@@ -220,6 +230,12 @@ func productReport(product kernel.ID, rows []selectedRow, fields []Field, overri
 		pr.Amounts[row.Category], err = add(pr.Amounts[row.Category], selected.amount)
 		if err != nil {
 			return ProductReport{}, err
+		}
+		if row.Category == Revenue && row.BundleID != "" {
+			pr.BundleRevenue, err = add(pr.BundleRevenue, selected.amount)
+			if err != nil {
+				return ProductReport{}, err
+			}
 		}
 		line := pr.Lineage[row.Category]
 		line.RowIDs = append(line.RowIDs, row.ID)
@@ -274,6 +290,13 @@ func productReport(product kernel.ID, rows []selectedRow, fields []Field, overri
 			if amount < 0 {
 				return ProductReport{}, kernel.Invalid("overrides", "negative category amount")
 			}
+			if key == Revenue && pr.Amounts[Revenue] > 0 && pr.BundleRevenue > 0 {
+				scaled := decimal.NewFromInt(pr.BundleRevenue).Mul(value).Div(decimal.NewFromInt(pr.Amounts[Revenue])).RoundBank(0)
+				pr.BundleRevenue, err = integer(scaled)
+				if err != nil {
+					return ProductReport{}, err
+				}
+			}
 			pr.Amounts[key] = amount
 		} else {
 			field, exists := definitions[key]
@@ -319,6 +342,9 @@ func productReport(product kernel.ID, rows []selectedRow, fields []Field, overri
 			continue
 		}
 		if field.Source == "calculated" {
+			if inputsOnly {
+				continue
+			}
 			formula, err := prioritization.ParseFormula(field.Formula)
 			if err != nil {
 				return ProductReport{}, err

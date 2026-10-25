@@ -71,11 +71,42 @@ func (s *Server) ImportFinanceFile(ctx context.Context, req gen.ImportFinanceFil
 	if err != nil {
 		return nil, err
 	}
-	snapshot, err := s.d.Economics.Import(ctx, scope(ctx), req.ProductId, req.Period, p, req.Body.ExpectedVersion, req.Body.Recalculate != nil && *req.Body.Recalculate)
+	importFile := s.d.Economics.Import
+	if req.Body.PreserveRules != nil && *req.Body.PreserveRules {
+		importFile = s.d.Economics.ImportReconciled
+	}
+	snapshot, err := importFile(ctx, scope(ctx), req.ProductId, req.Period, p, req.Body.ExpectedVersion, req.Body.Recalculate != nil && *req.Body.Recalculate)
 	if err != nil {
 		return nil, err
 	}
 	return gen.ImportFinanceFile201JSONResponse(snapshot), nil
+}
+
+func (s *Server) PreviewFinanceReconciliation(ctx context.Context, req gen.PreviewFinanceReconciliationRequestObject) (gen.PreviewFinanceReconciliationResponseObject, error) {
+	p, err := s.financePreview(ctx, req.ProductId, req.Period, req.Body)
+	if err != nil {
+		return nil, err
+	}
+	r, err := s.d.Economics.PreviewReconciliation(ctx, scope(ctx), req.ProductId, req.Period, p, req.Body.ExpectedVersion)
+	if err != nil {
+		return nil, err
+	}
+	return gen.PreviewFinanceReconciliation200JSONResponse(r), nil
+}
+
+func (s *Server) EvaluateBookMetric(ctx context.Context, req gen.EvaluateBookMetricRequestObject) (gen.EvaluateBookMetricResponseObject, error) {
+	if s.d.EvaluateBookMetric == nil {
+		return nil, kernel.ErrUnavailable
+	}
+	filter := kernel.NilID
+	if req.Params.FilterProductId != nil {
+		filter = *req.Params.FilterProductId
+	}
+	snapshot, metric, err := s.d.EvaluateBookMetric(ctx, scope(ctx), req.ProductId, req.Period, req.Params.Version, req.MetricKey, filter, strOrEmpty(req.Params.Team))
+	if err != nil {
+		return nil, err
+	}
+	return gen.EvaluateBookMetric200JSONResponse{Snapshot: snapshot, Metric: toExplanation(metric)}, nil
 }
 
 func (s *Server) ListEconomicsVersions(ctx context.Context, req gen.ListEconomicsVersionsRequestObject) (gen.ListEconomicsVersionsResponseObject, error) {

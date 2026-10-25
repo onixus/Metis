@@ -39,6 +39,7 @@ linters:
             - "**/internal/economics/*.go"
             - "**/internal/economics/modeling/*.go"
             - "**/internal/economics/modeling/formula/*.go"
+            - "**/internal/economics/sources/*.go"
             - "**/internal/marketing/*.go"
             - "**/internal/analytics/*.go"
             - "**/internal/licensing/*.go"

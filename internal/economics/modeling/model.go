@@ -157,6 +157,7 @@ type MetricVersion struct {
 	Expression    string        `json:"expression"`
 	Refs          []formula.Ref `json:"refs"`
 	Currency      string        `json:"currency,omitempty"`
+	ResultType    FieldType     `json:"result_type,omitempty"`
 	Actor         string        `json:"actor"`
 	At            time.Time     `json:"at"`
 }
@@ -198,14 +199,15 @@ func versionAt[T versioned](versions []T, d kernel.Date) (T, bool) {
 
 // FactRow — строка финансовых данных. Значение денежных полей — в минорных единицах.
 type FactRow struct {
-	ID        kernel.ID       `json:"id"`
-	BatchID   kernel.ID       `json:"batch_id"`
-	FieldKey  string          `json:"field_key"`
-	ProductID kernel.ID       `json:"product_id,omitempty"`
-	TeamID    kernel.ID       `json:"team_id,omitempty"`
-	Period    Period          `json:"period"`
-	Item      string          `json:"item,omitempty"`
-	Value     decimal.Decimal `json:"value"`
+	BookProductID kernel.ID       `json:"book_product_id,omitempty"`
+	ID            kernel.ID       `json:"id"`
+	BatchID       kernel.ID       `json:"batch_id"`
+	FieldKey      string          `json:"field_key"`
+	ProductID     kernel.ID       `json:"product_id,omitempty"`
+	TeamID        kernel.ID       `json:"team_id,omitempty"`
+	Period        Period          `json:"period"`
+	Item          string          `json:"item,omitempty"`
+	Value         decimal.Decimal `json:"value"`
 	// DataVersion — версия данных периода (EC-07): повторная загрузка создаёт новую.
 	DataVersion int `json:"data_version"`
 	// Sheet и Row — координаты исходной строки импорта для объяснения значения (EC-10).
@@ -397,12 +399,13 @@ type CertificationEconomics struct {
 
 // Explanation — объяснение значения показателя (EC-10): формула, вклад ссылок и исходные строки.
 type Explanation struct {
-	Key        string          `json:"key"`
-	Kind       formula.RefKind `json:"kind"`
-	Expression string          `json:"expression,omitempty"`
-	Value      decimal.Decimal `json:"value"`
-	Inputs     []Explanation   `json:"inputs,omitempty"`
-	Rows       []FactRow       `json:"rows,omitempty"`
+	Key        string              `json:"key"`
+	Kind       formula.RefKind     `json:"kind"`
+	Expression string              `json:"expression,omitempty"`
+	Value      decimal.Decimal     `json:"value"`
+	Inputs     []Explanation       `json:"inputs,omitempty"`
+	Rows       []FactRow           `json:"rows,omitempty"`
+	Sources    []SourceObservation `json:"sources,omitempty"`
 }
 
 // Названия доменных событий модуля.

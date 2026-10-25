@@ -15,17 +15,11 @@ import type { CompatRow, Release, ReleaseInput } from '../api/types'
 import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { ru } from '../i18n/ru'
 import { fmtDate } from '../lib/format'
+import { releaseStatuses, resolveReleaseStatus, type ReleaseStatusChoice } from '../lib/releaseStatus'
 import { MultiSelect } from './DiscoveryPage'
 
 const BRANCHES: Release['branch'][] = ['evolving', 'certified']
 
-// Expose forward lifecycle actions. Readiness remains a separate checked command.
-function releaseStatuses(status: Release['status']): Release['status'][] {
-  if (status === 'eol') return ['eol']
-  if (status === 'released') return ['released', 'eol']
-  if (status === 'ready_for_certification') return ['ready_for_certification', 'released']
-  return ['planned', 'released']
-}
 const STATUS_TONE: Record<Release['status'], 'neutral' | 'ok' | 'warn' | 'danger' | 'info'> = {
   planned: 'info',
   ready_for_certification: 'warn',
@@ -119,12 +113,17 @@ function ReleaseForm({
   const [form, setForm] = useState<ReleaseInput>({
     name: initial?.name ?? '',
     version: initial?.version ?? '',
-    status: initial?.status ?? 'planned',
     planned_date: initial?.planned_date ?? undefined,
     branch: initial?.branch ?? 'evolving',
     base_release_id: initial?.base_release_id,
     eol: initial?.eol ?? undefined,
   })
+  const currentStatus = initial?.status ?? 'planned'
+  const [statusChoice, setStatusChoice] = useState<ReleaseStatusChoice | null>(null)
+  // Reset only the stale lifecycle choice while adjusting to new props, rather
+  // than remounting or resetting the form and discarding unsaved text.
+  if (statusChoice && statusChoice.from !== currentStatus) setStatusChoice(null)
+  const status = resolveReleaseStatus(currentStatus, statusChoice)
   const set = <K extends keyof ReleaseInput>(k: K, v: ReleaseInput[K]) => setForm((f) => ({ ...f, [k]: v }))
   const m = initial ? update : create
   const submit = (e: FormEvent) => {
@@ -134,7 +133,7 @@ function ReleaseForm({
       planned_date: form.planned_date || undefined,
       base_release_id: form.base_release_id || undefined,
       eol: form.eol || undefined,
-      status: form.status === 'ready_for_certification' ? undefined : form.status,
+      status: status.update,
     }
     if (initial) update.mutate({ id: initial.id, body }, { onSuccess: onDone })
     else create.mutate(body, { onSuccess: onDone })
@@ -157,8 +156,11 @@ function ReleaseForm({
         </label>
         <label className="field">
           <span>Статус релиза</span>
-          <select value={form.status} onChange={(e) => set('status', e.target.value as Release['status'])}>
-            {releaseStatuses(initial?.status ?? 'planned').map((status) => (
+          <select value={status.value} onChange={(e) => {
+            const target = e.target.value as Release['status']
+            setStatusChoice(target === currentStatus ? null : { from: currentStatus, to: target })
+          }}>
+            {releaseStatuses(currentStatus).map((status) => (
               <option key={status} value={status}>{ru.release.statuses[status]}</option>
             ))}
           </select>

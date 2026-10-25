@@ -6,7 +6,7 @@ import type { Feature } from '../api/types'
 import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { fmtDate, fmtDateTime } from '../lib/format'
 import { canWriteRoadmap, hasRole } from '../lib/roles'
-import { compareForecastDate } from '../lib/forecastRisk'
+import { compareForecastDate, forecastIsStale } from '../lib/forecastRisk'
 
 export function DeliveryPage() {
   const me = useMe()
@@ -53,7 +53,7 @@ function ProductDelivery({ productId, canWrite, admin }: { productId: string; ca
         <label className="field"><span>Фича для прогноза</span><select value={forecastFeature} onChange={(e) => setForecastFeature(e.target.value)}>
           <option value="">Выберите фичу</option>{data.mappings.map((m) => <option key={m.feature_id} value={m.feature_id}>{names.get(m.feature_id) ?? m.feature_id}</option>)}
         </select></label>
-        {forecastFeature && data.mappings.some((m) => m.feature_id === forecastFeature) && <FeatureForecast key={forecastFeature} featureId={forecastFeature} productId={productId} plannedDate={features.data.find((f) => f.id === forecastFeature)?.planned_date} />}
+        {forecastFeature && data.mappings.some((m) => m.feature_id === forecastFeature) && <FeatureForecast key={forecastFeature} featureId={forecastFeature} productId={productId} currentSync={data.sync} currentConfirmed={delivery.fetchStatus === 'idle' && delivery.isFetchedAfterMount} plannedDate={features.data.find((f) => f.id === forecastFeature)?.planned_date} />}
       </>}
     </div>
     <div className="card stack"><h2>Спринты</h2>
@@ -66,15 +66,16 @@ function ProductDelivery({ productId, canWrite, admin }: { productId: string; ca
   </>
 }
 
-function FeatureForecast({ featureId, productId, plannedDate }: { featureId: string; productId: string; plannedDate?: string | null }) {
-  const forecast = useFeatureForecast(featureId)
+function FeatureForecast({ featureId, productId, plannedDate, currentSync, currentConfirmed }: { featureId: string; productId: string; plannedDate?: string | null; currentSync: DeliverySync; currentConfirmed: boolean }) {
+  const forecast = useFeatureForecast(featureId, currentSync.last_success_at)
   const commitments = useCommitments(productId)
   if (forecast.isPending) return <Loading />
   if (forecast.isError) return <div className="stack"><ErrorBox error={forecast.error} onRetry={() => void forecast.refetch()} /><p className="muted">Если истории throughput нет, сначала настройте доску и выполните сверку с трекером. Нулевой throughput не позволяет рассчитать дату.</p></div>
   const f = forecast.data
+  const stale = forecastIsStale(f.sync, currentSync, currentConfirmed)
   return <div className="stack">
-    {f.sync && <DeliverySyncStatus sync={f.sync} />}
-    {f.sync?.stale && <p className="alert alert-warn">Исходные данные устарели. Показанные даты рассчитаны по старому снимку; подтвердите их после успешной сверки с трекером.</p>}
+    {!currentConfirmed ? <p className="muted" role="status">Проверяем актуальность исходных данных прогноза…</p> : f.sync && <DeliverySyncStatus sync={{ ...f.sync, stale }} />}
+    {currentConfirmed && stale && <p className="alert alert-warn">Исходные данные прогноза устарели или изменились. Подтвердите даты новым расчётом после успешной сверки с трекером.</p>}
     <p className="muted">Расчёт выполнен: {fmtDateTime(f.calculated_at)}.</p>
     {f.remaining === 0 ? <p className="alert alert-ok">Все задачи эпика завершены на дату расчёта {fmtDate(f.from)}.</p> : <>
       <div className="stats">{([['P50', f.p50], ['P85', f.p85], ['P95', f.p95]] as const).map(([label, date]) => <div className="stat" key={label}><div className="stat-value">{fmtDate(date)}</div><div className="stat-label">{label}</div></div>)}</div>
@@ -84,19 +85,19 @@ function FeatureForecast({ featureId, productId, plannedDate }: { featureId: str
     <p>Эпик: {f.epic_key ?? '—'}. Осталось задач: {f.remaining}. Отсчёт: {fmtDate(f.from)}. Итерация: {f.iteration_days ?? '—'} дн. Прогонов: {f.samples ?? '—'}.</p>
     <p>Завершено задач за закрытые спринты: {(f.throughput ?? []).join(', ') || '—'} ({f.throughput?.length ?? 0} спринтов). Короткая история ограничивает надёжность оценки.</p>
     {f.remaining > 0 && <div className="stack"><h3>Сравнение со сроками</h3>
-      <ForecastDeadline label="План фичи" p85={f.p85} due={plannedDate} stale={f.sync?.stale !== false} />
+      <ForecastDeadline label="План фичи" p85={f.p85} due={plannedDate} stale={stale} checking={!currentConfirmed} />
       {commitments.isPending && <Loading />}
       {commitments.isError && <ErrorBox error={commitments.error} onRetry={() => void commitments.refetch()} />}
-      {commitments.data?.filter((c) => c.status === 'active' && c.feature_id === featureId).map((c) => <ForecastDeadline key={c.id} label={`Обязательство: ${c.subject}`} p85={f.p85} due={c.due_date} stale={f.sync?.stale !== false} />)}
+      {commitments.data?.filter((c) => c.status === 'active' && c.feature_id === featureId).map((c) => <ForecastDeadline key={c.id} label={`Обязательство: ${c.subject}`} p85={f.p85} due={c.due_date} stale={stale} checking={!currentConfirmed} />)}
       <p className="muted">Сравниваются план фичи и активные обязательства, явно связанные с этой фичей. Сроки и статусы обязательств при расчёте не меняются.</p>
     </div>}
     <div><button className="btn" type="button" disabled={forecast.isFetching} onClick={() => void forecast.refetch()}>Пересчитать прогноз</button></div>
   </div>
 }
 
-function ForecastDeadline({ label, p85, due, stale }: { label: string; p85?: string | null; due?: string | null; stale: boolean }) {
+function ForecastDeadline({ label, p85, due, stale, checking }: { label: string; p85?: string | null; due?: string | null; stale: boolean; checking: boolean }) {
   const risk = compareForecastDate(p85, due, stale)
-  const text = risk.state === 'unknown' ? 'Недостаточно дат для сравнения' : risk.state === 'stale' ? 'Данные устарели — сравнение требует сверки' : risk.state === 'at_risk' ? `P85 позже срока на ${risk.daysLate} дн.` : 'P85 укладывается в срок при допущениях модели'
+  const text = checking ? 'Проверяем актуальность данных' : risk.state === 'unknown' ? 'Недостаточно дат для сравнения' : risk.state === 'stale' ? 'Данные устарели — сравнение требует сверки' : risk.state === 'at_risk' ? `P85 позже срока на ${risk.daysLate} дн.` : 'P85 укладывается в срок при допущениях модели'
   return <p>{label}: {fmtDate(due)}. <Badge tone={risk.state === 'at_risk' ? 'danger' : risk.state === 'within' ? 'info' : 'warn'}>{text}</Badge></p>
 }
 

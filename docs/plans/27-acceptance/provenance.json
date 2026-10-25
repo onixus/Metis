@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-25",
+  "base_head": "48653b4fe699c64adb8065768fa1d34f5082f660",
+  "dirty": true,
+  "backend": "real memory/HMAC API; actual outbox; adapters disabled; loopback-only synthetic stand",
+  "focused_release": "Real GET/POST/PUT API; no response substitution",
+  "focused_forecast": "ONLY GET /products/{id}/delivery and GET /features/{id}/forecast mocked by Playwright; identity/products/features/commitments real. Clock runFor15.1s exercises actual React Query interval. Not a model/tracker integration claim.",
+  "unmocked_suite": "No substituted API responses;12 groups both dark/light;45 explicit HTTP statuses;0 JS errors",
+  "browser": "Playwright Chromium headless shell1248",
+  "api_sha256": "ea499cc5a471a8d7887c2a95ee7a93577682c221cac9a12482a89f9771e1301d",
+  "runner_sha256": "a69a6e6f8621052c8ddad5acebe3050d4e8781777a71d07065def9370dbeaeee",
+  "unmocked_runner_sha256": "d55e0bb46d187854e7a4b772a3313d8e8020dbed72a100b323574f859b6f27e2",
+  "frontend_sha256": {
+    "index.html": "c66141f65d909982f34b97850bbcaa710adf5965421c0fb0d5f5ce3232aa44a9",
+    "assets/GraphPage-DbvscUxX.js": "19839f9fec48b2c983a9b00d68d48bfc43259844217a4b34dac0df0b3fd223a1",
+    "assets/GraphPage-DLioOiRN.css": "b0cb7bd6fec5951c9c8f5808821438206604b1629a912c96009ac427f38e7d69",
+    "assets/index-D2dNhkv7.css": "b3f68956082880f27fb0b5fa987ac9b9886daa02722f7d17b346a9b457458615",
+    "assets/index-B7CxzBtv.js": "9b99094f08f460706854ccc6c317d5f0632726e80c171c393b618447df615735"
+  },
+  "result": "PASS",
+  "focused_groups": 2,
+  "unmocked_groups": 12,
+  "focused_projection_requests": 7,
+  "focused_js_errors": 0,
+  "web_gate": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "node_tests": 20,
+    "build": "PASS",
+    "production_licenses": "PASS",
+    "python_safety_tests": 2
+  }
+}

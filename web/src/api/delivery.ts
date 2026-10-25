@@ -10,6 +10,12 @@ export const deliveryKeys = { all: ['delivery'] as const, product: (id: string) 
 export function useDelivery(productId: string, enabled = true) {
   return useQuery({ queryKey: deliveryKeys.product(productId), enabled: enabled && !!productId, queryFn: async () => unwrap(await api.GET('/products/{productId}/delivery', { params: { path: { productId } } })), refetchInterval: 15_000 })
 }
+export function useFeatureForecast(featureId: string, sourceSnapshot: string) {
+  return useQuery({
+    queryKey: [...deliveryKeys.all, 'forecast', featureId, sourceSnapshot], enabled: !!featureId,
+    queryFn: async () => unwrap(await api.GET('/features/{featureId}/forecast', { params: { path: { featureId } } })),
+  })
+}
 export function useDeliveryConnector(enabled = true) {
   return useQuery({ queryKey: deliveryKeys.connector, enabled, queryFn: async () => unwrap(await api.GET('/admin/delivery')), refetchInterval: 30_000 })
 }

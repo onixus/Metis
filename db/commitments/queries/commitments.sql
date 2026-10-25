@@ -49,3 +49,10 @@ ON CONFLICT (id) DO UPDATE SET lead_months = EXCLUDED.lead_months, updated_at = 
 
 -- name: GetAlertByEvent :one
 SELECT * FROM commitments.alerts WHERE commitment_id = $1 AND event_id = $2 ORDER BY seq LIMIT 1;
+
+-- name: AppendAlertAction :exec
+INSERT INTO commitments.alert_actions (id, alert_id, product_id, kind, recipient, note, actor, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+
+-- name: ListAlertActions :many
+SELECT * FROM commitments.alert_actions WHERE alert_id = $1 ORDER BY seq;

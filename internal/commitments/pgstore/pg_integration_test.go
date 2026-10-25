@@ -34,7 +34,7 @@ func openTestDB(t *testing.T) *pgdb.DB {
 		t.Fatal(err)
 	}
 	// TRUNCATE не проходит через триггер строк; список тестовой БД чистится от владельца.
-	if _, err := db.Pool().Exec(ctx, "TRUNCATE commitments.commitments, commitments.alerts, commitments.processed_events, commitments.settings"); err != nil {
+	if _, err := db.Pool().Exec(ctx, "TRUNCATE commitments.alert_actions, commitments.commitments, commitments.alerts, commitments.processed_events, commitments.settings"); err != nil {
 		t.Fatal(err)
 	}
 	return db
@@ -228,4 +228,43 @@ func TestCT03_PGAlertUniquePerEvent(t *testing.T) {
 
 func repositoryScope() authz.Scope {
 	return authz.New(authz.Params{Subject: "repository-fixture", Roles: []authz.Role{authz.RoleAdmin, authz.RoleService}, AllProducts: authz.AccessPrivate, Audience: authz.AudienceInternal})
+}
+
+func TestCT03_PGRiskActionPersistenceAndImmutableHistory(t *testing.T) {
+	database := openTestDB(t)
+	ctx := context.Background()
+	store := pgstore.New(database, nil)
+	sc := repositoryScope()
+	product, id, alertID := kernel.NewID(), kernel.NewID(), kernel.NewID()
+	c := commitments.Commitment{ID: id, ProductID: product, Kind: commitments.KindCustomer, Subject: "Synthetic obligation", Owner: "synthetic-pm", Status: commitments.StatusActive, CreatedAt: now, UpdatedAt: now}
+	if err := store.Save(ctx, sc, c); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.AppendAlert(ctx, sc, commitments.Alert{ID: alertID, CommitmentID: id, ProductID: product, Kind: commitments.AlertRoadmapShift, RaisedAt: now}); err != nil {
+		t.Fatal(err)
+	}
+	action := commitments.AlertAction{ID: kernel.NewID(), AlertID: alertID, ProductID: product, Kind: "escalated", Recipient: "synthetic-cpo", Note: "Synthetic recovery plan", Actor: "synthetic-pm", CreatedAt: now}
+	if err := store.AppendAlertAction(ctx, sc, action); err != nil {
+		t.Fatal(err)
+	}
+	// New repository instance models re-reading after restart.
+	restored := pgstore.New(database, nil)
+	actions, err := restored.AlertActions(ctx, sc, alertID)
+	if err != nil || len(actions) != 1 || !reflect.DeepEqual(actions[0], action) {
+		t.Fatalf("persisted actions: %+v %v", actions, err)
+	}
+	for _, stmt := range []string{"UPDATE commitments.alert_actions SET note='tampered' WHERE id=$1", "DELETE FROM commitments.alert_actions WHERE id=$1"} {
+		if _, err := database.Pool().Exec(ctx, stmt, action.ID); err == nil {
+			t.Fatalf("immutable history allowed %s", stmt)
+		}
+	}
+	if _, err := restored.AlertActions(ctx, authz.Scope{}, alertID); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("zero scope read: %v", err)
+	}
+	wrong := action
+	wrong.ID = kernel.NewID()
+	wrong.ProductID = kernel.NewID()
+	if err := restored.AppendAlertAction(ctx, sc, wrong); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("foreign product action: %v", err)
+	}
 }

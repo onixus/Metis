@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-25",
+  "worktree": "/Users/onixus/.codex/worktrees/roadmap-commitments-dod/Metis",
+  "base_head": "8e03064e474b052f7743396bcabc4baf2dbf9168",
+  "dirty": true,
+  "backend": "real memory/HMAC API with actual outbox; loopback only; adapters disabled",
+  "browser": "Playwright Chromium headless shell1248",
+  "result": "PASS",
+  "scenario_groups": 12,
+  "api_status_assertions": 43,
+  "js_errors": 0,
+  "api_sha256": "9523164f035c5750101252340c78f3f0cb7e12758d8cd813316124050016a417",
+  "runner_sha256": "d55e0bb46d187854e7a4b772a3313d8e8020dbed72a100b323574f859b6f27e2",
+  "frontend_sha256": {
+    "index.html": "0c886e83d51409df1003a35410e77542a55b2a276c117740e554329e6edf1385",
+    "assets/GraphPage-DLioOiRN.css": "b0cb7bd6fec5951c9c8f5808821438206604b1629a912c96009ac427f38e7d69",
+    "assets/index-D2dNhkv7.css": "b3f68956082880f27fb0b5fa987ac9b9886daa02722f7d17b346a9b457458615",
+    "assets/index-O_HVrIuS.js": "396884c6292b45914e56c45e384d89d822032e8ff11abffc5147d047b41a639d",
+    "assets/GraphPage-wKoJ0nj6.js": "e0d707134cb24a8fe0f9ad31c0672b47994828a5b1382e5cea079721ee3b17e6"
+  },
+  "startup_note": "Temporary harness extended readiness wait10s to100s under parallel Go load. No test assertion changed. Frontend frozen before server launch."
+}

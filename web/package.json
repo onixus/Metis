@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "generate": "openapi-typescript ../api/openapi.yaml -o src/api/schema.d.ts",
-    "test": "node --test src/api/sessionCache.test.ts src/lib/moneyInput.test.ts src/designSystem.test.js scripts/*.test.cjs",
+    "test": "node --test src/api/sessionCache.test.ts src/lib/moneyInput.test.ts src/lib/forecastRisk.test.ts src/lib/releaseStatus.test.ts src/designSystem.test.js scripts/*.test.cjs",
     "licenses": "node scripts/check-licenses.cjs"
   },
   "dependencies": {

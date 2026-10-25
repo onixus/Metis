@@ -1,0 +1,370 @@
+{
+  "results": [
+    {
+      "requirement": "RM06",
+      "theme": "dark",
+      "result": "PASS",
+      "checks": [
+        "create",
+        "required-date",
+        "tier-filter",
+        "period-filter",
+        "preserve-on-edit",
+        "cache-refresh",
+        "clear",
+        "audience-filter",
+        "desktop-mobile"
+      ]
+    },
+    {
+      "requirement": "RM04/RM05",
+      "theme": "dark",
+      "result": "PASS",
+      "checks": [
+        "readiness-bypass-denied",
+        "clear-eol",
+        "release",
+        "branch-locked",
+        "end-of-life"
+      ]
+    },
+    {
+      "requirement": "DL04",
+      "theme": "dark",
+      "result": "PASS",
+      "checks": [
+        "mapping-visible",
+        "forecast-selection",
+        "missing-data-explained"
+      ]
+    },
+    {
+      "requirement": "CT03",
+      "theme": "dark",
+      "result": "PASS",
+      "checks": [
+        "outbox-alert",
+        "assign-owner",
+        "manual-escalation",
+        "mitigation-note",
+        "immutable-history",
+        "ack-filter",
+        "presale-action-denied"
+      ]
+    },
+    {
+      "requirement": "RM02/RM06",
+      "theme": "dark",
+      "result": "PASS",
+      "checks": [
+        "sales-safe-launch-visible",
+        "private-launch-hidden",
+        "read-only-mobile"
+      ]
+    },
+    {
+      "requirement": "CT03",
+      "theme": "dark",
+      "role": "marketing",
+      "result": "PASS",
+      "checks": [
+        "history-readable",
+        "write-hidden",
+        "direct-write-denied",
+        "mobile"
+      ]
+    },
+    {
+      "requirement": "RM06",
+      "theme": "light",
+      "result": "PASS",
+      "checks": [
+        "create",
+        "required-date",
+        "tier-filter",
+        "period-filter",
+        "preserve-on-edit",
+        "cache-refresh",
+        "clear",
+        "audience-filter",
+        "desktop-mobile"
+      ]
+    },
+    {
+      "requirement": "RM04/RM05",
+      "theme": "light",
+      "result": "PASS",
+      "checks": [
+        "readiness-bypass-denied",
+        "clear-eol",
+        "release",
+        "branch-locked",
+        "end-of-life"
+      ]
+    },
+    {
+      "requirement": "DL04",
+      "theme": "light",
+      "result": "PASS",
+      "checks": [
+        "mapping-visible",
+        "forecast-selection",
+        "missing-data-explained"
+      ]
+    },
+    {
+      "requirement": "CT03",
+      "theme": "light",
+      "result": "PASS",
+      "checks": [
+        "outbox-alert",
+        "assign-owner",
+        "manual-escalation",
+        "mitigation-note",
+        "immutable-history",
+        "ack-filter",
+        "presale-action-denied"
+      ]
+    },
+    {
+      "requirement": "RM02/RM06",
+      "theme": "light",
+      "result": "PASS",
+      "checks": [
+        "sales-safe-launch-visible",
+        "private-launch-hidden",
+        "read-only-mobile"
+      ]
+    },
+    {
+      "requirement": "CT03",
+      "theme": "light",
+      "role": "marketing",
+      "result": "PASS",
+      "checks": [
+        "history-readable",
+        "write-hidden",
+        "direct-write-denied",
+        "mobile"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/items",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/items",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/launch-calendar",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/launch-calendar",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/releases",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/releases",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "route": "/releases/01a17303-771e-76f5-a460-c936ed2e231d",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/releases/01a17303-771e-76f5-a460-c936ed2e231d",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/releases/01a17303-771e-76f5-a460-c936ed2e231d",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "route": "/features/01a17303-0695-7046-bdbe-930b0ded4e41/delivery-mapping",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/features/01a17303-0695-7046-bdbe-930b0ded4e41/shift-date",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitments",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/features/01a17303-0695-7046-bdbe-930b0ded4e41/shift-date",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/commitment-alerts/01a17303-7c3f-7451-b75b-3312d274bcbd/actions",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/items",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/items",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/commitment-alerts/01a17303-7c3f-7451-b75b-3312d274bcbd/actions",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/items",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/items",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/launch-calendar",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/launch-calendar",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/releases",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/releases",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "route": "/releases/01a17303-8db3-74a7-b8e4-3d57aa9649c3",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/releases/01a17303-8db3-74a7-b8e4-3d57aa9649c3",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/releases/01a17303-8db3-74a7-b8e4-3d57aa9649c3",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "route": "/features/01a17303-0695-7046-bdbe-930b0ded4e41/delivery-mapping",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/features/01a17303-0695-7046-bdbe-930b0ded4e41/shift-date",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitments",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/features/01a17303-0695-7046-bdbe-930b0ded4e41/shift-date",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/commitment-alerts?open=false",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/commitment-alerts/01a17303-93b3-7874-ba7c-7b23308548b8/actions",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/items",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/products/01a17303-0694-7ee8-b60a-bdd16af9b3b8/roadmap/items",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/commitment-alerts/01a17303-93b3-7874-ba7c-7b23308548b8/actions",
+      "status": 403
+    }
+  ],
+  "errors": []
+}

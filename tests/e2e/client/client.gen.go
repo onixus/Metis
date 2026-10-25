@@ -18,6 +18,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/economics"
+	"github.com/onixus/metis/internal/httpapi/request"
 	"github.com/onixus/metis/internal/ports"
 )
 
@@ -132,6 +133,48 @@ const (
 func (e CommitmentAlertKind) Valid() bool {
 	switch e {
 	case RoadmapShift:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommitmentAlertActionKind.
+const (
+	CommitmentAlertActionKindAssigned  CommitmentAlertActionKind = "assigned"
+	CommitmentAlertActionKindEscalated CommitmentAlertActionKind = "escalated"
+	CommitmentAlertActionKindNoted     CommitmentAlertActionKind = "noted"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentAlertActionKind enum.
+func (e CommitmentAlertActionKind) Valid() bool {
+	switch e {
+	case CommitmentAlertActionKindAssigned:
+		return true
+	case CommitmentAlertActionKindEscalated:
+		return true
+	case CommitmentAlertActionKindNoted:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommitmentAlertActionInputKind.
+const (
+	CommitmentAlertActionInputKindAssigned  CommitmentAlertActionInputKind = "assigned"
+	CommitmentAlertActionInputKindEscalated CommitmentAlertActionInputKind = "escalated"
+	CommitmentAlertActionInputKindNoted     CommitmentAlertActionInputKind = "noted"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentAlertActionInputKind enum.
+func (e CommitmentAlertActionInputKind) Valid() bool {
+	switch e {
+	case CommitmentAlertActionInputKindAssigned:
+		return true
+	case CommitmentAlertActionInputKindEscalated:
+		return true
+	case CommitmentAlertActionInputKindNoted:
 		return true
 	default:
 		return false
@@ -2419,22 +2462,59 @@ type CommitmentSubtype string
 
 // CommitmentAlert defines model for CommitmentAlert.
 type CommitmentAlert struct {
-	Acknowledged   bool                `json:"acknowledged"`
-	AcknowledgedAt *time.Time          `json:"acknowledged_at,omitempty"`
-	AcknowledgedBy *string             `json:"acknowledged_by,omitempty"`
-	CommitmentId   openapi_types.UUID  `json:"commitment_id"`
-	DueDate        *openapi_types.Date `json:"due_date,omitempty"`
-	EventId        openapi_types.UUID  `json:"event_id"`
-	Id             openapi_types.UUID  `json:"id"`
-	Kind           CommitmentAlertKind `json:"kind"`
-	Message        string              `json:"message"`
-	NewDate        *openapi_types.Date `json:"new_date,omitempty"`
-	ProductId      openapi_types.UUID  `json:"product_id"`
-	RaisedAt       time.Time           `json:"raised_at"`
+	Acknowledged   bool                     `json:"acknowledged"`
+	AcknowledgedAt *time.Time               `json:"acknowledged_at,omitempty"`
+	AcknowledgedBy *string                  `json:"acknowledged_by,omitempty"`
+	Actions        *[]CommitmentAlertAction `json:"actions,omitempty"`
+	CommitmentId   openapi_types.UUID       `json:"commitment_id"`
+	DueDate        *openapi_types.Date      `json:"due_date,omitempty"`
+	EventId        openapi_types.UUID       `json:"event_id"`
+	Id             openapi_types.UUID       `json:"id"`
+	Kind           CommitmentAlertKind      `json:"kind"`
+	Message        string                   `json:"message"`
+	NewDate        *openapi_types.Date      `json:"new_date,omitempty"`
+	ProductId      openapi_types.UUID       `json:"product_id"`
+	RaisedAt       time.Time                `json:"raised_at"`
+
+	// RiskOwner Последний назначенный адресат; по умолчанию текущий владелец обязательства
+	RiskOwner *string `json:"risk_owner,omitempty"`
 }
 
 // CommitmentAlertKind defines model for CommitmentAlert.Kind.
 type CommitmentAlertKind string
+
+// CommitmentAlertAction defines model for CommitmentAlertAction.
+type CommitmentAlertAction struct {
+	Actor     string                    `json:"actor"`
+	AlertId   openapi_types.UUID        `json:"alert_id"`
+	CreatedAt time.Time                 `json:"created_at"`
+	Id        openapi_types.UUID        `json:"id"`
+	Kind      CommitmentAlertActionKind `json:"kind"`
+
+	// Note Обоснование или план обработки риска
+	Note      string             `json:"note"`
+	ProductId openapi_types.UUID `json:"product_id"`
+
+	// Recipient Новый владелец или адресат ручной эскалации; обязателен для assigned и escalated
+	Recipient *string `json:"recipient,omitempty"`
+}
+
+// CommitmentAlertActionKind defines model for CommitmentAlertAction.Kind.
+type CommitmentAlertActionKind string
+
+// CommitmentAlertActionInput defines model for CommitmentAlertActionInput.
+type CommitmentAlertActionInput struct {
+	Kind CommitmentAlertActionInputKind `json:"kind"`
+
+	// Note Обоснование или план обработки риска
+	Note string `json:"note"`
+
+	// Recipient Новый владелец или адресат ручной эскалации; обязателен для assigned и escalated
+	Recipient *string `json:"recipient,omitempty"`
+}
+
+// CommitmentAlertActionInputKind defines model for CommitmentAlertActionInput.Kind.
+type CommitmentAlertActionInputKind string
 
 // CommitmentImpact defines model for CommitmentImpact.
 type CommitmentImpact struct {
@@ -3120,6 +3200,8 @@ type FinancialFieldVersion struct {
 
 // Forecast defines model for Forecast.
 type Forecast struct {
+	// CalculatedAt Момент расчёта UTC; свежесть исходных данных задаётся sync
+	CalculatedAt  *time.Time          `json:"calculated_at,omitempty"`
 	EpicKey       *string             `json:"epic_key,omitempty"`
 	FeatureId     openapi_types.UUID  `json:"feature_id"`
 	From          *openapi_types.Date `json:"from,omitempty"`
@@ -3132,6 +3214,7 @@ type Forecast struct {
 	ProductId     openapi_types.UUID  `json:"product_id"`
 	Remaining     int                 `json:"remaining"`
 	Samples       *int                `json:"samples,omitempty"`
+	Sync          *DeliverySync       `json:"sync,omitempty"`
 	Throughput    *[]int              `json:"throughput,omitempty"`
 }
 
@@ -3658,7 +3741,7 @@ type ReleaseGroup struct {
 	SalesSafeRelease *SalesSafeRelease `json:"sales_safe_release,omitempty"`
 }
 
-// ReleaseInput Данные релиза. При создании необязательные поля берут значения по умолчанию (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют текущее значение релиза. Снять дату окончания поддержки можно только через PUT /releases/{releaseId}/eol с пустой датой.
+// ReleaseInput Данные релиза. При создании необязательные поля берут значения по умолчанию (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют текущее значение релиза. Снять дату окончания поддержки можно только через PUT /releases/{releaseId}/eol с пустой датой. Статус ready_for_certification при создании запрещён; переход выполняется только через команду mark-ready с проверкой гейтов. Изменение статуса через PUT допускает planned или ready_for_certification → released, released → eol и сохранение текущего статуса; обратные переходы запрещены.
 type ReleaseInput struct {
 	// BaseReleaseId Релиз, от которого ответвлена сертифицированная ветка; пусто при обновлении — не менять
 	BaseReleaseId *openapi_types.UUID `json:"base_release_id,omitempty"`
@@ -4518,6 +4601,7 @@ type SetFeatureDevCostJSONBody struct {
 
 // GetFeatureForecastParams defines parameters for GetFeatureForecast.
 type GetFeatureForecastParams struct {
+	// Samples Число симуляций; 0 использует значение по умолчанию (10000)
 	Samples *int `form:"samples,omitempty" json:"samples,omitempty"`
 
 	// Seed Зерно генератора для воспроизводимого прогноза
@@ -4631,9 +4715,7 @@ type ListSignalsParams struct {
 type ListSignalsParamsStatus string
 
 // SetReleaseEOLJSONBody defines parameters for SetReleaseEOL.
-type SetReleaseEOLJSONBody struct {
-	Eol openapi_types.Date `json:"eol"`
-}
+type SetReleaseEOLJSONBody = request.ReleaseEOLInput
 
 // SetReleaseFeaturesJSONBody defines parameters for SetReleaseFeatures.
 type SetReleaseFeaturesJSONBody struct {
@@ -4738,6 +4820,9 @@ type SaveTrackTemplateJSONRequestBody = TrackTemplateInput
 
 // SetBaselineComponentsJSONRequestBody defines body for SetBaselineComponents for application/json ContentType.
 type SetBaselineComponentsJSONRequestBody SetBaselineComponentsJSONBody
+
+// HandleCommitmentAlertJSONRequestBody defines body for HandleCommitmentAlert for application/json ContentType.
+type HandleCommitmentAlertJSONRequestBody = CommitmentAlertActionInput
 
 // EnsureRenewalsJSONRequestBody defines body for EnsureRenewals for application/json ContentType.
 type EnsureRenewalsJSONRequestBody EnsureRenewalsJSONBody
@@ -4902,7 +4987,7 @@ type StartTrackJSONRequestBody = TrackInput
 type UpdateReleaseJSONRequestBody = ReleaseInput
 
 // SetReleaseEOLJSONRequestBody defines body for SetReleaseEOL for application/json ContentType.
-type SetReleaseEOLJSONRequestBody SetReleaseEOLJSONBody
+type SetReleaseEOLJSONRequestBody = SetReleaseEOLJSONBody
 
 // SetReleaseFeaturesJSONRequestBody defines body for SetReleaseFeatures for application/json ContentType.
 type SetReleaseFeaturesJSONRequestBody SetReleaseFeaturesJSONBody
@@ -5231,6 +5316,24 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /commitment-alerts/{alertId}/ack (the `AcknowledgeCommitmentAlert` operationId).
 	AcknowledgeCommitmentAlert(ctx context.Context, alertId AlertId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// HandleCommitmentAlertWithBody Назначить владельца, эскалировать или записать обработку риска (CT-03)
+	//
+	// Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /commitment-alerts/{alertId}/actions (the `HandleCommitmentAlert` operationId).
+	HandleCommitmentAlertWithBody(ctx context.Context, alertId AlertId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// HandleCommitmentAlert Назначить владельца, эскалировать или записать обработку риска (CT-03)
+	//
+	// Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /commitment-alerts/{alertId}/actions (the `HandleCommitmentAlert` operationId).
+	HandleCommitmentAlert(ctx context.Context, alertId AlertId, body HandleCommitmentAlertJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// EnsureRenewalsWithBody Завести элементы roadmap на продление сертификатов (CT-04)
 	//
@@ -7229,6 +7332,44 @@ func (c *Client) SetBaselineComponents(ctx context.Context, baselineId openapi_t
 // Corresponds with POST /commitment-alerts/{alertId}/ack (the `AcknowledgeCommitmentAlert` operationId).
 func (c *Client) AcknowledgeCommitmentAlert(ctx context.Context, alertId AlertId, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAcknowledgeCommitmentAlertRequest(c.Server, alertId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// HandleCommitmentAlertWithBody Назначить владельца, эскалировать или записать обработку риска (CT-03)
+//
+// Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /commitment-alerts/{alertId}/actions (the `HandleCommitmentAlert` operationId).
+func (c *Client) HandleCommitmentAlertWithBody(ctx context.Context, alertId AlertId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHandleCommitmentAlertRequestWithBody(c.Server, alertId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// HandleCommitmentAlert Назначить владельца, эскалировать или записать обработку риска (CT-03)
+//
+// Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /commitment-alerts/{alertId}/actions (the `HandleCommitmentAlert` operationId).
+func (c *Client) HandleCommitmentAlert(ctx context.Context, alertId AlertId, body HandleCommitmentAlertJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHandleCommitmentAlertRequest(c.Server, alertId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -11959,6 +12100,53 @@ func NewAcknowledgeCommitmentAlertRequest(server string, alertId AlertId) (*http
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewHandleCommitmentAlertRequest calls the generic HandleCommitmentAlert builder with application/json body
+func NewHandleCommitmentAlertRequest(server string, alertId AlertId, body HandleCommitmentAlertJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewHandleCommitmentAlertRequestWithBody(server, alertId, "application/json", bodyReader)
+}
+
+// NewHandleCommitmentAlertRequestWithBody constructs an http.Request for the HandleCommitmentAlert method, with any body, and a specified content type
+func NewHandleCommitmentAlertRequestWithBody(server string, alertId AlertId, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "alertId", alertId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/commitment-alerts/%s/actions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -19748,6 +19936,24 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /commitment-alerts/{alertId}/ack (the `AcknowledgeCommitmentAlert` operationId).
 	AcknowledgeCommitmentAlertWithResponse(ctx context.Context, alertId AlertId, reqEditors ...RequestEditorFn) (*AcknowledgeCommitmentAlertResponse, error)
 
+	// HandleCommitmentAlertWithBodyWithResponse Назначить владельца, эскалировать или записать обработку риска (CT-03)
+	//
+	// Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /commitment-alerts/{alertId}/actions (the `HandleCommitmentAlert` operationId).
+	HandleCommitmentAlertWithBodyWithResponse(ctx context.Context, alertId AlertId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HandleCommitmentAlertResponse, error)
+
+	// HandleCommitmentAlertWithResponse Назначить владельца, эскалировать или записать обработку риска (CT-03)
+	//
+	// Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /commitment-alerts/{alertId}/actions (the `HandleCommitmentAlert` operationId).
+	HandleCommitmentAlertWithResponse(ctx context.Context, alertId AlertId, body HandleCommitmentAlertJSONRequestBody, reqEditors ...RequestEditorFn) (*HandleCommitmentAlertResponse, error)
+
 	// EnsureRenewalsWithBodyWithResponse Завести элементы roadmap на продление сертификатов (CT-04)
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -22459,6 +22665,54 @@ func (r AcknowledgeCommitmentAlertResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r AcknowledgeCommitmentAlertResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type HandleCommitmentAlertResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CommitmentAlert
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r HandleCommitmentAlertResponse) GetJSON200() *CommitmentAlert {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r HandleCommitmentAlertResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r HandleCommitmentAlertResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r HandleCommitmentAlertResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r HandleCommitmentAlertResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r HandleCommitmentAlertResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -30855,6 +31109,36 @@ func (c *ClientWithResponses) AcknowledgeCommitmentAlertWithResponse(ctx context
 	return ParseAcknowledgeCommitmentAlertResponse(rsp)
 }
 
+// HandleCommitmentAlertWithBodyWithResponse Назначить владельца, эскалировать или записать обработку риска (CT-03)
+//
+// Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /commitment-alerts/{alertId}/actions (the `HandleCommitmentAlert` operationId).
+func (c *ClientWithResponses) HandleCommitmentAlertWithBodyWithResponse(ctx context.Context, alertId AlertId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HandleCommitmentAlertResponse, error) {
+	rsp, err := c.HandleCommitmentAlertWithBody(ctx, alertId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseHandleCommitmentAlertResponse(rsp)
+}
+
+// HandleCommitmentAlertWithResponse Назначить владельца, эскалировать или записать обработку риска (CT-03)
+//
+// Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /commitment-alerts/{alertId}/actions (the `HandleCommitmentAlert` operationId).
+func (c *ClientWithResponses) HandleCommitmentAlertWithResponse(ctx context.Context, alertId AlertId, body HandleCommitmentAlertJSONRequestBody, reqEditors ...RequestEditorFn) (*HandleCommitmentAlertResponse, error) {
+	rsp, err := c.HandleCommitmentAlert(ctx, alertId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseHandleCommitmentAlertResponse(rsp)
+}
+
 // EnsureRenewalsWithBodyWithResponse Завести элементы roadmap на продление сертификатов (CT-04)
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -34663,6 +34947,39 @@ func ParseAcknowledgeCommitmentAlertResponse(rsp *http.Response) (*AcknowledgeCo
 	}
 
 	response := &AcknowledgeCommitmentAlertResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CommitmentAlert
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseHandleCommitmentAlertResponse parses an HTTP response from a HandleCommitmentAlertWithResponse call
+func ParseHandleCommitmentAlertResponse(rsp *http.Response) (*HandleCommitmentAlertResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &HandleCommitmentAlertResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

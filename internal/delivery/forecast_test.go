@@ -1,6 +1,7 @@
 package delivery_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -10,6 +11,20 @@ import (
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/ports"
 )
+
+func TestDL04_ForecastRejectsExcessiveWorkAndHonorsCancellation(t *testing.T) {
+	f, feature := forecastFixture(t)
+	for _, samples := range []int{-1, 100_001} {
+		if _, err := f.svc.Forecast(f.ctx, f.cpo, feature, delivery.ForecastOptions{Samples: samples}); !errors.Is(err, kernel.ErrValidation) {
+			t.Fatalf("samples=%d: expected validation error, got %v", samples, err)
+		}
+	}
+	ctx, cancel := context.WithCancel(f.ctx)
+	cancel()
+	if _, err := f.svc.Forecast(ctx, f.cpo, feature, delivery.ForecastOptions{Samples: 100_000}); !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
+	}
+}
 
 // closedSprint — закрытый спринт доски с заданным числом завершённых задач.
 func closedSprint(id string, start kernel.Date, done, total int) ports.Sprint {

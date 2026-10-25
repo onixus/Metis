@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"sort"
+	"time"
 
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
@@ -25,9 +26,10 @@ type ForecastOptions struct {
 
 // Forecast — прогноз даты завершения фичи методом Монте-Карло (DL-04).
 type Forecast struct {
-	FeatureID kernel.ID `json:"feature_id"`
-	ProductID kernel.ID `json:"product_id"`
-	EpicKey   string    `json:"epic_key"`
+	CalculatedAt time.Time `json:"calculated_at"`
+	FeatureID    kernel.ID `json:"feature_id"`
+	ProductID    kernel.ID `json:"product_id"`
+	EpicKey      string    `json:"epic_key"`
 	// Remaining — незавершённые задачи эпика на момент прогноза.
 	Remaining int `json:"remaining"`
 	// Throughput — исторические значения завершённых задач за итерацию.
@@ -51,6 +53,9 @@ var ErrNoThroughput = fmt.Errorf("%w: нет истории throughput для п
 // с доверительным интервалом (DL-04). Прогноз — производная метрика: он ничего не меняет
 // ни в платформе, ни в трекере.
 func (s *Service) Forecast(ctx context.Context, sc authz.Scope, featureID kernel.ID, opts ForecastOptions) (Forecast, error) {
+	if opts.Samples < 0 || opts.Samples > 100_000 {
+		return Forecast{}, kernel.Invalid("samples", "число прогонов должно быть от 1 до 100000; 0 — по умолчанию")
+	}
 	f, err := s.portfolio.Feature(ctx, sc, featureID)
 	if err != nil {
 		return Forecast{}, err
@@ -94,7 +99,7 @@ func (s *Service) Forecast(ctx context.Context, sc authz.Scope, featureID kernel
 	if err != nil {
 		return Forecast{}, err
 	}
-	out := Forecast{FeatureID: featureID, ProductID: f.ProductID, EpicKey: epic.EpicKey,
+	out := Forecast{CalculatedAt: s.clock.Now().UTC(), FeatureID: featureID, ProductID: f.ProductID, EpicKey: epic.EpicKey,
 		Remaining: remaining, Throughput: throughput, IterationDays: iterationDays,
 		Samples: samples, From: from, Sync: state}
 	if remaining == 0 {
@@ -102,7 +107,10 @@ func (s *Service) Forecast(ctx context.Context, sc authz.Scope, featureID kernel
 		out.IntervalLow, out.IntervalHigh = from, from
 		return out, nil
 	}
-	iterations := simulate(remaining, throughput, samples, opts.Seed)
+	iterations, err := simulate(ctx, remaining, throughput, samples, opts.Seed)
+	if err != nil {
+		return Forecast{}, err
+	}
 	day := func(p float64) kernel.Date {
 		return from.AddDays(percentile(iterations, p) * iterationDays)
 	}
@@ -146,7 +154,7 @@ func allZero(v []int) bool {
 // throughput, пока не закрыт остаток. Возвращает число итераций по каждому прогону.
 // Источник случайности — math/rand/v2 с явным зерном: это имитационная модель,
 // а не криптография (см. docs/questions.md, вопрос 33).
-func simulate(remaining int, throughput []int, samples int, seed uint64) []int {
+func simulate(ctx context.Context, remaining int, throughput []int, samples int, seed uint64) ([]int, error) {
 	if seed == 0 {
 		seed = 0x5EED_1F0
 	}
@@ -154,15 +162,26 @@ func simulate(remaining int, throughput []int, samples int, seed uint64) []int {
 	maxIterations := remaining*len(throughput) + 1000
 	out := make([]int, 0, samples)
 	for i := 0; i < samples; i++ {
+		if err := ctx.Err(); err != nil {
+			return nil, fmt.Errorf("forecast cancelled: %w", err)
+		}
 		left, steps := remaining, 0
 		for left > 0 && steps < maxIterations {
+			if steps%256 == 0 {
+				if err := ctx.Err(); err != nil {
+					return nil, fmt.Errorf("forecast cancelled: %w", err)
+				}
+			}
 			left -= throughput[rng.IntN(len(throughput))]
 			steps++
+		}
+		if left > 0 {
+			return nil, fmt.Errorf("forecast iteration budget exhausted: %w", ErrNoThroughput)
 		}
 		out = append(out, steps)
 	}
 	sort.Ints(out)
-	return out
+	return out, nil
 }
 
 // percentile возвращает значение перцентиля из отсортированного среза.

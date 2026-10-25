@@ -322,7 +322,7 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 	a.Roadmap = roadmap.NewService(roadmapStore, pub, clock).WithContracts(a.Portfolio).WithReadiness(readinessAdapter{a.Compliance})
 	// Порты roadmap подключаются после его создания: compliance проверяет принадлежность релиза продукту (CM-03).
 	a.Compliance = a.Compliance.WithReleases(a.Roadmap)
-	a.Commitments = commitments.NewService(commitmentsStore, pub, clock).WithRoadmapWriter(a.Roadmap).WithRoadmapReader(a.Roadmap)
+	a.Commitments = commitments.NewService(commitmentsStore, pub, clock).WithRoadmapWriter(a.Roadmap).WithRoadmapReader(a.Roadmap).WithLinkOwners(a.Portfolio, a.Roadmap)
 	a.Portfolio = a.Portfolio.WithCommitments(a.Commitments)
 	a.Decisions = decisions.NewService(decisionsStore, pub, clock)
 	a.Discovery = discovery.NewService(discoveryStore, pub, clock,

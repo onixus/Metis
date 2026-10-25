@@ -653,6 +653,12 @@ export function useAckAlert(productId: string) {
   )
 }
 
+export function useHandleCommitmentAlert(productId: string) {
+  return useCommitmentMutation(productId, async (input: { id: string; body: components['schemas']['CommitmentAlertActionInput'] }) =>
+    unwrap(await api.POST('/commitment-alerts/{alertId}/actions', { params: { path: { alertId: input.id } }, body: input.body })),
+  )
+}
+
 export function useEnsureRenewals(productId: string) {
   return useCommitmentMutation(productId, async () => unwrap(await api.POST('/commitments/ensure-renewals', { body: {} })))
 }
@@ -1042,7 +1048,7 @@ export function useSetReleaseNotes(productId: string) {
 
 export function useSetReleaseEol(productId: string) {
   return useReleaseMutation(productId, async (input: { id: string; eol: string }) =>
-    unwrap(await api.PUT('/releases/{releaseId}/eol', { params: { path: { releaseId: input.id } }, body: { eol: input.eol } })),
+    unwrap(await api.PUT('/releases/{releaseId}/eol', { params: { path: { releaseId: input.id } }, body: { eol: input.eol || null } })),
   )
 }
 

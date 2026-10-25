@@ -37,6 +37,36 @@ func (q *Queries) AcknowledgeAlert(ctx context.Context, arg AcknowledgeAlertPara
 	return result.RowsAffected(), nil
 }
 
+const appendAlertAction = `-- name: AppendAlertAction :exec
+INSERT INTO commitments.alert_actions (id, alert_id, product_id, kind, recipient, note, actor, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+`
+
+type AppendAlertActionParams struct {
+	ID        uuid.UUID
+	AlertID   uuid.UUID
+	ProductID uuid.UUID
+	Kind      string
+	Recipient string
+	Note      string
+	Actor     string
+	CreatedAt time.Time
+}
+
+func (q *Queries) AppendAlertAction(ctx context.Context, arg AppendAlertActionParams) error {
+	_, err := q.db.Exec(ctx, appendAlertAction,
+		arg.ID,
+		arg.AlertID,
+		arg.ProductID,
+		arg.Kind,
+		arg.Recipient,
+		arg.Note,
+		arg.Actor,
+		arg.CreatedAt,
+	)
+	return err
+}
+
 const eventProcessed = `-- name: EventProcessed :one
 SELECT EXISTS (SELECT 1 FROM commitments.processed_events WHERE event_id = $1)
 `
@@ -178,6 +208,40 @@ func (q *Queries) InsertAlert(ctx context.Context, arg InsertAlertParams) error 
 		arg.AcknowledgedAt,
 	)
 	return err
+}
+
+const listAlertActions = `-- name: ListAlertActions :many
+SELECT seq, id, alert_id, product_id, kind, recipient, note, actor, created_at FROM commitments.alert_actions WHERE alert_id = $1 ORDER BY seq
+`
+
+func (q *Queries) ListAlertActions(ctx context.Context, alertID uuid.UUID) ([]CommitmentsAlertAction, error) {
+	rows, err := q.db.Query(ctx, listAlertActions, alertID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CommitmentsAlertAction
+	for rows.Next() {
+		var i CommitmentsAlertAction
+		if err := rows.Scan(
+			&i.Seq,
+			&i.ID,
+			&i.AlertID,
+			&i.ProductID,
+			&i.Kind,
+			&i.Recipient,
+			&i.Note,
+			&i.Actor,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listAlerts = `-- name: ListAlerts :many

@@ -1,0 +1,127 @@
+{
+  "results": [
+    {
+      "requirement": "RM04/RM05",
+      "scenario": "open-editor-server-status-refresh",
+      "result": "PASS",
+      "displayedStatus": "released",
+      "submittedStatus": "omitted",
+      "responseStatus": 200,
+      "checks": [
+        "local-text-preserved",
+        "display-follows-server",
+        "no-backward-status-request",
+        "save200",
+        "released-state-preserved"
+      ],
+      "backend": "real API, no mocked responses"
+    },
+    {
+      "requirement": "DL04",
+      "scenario": "live-sync-staleness-and-source-refresh",
+      "result": "PASS",
+      "checks": [
+        "initial-plan-and-commitment-comparison",
+        "clock-driven15s-poll",
+        "stale-removes-confidence",
+        "same-source-no-extra-model-call",
+        "new-source-auto-requery",
+        "pending-new-source-no-old-confidence",
+        "new-forecast-visible",
+        "cached-remount-pending-no-confidence",
+        "confirmed-overview-restores-comparison"
+      ],
+      "overviewCalls": 4,
+      "forecastCalls": 3,
+      "mockedReadEndpointsOnly": [
+        "/products/{id}/delivery",
+        "/features/{id}/forecast"
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "route": "/products/01a17335-8de6-739d-b929-6496421dab20/releases",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "route": "/releases/01a17338-36a5-748c-8db2-180cd8504643",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "route": "/releases/01a17338-36a5-748c-8db2-180cd8504643",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "route": "/products/01a17335-8de6-739d-b929-6496421dab20/features",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "route": "/products/01a17335-8de6-739d-b929-6496421dab20/commitments",
+      "method": "POST",
+      "status": 201
+    }
+  ],
+  "projectionRequests": [
+    {
+      "endpoint": "delivery",
+      "call": 1,
+      "sync": {
+        "last_success_at": "2026-10-25T12:00:00Z",
+        "last_attempt_at": "2026-10-25T12:00:00Z",
+        "lag": 0,
+        "stale": false
+      }
+    },
+    {
+      "endpoint": "forecast",
+      "call": 1,
+      "source": "2026-10-25T12:00:00Z"
+    },
+    {
+      "endpoint": "delivery",
+      "call": 2,
+      "sync": {
+        "last_success_at": "2026-10-25T12:00:00Z",
+        "last_attempt_at": "2026-10-25T12:00:00Z",
+        "lag": 1800000000000,
+        "stale": true
+      }
+    },
+    {
+      "endpoint": "delivery",
+      "call": 3,
+      "sync": {
+        "last_success_at": "2026-10-25T12:00:20Z",
+        "last_attempt_at": "2026-10-25T12:00:20Z",
+        "lag": 0,
+        "stale": false
+      }
+    },
+    {
+      "endpoint": "forecast",
+      "call": 2,
+      "source": "2026-10-25T12:00:20Z"
+    },
+    {
+      "endpoint": "delivery",
+      "call": 4,
+      "sync": {
+        "last_success_at": "2026-10-25T12:00:20Z",
+        "last_attempt_at": "2026-10-25T12:00:20Z",
+        "lag": 0,
+        "stale": false
+      }
+    },
+    {
+      "endpoint": "forecast",
+      "call": 3,
+      "source": "2026-10-25T12:00:20Z"
+    }
+  ],
+  "errors": []
+}

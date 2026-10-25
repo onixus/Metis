@@ -80,6 +80,8 @@ type Store interface {
 
 	Settings(ctx context.Context, sc authz.Scope) (Settings, error)
 	SaveSettings(ctx context.Context, sc authz.Scope, st Settings) error
+	AppendAlertAction(ctx context.Context, sc authz.Scope, action AlertAction) error
+	AlertActions(ctx context.Context, sc authz.Scope, alertID kernel.ID) ([]AlertAction, error)
 }
 
 // MemStore — хранилище в памяти.
@@ -87,6 +89,7 @@ type MemStore struct {
 	mu        sync.Mutex
 	items     []Commitment
 	alerts    []Alert
+	actions   []AlertAction
 	processed map[kernel.ID]struct{}
 	settings  Settings
 }
@@ -182,7 +185,7 @@ func (m *MemStore) AppendAlert(_ context.Context, sc authz.Scope, a Alert) error
 		return kernel.ErrForbidden
 	}
 	for _, old := range m.alerts {
-		if old.ID == a.ID {
+		if old.ID == a.ID || (a.EventID != kernel.NilID && old.CommitmentID == a.CommitmentID && old.EventID == a.EventID) {
 			return kernel.ErrConflict
 		}
 	}
@@ -317,4 +320,40 @@ func (m *MemStore) SaveSettings(_ context.Context, sc authz.Scope, st Settings) 
 	defer m.mu.Unlock()
 	m.settings = st
 	return nil
+}
+
+// AppendAlertAction добавляет действие только к доступному алерту того же продукта.
+func (m *MemStore) AppendAlertAction(ctx context.Context, sc authz.Scope, action AlertAction) error {
+	alert, err := m.Alert(ctx, sc, action.AlertID)
+	if err != nil {
+		return err
+	}
+	if alert.ProductID != action.ProductID || !sc.Allows(authz.ActionWriteCommitments, action.ProductID) {
+		return kernel.ErrForbidden
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, old := range m.actions {
+		if old.ID == action.ID {
+			return kernel.ErrConflict
+		}
+	}
+	m.actions = append(m.actions, action)
+	return nil
+}
+
+// AlertActions возвращает неизменяемую историю после проверки доступа к алерту.
+func (m *MemStore) AlertActions(ctx context.Context, sc authz.Scope, alertID kernel.ID) ([]AlertAction, error) {
+	if _, err := m.Alert(ctx, sc, alertID); err != nil {
+		return nil, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	result := make([]AlertAction, 0)
+	for _, action := range m.actions {
+		if action.AlertID == alertID {
+			result = append(result, action)
+		}
+	}
+	return result, nil
 }

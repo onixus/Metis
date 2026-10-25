@@ -440,3 +440,56 @@ func TestCM03_ReleaseProductRequiresStrategicAccess(t *testing.T) {
 		t.Fatalf("отсутствующий релиз: ожидался NotFound, получено %v", err)
 	}
 }
+
+// TestRM05_CreateReleaseCannotBypassCertificationReadiness checks the same guarded
+// status rule as UpdateRelease before any aggregate or event is persisted.
+func TestRM05_CreateReleaseCannotBypassCertificationReadiness(t *testing.T) {
+	for _, branch := range []roadmap.Branch{roadmap.BranchEvolving, roadmap.BranchCertified} {
+		t.Run(string(branch), func(t *testing.T) {
+			f := newFixture(t)
+			rd := &fakeReadiness{ready: map[kernel.ID]roadmap.Readiness{}}
+			f.svc.WithReadiness(rd)
+			_, err := f.svc.CreateRelease(f.ctx, f.cpo, f.edr, roadmap.ReleaseInput{
+				Name: "Bypass", Version: "9.0", Branch: branch, Status: roadmap.ReleaseReadyForCertification,
+			})
+			if !errors.Is(err, kernel.ErrConflict) {
+				t.Fatalf("ready status must require command: %v", err)
+			}
+			releases, err := f.svc.Releases(f.ctx, f.cpo, f.edr)
+			if err != nil || len(releases) != 0 {
+				t.Fatalf("rejected release persisted: %+v, %v", releases, err)
+			}
+			if rd.calls != 0 || len(f.pub.events) != 0 {
+				t.Fatal("rejected create must not check readiness or publish events")
+			}
+		})
+	}
+}
+
+func TestRM04_ReleasedBranchCannotBeReopenedForModification(t *testing.T) {
+	f := newFixture(t)
+	r, err := f.svc.CreateRelease(f.ctx, f.cpo, f.edr, roadmap.ReleaseInput{
+		Name: "Issued", Version: "11.0", Branch: roadmap.BranchCertified, Status: roadmap.ReleaseReleased,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, status := range []roadmap.ReleaseStatus{roadmap.ReleasePlanned, roadmap.ReleaseReadyForCertification} {
+		_, err = f.svc.UpdateRelease(f.ctx, f.cpo, r.ID, roadmap.ReleaseInput{Name: r.Name, Version: r.Version, Status: status})
+		if !errors.Is(err, kernel.ErrConflict) {
+			t.Fatalf("cannot reopen issued release as %s: %v", status, err)
+		}
+	}
+	eol, err := f.svc.UpdateRelease(f.ctx, f.cpo, r.ID, roadmap.ReleaseInput{Name: r.Name, Version: r.Version, Status: roadmap.ReleaseEOL})
+	if err != nil || eol.Status != roadmap.ReleaseEOL {
+		t.Fatalf("end support: %+v, %v", eol, err)
+	}
+	_, err = f.svc.UpdateRelease(f.ctx, f.cpo, r.ID, roadmap.ReleaseInput{Name: r.Name, Version: r.Version, Status: roadmap.ReleaseReleased})
+	if !errors.Is(err, kernel.ErrConflict) {
+		t.Fatalf("cannot reopen EOL as released: %v", err)
+	}
+	got, err := f.svc.Release(f.ctx, f.cpo, r.ID)
+	if err != nil || got.Status != roadmap.ReleaseEOL || got.Branch != roadmap.BranchCertified {
+		t.Fatalf("rejected update changed release: %+v, %v", got, err)
+	}
+}

@@ -28,7 +28,7 @@ generate:
 	cd web && npm run generate
 
 check-generated: generate
-	git diff --exit-code -- internal/httpapi/gen tests/e2e/client internal/*/internal/db web/src/api/schema.d.ts
+	git diff --exit-code -- internal/httpapi/gen tests/e2e/client internal/*/internal/db internal/economics/modeling/internal/db web/src/api/schema.d.ts
 
 # -race требует cgo; сборка бинарников остаётся без cgo (инвариант 9).
 test:

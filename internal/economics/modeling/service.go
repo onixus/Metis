@@ -119,10 +119,17 @@ func (s *Service) emit(ctx context.Context, typ string, aggregate, product kerne
 }
 
 func (s *Service) logAccess(ctx context.Context, sc authz.Scope, action, object string, product kernel.ID, details map[string]any) {
+	_ = s.logAccessChecked(ctx, sc, action, object, product, details)
+}
+
+func (s *Service) logAccessChecked(ctx context.Context, sc authz.Scope, action, object string, product kernel.ID, details map[string]any) error {
 	if s.audit == nil {
-		return
+		return nil
 	}
-	_ = s.audit.FinanceAccess(ctx, sc.Subject(), action, object, product, details)
+	if err := s.audit.FinanceAccess(ctx, sc.Subject(), action, object, product, details); err != nil {
+		return fmt.Errorf("finance audit: %w", err)
+	}
+	return nil
 }
 
 // ---- Доступ ----
@@ -161,6 +168,19 @@ type FieldInput struct {
 
 // SaveField создаёт поле или добавляет новую версию его описания (EC-08, EC-11).
 func (s *Service) SaveField(ctx context.Context, sc authz.Scope, in FieldInput) (Field, error) {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		var result Field
+		err := tx.Transact(ctx, sc, func(ctx context.Context) error {
+			var err error
+			result, err = s.saveField(ctx, sc, in)
+			return err
+		})
+		return result, err
+	}
+	return s.saveField(ctx, sc, in)
+}
+
+func (s *Service) saveField(ctx context.Context, sc authz.Scope, in FieldInput) (Field, error) {
 	if err := s.requireWrite(sc, kernel.NilID); err != nil {
 		return Field{}, err
 	}
@@ -204,7 +224,9 @@ func (s *Service) SaveField(ctx context.Context, sc authz.Scope, in FieldInput) 
 	if err := s.store.SaveField(ctx, sc, f); err != nil {
 		return Field{}, fmt.Errorf("save field: %w", err)
 	}
-	s.logAccess(ctx, sc, "write", "economics.field:"+f.Key, kernel.NilID, map[string]any{"version": len(f.Versions)})
+	if err := s.logAccessChecked(ctx, sc, "write", "economics.field:"+f.Key, kernel.NilID, map[string]any{"version": len(f.Versions)}); err != nil {
+		return Field{}, err
+	}
 	if err := s.emit(ctx, EventFieldSaved, f.ID, kernel.NilID, sc.Subject(), f.Latest()); err != nil {
 		return Field{}, err
 	}
@@ -233,6 +255,19 @@ type MetricInput struct {
 // SaveMetric создаёт показатель или добавляет версию формулы. Формула компилируется
 // при сохранении; формула, создающая цикл, отклоняется с показом пути (EC-10).
 func (s *Service) SaveMetric(ctx context.Context, sc authz.Scope, in MetricInput) (Metric, error) {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		var result Metric
+		err := tx.Transact(ctx, sc, func(ctx context.Context) error {
+			var err error
+			result, err = s.saveMetric(ctx, sc, in)
+			return err
+		})
+		return result, err
+	}
+	return s.saveMetric(ctx, sc, in)
+}
+
+func (s *Service) saveMetric(ctx context.Context, sc authz.Scope, in MetricInput) (Metric, error) {
 	if err := s.requireWrite(sc, kernel.NilID); err != nil {
 		return Metric{}, err
 	}
@@ -274,7 +309,9 @@ func (s *Service) SaveMetric(ctx context.Context, sc authz.Scope, in MetricInput
 		return Metric{}, fmt.Errorf("save metric: %w", err)
 	}
 	s.cache(in.Expression, prog)
-	s.logAccess(ctx, sc, "write", "economics.metric:"+m.Key, kernel.NilID, map[string]any{"version": len(m.Versions), "expression": in.Expression})
+	if err := s.logAccessChecked(ctx, sc, "write", "economics.metric:"+m.Key, kernel.NilID, map[string]any{"version": len(m.Versions), "expression": in.Expression}); err != nil {
+		return Metric{}, err
+	}
 	if err := s.emit(ctx, EventMetricSaved, m.ID, kernel.NilID, sc.Subject(), m.Latest()); err != nil {
 		return Metric{}, err
 	}
@@ -726,6 +763,19 @@ func (s *Service) Facts(ctx context.Context, sc authz.Scope, f FactFilter) ([]Fa
 
 // SetManualValue записывает значение поля ручного ввода отдельной загрузкой (EC-08).
 func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string, sl Slice, value decimal.Decimal) (FactRow, error) {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		var row FactRow
+		err := tx.Transact(ctx, sc, func(ctx context.Context) error {
+			var err error
+			row, err = s.setManualValue(ctx, sc, key, sl, value)
+			return err
+		})
+		return row, err
+	}
+	return s.setManualValue(ctx, sc, key, sl, value)
+}
+
+func (s *Service) setManualValue(ctx context.Context, sc authz.Scope, key string, sl Slice, value decimal.Decimal) (FactRow, error) {
 	if err := s.requireWrite(sc, sl.ProductID); err != nil {
 		return FactRow{}, err
 	}
@@ -768,7 +818,9 @@ func (s *Service) SetManualValue(ctx context.Context, sc authz.Scope, key string
 	if err := s.store.AppendFacts(ctx, sc, append([]FactRow{row}, carried...)); err != nil {
 		return FactRow{}, fmt.Errorf("append facts: %w", err)
 	}
-	s.logAccess(ctx, sc, "write", "economics.value:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()})
+	if err := s.logAccessChecked(ctx, sc, "write", "economics.value:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()}); err != nil {
+		return FactRow{}, err
+	}
 	return row, nil
 }
 

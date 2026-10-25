@@ -33,6 +33,7 @@ import (
 	discoverypg "github.com/onixus/metis/internal/discovery/pgstore"
 	"github.com/onixus/metis/internal/economics"
 	modeling "github.com/onixus/metis/internal/economics/modeling"
+	modelingpg "github.com/onixus/metis/internal/economics/modeling/pgstore"
 	"github.com/onixus/metis/internal/httpapi"
 	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
@@ -275,6 +276,7 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 		evidenceStore    compliance.EvidenceStore  = compliance.NewEvidenceMemStore()
 		decisionsStore   decisions.Store           = decisions.NewMemStore()
 		index            discovery.SimilarityIndex = discovery.NewMemIndex()
+		modelingStore    modeling.Store            = modeling.NewMemStore()
 	)
 	switch cfg.Storage {
 	case "memory":
@@ -296,6 +298,7 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 		discoveryStore, index = discoverypg.New(db), discoverypg.NewIndex(db)
 		commitmentsStore, decisionsStore = commitmentspg.New(db, clock), decisionspg.New(db)
 		complianceStore, evidenceStore = compliancepg.New(db), compliancepg.NewEvidenceStore(db)
+		modelingStore = modelingpg.New(db)
 		complianceClock = compliancepg.Clock{Inner: clock}
 	default:
 		return nil, fmt.Errorf("%w: неизвестное хранилище %q", kernel.ErrValidation, cfg.Storage)
@@ -336,7 +339,7 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 	if cfg.SecurityDir != "" {
 		a.Compliance = a.Compliance.WithPipeline(securityfile.New(cfg.SecurityDir))
 	}
-	econ, err := modeling.NewService(modeling.NewMemStore(), pub, clock, modeling.DefaultConfig())
+	econ, err := modeling.NewService(modelingStore, pub, clock, modeling.DefaultConfig())
 	if err != nil {
 		return nil, fmt.Errorf("экономика: %w", err)
 	}

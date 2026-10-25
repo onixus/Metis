@@ -21,7 +21,7 @@ type FactFilter struct {
 	DataVersion *int
 }
 
-// Store — хранилище экономики. Авторизация выполняется в Service до вызова хранилища.
+// Store — хранилище экономики; Scope проверяется и сервисом, и хранилищем.
 type Store interface {
 	SaveField(ctx context.Context, sc authz.Scope, f Field) error
 	Field(ctx context.Context, sc authz.Scope, key string) (Field, error)
@@ -61,7 +61,12 @@ type Store interface {
 	Scenarios(ctx context.Context, sc authz.Scope) ([]Scenario, error)
 }
 
-// MemStore — хранилище в памяти (тесты, стенд). PG-хранилище — отдельной итерацией (вопрос 12).
+// TransactionalStore — порт атомарных изменений модели вместе с аудитом и outbox.
+type TransactionalStore interface {
+	Transact(ctx context.Context, sc authz.Scope, fn func(context.Context) error) error
+}
+
+// MemStore — хранилище в памяти (тесты, стенд).
 type MemStore struct {
 	mu        sync.RWMutex
 	fields    map[string]Field

@@ -114,6 +114,15 @@ func (s *Service) PreviewImport(ctx context.Context, sc authz.Scope, in ImportIn
 // ApplyImport загружает финансовые данные. Повторная загрузка периода создаёт новую
 // версию данных; история загрузок сохраняется (EC-07).
 func (s *Service) ApplyImport(ctx context.Context, sc authz.Scope, in ImportInput) (ImportResult, error) {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		var result ImportResult
+		err := tx.Transact(ctx, sc, func(ctx context.Context) error {
+			var err error
+			result, err = s.runImport(ctx, sc, in, true)
+			return err
+		})
+		return result, err
+	}
 	return s.runImport(ctx, sc, in, true)
 }
 
@@ -195,10 +204,12 @@ func (s *Service) runImport(ctx context.Context, sc authz.Scope, in ImportInput,
 	if err := s.store.AppendFacts(ctx, sc, append(rows, carried...)); err != nil {
 		return ImportResult{}, fmt.Errorf("append facts: %w", err)
 	}
-	s.logAccess(ctx, sc, "write", "economics.import:"+batch.ID.String(), kernel.NilID, map[string]any{
+	if err := s.logAccessChecked(ctx, sc, "write", "economics.import:"+batch.ID.String(), kernel.NilID, map[string]any{
 		"period": batch.Period.String(), "version": version, "rows": len(rows),
 		"errors": len(batch.Errors), "scheduled": in.Scheduled, "sha256": batch.SHA256,
-	})
+	}); err != nil {
+		return ImportResult{}, err
+	}
 	if err := s.emit(ctx, EventBatchApplied, batch.ID, kernel.NilID, sc.Subject(), batch); err != nil {
 		return ImportResult{}, err
 	}

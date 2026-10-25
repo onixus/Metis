@@ -4,6 +4,7 @@ import { errorMessage } from '../api/client'
 import {
   accessLevel,
   useAckAlert,
+  useHandleCommitmentAlert,
   useCancelCommitment,
   useCommitmentAlerts,
   useCommitments,
@@ -44,7 +45,7 @@ export function CommitmentsPage() {
   const [editing, setEditing] = useState<Commitment | 'new' | null>(null)
   const level = accessLevel(me.data, id)
   const canWrite = canWriteCommitments(me.data, level)
-  const canPlan = hasRole(me.data, 'cpo', 'admin', 'pm')
+  const canPlan = canWrite && hasRole(me.data, 'cpo', 'admin', 'pm')
   const featureName = useMemo(() => new Map((features.data ?? []).map((f) => [f.id, f.name])), [features.data])
   const releaseName = useMemo(() => new Map((releases.data ?? []).map((r) => [r.id, `${r.name} ${r.version}`])), [releases.data])
 
@@ -111,7 +112,7 @@ export function CommitmentsPage() {
               </thead>
               <tbody>
                 {list.data.map((c) => (
-                  <tr key={c.id}>
+                  <tr key={c.id} id={`commitment-${c.id}`}>
                     <td>
                       {ru.commitments.kinds[c.kind]}
                       {c.subtype && <div className="muted">{pick(ru.commitments.subtypes, c.subtype)}</div>}
@@ -156,7 +157,7 @@ export function CommitmentsPage() {
           </div>
         )}
       </div>
-      <Alerts productId={id} canWrite={canWrite} />
+      <Alerts productId={id} canWrite={canWrite} commitments={list.data} />
     </section>
   )
 }
@@ -291,10 +292,20 @@ function CommitmentForm({
   )
 }
 
-function Alerts({ productId, canWrite }: { productId: string; canWrite: boolean }) {
+function Alerts({ productId, canWrite, commitments }: { productId: string; canWrite: boolean; commitments: Commitment[] }) {
   const [all, setAll] = useState(false)
   const alerts = useCommitmentAlerts(productId, !all)
   const ack = useAckAlert(productId)
+  const handle = useHandleCommitmentAlert(productId)
+  const [selected, setSelected] = useState('')
+  const [kind, setKind] = useState<'assigned' | 'escalated' | 'noted'>('noted')
+  const [recipient, setRecipient] = useState('')
+  const [note, setNote] = useState('')
+  const commitmentById = new Map(commitments.map((c) => [c.id, c]))
+  const submitAction = (e: FormEvent) => {
+    e.preventDefault()
+    handle.mutate({ id: selected, body: { kind, note, recipient: kind === 'noted' ? undefined : recipient } }, { onSuccess: () => { setSelected(''); setNote(''); setRecipient('') } })
+  }
   return (
     <div className="card stack">
       <div className="row wrap-row">
@@ -307,6 +318,19 @@ function Alerts({ productId, canWrite }: { productId: string; canWrite: boolean 
       {alerts.isPending && <Loading />}
       {alerts.isError && <ErrorBox error={alerts.error} onRetry={() => void alerts.refetch()} />}
       {ack.isError && <ErrorBox error={ack.error} />}
+      {handle.isError && <ErrorBox error={handle.error} />}
+      {selected && <form className="stack" onSubmit={submitAction}>
+        <h3>Обработка риска: {commitmentById.get(alerts.data?.find((a) => a.id === selected)?.commitment_id ?? '')?.subject ?? 'обязательство'}</h3>
+        <div className="row wrap-row">
+          <label className="field"><span>Действие</span><select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
+            <option value="noted">План обработки / заметка</option><option value="assigned">Назначить владельца</option><option value="escalated">Эскалировать</option>
+          </select></label>
+          {kind !== 'noted' && <label className="field"><span>{kind === 'assigned' ? 'Владелец риска' : 'Адресат эскалации'}</span><input required value={recipient} onChange={(e) => setRecipient(e.target.value)} /></label>}
+          <label className="field grow"><span>Обоснование / план обработки</span><textarea required value={note} onChange={(e) => setNote(e.target.value)} /></label>
+        </div>
+        {kind === 'escalated' && <p className="muted">Эскалация фиксируется в Metis. Для уведомления свяжитесь с адресатом по согласованному каналу.</p>}
+        <div className="row"><button type="submit" className="btn" disabled={handle.isPending}>Сохранить действие</button><button type="button" className="btn" onClick={() => setSelected('')}>Отмена</button></div>
+      </form>}
       {alerts.data && alerts.data.length === 0 && <Empty text={ru.commitments.alertsEmpty} />}
       {alerts.data && alerts.data.length > 0 && (
         <div className="table-wrap">
@@ -323,9 +347,14 @@ function Alerts({ productId, canWrite }: { productId: string; canWrite: boolean 
             </thead>
             <tbody>
               {alerts.data.map((a) => (
-                <tr key={a.id} className={a.acknowledged ? undefined : 'row-affected'}>
+                <tr key={a.id} id={`commitment-alert-${a.id}`} className={a.acknowledged ? undefined : 'row-affected'}>
                   <td>{fmtDateTime(a.raised_at)}</td>
-                  <td className="wrap">{a.message}</td>
+                  <td className="wrap">
+                    <a href={`#commitment-${a.commitment_id}`}>{commitmentById.get(a.commitment_id)?.subject ?? 'Обязательство'}</a>
+                    <p>{a.message}</p>
+                    <div>Владелец риска: {a.risk_owner ?? commitmentById.get(a.commitment_id)?.owner ?? ru.app.dash}</div>
+                    {(a.actions?.length ?? 0) > 0 && <details><summary>История обработки ({a.actions?.length})</summary><ul>{a.actions?.map((action) => <li key={action.id}>{fmtDateTime(action.created_at)} · {action.actor} · {{ assigned: 'Назначен владелец', escalated: 'Эскалация', noted: 'План обработки' }[action.kind]}{action.recipient ? ` → ${action.recipient}` : ''}: {action.note}</li>)}</ul></details>}
+                  </td>
                   <td>{fmtDate(a.new_date)}</td>
                   <td>{fmtDate(a.due_date)}</td>
                   <td>
@@ -338,6 +367,7 @@ function Alerts({ productId, canWrite }: { productId: string; canWrite: boolean 
                     )}
                   </td>
                   <td>
+                    {canWrite && <button type="button" className="btn btn-sm" onClick={() => { setSelected(a.id); setKind('noted'); setNote(''); setRecipient(a.risk_owner ?? ''); handle.reset() }}>Обработать риск</button>}
                     {canWrite && !a.acknowledged && (
                       <button type="button" className="btn btn-sm" disabled={ack.isPending} onClick={() => ack.mutate(a.id)}>
                         {ru.commitments.ack}

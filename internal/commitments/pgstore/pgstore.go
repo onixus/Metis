@@ -273,3 +273,34 @@ func (s *Store) SaveSettings(ctx context.Context, sc authz.Scope, st commitments
 	}
 	return nil
 }
+
+// AppendAlertAction сохраняет неизменяемое действие риска после проверки продукта.
+func (s *Store) AppendAlertAction(ctx context.Context, sc authz.Scope, action commitments.AlertAction) error {
+	alert, err := s.Alert(ctx, sc, action.AlertID)
+	if err != nil {
+		return err
+	}
+	if alert.ProductID != action.ProductID || !sc.Allows(authz.ActionWriteCommitments, action.ProductID) {
+		return kernel.ErrForbidden
+	}
+	if err := s.q(ctx).AppendAlertAction(ctx, db.AppendAlertActionParams{ID: action.ID, AlertID: action.AlertID, ProductID: action.ProductID, Kind: action.Kind, Recipient: action.Recipient, Note: action.Note, Actor: action.Actor, CreatedAt: action.CreatedAt.UTC()}); err != nil {
+		return fmt.Errorf("append risk action: %w", pgdb.MapError(err))
+	}
+	return nil
+}
+
+// AlertActions читает историю только доступного алерта.
+func (s *Store) AlertActions(ctx context.Context, sc authz.Scope, alertID kernel.ID) ([]commitments.AlertAction, error) {
+	if _, err := s.Alert(ctx, sc, alertID); err != nil {
+		return nil, err
+	}
+	rows, err := s.q(ctx).ListAlertActions(ctx, alertID)
+	if err != nil {
+		return nil, fmt.Errorf("risk history: %w", pgdb.MapError(err))
+	}
+	result := make([]commitments.AlertAction, 0, len(rows))
+	for _, r := range rows {
+		result = append(result, commitments.AlertAction{ID: r.ID, AlertID: r.AlertID, ProductID: r.ProductID, Kind: r.Kind, Recipient: r.Recipient, Note: r.Note, Actor: r.Actor, CreatedAt: r.CreatedAt.UTC()})
+	}
+	return result, nil
+}

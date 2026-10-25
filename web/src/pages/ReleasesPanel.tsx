@@ -18,6 +18,14 @@ import { fmtDate } from '../lib/format'
 import { MultiSelect } from './DiscoveryPage'
 
 const BRANCHES: Release['branch'][] = ['evolving', 'certified']
+
+// Expose forward lifecycle actions. Readiness remains a separate checked command.
+function releaseStatuses(status: Release['status']): Release['status'][] {
+  if (status === 'eol') return ['eol']
+  if (status === 'released') return ['released', 'eol']
+  if (status === 'ready_for_certification') return ['ready_for_certification', 'released']
+  return ['planned', 'released']
+}
 const STATUS_TONE: Record<Release['status'], 'neutral' | 'ok' | 'warn' | 'danger' | 'info'> = {
   planned: 'info',
   ready_for_certification: 'warn',
@@ -111,6 +119,7 @@ function ReleaseForm({
   const [form, setForm] = useState<ReleaseInput>({
     name: initial?.name ?? '',
     version: initial?.version ?? '',
+    status: initial?.status ?? 'planned',
     planned_date: initial?.planned_date ?? undefined,
     branch: initial?.branch ?? 'evolving',
     base_release_id: initial?.base_release_id,
@@ -125,7 +134,7 @@ function ReleaseForm({
       planned_date: form.planned_date || undefined,
       base_release_id: form.base_release_id || undefined,
       eol: form.eol || undefined,
-      status: initial?.status === 'ready_for_certification' ? undefined : initial?.status,
+      status: form.status === 'ready_for_certification' ? undefined : form.status,
     }
     if (initial) update.mutate({ id: initial.id, body }, { onSuccess: onDone })
     else create.mutate(body, { onSuccess: onDone })
@@ -147,8 +156,16 @@ function ReleaseForm({
           <input type="date" value={form.planned_date ?? ''} onChange={(e) => set('planned_date', e.target.value)} />
         </label>
         <label className="field">
+          <span>Статус релиза</span>
+          <select value={form.status} onChange={(e) => set('status', e.target.value as Release['status'])}>
+            {releaseStatuses(initial?.status ?? 'planned').map((status) => (
+              <option key={status} value={status}>{ru.release.statuses[status]}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
           <span>{ru.release.branch}</span>
-          <select value={form.branch} onChange={(e) => set('branch', e.target.value as Release['branch'])}>
+          <select value={form.branch} disabled={initial?.status === 'released' || initial?.status === 'eol'} onChange={(e) => set('branch', e.target.value as Release['branch'])}>
             {BRANCHES.map((b) => (
               <option key={b} value={b}>
                 {ru.release.branches[b]}
@@ -274,8 +291,8 @@ function ReleaseCard({
             <span>{ru.release.eol}</span>
             <input type="date" value={eol} onChange={(e) => setEolText(e.target.value)} />
           </label>
-          <button type="button" className="btn btn-sm" disabled={!eol || setEol.isPending} onClick={() => setEol.mutate({ id: r.id, eol })}>
-            {ru.release.setEol}
+          <button type="button" className="btn btn-sm" disabled={setEol.isPending || (!eol && !r.eol)} onClick={() => setEol.mutate({ id: r.id, eol })}>
+            {eol ? ru.release.setEol : 'Снять дату EOL'}
           </button>
           {r.status === 'planned' && (
             <button

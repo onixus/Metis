@@ -27,6 +27,18 @@ type CommitmentsAlert struct {
 	AcknowledgedAt pgtype.Timestamptz
 }
 
+type CommitmentsAlertAction struct {
+	Seq       pgtype.Int8
+	ID        uuid.UUID
+	AlertID   uuid.UUID
+	ProductID uuid.UUID
+	Kind      string
+	Recipient string
+	Note      string
+	Actor     string
+	CreatedAt time.Time
+}
+
 type CommitmentsCommitment struct {
 	ID            uuid.UUID
 	ProductID     uuid.UUID

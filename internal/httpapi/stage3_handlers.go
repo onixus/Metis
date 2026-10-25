@@ -237,9 +237,10 @@ func (s *Server) GetFeatureForecast(ctx context.Context, req gen.GetFeatureForec
 	epic, iterations, samples := fc.EpicKey, fc.IterationDays, fc.Samples
 	throughput := append([]int(nil), fc.Throughput...)
 	return gen.GetFeatureForecast200JSONResponse{FeatureId: fc.FeatureID, ProductId: fc.ProductID,
-		EpicKey: &epic, Remaining: fc.Remaining, Throughput: &throughput, IterationDays: &iterations,
+		CalculatedAt: &fc.CalculatedAt,
+		EpicKey:      &epic, Remaining: fc.Remaining, Throughput: &throughput, IterationDays: &iterations,
 		Samples: &samples, From: datePtr(fc.From), P50: datePtr(fc.P50), P85: datePtr(fc.P85),
-		P95: datePtr(fc.P95), IntervalLow: datePtr(fc.IntervalLow), IntervalHigh: datePtr(fc.IntervalHigh)}, nil
+		P95: datePtr(fc.P95), IntervalLow: datePtr(fc.IntervalLow), IntervalHigh: datePtr(fc.IntervalHigh), Sync: &fc.Sync}, nil
 }
 
 // GetWorklogCostBase — DL-05.

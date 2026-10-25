@@ -61,7 +61,7 @@ func (a *App) registerNotifications() {
 		delivery.EventEpicLinked, delivery.EventEpicDueDateChanged,
 		discovery.EventHypothesisSaved, discovery.EventInterviewSaved, discovery.EventInsightSaved, discovery.EventEvidenceSaved,
 		commitments.EventCommitmentCreated, commitments.EventCommitmentUpdated, commitments.EventCommitmentFulfilled,
-		commitments.EventCommitmentCancelled, commitments.EventAlertRaised, commitments.EventAlertAcknowledged, commitments.EventRenewalPlanned,
+		commitments.EventCommitmentCancelled, commitments.EventAlertRaised, commitments.EventAlertAcknowledged, commitments.EventAlertHandled, commitments.EventRenewalPlanned,
 		compliance.EventTrackStarted, compliance.EventGatePassed, compliance.EventGateFailed,
 		compliance.EventEvidenceAppended, compliance.EventImpactSet, compliance.EventBaselineCreated,
 		decisions.EventRecordSaved, decisions.EventRecordAccepted, decisions.EventPageCreated,

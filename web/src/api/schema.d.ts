@@ -1266,6 +1266,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/commitment-alerts/{alertId}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alertId: components["parameters"]["alertId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Назначить владельца, эскалировать или записать обработку риска (CT-03)
+         * @description Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+         */
+        post: operations["handleCommitmentAlert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings/commitments": {
         parameters: {
             query?: never;
@@ -2519,6 +2541,7 @@ export interface paths {
     "/features/{featureId}/forecast": {
         parameters: {
             query?: {
+                /** @description Число симуляций; 0 использует значение по умолчанию (10000) */
                 samples?: number;
                 /** @description Зерно генератора для воспроизводимого прогноза */
                 seed?: string;
@@ -3119,7 +3142,7 @@ export interface components {
             releases: components["schemas"]["ReleaseGroup"][];
             unassigned: components["schemas"]["RoadmapGroup"];
         };
-        /** @description Данные релиза. При создании необязательные поля берут значения по умолчанию (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют текущее значение релиза. Снять дату окончания поддержки можно только через PUT /releases/{releaseId}/eol с пустой датой. */
+        /** @description Данные релиза. При создании необязательные поля берут значения по умолчанию (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют текущее значение релиза. Снять дату окончания поддержки можно только через PUT /releases/{releaseId}/eol с пустой датой. Статус ready_for_certification при создании запрещён; переход выполняется только через команду mark-ready с проверкой гейтов. Изменение статуса через PUT допускает planned или ready_for_certification → released, released → eol и сохранение текущего статуса; обратные переходы запрещены. */
         ReleaseInput: {
             name: string;
             version: string;
@@ -3457,6 +3480,28 @@ export interface components {
             acknowledged_by?: string;
             /** Format: date-time */
             acknowledged_at?: string;
+            /** @description Последний назначенный адресат; по умолчанию текущий владелец обязательства */
+            risk_owner?: string;
+            actions?: components["schemas"]["CommitmentAlertAction"][];
+        };
+        CommitmentAlertActionInput: {
+            /** @enum {string} */
+            kind: "assigned" | "escalated" | "noted";
+            /** @description Новый владелец или адресат ручной эскалации; обязателен для assigned и escalated */
+            recipient?: string;
+            /** @description Обоснование или план обработки риска */
+            note: string;
+        };
+        CommitmentAlertAction: components["schemas"]["CommitmentAlertActionInput"] & {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            alert_id: string;
+            /** Format: uuid */
+            product_id: string;
+            actor: string;
+            /** Format: date-time */
+            created_at: string;
         };
         CommitmentSettings: {
             /** @description Месяцев до истечения сертификата для элемента продления (CT-04) */
@@ -4484,6 +4529,12 @@ export interface components {
             entries: components["schemas"]["LaunchEntry"][];
         };
         Forecast: {
+            /**
+             * Format: date-time
+             * @description Момент расчёта UTC; свежесть исходных данных задаётся sync
+             */
+            calculated_at?: string;
+            sync?: components["schemas"]["DeliverySync"];
             /** Format: uuid */
             feature_id: string;
             /** Format: uuid */
@@ -6032,8 +6083,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** Format: date */
-                    eol: string;
+                    /**
+                     * Format: date
+                     * @description Дата окончания поддержки; null снимает дату EOL
+                     */
+                    eol: string | null;
                 };
             };
         };
@@ -7054,6 +7108,33 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentAlert"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    handleCommitmentAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alertId: components["parameters"]["alertId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitmentAlertActionInput"];
+            };
+        };
+        responses: {
+            /** @description Алерт с актуальным владельцем и неизменяемой историей */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -9181,6 +9262,7 @@ export interface operations {
     getFeatureForecast: {
         parameters: {
             query?: {
+                /** @description Число симуляций; 0 использует значение по умолчанию (10000) */
                 samples?: number;
                 /** @description Зерно генератора для воспроизводимого прогноза */
                 seed?: string;

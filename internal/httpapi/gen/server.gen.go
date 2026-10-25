@@ -18,6 +18,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/economics"
+	"github.com/onixus/metis/internal/httpapi/request"
 	"github.com/onixus/metis/internal/ports"
 )
 
@@ -132,6 +133,48 @@ const (
 func (e CommitmentAlertKind) Valid() bool {
 	switch e {
 	case RoadmapShift:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommitmentAlertActionKind.
+const (
+	CommitmentAlertActionKindAssigned  CommitmentAlertActionKind = "assigned"
+	CommitmentAlertActionKindEscalated CommitmentAlertActionKind = "escalated"
+	CommitmentAlertActionKindNoted     CommitmentAlertActionKind = "noted"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentAlertActionKind enum.
+func (e CommitmentAlertActionKind) Valid() bool {
+	switch e {
+	case CommitmentAlertActionKindAssigned:
+		return true
+	case CommitmentAlertActionKindEscalated:
+		return true
+	case CommitmentAlertActionKindNoted:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommitmentAlertActionInputKind.
+const (
+	CommitmentAlertActionInputKindAssigned  CommitmentAlertActionInputKind = "assigned"
+	CommitmentAlertActionInputKindEscalated CommitmentAlertActionInputKind = "escalated"
+	CommitmentAlertActionInputKindNoted     CommitmentAlertActionInputKind = "noted"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentAlertActionInputKind enum.
+func (e CommitmentAlertActionInputKind) Valid() bool {
+	switch e {
+	case CommitmentAlertActionInputKindAssigned:
+		return true
+	case CommitmentAlertActionInputKindEscalated:
+		return true
+	case CommitmentAlertActionInputKindNoted:
 		return true
 	default:
 		return false
@@ -2419,22 +2462,59 @@ type CommitmentSubtype string
 
 // CommitmentAlert defines model for CommitmentAlert.
 type CommitmentAlert struct {
-	Acknowledged   bool                `json:"acknowledged"`
-	AcknowledgedAt *time.Time          `json:"acknowledged_at,omitempty"`
-	AcknowledgedBy *string             `json:"acknowledged_by,omitempty"`
-	CommitmentId   openapi_types.UUID  `json:"commitment_id"`
-	DueDate        *openapi_types.Date `json:"due_date,omitempty"`
-	EventId        openapi_types.UUID  `json:"event_id"`
-	Id             openapi_types.UUID  `json:"id"`
-	Kind           CommitmentAlertKind `json:"kind"`
-	Message        string              `json:"message"`
-	NewDate        *openapi_types.Date `json:"new_date,omitempty"`
-	ProductId      openapi_types.UUID  `json:"product_id"`
-	RaisedAt       time.Time           `json:"raised_at"`
+	Acknowledged   bool                     `json:"acknowledged"`
+	AcknowledgedAt *time.Time               `json:"acknowledged_at,omitempty"`
+	AcknowledgedBy *string                  `json:"acknowledged_by,omitempty"`
+	Actions        *[]CommitmentAlertAction `json:"actions,omitempty"`
+	CommitmentId   openapi_types.UUID       `json:"commitment_id"`
+	DueDate        *openapi_types.Date      `json:"due_date,omitempty"`
+	EventId        openapi_types.UUID       `json:"event_id"`
+	Id             openapi_types.UUID       `json:"id"`
+	Kind           CommitmentAlertKind      `json:"kind"`
+	Message        string                   `json:"message"`
+	NewDate        *openapi_types.Date      `json:"new_date,omitempty"`
+	ProductId      openapi_types.UUID       `json:"product_id"`
+	RaisedAt       time.Time                `json:"raised_at"`
+
+	// RiskOwner Последний назначенный адресат; по умолчанию текущий владелец обязательства
+	RiskOwner *string `json:"risk_owner,omitempty"`
 }
 
 // CommitmentAlertKind defines model for CommitmentAlert.Kind.
 type CommitmentAlertKind string
+
+// CommitmentAlertAction defines model for CommitmentAlertAction.
+type CommitmentAlertAction struct {
+	Actor     string                    `json:"actor"`
+	AlertId   openapi_types.UUID        `json:"alert_id"`
+	CreatedAt time.Time                 `json:"created_at"`
+	Id        openapi_types.UUID        `json:"id"`
+	Kind      CommitmentAlertActionKind `json:"kind"`
+
+	// Note Обоснование или план обработки риска
+	Note      string             `json:"note"`
+	ProductId openapi_types.UUID `json:"product_id"`
+
+	// Recipient Новый владелец или адресат ручной эскалации; обязателен для assigned и escalated
+	Recipient *string `json:"recipient,omitempty"`
+}
+
+// CommitmentAlertActionKind defines model for CommitmentAlertAction.Kind.
+type CommitmentAlertActionKind string
+
+// CommitmentAlertActionInput defines model for CommitmentAlertActionInput.
+type CommitmentAlertActionInput struct {
+	Kind CommitmentAlertActionInputKind `json:"kind"`
+
+	// Note Обоснование или план обработки риска
+	Note string `json:"note"`
+
+	// Recipient Новый владелец или адресат ручной эскалации; обязателен для assigned и escalated
+	Recipient *string `json:"recipient,omitempty"`
+}
+
+// CommitmentAlertActionInputKind defines model for CommitmentAlertActionInput.Kind.
+type CommitmentAlertActionInputKind string
 
 // CommitmentImpact defines model for CommitmentImpact.
 type CommitmentImpact struct {
@@ -3120,6 +3200,8 @@ type FinancialFieldVersion struct {
 
 // Forecast defines model for Forecast.
 type Forecast struct {
+	// CalculatedAt Момент расчёта UTC; свежесть исходных данных задаётся sync
+	CalculatedAt  *time.Time          `json:"calculated_at,omitempty"`
 	EpicKey       *string             `json:"epic_key,omitempty"`
 	FeatureId     openapi_types.UUID  `json:"feature_id"`
 	From          *openapi_types.Date `json:"from,omitempty"`
@@ -3132,6 +3214,7 @@ type Forecast struct {
 	ProductId     openapi_types.UUID  `json:"product_id"`
 	Remaining     int                 `json:"remaining"`
 	Samples       *int                `json:"samples,omitempty"`
+	Sync          *DeliverySync       `json:"sync,omitempty"`
 	Throughput    *[]int              `json:"throughput,omitempty"`
 }
 
@@ -3658,7 +3741,7 @@ type ReleaseGroup struct {
 	SalesSafeRelease *SalesSafeRelease `json:"sales_safe_release,omitempty"`
 }
 
-// ReleaseInput Данные релиза. При создании необязательные поля берут значения по умолчанию (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют текущее значение релиза. Снять дату окончания поддержки можно только через PUT /releases/{releaseId}/eol с пустой датой.
+// ReleaseInput Данные релиза. При создании необязательные поля берут значения по умолчанию (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют текущее значение релиза. Снять дату окончания поддержки можно только через PUT /releases/{releaseId}/eol с пустой датой. Статус ready_for_certification при создании запрещён; переход выполняется только через команду mark-ready с проверкой гейтов. Изменение статуса через PUT допускает planned или ready_for_certification → released, released → eol и сохранение текущего статуса; обратные переходы запрещены.
 type ReleaseInput struct {
 	// BaseReleaseId Релиз, от которого ответвлена сертифицированная ветка; пусто при обновлении — не менять
 	BaseReleaseId *openapi_types.UUID `json:"base_release_id,omitempty"`
@@ -4518,6 +4601,7 @@ type SetFeatureDevCostJSONBody struct {
 
 // GetFeatureForecastParams defines parameters for GetFeatureForecast.
 type GetFeatureForecastParams struct {
+	// Samples Число симуляций; 0 использует значение по умолчанию (10000)
 	Samples *int `form:"samples,omitempty" json:"samples,omitempty"`
 
 	// Seed Зерно генератора для воспроизводимого прогноза
@@ -4631,9 +4715,7 @@ type ListSignalsParams struct {
 type ListSignalsParamsStatus string
 
 // SetReleaseEOLJSONBody defines parameters for SetReleaseEOL.
-type SetReleaseEOLJSONBody struct {
-	Eol openapi_types.Date `json:"eol"`
-}
+type SetReleaseEOLJSONBody = request.ReleaseEOLInput
 
 // SetReleaseFeaturesJSONBody defines parameters for SetReleaseFeatures.
 type SetReleaseFeaturesJSONBody struct {
@@ -4738,6 +4820,9 @@ type SaveTrackTemplateJSONRequestBody = TrackTemplateInput
 
 // SetBaselineComponentsJSONRequestBody defines body for SetBaselineComponents for application/json ContentType.
 type SetBaselineComponentsJSONRequestBody SetBaselineComponentsJSONBody
+
+// HandleCommitmentAlertJSONRequestBody defines body for HandleCommitmentAlert for application/json ContentType.
+type HandleCommitmentAlertJSONRequestBody = CommitmentAlertActionInput
 
 // EnsureRenewalsJSONRequestBody defines body for EnsureRenewals for application/json ContentType.
 type EnsureRenewalsJSONRequestBody EnsureRenewalsJSONBody
@@ -4902,7 +4987,7 @@ type StartTrackJSONRequestBody = TrackInput
 type UpdateReleaseJSONRequestBody = ReleaseInput
 
 // SetReleaseEOLJSONRequestBody defines body for SetReleaseEOL for application/json ContentType.
-type SetReleaseEOLJSONRequestBody SetReleaseEOLJSONBody
+type SetReleaseEOLJSONRequestBody = SetReleaseEOLJSONBody
 
 // SetReleaseFeaturesJSONRequestBody defines body for SetReleaseFeatures for application/json ContentType.
 type SetReleaseFeaturesJSONRequestBody SetReleaseFeaturesJSONBody
@@ -5026,6 +5111,9 @@ type ServerInterface interface {
 	// AcknowledgeCommitmentAlert Подтвердить алерт
 	// (POST /commitment-alerts/{alertId}/ack)
 	AcknowledgeCommitmentAlert(w http.ResponseWriter, r *http.Request, alertId AlertId)
+	// HandleCommitmentAlert Назначить владельца, эскалировать или записать обработку риска (CT-03)
+	// (POST /commitment-alerts/{alertId}/actions)
+	HandleCommitmentAlert(w http.ResponseWriter, r *http.Request, alertId AlertId)
 	// EnsureRenewals Завести элементы roadmap на продление сертификатов (CT-04)
 	// (POST /commitments/ensure-renewals)
 	EnsureRenewals(w http.ResponseWriter, r *http.Request)
@@ -5662,6 +5750,12 @@ func (_ Unimplemented) SetBaselineComponents(w http.ResponseWriter, r *http.Requ
 // AcknowledgeCommitmentAlert Подтвердить алерт
 // (POST /commitment-alerts/{alertId}/ack)
 func (_ Unimplemented) AcknowledgeCommitmentAlert(w http.ResponseWriter, r *http.Request, alertId AlertId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// HandleCommitmentAlert Назначить владельца, эскалировать или записать обработку риска (CT-03)
+// (POST /commitment-alerts/{alertId}/actions)
+func (_ Unimplemented) HandleCommitmentAlert(w http.ResponseWriter, r *http.Request, alertId AlertId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7073,6 +7167,32 @@ func (siw *ServerInterfaceWrapper) AcknowledgeCommitmentAlert(w http.ResponseWri
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AcknowledgeCommitmentAlert(w, r, alertId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// HandleCommitmentAlert operation middleware
+func (siw *ServerInterfaceWrapper) HandleCommitmentAlert(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "alertId" -------------
+	var alertId AlertId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "alertId", chi.URLParam(r, "alertId"), &alertId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "alertId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.HandleCommitmentAlert(w, r, alertId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12329,6 +12449,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/commitment-alerts/{alertId}/ack", wrapper.AcknowledgeCommitmentAlert)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/commitment-alerts/{alertId}/actions", wrapper.HandleCommitmentAlert)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/admin/settings/commitments", wrapper.GetCommitmentSettings)
 	})
 	r.Group(func(r chi.Router) {
@@ -13448,6 +13571,46 @@ type AcknowledgeCommitmentAlertdefaultApplicationProblemPlusJSONResponse struct 
 }
 
 func (response AcknowledgeCommitmentAlertdefaultApplicationProblemPlusJSONResponse) VisitAcknowledgeCommitmentAlertResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type HandleCommitmentAlertRequestObject struct {
+	AlertId AlertId `json:"alertId"`
+	Body    *HandleCommitmentAlertJSONRequestBody
+}
+
+type HandleCommitmentAlertResponseObject interface {
+	VisitHandleCommitmentAlertResponse(w http.ResponseWriter) error
+}
+
+type HandleCommitmentAlert200JSONResponse CommitmentAlert
+
+func (response HandleCommitmentAlert200JSONResponse) VisitHandleCommitmentAlertResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type HandleCommitmentAlertdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response HandleCommitmentAlertdefaultApplicationProblemPlusJSONResponse) VisitHandleCommitmentAlertResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -20122,6 +20285,9 @@ type StrictServerInterface interface {
 	// AcknowledgeCommitmentAlert Подтвердить алерт
 	// (POST /commitment-alerts/{alertId}/ack)
 	AcknowledgeCommitmentAlert(ctx context.Context, request AcknowledgeCommitmentAlertRequestObject) (AcknowledgeCommitmentAlertResponseObject, error)
+	// HandleCommitmentAlert Назначить владельца, эскалировать или записать обработку риска (CT-03)
+	// (POST /commitment-alerts/{alertId}/actions)
+	HandleCommitmentAlert(ctx context.Context, request HandleCommitmentAlertRequestObject) (HandleCommitmentAlertResponseObject, error)
 	// EnsureRenewals Завести элементы roadmap на продление сертификатов (CT-04)
 	// (POST /commitments/ensure-renewals)
 	EnsureRenewals(ctx context.Context, request EnsureRenewalsRequestObject) (EnsureRenewalsResponseObject, error)
@@ -21267,6 +21433,39 @@ func (sh *strictHandler) AcknowledgeCommitmentAlert(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AcknowledgeCommitmentAlertResponseObject); ok {
 		if err := validResponse.VisitAcknowledgeCommitmentAlertResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// HandleCommitmentAlert operation middleware
+func (sh *strictHandler) HandleCommitmentAlert(w http.ResponseWriter, r *http.Request, alertId AlertId) {
+	var request HandleCommitmentAlertRequestObject
+
+	request.AlertId = alertId
+
+	var body HandleCommitmentAlertJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.HandleCommitmentAlert(ctx, request.(HandleCommitmentAlertRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "HandleCommitmentAlert")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(HandleCommitmentAlertResponseObject); ok {
+		if err := validResponse.VisitHandleCommitmentAlertResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

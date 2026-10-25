@@ -947,7 +947,10 @@ paths:
               type: object
               required: [eol]
               properties:
-                eol: { type: string, format: date }
+                eol: { type: string, format: date, nullable: true, description: "Дата окончания поддержки; null снимает дату EOL" }
+              x-go-type: request.ReleaseEOLInput
+              x-go-type-import:
+                path: github.com/onixus/metis/internal/httpapi/request
       responses:
         "200":
           description: OK
@@ -1650,6 +1653,26 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommitmentAlert" }
+        default: { $ref: "#/components/responses/Problem" }
+  /commitment-alerts/{alertId}/actions:
+    parameters:
+      - $ref: "#/components/parameters/alertId"
+    post:
+      tags: [commitments]
+      operationId: handleCommitmentAlert
+      summary: Назначить владельца, эскалировать или записать обработку риска (CT-03)
+      description: Ручная запись внутри Metis; внешнее уведомление не отправляется. Требует права записи обязательств продукта.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommitmentAlertActionInput" }
+      responses:
+        "200":
+          description: Алерт с актуальным владельцем и неизменяемой историей
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CommitmentAlert" }
@@ -3235,7 +3258,8 @@ paths:
       - $ref: "#/components/parameters/featureId"
       - name: samples
         in: query
-        schema: { type: integer }
+        description: Число симуляций; 0 использует значение по умолчанию (10000)
+        schema: { type: integer, minimum: 0, maximum: 100000, default: 10000 }
       - name: seed
         in: query
         description: Зерно генератора для воспроизводимого прогноза
@@ -4115,7 +4139,10 @@ components:
         (status=planned, branch=evolving). При обновлении (PUT /releases/{releaseId}) опущенное
         необязательное поле означает «не менять»: status, branch, base_release_id и eol сохраняют
         текущее значение релиза. Снять дату окончания поддержки можно только через
-        PUT /releases/{releaseId}/eol с пустой датой.
+        PUT /releases/{releaseId}/eol с пустой датой. Статус ready_for_certification
+        при создании запрещён; переход выполняется только через команду mark-ready с проверкой гейтов.
+        Изменение статуса через PUT допускает planned или ready_for_certification → released,
+        released → eol и сохранение текущего статуса; обратные переходы запрещены.
       required: [name, version]
       properties:
         name: { type: string }
@@ -4452,6 +4479,28 @@ components:
         acknowledged: { type: boolean }
         acknowledged_by: { type: string }
         acknowledged_at: { type: string, format: date-time }
+        risk_owner: { type: string, description: Последний назначенный адресат; по умолчанию текущий владелец обязательства }
+        actions:
+          type: array
+          items: { $ref: "#/components/schemas/CommitmentAlertAction" }
+    CommitmentAlertActionInput:
+      type: object
+      required: [kind, note]
+      properties:
+        kind: { type: string, enum: [assigned, escalated, noted] }
+        recipient: { type: string, description: Новый владелец или адресат ручной эскалации; обязателен для assigned и escalated }
+        note: { type: string, minLength: 1, description: Обоснование или план обработки риска }
+    CommitmentAlertAction:
+      allOf:
+        - $ref: "#/components/schemas/CommitmentAlertActionInput"
+        - type: object
+          required: [id, alert_id, product_id, actor, created_at]
+          properties:
+            id: { type: string, format: uuid }
+            alert_id: { type: string, format: uuid }
+            product_id: { type: string, format: uuid }
+            actor: { type: string }
+            created_at: { type: string, format: date-time }
     CommitmentSettings:
       type: object
       required: [lead_months]
@@ -6288,6 +6337,8 @@ components:
       type: object
       required: [feature_id, product_id, remaining, p50, p85, p95]
       properties:
+        calculated_at: { type: string, format: date-time, description: Момент расчёта UTC; свежесть исходных данных задаётся sync }
+        sync: { $ref: "#/components/schemas/DeliverySync" }
         feature_id: { type: string, format: uuid }
         product_id: { type: string, format: uuid }
         epic_key: { type: string }

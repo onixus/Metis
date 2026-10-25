@@ -464,6 +464,9 @@ func (s *Service) CreateRelease(ctx context.Context, sc authz.Scope, productID k
 	if err := validateReleaseInput(in); err != nil {
 		return Release{}, err
 	}
+	if in.Status == ReleaseReadyForCertification {
+		return Release{}, fmt.Errorf("%w: статус ready_for_certification выставляется через MarkReadyForCertification", kernel.ErrConflict)
+	}
 	if err := s.validateBase(ctx, sc, productID, kernel.NilID, in.BaseReleaseID); err != nil {
 		return Release{}, err
 	}
@@ -482,6 +485,22 @@ func (s *Service) CreateRelease(ctx context.Context, sc authz.Scope, productID k
 
 // released сообщает, выпущен ли релиз (released или eol): после выпуска ветка не меняется.
 func released(st ReleaseStatus) bool { return st == ReleaseReleased || st == ReleaseEOL }
+
+// validReleaseTransition prevents reopening an issued release to bypass branch immutability.
+func validReleaseTransition(from, to ReleaseStatus) bool {
+	if from == to {
+		return true
+	}
+	switch from {
+	case ReleasePlanned:
+		return to == ReleaseReleased
+	case ReleaseReadyForCertification:
+		return to == ReleaseReleased
+	case ReleaseReleased:
+		return to == ReleaseEOL
+	}
+	return false
+}
 
 // UpdateRelease изменяет атрибуты релиза. Смена ветки после выпуска запрещена (RM-04).
 // Статус ready_for_certification выставляется только через MarkReadyForCertification.
@@ -512,6 +531,9 @@ func (s *Service) UpdateRelease(ctx context.Context, sc authz.Scope, id kernel.I
 	}
 	if in.Status == ReleaseReadyForCertification && r.Status != ReleaseReadyForCertification {
 		return Release{}, fmt.Errorf("%w: статус ready_for_certification выставляется через MarkReadyForCertification", kernel.ErrConflict)
+	}
+	if !validReleaseTransition(r.Status, in.Status) {
+		return Release{}, fmt.Errorf("%w: переход статуса релиза из %s в %s запрещён", kernel.ErrConflict, r.Status, in.Status)
 	}
 	if in.Branch != r.Branch && released(r.Status) {
 		return Release{}, fmt.Errorf("%w: ветка релиза %s не меняется после выпуска (статус %s)", kernel.ErrConflict, r.Version, r.Status)

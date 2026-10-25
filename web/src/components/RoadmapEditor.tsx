@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { useFeatures, useReleases } from '../api/hooks'
+import { useQueryClient } from '@tanstack/react-query'
+import { keys, useFeatures, useReleases } from '../api/hooks'
 import { useSaveRoadmapItem } from '../api/workflow'
 import type { Feature, Release, RoadmapItem } from '../api/types'
 import { ru } from '../i18n/ru'
@@ -16,6 +17,7 @@ export function RoadmapEditor({ productId, item, featureId, onDone }: { productI
 
 function RoadmapForm({ productId, item, features, releases, initialFeatureId, onDone }: { productId: string; item?: RoadmapItem; features: Feature[]; releases: Release[]; initialFeatureId?: string; onDone: (saved?: boolean) => void }) {
   const save = useSaveRoadmapItem(productId)
+  const cache = useQueryClient()
   const preselected = features.find((feature) => feature.id === initialFeatureId)
   const [title, setTitle] = useState(item?.title ?? preselected?.name ?? '')
   const [featureId, setFeatureId] = useState(item?.feature_id ?? preselected?.id ?? '')
@@ -26,16 +28,23 @@ function RoadmapForm({ productId, item, features, releases, initialFeatureId, on
   const [kind, setKind] = useState<RoadmapItem['kind']>(item?.kind ?? 'feature')
   const [start, setStart] = useState(item?.start_date ?? '')
   const [end, setEnd] = useState(item?.end_date ?? preselected?.planned_date ?? '')
+  const [launchTier, setLaunchTier] = useState<RoadmapItem['launch_tier'] | ''>(item?.launch_tier ?? '')
+  const [launchDate, setLaunchDate] = useState(item?.launch_date ?? '')
   const [validation, setValidation] = useState('')
   const submit = (event: FormEvent) => {
     event.preventDefault()
     if (!title.trim()) { setValidation(ru.workflow.nameRequired); return }
     if (start && end && end < start) { setValidation(ru.workflow.datesInvalid); return }
+    if (launchTier && !launchDate) { setValidation('Укажите дату запуска для выбранного уровня'); return }
     setValidation('')
     // PATCH is a complete attribute replacement in the current API. Preserve dates exactly;
     // date changes go through the separate audited operation with a reason.
     save.mutate({ id: item?.id, body: { title: title.trim(), feature_id: featureId || undefined, release_id: releaseId || undefined, bucket, audience, status, kind,
-      start_date: item ? item.start_date || undefined : start || undefined, end_date: item ? item.end_date || undefined : end || undefined } }, { onSuccess: () => onDone(true) })
+      start_date: item ? item.start_date || undefined : start || undefined, end_date: item ? item.end_date || undefined : end || undefined,
+      launch_tier: launchTier || undefined, launch_date: launchTier ? launchDate || undefined : undefined } }, { onSuccess: () => {
+        void cache.invalidateQueries({ queryKey: keys.launchCalendar(productId) })
+        onDone(true)
+      } })
   }
   return <form className="card form-inline stack" onSubmit={submit}>
     <h3>{item ? ru.workflow.editItem : ru.workflow.createItem}</h3><p className="muted">{ru.workflow.roadmapHelp}</p>
@@ -52,6 +61,10 @@ function RoadmapForm({ productId, item, features, releases, initialFeatureId, on
       <label className="field"><span>{ru.roadmap.status}</span><select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>{Object.entries(ru.roadmap.statuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label className="field"><span>{ru.release.itemKind}</span><select value={kind} disabled={releases.find((r) => r.id === releaseId)?.branch === 'certified'} onChange={(e) => setKind(e.target.value as typeof kind)}>{Object.entries(ru.release.itemKinds).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       {!item && <><label className="field"><span>{ru.roadmap.start}</span><input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></label><label className="field"><span>{ru.roadmap.end}</span><input type="date" min={start || undefined} value={end} onChange={(e) => setEnd(e.target.value)} /></label></>}
+      <label className="field"><span>Уровень запуска</span><select value={launchTier} onChange={(e) => setLaunchTier(e.target.value as typeof launchTier)}>
+        <option value="">Без запуска</option><option value="tier1">Tier 1</option><option value="tier2">Tier 2</option><option value="tier3">Tier 3</option>
+      </select></label>
+      {launchTier && <label className="field"><span>Дата запуска</span><input type="date" value={launchDate} onChange={(e) => setLaunchDate(e.target.value)} required /></label>}
     </div>
     {validation && <div className="alert alert-error" role="alert">{validation}</div>}{save.isError && <ErrorBox error={save.error} />}
     <div className="row"><button className="btn" disabled={save.isPending}>{ru.app.save}</button><button type="button" className="btn" onClick={() => onDone()}>{ru.app.cancel}</button></div>

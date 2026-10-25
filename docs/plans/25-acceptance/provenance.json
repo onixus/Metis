@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-25",
+  "backend": "real memory/HMAC API with outbox worker; loopback-only; Atlassian disabled",
+  "browser": "Chromium headless shell 156 / Playwright",
+  "head": "e8ca9b145c57cccff29db2f1407e68f8ebd27de7",
+  "worktree_dirty": true,
+  "frontend_snapshot": "/tmp/metis-roadmap-static-isolated",
+  "frontend_files": {
+    "index.html": "bc8d2a146fee4c6385d314ffae596b11fab3c424330c6e315aa15b5f7d6a2700",
+    "assets/index-DW3Oy6ir.js": "f2d5ec714d9389003393e4de9183480af0a6cfff113baaf49523ce1cd706da15",
+    "assets/GraphPage-Bg6QiohB.js": "1c0ebaee82c2c564371a35016851bd60a59530e4c7e63233adf78d9914e0043d"
+  },
+  "runner_sha256": "d55e0bb46d187854e7a4b772a3313d8e8020dbed72a100b323574f859b6f27e2",
+  "api_sha256": "fff9410b527431b13e82d3bcb8a7f9dabae9d69cdee5f800c3b65ed4700f2642",
+  "result": "PASS",
+  "groups": 12,
+  "explicit_api_checks": 45,
+  "browser_errors": 0
+}

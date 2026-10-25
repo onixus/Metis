@@ -1,0 +1,43 @@
+{
+  "result": "PASS",
+  "previous_revision": "8e03064e474b052f7743396bcabc4baf2dbf9168",
+  "postgres_version": "16.14",
+  "checks": [
+    {
+      "method": "POST",
+      "route": "/api/v1/products",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/api/v1/products/01a17304-8132-7cbd-842f-2b0caf41b572/features",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "route": "/api/v1/products/01a17304-8132-7cbd-842f-2b0caf41b572/commitments",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/api/v1/products/01a17304-8132-7cbd-842f-2b0caf41b572/commitments",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "route": "/api/v1/products/01a17304-8132-7cbd-842f-2b0caf41b572/releases",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "route": "/api/v1/products/01a17304-8132-7cbd-842f-2b0caf41b572/releases",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/api/v1/products/01a17304-8132-7cbd-842f-2b0caf41b572/commitment-alerts",
+      "status": 200
+    }
+  ],
+  "boundary": "Previous API runtime with current additive migrations; rolling worker consumption of new risk events is not claimed."
+}

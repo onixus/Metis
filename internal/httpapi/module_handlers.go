@@ -608,7 +608,7 @@ func (s *Server) SetReleaseEOL(ctx context.Context, req gen.SetReleaseEOLRequest
 	if err := s.requireRoadmap(); err != nil {
 		return nil, err
 	}
-	r, err := s.d.Roadmap.SetReleaseEOL(ctx, scope(ctx), req.ReleaseId, kernel.DateFromTime(req.Body.Eol.Time))
+	r, err := s.d.Roadmap.SetReleaseEOL(ctx, scope(ctx), req.ReleaseId, dateOf(req.Body.Eol))
 	if err != nil {
 		return nil, err
 	}

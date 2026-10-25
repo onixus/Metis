@@ -29,11 +29,49 @@ type RoadmapReader interface {
 
 // Service — публичный интерфейс модуля обязательств.
 type Service struct {
-	store  Store
-	pub    kernel.Publisher
-	clock  kernel.Clock
-	writer RoadmapWriter
-	reader RoadmapReader
+	store    Store
+	pub      kernel.Publisher
+	clock    kernel.Clock
+	writer   RoadmapWriter
+	reader   RoadmapReader
+	features FeatureOwner
+	releases ReleaseOwner
+}
+
+// FeatureOwner и ReleaseOwner проверяют принадлежность привязок через публичные порты.
+type FeatureOwner interface {
+	FeatureProduct(context.Context, authz.Scope, kernel.ID) (kernel.ID, error)
+}
+type ReleaseOwner interface {
+	ReleaseProduct(context.Context, authz.Scope, kernel.ID) (kernel.ID, error)
+}
+
+// WithLinkOwners включает проверку привязок фич и релизов в runtime.
+func (s *Service) WithLinkOwners(features FeatureOwner, releases ReleaseOwner) *Service {
+	s.features, s.releases = features, releases
+	return s
+}
+
+func (s *Service) validateLinks(ctx context.Context, sc authz.Scope, productID kernel.ID, in Input) error {
+	if in.FeatureID != kernel.NilID && s.features != nil {
+		owner, err := s.features.FeatureProduct(ctx, sc, in.FeatureID)
+		if err != nil {
+			return fmt.Errorf("feature owner: %w", err)
+		}
+		if owner != productID {
+			return kernel.Invalid("feature_id", "фича другого продукта")
+		}
+	}
+	if in.ReleaseID != kernel.NilID && s.releases != nil {
+		owner, err := s.releases.ReleaseProduct(ctx, sc, in.ReleaseID)
+		if err != nil {
+			return fmt.Errorf("release owner: %w", err)
+		}
+		if owner != productID {
+			return kernel.Invalid("release_id", "релиз другого продукта")
+		}
+	}
+	return nil
 }
 
 // NewService создаёт сервис.
@@ -134,6 +172,9 @@ func (s *Service) Create(ctx context.Context, sc authz.Scope, productID kernel.I
 	if err := sc.Require(authz.ActionWriteCommitments, productID); err != nil {
 		return Commitment{}, err
 	}
+	if err := s.validateLinks(ctx, sc, productID, in); err != nil {
+		return Commitment{}, err
+	}
 	now := s.clock.Now()
 	c := Commitment{ID: kernel.NewID(), ProductID: productID, Status: StatusActive, CreatedBy: sc.Subject(), CreatedAt: now, UpdatedAt: now}
 	in.apply(&c)
@@ -160,6 +201,9 @@ func (s *Service) Update(ctx context.Context, sc authz.Scope, id kernel.ID, in I
 	}
 	if c.Status != StatusActive {
 		return Commitment{}, fmt.Errorf("%w: обязательство в статусе %s не редактируется", kernel.ErrConflict, c.Status)
+	}
+	if err := s.validateLinks(ctx, sc, c.ProductID, in); err != nil {
+		return Commitment{}, err
 	}
 	in.apply(&c)
 	c.UpdatedAt = s.clock.Now()
@@ -273,6 +317,12 @@ func (s *Service) Alerts(ctx context.Context, sc authz.Scope, productID kernel.I
 	if err != nil {
 		return nil, fmt.Errorf("list alerts: %w", err)
 	}
+	for i := range list {
+		list[i], err = s.withRiskHistory(ctx, sc, list[i])
+		if err != nil {
+			return nil, err
+		}
+	}
 	return list, nil
 }
 
@@ -286,7 +336,7 @@ func (s *Service) AcknowledgeAlert(ctx context.Context, sc authz.Scope, id kerne
 		return Alert{}, err
 	}
 	if a.Acknowledged {
-		return a, nil
+		return s.withRiskHistory(ctx, sc, a)
 	}
 	a.Acknowledged, a.AcknowledgedBy, a.AcknowledgedAt = true, sc.Subject(), s.clock.Now()
 	if err := s.store.Acknowledge(ctx, sc, a); err != nil {
@@ -295,7 +345,7 @@ func (s *Service) AcknowledgeAlert(ctx context.Context, sc authz.Scope, id kerne
 	if err := s.emit(ctx, EventAlertAcknowledged, a.ID, a.ProductID, sc.Subject(), a); err != nil {
 		return Alert{}, err
 	}
-	return a, nil
+	return s.withRiskHistory(ctx, sc, a)
 }
 
 // raiseAlert создаёт алерт «сдвиг roadmap нарушает обязательство», если newDate позже срока
@@ -386,7 +436,7 @@ func (s *Service) EnsureRenewals(ctx context.Context, sc authz.Scope, now kernel
 	if err != nil {
 		return nil, err
 	}
-	horizon := kernel.DateFromTime(now.Time().AddDate(0, st.LeadMonths, 0))
+	horizon := renewalHorizon(now, st.LeadMonths)
 	list, err := s.store.List(ctx, sc, Filter{Kind: KindRegulatory, Subtype: SubtypeCertificateExpiry, Statuses: []Status{StatusActive}, DueBefore: horizon})
 	if err != nil {
 		return nil, fmt.Errorf("list commitments: %w", err)
@@ -444,3 +494,79 @@ func (s *Service) StartVulnerabilityDeadline(ctx context.Context, sc authz.Scope
 // vulnerabilityOwner — владелец автосозданных сроков устранения: роль compliance
 // (TODO(question-38): конкретный владелец назначается настройкой, когда появится справочник ролей).
 const vulnerabilityOwner = "compliance"
+
+// renewalHorizon прибавляет календарные месяцы, ограничивая день концом целевого месяца.
+func renewalHorizon(now kernel.Date, months int) kernel.Date {
+	first := kernel.DateOf(now.Year, now.Month, 1).Time().AddDate(0, months, 0)
+	last := kernel.DateFromTime(first.AddDate(0, 1, -1))
+	if now.Day < last.Day {
+		last.Day = now.Day
+	}
+	return last
+}
+
+func (s *Service) withRiskHistory(ctx context.Context, sc authz.Scope, alert Alert) (Alert, error) {
+	c, err := s.store.Get(ctx, sc, alert.CommitmentID)
+	if err != nil {
+		return Alert{}, fmt.Errorf("risk commitment: %w", err)
+	}
+	actions, err := s.store.AlertActions(ctx, sc, alert.ID)
+	if err != nil {
+		return Alert{}, fmt.Errorf("risk history: %w", err)
+	}
+	alert.RiskOwner, alert.Actions = c.Owner, actions
+	for _, action := range actions {
+		if action.Kind == "assigned" || action.Kind == "escalated" {
+			alert.RiskOwner = action.Recipient
+		}
+	}
+	return alert, nil
+}
+
+// HandleAlert сохраняет назначение, эскалацию или план обработки риска и событие аудита.
+// TODO(question-51): автоматический SLA и внешний канал доставки требуют согласования.
+func (s *Service) HandleAlert(ctx context.Context, sc authz.Scope, alertID kernel.ID, in AlertActionInput) (Alert, error) {
+	alert, _, err := s.HandleAlertAction(ctx, sc, alertID, in)
+	return alert, err
+}
+
+// HandleAlertAction returns the exact immutable action saved by this operation.
+// The final history may include another concurrent action; audit consumers must
+// record this returned action rather than assuming the history's last entry is it.
+func (s *Service) HandleAlertAction(ctx context.Context, sc authz.Scope, alertID kernel.ID, in AlertActionInput) (Alert, AlertAction, error) {
+	alert, err := s.store.Alert(ctx, sc, alertID)
+	if err != nil {
+		return Alert{}, AlertAction{}, err
+	}
+	if err := sc.Require(authz.ActionWriteCommitments, alert.ProductID); err != nil {
+		return Alert{}, AlertAction{}, err
+	}
+	in.Kind, in.Recipient, in.Note = strings.TrimSpace(in.Kind), strings.TrimSpace(in.Recipient), strings.TrimSpace(in.Note)
+	switch in.Kind {
+	case "assigned", "escalated":
+		if in.Recipient == "" {
+			return Alert{}, AlertAction{}, kernel.Invalid("recipient", "адресат обязателен")
+		}
+	case "noted":
+		if in.Recipient != "" {
+			return Alert{}, AlertAction{}, kernel.Invalid("recipient", "заметка не меняет владельца")
+		}
+	default:
+		return Alert{}, AlertAction{}, kernel.Invalid("kind", "неизвестное действие")
+	}
+	if in.Note == "" {
+		return Alert{}, AlertAction{}, kernel.Invalid("note", "обоснование обязательно")
+	}
+	action := AlertAction{ID: kernel.NewID(), AlertID: alert.ID, ProductID: alert.ProductID, Kind: in.Kind, Recipient: in.Recipient, Note: in.Note, Actor: sc.Subject(), CreatedAt: s.clock.Now()}
+	if err := s.store.AppendAlertAction(ctx, sc, action); err != nil {
+		return Alert{}, AlertAction{}, fmt.Errorf("append risk action: %w", err)
+	}
+	if err := s.emit(ctx, EventAlertHandled, alert.ID, alert.ProductID, sc.Subject(), action); err != nil {
+		return Alert{}, AlertAction{}, err
+	}
+	alert, err = s.withRiskHistory(ctx, sc, alert)
+	if err != nil {
+		return Alert{}, AlertAction{}, err
+	}
+	return alert, action, nil
+}

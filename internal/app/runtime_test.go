@@ -110,6 +110,11 @@ func TestNFR06_BuildWorkerDispatchesPG08RM03CT03(t *testing.T) {
 	if err != nil || len(alerts) == 0 || alerts[0].CommitmentID != c.ID {
 		t.Fatalf("commitment alert not delivered: %v %v", alerts, err)
 	}
+	handled, err := a.Commitments.HandleAlert(ctx, sc, alerts[0].ID, commitments.AlertActionInput{Kind: "escalated", Recipient: "synthetic-release-owner", Note: "Review delivery risk"})
+	if err != nil || handled.RiskOwner != "synthetic-release-owner" || len(handled.Actions) != 1 {
+		t.Fatalf("risk escalation not recorded: %+v %v", handled, err)
+	}
+	drainWorker(t, a)
 	if dead, err := a.Worker.DLQCount(ctx); err != nil || dead != 0 {
 		t.Fatalf("known notifications reached DLQ: %d %v", dead, err)
 	}

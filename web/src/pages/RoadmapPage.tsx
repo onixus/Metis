@@ -6,6 +6,7 @@ import {
   accessLevel,
   useChangeItemDates,
   useItemHistory,
+  useLaunchCalendar,
   useMe,
   useProduct,
   useRoadmapByRelease,
@@ -21,12 +22,13 @@ import { daysBetween, fmtDate, fmtDateTime, pick } from '../lib/format'
 import { canWriteRoadmap } from '../lib/roles'
 import { CompatMatrix, ReleaseBadges, ReleasesPanel } from './ReleasesPanel'
 
-type View = RoadmapView | 'releases'
+type View = RoadmapView | 'releases' | 'launch-calendar'
 const VIEWS: { key: View; label: string; internalOnly?: boolean }[] = [
   { key: 'timeline', label: ru.roadmap.viewTimeline },
   { key: 'now-next-later', label: ru.roadmap.viewNnl },
   { key: 'by-release', label: ru.roadmap.viewByRelease },
   { key: 'releases', label: ru.release.title, internalOnly: true },
+  { key: 'launch-calendar', label: 'Календарь запусков' },
 ]
 
 /** Единое представление элемента для обеих аудиторий. */
@@ -99,9 +101,10 @@ export function RoadmapPage() {
       {canWrite && creating && <RoadmapEditor productId={id} featureId={search.get('feature') ?? undefined} onDone={(success) => { setCreating(false); setSearch({}, { replace: true }); if (success) { setSaved(true); setView('now-next-later') } }} />}
       {saved && <div className="alert alert-ok" role="status">{ru.workflow.itemSaved}</div>}
       {audience === 'sales_safe' && <div className="alert alert-warn">{ru.roadmap.salesSafeBanner}</div>}
-      {view !== 'releases' && active.isPending && <Loading />}
-      {view !== 'releases' && active.isError && <ErrorBox error={active.error} onRetry={() => void active.refetch()} />}
+      {view !== 'releases' && view !== 'launch-calendar' && active.isPending && <Loading />}
+      {view !== 'releases' && view !== 'launch-calendar' && active.isError && <ErrorBox error={active.error} onRetry={() => void active.refetch()} />}
       {view === 'releases' && <ReleasesPanel productId={id} canWrite={canWrite} />}
+      {view === 'launch-calendar' && <LaunchCalendar productId={id} />}
       {view === 'timeline' && timeline.data && (
         <Timeline productId={id} canWrite={canWrite} data={rows(timeline.data.audience, timeline.data.items, timeline.data.sales_safe)} />
       )}
@@ -326,4 +329,33 @@ function History({ itemId }: { itemId: string }) {
       </table>
     </div>
   )
+}
+
+
+function LaunchCalendar({ productId }: { productId: string }) {
+  const calendar = useLaunchCalendar(productId)
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [tier, setTier] = useState('')
+  const invalidRange = !!from && !!to && to < from
+  const entries = (calendar.data?.entries ?? []).filter((entry) =>
+    entry.launch_date && (!from || entry.launch_date >= from) && (!to || entry.launch_date <= to) && (!tier || entry.tier === tier),
+  )
+  return <div className="card stack">
+    <div className="row wrap-row"><h2>Календарь запусков</h2><button type="button" className="btn btn-sm" onClick={() => void calendar.refetch()}>Обновить</button></div>
+    <p className="muted">Уровень и дата запуска задаются в редакторе элемента roadmap. Для внешней аудитории отображается только sales-safe срез.</p>
+    <div className="row wrap-row">
+      <label className="field"><span>Запуски с</span><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+      <label className="field"><span>Запуски по</span><input type="date" min={from || undefined} value={to} onChange={(e) => setTo(e.target.value)} /></label>
+      <label className="field"><span>Уровень запуска</span><select value={tier} onChange={(e) => setTier(e.target.value)}><option value="">Все уровни</option><option value="tier1">Tier 1</option><option value="tier2">Tier 2</option><option value="tier3">Tier 3</option></select></label>
+      {(from || to || tier) && <button type="button" className="btn btn-sm" onClick={() => { setFrom(''); setTo(''); setTier('') }}>Сбросить фильтры</button>}
+    </div>
+    {invalidRange && <div className="alert alert-error" role="alert">{ru.workflow.datesInvalid}</div>}
+    {calendar.isPending && <Loading />}
+    {calendar.isError && <ErrorBox error={calendar.error} onRetry={() => void calendar.refetch()} />}
+    {calendar.data && !invalidRange && (entries.length === 0 ? <Empty text="В выбранном периоде запусков нет. Задайте уровень и дату в элементе roadmap." /> :
+      <div className="table-wrap"><table className="table"><thead><tr><th>Дата запуска</th><th>Уровень</th><th>Элемент roadmap</th><th>Аудитория</th></tr></thead><tbody>
+        {entries.map((entry) => <tr key={entry.item_id}><td>{fmtDate(entry.launch_date)}</td><td><Badge tone={entry.tier === 'tier1' ? 'warn' : entry.tier === 'tier2' ? 'info' : 'neutral'}>{entry.tier.replace('tier', 'Tier ')}</Badge></td><td>{entry.title}</td><td>{entry.audience === 'sales_safe' ? ru.me.audienceSalesSafe : ru.workflow.internal}</td></tr>)}
+      </tbody></table></div>)}
+  </div>
 }

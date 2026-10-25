@@ -105,10 +105,12 @@ type Alert struct {
 	NewDate  kernel.Date `json:"new_date"`
 	DueDate  kernel.Date `json:"due_date"`
 	RaisedAt time.Time   `json:"raised_at"`
-	// Acknowledged — владелец подтвердил, что алерт увидел; единственное изменяемое поле.
-	Acknowledged   bool      `json:"acknowledged"`
-	AcknowledgedBy string    `json:"acknowledged_by,omitempty"`
-	AcknowledgedAt time.Time `json:"acknowledged_at,omitempty"`
+	// Acknowledged — уполномоченный пользователь подтвердил просмотр риска; не исполнение обязательства.
+	Acknowledged   bool          `json:"acknowledged"`
+	AcknowledgedBy string        `json:"acknowledged_by,omitempty"`
+	AcknowledgedAt time.Time     `json:"acknowledged_at,omitempty"`
+	RiskOwner      string        `json:"risk_owner"`
+	Actions        []AlertAction `json:"actions"`
 }
 
 // Settings — настройки модуля.
@@ -128,6 +130,22 @@ const (
 	EventCommitmentFulfilled = "commitments.commitment.fulfilled"
 	EventCommitmentCancelled = "commitments.commitment.cancelled"
 	EventAlertRaised         = "commitments.alert.raised"
+	EventAlertHandled        = "commitments.alert.handled"
 	EventAlertAcknowledged   = "commitments.alert.acknowledged"
 	EventRenewalPlanned      = "commitments.renewal.planned"
 )
+
+// AlertAction — неизменяемая запись назначения, эскалации или обработки риска.
+type AlertAction struct {
+	ID        kernel.ID `json:"id"`
+	AlertID   kernel.ID `json:"alert_id"`
+	ProductID kernel.ID `json:"product_id"`
+	Kind      string    `json:"kind"`
+	Recipient string    `json:"recipient,omitempty"`
+	Note      string    `json:"note"`
+	Actor     string    `json:"actor"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// AlertActionInput задаёт ручное действие; эскалация не отправляет внешнее уведомление.
+type AlertActionInput struct{ Kind, Recipient, Note string }

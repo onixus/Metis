@@ -6,6 +6,7 @@ import (
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
+	"github.com/onixus/metis/internal/audit"
 	"github.com/onixus/metis/internal/commitments"
 	"github.com/onixus/metis/internal/httpapi/gen"
 	"github.com/onixus/metis/internal/kernel"
@@ -48,8 +49,13 @@ func toAlert(a commitments.Alert) gen.CommitmentAlert {
 	out := gen.CommitmentAlert{
 		Id: a.ID, CommitmentId: a.CommitmentID, ProductId: a.ProductID, Kind: gen.CommitmentAlertKind(a.Kind), Message: a.Message,
 		EventId: a.EventID, NewDate: datePtr(a.NewDate), DueDate: datePtr(a.DueDate), RaisedAt: a.RaisedAt, Acknowledged: a.Acknowledged,
-		AcknowledgedBy: strPtr(a.AcknowledgedBy),
+		AcknowledgedBy: strPtr(a.AcknowledgedBy), RiskOwner: strPtr(a.RiskOwner),
 	}
+	actions := make([]gen.CommitmentAlertAction, 0, len(a.Actions))
+	for _, action := range a.Actions {
+		actions = append(actions, gen.CommitmentAlertAction{Id: action.ID, AlertId: action.AlertID, ProductId: action.ProductID, Kind: gen.CommitmentAlertActionKind(action.Kind), Recipient: strPtr(action.Recipient), Note: action.Note, Actor: action.Actor, CreatedAt: action.CreatedAt})
+	}
+	out.Actions = &actions
 	if !a.AcknowledgedAt.IsZero() {
 		out.AcknowledgedAt = ptr(a.AcknowledgedAt)
 	}
@@ -186,6 +192,9 @@ func (s *Server) AcknowledgeCommitmentAlert(ctx context.Context, req gen.Acknowl
 	if err != nil {
 		return nil, err
 	}
+	if err := s.auditRiskAction(ctx, a, "acknowledged", nil); err != nil {
+		return nil, err
+	}
 	return gen.AcknowledgeCommitmentAlert200JSONResponse(toAlert(a)), nil
 }
 
@@ -217,4 +226,35 @@ func (s *Server) UpdateCommitmentSettings(ctx context.Context, req gen.UpdateCom
 		return nil, err
 	}
 	return gen.UpdateCommitmentSettings200JSONResponse{LeadMonths: st.LeadMonths}, nil
+}
+
+// HandleCommitmentAlert — CT-03: ручное назначение, эскалация и обработка риска.
+func (s *Server) HandleCommitmentAlert(ctx context.Context, req gen.HandleCommitmentAlertRequestObject) (gen.HandleCommitmentAlertResponseObject, error) {
+	if err := s.requireCommitments(); err != nil {
+		return nil, err
+	}
+	recipient := ""
+	if req.Body.Recipient != nil {
+		recipient = *req.Body.Recipient
+	}
+	alert, action, err := s.d.Commitments.HandleAlertAction(ctx, scope(ctx), req.AlertId, commitments.AlertActionInput{Kind: string(req.Body.Kind), Recipient: recipient, Note: req.Body.Note})
+	if err != nil {
+		return nil, err
+	}
+	if err := s.auditRiskAction(ctx, alert, action.Kind, &action); err != nil {
+		return nil, err
+	}
+	return gen.HandleCommitmentAlert200JSONResponse(toAlert(alert)), nil
+}
+
+func (s *Server) auditRiskAction(ctx context.Context, alert commitments.Alert, action string, handling *commitments.AlertAction) error {
+	if s.d.Audit == nil {
+		return nil
+	}
+	details := map[string]any{"action": action, "commitment_id": alert.CommitmentID.String(), "risk_owner": alert.RiskOwner}
+	if handling != nil {
+		details["handling"] = *handling
+	}
+	_, err := s.d.Audit.Append(ctx, audit.Entry{Actor: scope(ctx).Subject(), Action: audit.ActionRuleChange, ObjectType: "commitment_risk", ObjectID: alert.ID.String(), ProductID: alert.ProductID, Details: details})
+	return err
 }

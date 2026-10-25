@@ -1,0 +1,43 @@
+
+> metis-web@0.0.0 test
+> node --test src/api/sessionCache.test.ts src/lib/moneyInput.test.ts src/lib/economicsModel.test.ts src/lib/forecastRisk.test.ts src/lib/releaseStatus.test.ts src/lib/portfolio.test.ts src/lib/graph.test.ts src/designSystem.test.js scripts/*.test.cjs
+
+✔ DS56_NFS01_all_recorded_GET_probes_reject_access_leaks_denials_and_server_failures (3.418042ms)
+✔ NF_L02_DS56_font_exception_does_not_admit_unreviewed_OFL_code_or_GPL_fonts (2788.791958ms)
+✔ NF_L02_DS56_missing_shipped_font_notice_fails (1098.646708ms)
+✔ NF_L02_DS56_font_exception_rejects_version_prefix_matches (452.5575ms)
+✔ TestNFS01_SessionChangeCancelsLatePrivateQuery (3.058625ms)
+✔ TestNFS01_LateMutationCallbackCannotPopulateNextSession (0.705792ms)
+✔ DS56_prepaint_bootstrap_restores_all_preferences_and_denied_storage (10.457083ms)
+✔ DS56_system_changes_cross_tab_reset_and_storage_failure (0.365666ms)
+✔ DS56_text_status_severity_and_control_contrast_in_both_themes (1.922667ms)
+✔ DS56_no_color_literals_raw_neutrals_or_remote_fonts_outside_tokens (10.750333ms)
+✔ EC08_EC11_field_editor_keeps_type_source_dimensions_and_effective_date (1.118584ms)
+✔ EC09_EC11_formula_editor_preserves_decimal_literals_and_version_order (0.159916ms)
+✔ EC13_DA02_signed_budget_delta_preserves_cents_and_rejects_rounding (0.49725ms)
+✔ EC11_EC13_historic_scenario_uses_effective_field_definition (0.176708ms)
+✔ EC09_EC13_direct_source_override_serializes_exact_int64_and_team_without_field (0.443209ms)
+✔ EC08_EC13_field_override_keeps_precise_decimal_and_clears_source_team (0.168709ms)
+✔ TestDL04_DeadlineComparisonUsesCalendarDaysAndExplicitUnknown (5.555292ms)
+✔ TestDL04_StaleProjectionCannotClaimDeadlineConfidence (0.193ms)
+✔ TestDL04_ActiveForecastLosesConfidenceWhenItsSourceAgesOrChanges (0.2645ms)
+✔ TestDL04_UnknownSourceNeverConfirmsDeadline (0.095875ms)
+✔ TestDL04_CachedSourceRequiresConfirmationAfterNavigationOrDuringRefresh (0.104ms)
+✔ PG09_filters_intersect_type_product_status_without_dangling_edges (1.274333ms)
+✔ PG03_PG05_endpoint_validation_never_downgrades_mixed_feature_connection (0.431875ms)
+✔ PG09_feature_handles_require_both_loaded_endpoints (0.1465ms)
+✔ AD02_PG03_graph_write_gate_denies_strategic_and_unassigned_pm (0.127083ms)
+✔ TestSG01_MoneyEntryPreservesKopecksAndOptionalAmount (2.394375ms)
+✔ TestSG01_MoneyEntryRejectsRoundingOverflowAndExecutableInput (1.016ms)
+✔ PG02_hierarchy_retains_empty_capabilities_and_unassigned_features (1.136875ms)
+✔ TestRM05_UntouchedEditorTracksLatestStatusWithoutRequestingTransition (3.091042ms)
+✔ TestRM04_ExplicitTransitionRequiresTheSourceStatusTheUserSaw (0.201625ms)
+✔ TestRM04_EditorCannotRequestReadinessOrReopenAnIssuedRelease (0.159ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4448.954333

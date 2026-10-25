@@ -88,7 +88,8 @@ export interface paths {
             };
             cookie?: never;
         };
-        get?: never;
+        /** Прочитать иерархию продукта (PG-02) */
+        get: operations["listCapabilities"];
         put?: never;
         /** Создать возможность (PG-02) */
         post: operations["createCapability"];
@@ -166,7 +167,8 @@ export interface paths {
             };
             cookie?: never;
         };
-        get?: never;
+        /** Прочитать иерархию продукта (PG-02) */
+        get: operations["listRequirements"];
         put?: never;
         /** Добавить требование (PG-02) */
         post: operations["createRequirement"];
@@ -2940,7 +2942,10 @@ export interface components {
             to_feature_id?: string;
             /** @enum {string} */
             criticality: "blocks" | "accelerates" | "desirable";
-            /** Format: uuid */
+            /**
+             * Format: uuid
+             * @description Только integration в направлении consumer→provider с точными сторонами контракта
+             */
             contract_id?: string;
         };
         Link: components["schemas"]["LinkInput"] & {
@@ -5194,6 +5199,29 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    listCapabilities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["productId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Capability"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
     createCapability: {
         parameters: {
             query?: never;
@@ -5341,6 +5369,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Feature"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listRequirements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                featureId: components["parameters"]["featureId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Requirement"][];
                 };
             };
             default: components["responses"]["Problem"];

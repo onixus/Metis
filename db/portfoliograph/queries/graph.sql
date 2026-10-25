@@ -56,6 +56,9 @@ WHERE portfoliograph.links.from_product_id = EXCLUDED.from_product_id AND portfo
 -- name: DeleteLink :execrows
 DELETE FROM portfoliograph.links WHERE id = $1 AND from_product_id = $2 AND to_product_id = $3;
 
+-- name: GetContract :one
+SELECT * FROM portfoliograph.contracts WHERE id = $1;
+
 -- name: ListContracts :many
 SELECT * FROM portfoliograph.contracts ORDER BY id;
 
@@ -112,3 +115,6 @@ DELETE FROM portfoliograph.products WHERE id = $1;
 
 -- name: GetLink :one
 SELECT * FROM portfoliograph.links WHERE id = $1;
+
+-- name: GetFeatureProduct :one
+SELECT product_id FROM portfoliograph.features WHERE id = $1;

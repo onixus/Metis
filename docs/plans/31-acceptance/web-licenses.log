@@ -1,0 +1,5 @@
+
+> metis-web@0.0.0 licenses
+> node scripts/check-licenses.cjs
+
+NF-L02 production licenses and font notices PASS

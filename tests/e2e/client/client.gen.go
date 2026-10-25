@@ -3674,6 +3674,7 @@ type LicenseStatus struct {
 
 // Link defines model for Link.
 type Link struct {
+	// ContractId Только integration в направлении consumer→provider с точными сторонами контракта
 	ContractId    *openapi_types.UUID `json:"contract_id,omitempty"`
 	CreatedAt     time.Time           `json:"created_at"`
 	Criticality   LinkCriticality     `json:"criticality"`
@@ -3693,6 +3694,7 @@ type LinkType string
 
 // LinkInput defines model for LinkInput.
 type LinkInput struct {
+	// ContractId Только integration в направлении consumer→provider с точными сторонами контракта
 	ContractId    *openapi_types.UUID  `json:"contract_id,omitempty"`
 	Criticality   LinkInputCriticality `json:"criticality"`
 	FromFeatureId *openapi_types.UUID  `json:"from_feature_id,omitempty"`
@@ -6152,6 +6154,11 @@ type ClientInterface interface {
 	// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
 	RequestDeliveryEpic(ctx context.Context, featureId FeatureId, body RequestDeliveryEpicJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListRequirements Прочитать иерархию продукта (PG-02)
+	//
+	// Corresponds with GET /features/{featureId}/requirements (the `ListRequirements` operationId).
+	ListRequirements(ctx context.Context, featureId FeatureId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateRequirementWithBody Добавить требование (PG-02)
 	//
 	// Takes any type of body and a specified content type.
@@ -6342,6 +6349,11 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /products/{productId}/baselines (the `ListBaselines` operationId).
 	ListBaselines(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCapabilities Прочитать иерархию продукта (PG-02)
+	//
+	// Corresponds with GET /products/{productId}/capabilities (the `ListCapabilities` operationId).
+	ListCapabilities(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateCapabilityWithBody Создать возможность (PG-02)
 	//
@@ -9212,6 +9224,21 @@ func (c *Client) RequestDeliveryEpic(ctx context.Context, featureId FeatureId, b
 	return c.Client.Do(req)
 }
 
+// ListRequirements Прочитать иерархию продукта (PG-02)
+//
+// Corresponds with GET /features/{featureId}/requirements (the `ListRequirements` operationId).
+func (c *Client) ListRequirements(ctx context.Context, featureId FeatureId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListRequirementsRequest(c.Server, featureId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // CreateRequirementWithBody Добавить требование (PG-02)
 //
 // Takes any type of body and a specified content type.
@@ -9703,6 +9730,21 @@ func (c *Client) UpdateProduct(ctx context.Context, productId ProductId, body Up
 // Corresponds with GET /products/{productId}/baselines (the `ListBaselines` operationId).
 func (c *Client) ListBaselines(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListBaselinesRequest(c.Server, productId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCapabilities Прочитать иерархию продукта (PG-02)
+//
+// Corresponds with GET /products/{productId}/capabilities (the `ListCapabilities` operationId).
+func (c *Client) ListCapabilities(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCapabilitiesRequest(c.Server, productId)
 	if err != nil {
 		return nil, err
 	}
@@ -15632,6 +15674,40 @@ func NewRequestDeliveryEpicRequestWithBody(server string, featureId FeatureId, c
 	return req, nil
 }
 
+// NewListRequirementsRequest constructs an http.Request for the ListRequirements method
+func NewListRequirementsRequest(server string, featureId FeatureId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "featureId", featureId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/features/%s/requirements", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateRequirementRequest calls the generic CreateRequirement builder with application/json body
 func NewCreateRequirementRequest(server string, featureId FeatureId, body CreateRequirementJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -16482,6 +16558,40 @@ func NewListBaselinesRequest(server string, productId ProductId) (*http.Request,
 	}
 
 	operationPath := fmt.Sprintf("/products/%s/baselines", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListCapabilitiesRequest constructs an http.Request for the ListCapabilities method
+func NewListCapabilitiesRequest(server string, productId ProductId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/capabilities", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -21459,6 +21569,13 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /features/{featureId}/request-epic (the `RequestDeliveryEpic` operationId).
 	RequestDeliveryEpicWithResponse(ctx context.Context, featureId FeatureId, body RequestDeliveryEpicJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestDeliveryEpicResponse, error)
 
+	// ListRequirementsWithResponse Прочитать иерархию продукта (PG-02)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /features/{featureId}/requirements (the `ListRequirements` operationId).
+	ListRequirementsWithResponse(ctx context.Context, featureId FeatureId, reqEditors ...RequestEditorFn) (*ListRequirementsResponse, error)
+
 	// CreateRequirementWithBodyWithResponse Добавить требование (PG-02)
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -21675,6 +21792,13 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /products/{productId}/baselines (the `ListBaselines` operationId).
 	ListBaselinesWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*ListBaselinesResponse, error)
+
+	// ListCapabilitiesWithResponse Прочитать иерархию продукта (PG-02)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /products/{productId}/capabilities (the `ListCapabilities` operationId).
+	ListCapabilitiesWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*ListCapabilitiesResponse, error)
 
 	// CreateCapabilityWithBodyWithResponse Создать возможность (PG-02)
 	//
@@ -26901,6 +27025,54 @@ func (r RequestDeliveryEpicResponse) ContentType() string {
 	return ""
 }
 
+type ListRequirementsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Requirement
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListRequirementsResponse) GetJSON200() *[]Requirement {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListRequirementsResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListRequirementsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListRequirementsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListRequirementsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListRequirementsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type CreateRequirementResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -27951,6 +28123,54 @@ func (r ListBaselinesResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListBaselinesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListCapabilitiesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Capability
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCapabilitiesResponse) GetJSON200() *[]Capability {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListCapabilitiesResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCapabilitiesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCapabilitiesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCapabilitiesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCapabilitiesResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -33621,6 +33841,19 @@ func (c *ClientWithResponses) RequestDeliveryEpicWithResponse(ctx context.Contex
 	return ParseRequestDeliveryEpicResponse(rsp)
 }
 
+// ListRequirementsWithResponse Прочитать иерархию продукта (PG-02)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /features/{featureId}/requirements (the `ListRequirements` operationId).
+func (c *ClientWithResponses) ListRequirementsWithResponse(ctx context.Context, featureId FeatureId, reqEditors ...RequestEditorFn) (*ListRequirementsResponse, error) {
+	rsp, err := c.ListRequirements(ctx, featureId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListRequirementsResponse(rsp)
+}
+
 // CreateRequirementWithBodyWithResponse Добавить требование (PG-02)
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -34022,6 +34255,19 @@ func (c *ClientWithResponses) ListBaselinesWithResponse(ctx context.Context, pro
 		return nil, err
 	}
 	return ParseListBaselinesResponse(rsp)
+}
+
+// ListCapabilitiesWithResponse Прочитать иерархию продукта (PG-02)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /products/{productId}/capabilities (the `ListCapabilities` operationId).
+func (c *ClientWithResponses) ListCapabilitiesWithResponse(ctx context.Context, productId ProductId, reqEditors ...RequestEditorFn) (*ListCapabilitiesResponse, error) {
+	rsp, err := c.ListCapabilities(ctx, productId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCapabilitiesResponse(rsp)
 }
 
 // CreateCapabilityWithBodyWithResponse Создать возможность (PG-02)
@@ -38633,6 +38879,39 @@ func ParseRequestDeliveryEpicResponse(rsp *http.Response) (*RequestDeliveryEpicR
 	return response, nil
 }
 
+// ParseListRequirementsResponse parses an HTTP response from a ListRequirementsWithResponse call
+func ParseListRequirementsResponse(rsp *http.Response) (*ListRequirementsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListRequirementsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Requirement
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseCreateRequirementResponse parses an HTTP response from a CreateRequirementWithResponse call
 func ParseCreateRequirementResponse(rsp *http.Response) (*CreateRequirementResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -39348,6 +39627,39 @@ func ParseListBaselinesResponse(rsp *http.Response) (*ListBaselinesResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []CertifiedBaseline
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListCapabilitiesResponse parses an HTTP response from a ListCapabilitiesWithResponse call
+func ParseListCapabilitiesResponse(rsp *http.Response) (*ListCapabilitiesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCapabilitiesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Capability
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

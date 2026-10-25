@@ -466,6 +466,10 @@ func (s *Service) UpdateFeature(ctx context.Context, sc authz.Scope, id kernel.I
 		upd.Status = in.Status
 	}
 	if in.CapabilityID != kernel.NilID {
+		c, ok := s.g.capabilities[in.CapabilityID]
+		if !ok || c.ProductID != f.ProductID {
+			return Feature{}, kernel.Invalid("capability_id", "возможность не принадлежит продукту")
+		}
 		upd.CapabilityID = in.CapabilityID
 	}
 	if in.ExternalKey != "" {
@@ -681,8 +685,12 @@ func (s *Service) CreateLink(ctx context.Context, sc authz.Scope, in LinkInput) 
 		return Link{}, err
 	}
 	if l.ContractID != kernel.NilID {
-		if _, ok := s.g.contracts[l.ContractID]; !ok {
+		c, ok := s.g.contracts[l.ContractID]
+		if !ok {
 			return Link{}, kernel.NotFound("contract", l.ContractID)
+		}
+		if !s.g.ownsContractLink(*c, l) {
+			return Link{}, kernel.Invalid("contract_id", "связь не принадлежит сторонам интеграционного контракта")
 		}
 	}
 	if l.IsFeatureLevel() {
@@ -716,6 +724,9 @@ func (s *Service) DeleteLink(ctx context.Context, sc authz.Scope, id kernel.ID) 
 	}
 	if err := sc.Require(authz.ActionWriteGraph, l.FromProductID); err != nil {
 		return err
+	}
+	if l.ContractID != kernel.NilID {
+		return fmt.Errorf("%w: связь принадлежит контракту; измените состав фич контракта", kernel.ErrConflict)
 	}
 	if err := s.store.DeleteLink(ctx, sc, id); err != nil {
 		return fmt.Errorf("delete link: %w", err)
@@ -797,13 +808,22 @@ func (s *Service) SaveContract(ctx context.Context, sc authz.Scope, id kernel.ID
 	} else if err := sc.Require(authz.ActionReadStrategic, in.ConsumerProductID); err != nil {
 		return IntegrationContract{}, err
 	}
+	seenFeatures := map[kernel.ID]bool{}
 	for _, fid := range in.ProviderFeatureIDs {
+		if seenFeatures[fid] {
+			return IntegrationContract{}, kernel.Invalid("provider_feature_ids", "фича указана повторно")
+		}
+		seenFeatures[fid] = true
 		f, ok := s.g.features[fid]
 		if !ok || f.ProductID != in.ProviderProductID {
 			return IntegrationContract{}, kernel.Invalid("provider_feature_ids", "фича не принадлежит продукту-поставщику")
 		}
 	}
 	for _, fid := range in.ConsumerFeatureIDs {
+		if seenFeatures[fid] {
+			return IntegrationContract{}, kernel.Invalid("consumer_feature_ids", "фича указана повторно")
+		}
+		seenFeatures[fid] = true
 		f, ok := s.g.features[fid]
 		if !ok || f.ProductID != in.ConsumerProductID {
 			return IntegrationContract{}, kernel.Invalid("consumer_feature_ids", "фича не принадлежит продукту-потребителю")
@@ -814,6 +834,9 @@ func (s *Service) SaveContract(ctx context.Context, sc authz.Scope, id kernel.ID
 	if id == kernel.NilID {
 		c.ID = kernel.NewID()
 	} else if old, ok := s.g.contracts[id]; ok {
+		if old.ProviderProductID != in.ProviderProductID || old.ConsumerProductID != in.ConsumerProductID {
+			return IntegrationContract{}, kernel.Invalid("products", "стороны существующего контракта неизменяемы")
+		}
 		c.CreatedAt, c.SignalValue = old.CreatedAt, old.SignalValue
 	} else {
 		return IntegrationContract{}, kernel.NotFound("contract", id)
@@ -827,63 +850,46 @@ func (s *Service) SaveContract(ctx context.Context, sc authz.Scope, id kernel.ID
 	if c.Status == "" {
 		c.Status = ContractDraft
 	}
+	if c.Status != ContractDraft && c.Status != ContractActive && c.Status != ContractDeprecated {
+		return IntegrationContract{}, kernel.Invalid("status", "неизвестный статус контракта")
+	}
 
-	// Рёбра фич контракта: каждый потребитель зависит от каждого поставщика. Проверяем циклы до записи.
+	// Validate against a candidate without obsolete edges from this contract.
+	candidate := s.g.cloneWithoutContract(c.ID)
 	var newLinks []Link
 	for _, cf := range c.ConsumerFeatureIDs {
 		for _, pf := range c.ProviderFeatureIDs {
-			if s.hasFeatureLink(cf, pf) {
-				continue
-			}
-			if path := s.g.FindCyclePath(cf, pf); path != nil {
+			if path := candidate.FindCyclePath(cf, pf); path != nil {
 				return IntegrationContract{}, &CycleError{Path: path}
 			}
-			newLinks = append(newLinks, Link{
-				ID: kernel.NewID(), Type: LinkIntegration, FromProductID: c.ConsumerProductID, ToProductID: c.ProviderProductID,
-				FromFeatureID: cf, ToFeatureID: pf, Criticality: c.Criticality, ContractID: c.ID, CreatedAt: now,
-			})
+			l := Link{ID: kernel.NewID(), Type: LinkIntegration, FromProductID: c.ConsumerProductID, ToProductID: c.ProviderProductID, FromFeatureID: cf, ToFeatureID: pf, Criticality: c.Criticality, ContractID: c.ID, CreatedAt: now}
+			newLinks = append(newLinks, l)
+			candidate.putLink(l)
 		}
 	}
-	// Связь уровня продуктов для контракта (роль хаба, PG-06).
-	if !s.hasProductLink(c.ConsumerProductID, c.ProviderProductID, c.ID) {
-		newLinks = append(newLinks, Link{
-			ID: kernel.NewID(), Type: LinkIntegration, FromProductID: c.ConsumerProductID, ToProductID: c.ProviderProductID,
-			Criticality: c.Criticality, ContractID: c.ID, CreatedAt: now,
-		})
+	newLinks = append(newLinks, Link{ID: kernel.NewID(), Type: LinkIntegration, FromProductID: c.ConsumerProductID, ToProductID: c.ProviderProductID, Criticality: c.Criticality, ContractID: c.ID, CreatedAt: now})
+	updates, err := s.store.ReplaceContract(ctx, sc, c, newLinks)
+	if err != nil {
+		return IntegrationContract{}, fmt.Errorf("replace contract: %w", err)
 	}
-	if err := s.store.SaveContract(ctx, sc, c); err != nil {
-		return IntegrationContract{}, fmt.Errorf("save contract: %w", err)
+	for lid, l := range s.g.links {
+		if old := s.g.contracts[c.ID]; old != nil && s.g.ownsContractLink(*old, *l) {
+			s.g.removeLink(lid)
+		}
 	}
 	s.g.putContract(c)
 	for _, l := range newLinks {
-		if err := s.store.SaveLink(ctx, sc, l); err != nil {
-			return IntegrationContract{}, fmt.Errorf("save link: %w", err)
-		}
 		s.g.putLink(l)
+	}
+
+	for _, f := range updates {
+		s.g.putFeature(f)
 	}
 	s.dirty = true
 	if err := s.emit(ctx, EventContractSaved, c.ID, c.ConsumerProductID, sc.Subject(), c); err != nil {
 		return IntegrationContract{}, err
 	}
 	return c, nil
-}
-
-func (s *Service) hasFeatureLink(from, to kernel.ID) bool {
-	for _, l := range s.g.links {
-		if l.FromFeatureID == from && l.ToFeatureID == to {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *Service) hasProductLink(from, to, contract kernel.ID) bool {
-	for _, l := range s.g.links {
-		if !l.IsFeatureLevel() && l.FromProductID == from && l.ToProductID == to && l.ContractID == contract {
-			return true
-		}
-	}
-	return false
 }
 
 // SetContractSignalValue задаёт ценность контракта из сигналов (SG-05) и пересчитывает rollup.
@@ -921,7 +927,7 @@ func (s *Service) Contracts(ctx context.Context, sc authz.Scope) ([]IntegrationC
 	out := make([]IntegrationContract, 0, len(s.g.contracts))
 	for _, c := range s.g.contracts {
 		if sc.Allows(authz.ActionReadStrategic, c.ProviderProductID) || sc.Allows(authz.ActionReadStrategic, c.ConsumerProductID) {
-			out = append(out, *c)
+			out = append(out, kernel.CloneValue(*c))
 		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
@@ -942,7 +948,7 @@ func (s *Service) Contract(ctx context.Context, sc authz.Scope, id kernel.ID) (I
 	if !sc.Allows(authz.ActionReadStrategic, c.ProviderProductID) && !sc.Allows(authz.ActionReadStrategic, c.ConsumerProductID) {
 		return IntegrationContract{}, kernel.Date{}, kernel.ErrForbidden
 	}
-	return *c, s.g.ContractReadyDate(c), nil
+	return kernel.CloneValue(*c), s.g.ContractReadyDate(c), nil
 }
 
 // ---- Rollup (PG-07) ----
@@ -1026,7 +1032,7 @@ func (s *Service) Settings(ctx context.Context) (Settings, error) {
 	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.g.settings, nil
+	return kernel.CloneValue(s.g.settings), nil
 }
 
 // UpdateSettings меняет коэффициенты (admin) и пересчитывает rollup.
@@ -1050,7 +1056,10 @@ func (s *Service) UpdateSettings(ctx context.Context, sc authz.Scope, st Setting
 	if err := s.store.SaveSettings(ctx, sc, st); err != nil {
 		return fmt.Errorf("save settings: %w", err)
 	}
-	s.g.settings = st
+	s.g.settings = kernel.CloneValue(st)
+	for key := range s.g.crit {
+		s.g.crit[key] = s.g.maxCrit(key)
+	}
 	s.dirty = true
 	return nil
 }
@@ -1081,26 +1090,35 @@ func (s *Service) ShiftFeatureDate(ctx context.Context, sc authz.Scope, id kerne
 	res := ShiftResult{SourceFeature: id, OldDate: f.PlannedDate, NewDate: newDate}
 	upd := *f
 	upd.PlannedDate = newDate
-	upd.Affected, upd.AffectedBy, upd.ImpliedDate = false, kernel.NilID, kernel.Date{}
+	dates, via, err := s.g.effectiveDates(id, newDate)
+	if err != nil {
+		return ShiftResult{}, fmt.Errorf("effective dates: %w", err)
+	}
+	upd.Affected = dates[id].After(newDate)
+	upd.AffectedBy, upd.ImpliedDate = kernel.NilID, kernel.Date{}
+	if upd.Affected {
+		upd.AffectedBy, upd.ImpliedDate = via[id], dates[id]
+	}
 	upd.UpdatedAt = s.clock.Now()
 	if err := s.store.SaveFeature(ctx, sc, upd); err != nil {
 		return ShiftResult{}, fmt.Errorf("save feature: %w", err)
 	}
 	s.g.putFeature(upd)
 
-	later := res.OldDate.IsZero() || newDate.After(res.OldDate)
-	if later {
-		res.Affected = s.g.PropagateShift(id, newDate)
-		for _, a := range res.Affected {
-			dep := s.g.features[a.FeatureID]
-			u := *dep
-			u.Affected, u.AffectedBy, u.ImpliedDate = true, a.ViaFeature, a.ImpliedDate
-			u.UpdatedAt = s.clock.Now()
-			if err := s.store.SaveFeature(ctx, identityaccess.ServiceScope("graph-propagation"), u); err != nil {
-				return ShiftResult{}, fmt.Errorf("save feature: %w", err)
-			}
-			s.g.putFeature(u)
+	res.Affected = s.g.PropagateShift(id, newDate)
+	for _, a := range res.Affected {
+		dep := s.g.features[a.FeatureID]
+		u := *dep
+		u.Affected = a.ImpliedDate.After(u.PlannedDate)
+		u.AffectedBy, u.ImpliedDate = kernel.NilID, kernel.Date{}
+		if u.Affected {
+			u.AffectedBy, u.ImpliedDate = a.ViaFeature, a.ImpliedDate
 		}
+		u.UpdatedAt = s.clock.Now()
+		if err := s.store.SaveFeature(ctx, identityaccess.ServiceScope("graph-propagation"), u); err != nil {
+			return ShiftResult{}, fmt.Errorf("save feature: %w", err)
+		}
+		s.g.putFeature(u)
 	}
 	touched := map[kernel.ID]bool{id: true}
 	for _, a := range res.Affected {
@@ -1167,7 +1185,7 @@ func (s *Service) StrategicSlice(ctx context.Context, sc authz.Scope, productID 
 	sort.Slice(out.Features, func(i, j int) bool { return out.Features[i].Name < out.Features[j].Name })
 	for _, c := range s.g.contracts {
 		if c.ProviderProductID == productID || c.ConsumerProductID == productID {
-			out.Contracts = append(out.Contracts, *c)
+			out.Contracts = append(out.Contracts, kernel.CloneValue(*c))
 		}
 	}
 	sort.Slice(out.Contracts, func(i, j int) bool { return out.Contracts[i].Name < out.Contracts[j].Name })

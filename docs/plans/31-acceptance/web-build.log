@@ -1,0 +1,33 @@
+
+> metis-web@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 2206 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                     1.10 kB │ gzip:   0.59 kB
+dist/assets/jetbrains-mono-vietnamese-wght-normal-Bt-aOZkq.woff2    7.50 kB
+dist/assets/jetbrains-mono-greek-wght-normal-Bw9x6K1M.woff2         9.00 kB
+dist/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2            10.25 kB
+dist/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2             11.23 kB
+dist/assets/jetbrains-mono-cyrillic-wght-normal-D73BlboJ.woff2     12.10 kB
+dist/assets/jetbrains-mono-latin-ext-wght-normal-DBQx-q_a.woff2    15.19 kB
+dist/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2              18.74 kB
+dist/assets/inter-greek-wght-normal-CkhJZR-_.woff2                 18.99 kB
+dist/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2          25.96 kB
+dist/assets/jetbrains-mono-latin-wght-normal-B9CIFXIH.woff2        40.40 kB
+dist/assets/inter-latin-wght-normal-Dx4kXJAl.woff2                 48.25 kB
+dist/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2             85.06 kB
+dist/assets/GraphPage-DLioOiRN.css                                 15.41 kB │ gzip:   2.56 kB
+dist/assets/index-D2dNhkv7.css                                     22.07 kB │ gzip:   6.92 kB
+dist/assets/GraphPage-Bb8GkbGC.js                                 240.15 kB │ gzip:  78.10 kB
+dist/assets/index-C2sxQian.js                                     722.98 kB │ gzip: 188.20 kB
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 513ms

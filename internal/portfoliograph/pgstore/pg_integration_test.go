@@ -287,3 +287,46 @@ func TestAD02_NFS01_PGContractBothSidesAndImmutableOwner(t *testing.T) {
 		t.Fatalf("state changed: %+v, %v", snap, err)
 	}
 }
+
+func TestPG04_PGContractReplacementAtomicRollback(t *testing.T) {
+	db := openTestDB(t)
+	ctx, sc := context.Background(), repositoryScope()
+	store := pgstore.NewStore(db, nil)
+	a, b := kernel.NewID(), kernel.NewID()
+	for i, id := range []kernel.ID{a, b} {
+		if err := store.SaveProduct(ctx, sc, portfoliograph.Product{ID: id, Key: []string{"replace-a", "replace-b"}[i], Name: "Synthetic", Type: portfoliograph.ProductTypeOther, Lifecycle: portfoliograph.LifecycleActive}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	c := portfoliograph.IntegrationContract{ID: kernel.NewID(), Name: "Original", ProviderProductID: a, ConsumerProductID: b, Status: portfoliograph.ContractDraft, Criticality: portfoliograph.CritBlocks}
+	link := portfoliograph.Link{ID: kernel.NewID(), Type: portfoliograph.LinkIntegration, FromProductID: b, ToProductID: a, ContractID: c.ID, Criticality: c.Criticality}
+	if _, err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{link}); err != nil {
+		t.Fatal(err)
+	}
+	c.Name = "Must roll back"
+	bad := link
+	bad.ID = kernel.NewID()
+	bad.FromFeatureID = kernel.NewID()
+	bad.ToFeatureID = kernel.NewID()
+	if _, err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{bad}); err == nil {
+		t.Fatal("invalid feature links accepted")
+	}
+	snap, err := store.Load(ctx, sc)
+	if err != nil || len(snap.Contracts) != 1 || snap.Contracts[0].Name != "Original" || len(snap.Links) != 1 || snap.Links[0].ID != link.ID {
+		t.Fatalf("partial replace: %+v err=%v", snap, err)
+	}
+	c.Name = "Updated"
+	link.ID = kernel.NewID()
+	link.Criticality = portfoliograph.CritAccelerates
+	if _, err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{link}); err != nil {
+		t.Fatal(err)
+	}
+	snap, err = store.Load(ctx, sc)
+	if err != nil || len(snap.Links) != 1 || snap.Links[0].ID != link.ID || snap.Contracts[0].Name != "Updated" {
+		t.Fatalf("replacement: %+v err=%v", snap, err)
+	}
+	hidden := authz.New(authz.Params{Subject: "pm", Roles: []authz.Role{authz.RolePM}, Products: map[kernel.ID]authz.Access{a: authz.AccessPrivate}})
+	if _, err := store.ReplaceContract(ctx, hidden, c, nil); !errors.Is(err, kernel.ErrForbidden) {
+		t.Fatalf("hidden endpoint: %v", err)
+	}
+}

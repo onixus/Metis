@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { usePortfolioPnL, useProducts, useWinLoss } from '../api/hooks'
+import { useHubs, useLinks, useMe, usePortfolioPnL, useProducts, useWinLoss } from '../api/hooks'
 import type { PnL } from '../api/types'
-import { Empty, ErrorBox, Loading } from '../components/Status'
+import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { ru } from '../i18n/ru'
-import { fmtMoney } from '../lib/format'
+import { fmtMoney, pick } from '../lib/format'
+import { canReadPortfolioWinLoss } from '../lib/portfolio'
 
 /** Текущий месяц в формате YYYY-MM: период по умолчанию для финансовых отчётов. */
 function currentPeriod(): string {
@@ -14,10 +15,34 @@ function currentPeriod(): string {
 }
 
 export function PortfolioPage() {
+  const me = useMe()
+  const products = useProducts()
+  const hubs = useHubs()
+  const links = useLinks()
+  const hubById = new Map((hubs.data ?? []).map(hub => [hub.product_id, hub]))
+  return <section className="stack">
+    <div className="page-head"><div><h1>Портфель</h1><p className="muted">Продукты, роль хабов и зависимости доступного портфеля.</p></div><div className="row wrap-row"><Link className="btn" to="/graph">Открыть граф</Link><Link className="btn" to="/">Все продукты</Link></div></div>
+    {(products.isPending || hubs.isPending || links.isPending) && <Loading />}
+    {products.isError && <ErrorBox error={products.error} onRetry={() => void products.refetch()} />}
+    {hubs.isError && <ErrorBox error={hubs.error} onRetry={() => void hubs.refetch()} />}
+    {links.isError && <ErrorBox error={links.error} onRetry={() => void links.refetch()} />}
+    {products.data && <>
+      <div className="stats"><Stat label="Доступно продуктов" value={String(products.data.length)} /><Stat label="Хабов" value={hubs.data ? String(hubs.data.filter(hub => hub.manual || hub.computed).length) : ru.app.dash} /><Stat label="Связей" value={links.data ? String(links.data.length) : ru.app.dash} /></div>
+      <div className="card stack"><h2>Состав портфеля</h2>{!products.data.length ? <Empty /> : <div className="table-wrap"><table className="table"><thead><tr><th>Продукт</th><th>Тип</th><th>Владелец</th><th>Жизненный цикл</th><th>Роль хаба</th><th>РБПО</th><th>Зависимости</th></tr></thead><tbody>{products.data.map(product => {
+        const hub = hubById.get(product.id)
+        const related = (links.data ?? []).filter(link => link.from_product_id === product.id || link.to_product_id === product.id)
+        return <tr key={product.id}><td><Link to={`/products/${product.id}`}>{product.name}</Link></td><td>{pick(ru.product.types, product.type)}</td><td>{product.owner || ru.app.dash}</td><td>{pick(ru.product.lifecycles, product.lifecycle)}</td><td>{hub?.manual && <Badge tone="warn">{ru.product.hubManual}</Badge>}{' '}{hub?.computed && <Badge tone="info">{ru.product.hubComputed}</Badge>}{!hub?.manual && !hub?.computed && ru.app.dash}</td><td>{product.ssdlc_certified ? ru.app.yes : ru.app.no}</td><td>{links.data ? <Link to={`/graph?product=${encodeURIComponent(product.id)}`}>{related.length}</Link> : ru.app.dash}</td></tr>
+      })}</tbody></table></div>}</div>
+    </>}
+    {me.data?.finance && me.data.finance !== 'none' ? <PortfolioFinance /> : <p className="muted">Финансовые отчёты доступны при наличии финансового уровня доступа.</p>}
+    {canReadPortfolioWinLoss(me.data) && <PortfolioWinLoss />}
+  </section>
+}
+
+function PortfolioFinance() {
   const [period, setPeriod] = useState(currentPeriod)
   const products = useProducts()
   const pnl = usePortfolioPnL(period)
-  const winLoss = useWinLoss('')
   const nameById = useMemo(
     () => new Map((products.data ?? []).map((p) => [p.id, p.name])),
     [products.data],
@@ -29,7 +54,7 @@ export function PortfolioPage() {
     <section className="stack">
       <div className="page-head">
         <div>
-          <h1>{ru.portfolio.title}</h1>
+          <h2>{ru.portfolio.title}</h2>
           <div className="muted">{ru.portfolio.subtitle}</div>
         </div>
         <label className="field">
@@ -64,45 +89,50 @@ export function PortfolioPage() {
           </div>
         </>
       )}
-
-      <div className="card stack">
-        <h2>{ru.portfolio.winLoss}</h2>
-        {winLoss.isPending && <Loading />}
-        {winLoss.isError && <p className="muted">{ru.portfolio.winLossForbidden}</p>}
-        {winLoss.data && (
-          <>
-            <div className="stats">
-              <Stat label={ru.portfolio.won} value={String(winLoss.data.won)} tone="ok" />
-              <Stat label={ru.portfolio.lost} value={String(winLoss.data.lost)} tone={winLoss.data.lost > 0 ? 'warn' : 'ok'} />
-            </div>
-            {(winLoss.data.by_reason ?? []).length === 0 ? (
-              <Empty text={ru.portfolio.noWinLoss} />
-            ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{ru.portfolio.reason}</th>
-                    <th>{ru.portfolio.won}</th>
-                    <th>{ru.portfolio.lost}</th>
-                    <th>{ru.portfolio.amount}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(winLoss.data.by_reason ?? []).map((r) => (
-                    <tr key={r.key}>
-                      <td>{r.key}</td>
-                      <td>{r.won}</td>
-                      <td>{r.lost}</td>
-                      <td>{fmtMoney(r.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </>
-        )}
-      </div>
     </section>
+  )
+}
+
+function PortfolioWinLoss() {
+  const winLoss = useWinLoss('')
+  return (
+    <div className="card stack">
+      <h2>{ru.portfolio.winLoss}</h2>
+      {winLoss.isPending && <Loading />}
+      {winLoss.isError && (winLoss.error instanceof ApiError && winLoss.error.status === 403 ? <p className="muted">{ru.portfolio.winLossForbidden}</p> : <ErrorBox error={winLoss.error} onRetry={() => void winLoss.refetch()} />)}
+      {winLoss.data && (
+        <>
+          <div className="stats">
+            <Stat label={ru.portfolio.won} value={String(winLoss.data.won)} tone="ok" />
+            <Stat label={ru.portfolio.lost} value={String(winLoss.data.lost)} tone={winLoss.data.lost > 0 ? 'warn' : 'ok'} />
+          </div>
+          {(winLoss.data.by_reason ?? []).length === 0 ? (
+            <Empty text={ru.portfolio.noWinLoss} />
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>{ru.portfolio.reason}</th>
+                  <th>{ru.portfolio.won}</th>
+                  <th>{ru.portfolio.lost}</th>
+                  <th>{ru.portfolio.amount}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(winLoss.data.by_reason ?? []).map((r) => (
+                  <tr key={r.key}>
+                    <td>{r.key}</td>
+                    <td>{r.won}</td>
+                    <td>{r.lost}</td>
+                    <td>{fmtMoney(r.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
+    </div>
   )
 }
 

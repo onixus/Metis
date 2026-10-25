@@ -1,0 +1,11 @@
+{
+  "results": [
+    "PG09 deep link product filter",
+    "PG03 accessible product link form persists",
+    "PG03 feature link form; PG05 reverse cycle rejected with path",
+    "PG04 contract create/read/edit compatibility/features/status persists; pending input/matrix/cancel actions disabled on held real POST/PUT responses",
+    "PG09 contract status filter desktop mobile themes",
+    "AD02 read-only role has no graph/contract mutation controls"
+  ],
+  "errors": []
+}

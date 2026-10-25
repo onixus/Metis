@@ -1,0 +1,15 @@
+# feat(portfolio): complete portfolio and graph workflows
+
+Портфель показывает доступные продукты, хабы и зависимости без финансовых прав. Карточка продукта позволяет вести иерархию Capability→Feature→Requirement; PM редактирует свой продукт, а роль хаба назначается независимо от типа продукта. Граф получил создание связей без drag, фильтр статуса контрактов, переход к продукту и явные ошибки загрузки.
+
+Контракты можно создавать и редактировать с фичами обеих сторон, владельцем, версией интерфейса, статусом и матрицей совместимости. Контракт и его автоматические рёбра заменяются атомарно; устаревшие зависимости удаляются, ручные связи сохраняются, циклы проверяются до записи. Исправлены пересчёт критичности параллельных рёбер и перенос дат в обе стороны с учётом всей цепочки поставщиков.
+
+Требования: PG-01…10 (дополнение существующей реализации), AD-02. Добавлены два приватных GET иерархии в OpenAPI, generated server/client обновлены. Новых зависимостей и миграций нет; решение замещения — ADR0034.
+
+Проверено на ветке от main41acf69: полный Go race/integration на PostgreSQL16 UTF8 с отдельной ролью metis_app; lint0/vet/CGO0build; frontend lint/typecheck/31tests/build; воспроизводимая генерация40files, licenses и gitleaks, включая новые файлы. Два browser сценария прошли на production сборке с реальным synthetic API: CPO/PM/readonly, desktop/mobile, light/dark, cycle409 и удержанные POST/PUT responses. Команды, исходники и хеши логов: docs/plans/31-acceptance/README.md и gates.json.
+
+Обновлённый govulncheck, внешний OIDC/Atlassian и production не проверены. Merge/deployment не выполнялись. Исходный dirty checkout сохранён; PR содержит только PortfolioGraph, новые main API и тесты других модулей сохранены. Документы перенумерованы28→31 из-за занятого номера в main.
+
+NF-L01: backend, frontend и тесты написаны основным Codex и тремя агентами Codex. Авторское агентское ревью выполнено; отдельное ревью опубликованного commit следует после создания PR. Человеческое ревью pending.
+
+Исправления review PR60: замена контракта атомарно обновляет derived dates потребителей/downstream; устаревшие ограничения удаляются. Принадлежность contract_id проверяется на Service и обоих Store, включая фактического владельца фич; чужие legacy связи/проекции сохраняются. Win/loss отделён от финансового уровня. Добавлены реальные PG rollback/legacy/scope-регрессии, API acceptance контрактов и browser-регрессия9 role/scope сочетаний. После исправлений full Go race/integration/lint/vet/build, frontend32tests/lint/typecheck/build, licenses/gitleaks/generation и browser acceptance PASS. Отдельный read-only bypass review выполнен, выявленная альтернативная подмена feature-product устранена. ADR0035; человеческое ревью pending.

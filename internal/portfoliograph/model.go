@@ -77,7 +77,7 @@ type Feature struct {
 	Status       FeatureStatus `json:"status"`
 	OwnValue     kernel.Money  `json:"own_value"`    // собственная ценность (сигналы, привязанные к фиче)
 	PlannedDate  kernel.Date   `json:"planned_date"` // плановая дата готовности
-	// Affected — фича затронута сдвигом срока поставщика (PG-08); снимается при изменении даты.
+	// Affected — ограничения поставщиков требуют дату позже собственного плана (PG-08).
 	Affected    bool        `json:"affected"`
 	AffectedBy  kernel.ID   `json:"affected_by,omitempty"`
 	ImpliedDate kernel.Date `json:"implied_date"`           // не раньше этой даты по зависимостям

@@ -1,0 +1,10 @@
+oapi-codegen -config api/oapi-server.yaml api/openapi.yaml
+oapi-codegen -config api/oapi-types.yaml api/openapi.yaml
+sqlc generate
+cd web && npm run generate
+
+> metis-web@0.0.0 generate
+> openapi-typescript ../api/openapi.yaml -o src/api/schema.d.ts
+
+✨ openapi-typescript 7.13.0
+🚀 ../api/openapi.yaml → src/api/schema.d.ts [112.9ms]

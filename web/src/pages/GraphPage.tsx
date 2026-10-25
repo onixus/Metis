@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Background,
   Controls,
@@ -10,6 +10,7 @@ import {
   ReactFlowProvider,
   useEdgesState,
   useNodesInitialized,
+  useUpdateNodeInternals,
   useReactFlow,
   useNodesState,
   type Connection,
@@ -28,14 +29,16 @@ import {
   useLinks,
   useContracts,
   useProducts,
+  useMe,
   type GraphFeature,
-  type LinkInput,
 } from '../api/hooks'
 import { ApiError, errorMessage } from '../api/client'
 import type { Criticality, Lifecycle, LinkType, Product } from '../api/types'
 import { ErrorBox, Loading } from '../components/Status'
 import { fmtDate } from '../lib/format'
 import { ru } from '../i18n/ru'
+import { ContractsPanel } from '../components/ContractsPanel'
+import { canWriteGraph, featureHandlesReady, filterGraph, linkBody } from '../lib/graph'
 
 const LINK_TYPES: LinkType[] = ['integration', 'shared_component', 'commercial', 'bundled']
 const CRITICALITIES: Criticality[] = ['blocks', 'accelerates', 'desirable']
@@ -62,6 +65,9 @@ interface ProductNodeData extends Record<string, unknown> {
   expanded: boolean
   features: GraphFeature[] | undefined
   loading: boolean
+  error: unknown
+  retry: () => unknown
+  writable: boolean
   onToggle: (id: string) => void
   onOpen: (id: string) => void
 }
@@ -70,6 +76,8 @@ type ProductNode = Node<ProductNodeData, 'product'>
 
 /** Узел продукта: заголовок с кнопками, хендлы продукта и раскрываемый список фич с собственными хендлами. */
 const ProductNodeView = memo(function ProductNodeView({ id, data }: NodeProps<ProductNode>) {
+  const updateNodeInternals = useUpdateNodeInternals()
+  useEffect(() => { updateNodeInternals(id) }, [id, data.expanded, data.features, data.loading, data.error, updateNodeInternals])
   const strategicOnly = data.features?.some((f) => !f.privateAccess) ?? false
   return (
     <div>
@@ -94,7 +102,8 @@ const ProductNodeView = memo(function ProductNodeView({ id, data }: NodeProps<Pr
       {data.expanded && (
         <>
           {data.loading && <div className="node-note">{ru.graph.loadingFeatures}</div>}
-          {!data.loading && (data.features?.length ?? 0) === 0 && <div className="node-note">{ru.graph.noFeatures}</div>}
+          {!data.loading && !data.error && (data.features?.length ?? 0) === 0 && <div className="node-note">{ru.graph.noFeatures}</div>}
+          {!!data.error && <div className="node-note"><ErrorBox error={data.error} onRetry={() => void data.retry()} /></div>}
           {!data.loading && strategicOnly && <div className="node-note">{ru.graph.strategicOnly}</div>}
           {!data.loading && (data.features?.length ?? 0) > 0 && (
             <ul className="node-list nowheel">
@@ -104,14 +113,14 @@ const ProductNodeView = memo(function ProductNodeView({ id, data }: NodeProps<Pr
                   <span className="dot" />
                   <span>{f.name}</span>
                   {f.planned_date && <span className="fdate">{fmtDate(f.planned_date)}</span>}
-                  <Handle type="source" position={Position.Right} id={featureOut(f.id)} />
+                  <Handle type="source" position={Position.Right} id={featureOut(f.id)} isConnectable={data.writable} />
                 </li>
               ))}
             </ul>
           )}
         </>
       )}
-      <Handle type="source" position={Position.Bottom} id="p:out" className="handle-product" />
+      <Handle type="source" position={Position.Bottom} id="p:out" className="handle-product" isConnectable={data.writable} />
     </div>
   )
 })
@@ -176,6 +185,8 @@ function GraphInner() {
     return () => observer.disconnect()
   }, [])
   const nodesReady = useNodesInitialized()
+  const me = useMe()
+  const [searchParams, setSearchParams] = useSearchParams()
   const products = useProducts()
   const links = useLinks()
   const contracts = useContracts()
@@ -185,15 +196,19 @@ function GraphInner() {
   const navigate = useNavigate()
 
   const [types, setTypes] = useState<Set<LinkType>>(() => new Set(LINK_TYPES))
-  const [productId, setProductId] = useState('')
+  const productId = searchParams.get('product') ?? ''
+  const setProductId = (id: string) => setSearchParams(previous => { const next = new URLSearchParams(previous); if (id) next.set('product', id); else next.delete('product'); return next })
   const [lifecycle, setLifecycle] = useState('')
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set())
   const [pending, setPending] = useState<PendingLink | null>(null)
   const [linkType, setLinkType] = useState<LinkType>('integration')
+  const [formOpen, setFormOpen] = useState(false)
+  const [featureLevel, setFeatureLevel] = useState(false)
+  const [contractStatus, setContractStatus] = useState('')
   const [crit, setCrit] = useState<Criticality>('blocks')
   const [toast, setToast] = useState<{ text: string; error?: boolean; cycle?: string[] } | null>(null)
 
-  const expandedIds = useMemo(() => Array.from(expanded), [expanded])
+  const expandedIds = useMemo(() => Array.from(new Set([...expanded, ...(formOpen && featureLevel && pending ? [pending.fromProduct, pending.toProduct].filter(Boolean) : [])])), [expanded, formOpen, featureLevel, pending])
   const featureQueries = useExpandedFeatures(expandedIds)
 
   const hubIds = useMemo(
@@ -219,25 +234,11 @@ function GraphInner() {
   }, [featureQueries])
 
   const visible = useMemo(() => {
-    const all = products.data ?? []
-    const allLinks = links.data ?? []
-    let visibleLinks = allLinks.filter((l) => types.has(l.type))
-    if (productId) {
-      visibleLinks = visibleLinks.filter((l) => l.from_product_id === productId || l.to_product_id === productId)
-    }
-    let vis = all.filter((p) => !lifecycle || (p.lifecycle ?? '') === lifecycle)
-    if (productId) {
-      const neighbors = new Set<string>([productId])
-      for (const l of visibleLinks) {
-        neighbors.add(l.from_product_id)
-        neighbors.add(l.to_product_id)
-      }
-      vis = vis.filter((p) => neighbors.has(p.id))
-    }
-    const ids = new Set(vis.map((p) => p.id))
-    visibleLinks = visibleLinks.filter((l) => ids.has(l.from_product_id) && ids.has(l.to_product_id))
-    return { products: vis, links: visibleLinks }
-  }, [products.data, links.data, types, productId, lifecycle])
+    const filteredLinks = (links.data ?? []).filter(link => !contractStatus || !!link.contract_id && contracts.data?.some(contract => contract.id === link.contract_id && contract.status === contractStatus))
+    return filterGraph(products.data ?? [], filteredLinks, { types, productId, lifecycle })
+  }, [products.data, links.data, contracts.data, types, productId, lifecycle, contractStatus])
+  const featureQueryFor = (id: string) => featureQueries[expandedIds.indexOf(id)]
+  const writableProducts = (products.data ?? []).filter(product => canWriteGraph(me.data, product.id))
 
   const [nodes, setNodes, onNodesChange] = useNodesState<ProductNode>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
@@ -249,9 +250,9 @@ function GraphInner() {
   const structureKey = useMemo(() => {
     const ids = visible.products.map((p) => p.id).sort().join(',')
     const es = visible.links.map((l) => `${l.from_product_id}>${l.to_product_id}`).sort().join(',')
-    const ex = expandedIds.map((id) => `${id}:${featureQueries[expandedIds.indexOf(id)]?.data?.length ?? -1}`).sort().join(',')
+    const ex = expandedIds.filter(id => expanded.has(id)).map((id) => `${id}:${featureQueries[expandedIds.indexOf(id)]?.data?.length ?? -1}`).sort().join(',')
     return `${ids}|${es}|${ex}|${layoutVersion}`
-  }, [visible.products, visible.links, expandedIds, featureQueries, layoutVersion])
+  }, [visible.products, visible.links, expanded, expandedIds, featureQueries, layoutVersion])
   const lastKey = useRef('')
 
   // После смены раскладки подгоняем вид под все узлы.
@@ -264,7 +265,7 @@ function GraphInner() {
   // Узлы: данные обновляются всегда, позиции — по раскладке при смене структуры.
   useEffect(() => {
     const sizeOf = (id: string) => {
-      const idx = expandedIds.indexOf(id)
+      const idx = expanded.has(id) ? expandedIds.indexOf(id) : -1
       const n = idx >= 0 ? (featureQueries[idx]?.data?.length ?? 0) : 0
       const list = idx >= 0 ? Math.min(LIST_MAX_H, Math.max(n, 1) * FEATURE_ROW_H + 8) : 0
       return { width: NODE_W, height: NODE_HEAD_H + list }
@@ -285,14 +286,14 @@ function GraphInner() {
           type: 'product',
           position: pos,
           data: {
-            product: p, hub, expanded: expanded.has(p.id), features: q?.data, loading: q?.isPending ?? false, onToggle: toggle, onOpen: open,
+            product: p, hub, expanded: expanded.has(p.id), features: q?.data, loading: q?.isPending ?? false, error: q?.error, retry: q?.refetch ?? (() => {}), writable: canWriteGraph(me.data, p.id), onToggle: toggle, onOpen: open,
           },
           className: hub ? 'node node-hub' : 'node',
           style: { opacity: p.lifecycle === 'retired' ? 0.5 : 1 },
         }
       }),
     )
-  }, [visible.products, visible.links, expanded, expandedIds, featureQueries, hubIds, toggle, open, setNodes, structureKey])
+  }, [visible.products, visible.links, expanded, expandedIds, featureQueries, hubIds, toggle, open, setNodes, structureKey, me.data])
 
   // Рёбра: связь фич рисуется между хендлами фич, если оба узла раскрыты, иначе между продуктами.
   useEffect(() => {
@@ -300,7 +301,7 @@ function GraphInner() {
       visible.links.map((l) => {
         const color = getComputedStyle(document.documentElement).getPropertyValue(LINK_COLORS[l.type].slice(4, -1)).trim()
         const featureLevel = !!l.from_feature_id && !!l.to_feature_id
-        const bothExpanded = featureLevel && expanded.has(l.from_product_id) && expanded.has(l.to_product_id)
+        const bothExpanded = featureLevel && expanded.has(l.from_product_id) && expanded.has(l.to_product_id) && featureHandlesReady(l.from_feature_id, l.to_feature_id, featureQueries[expandedIds.indexOf(l.from_product_id)]?.data, featureQueries[expandedIds.indexOf(l.to_product_id)]?.data)
         const critLabel = ru.link.criticality[l.criticality]
         let label = l.contract_id ? `${ru.link.types[l.type]} · ${critLabel}` : critLabel
         if (featureLevel && !bothExpanded) {
@@ -321,33 +322,38 @@ function GraphInner() {
           labelStyle: { fill: color, fontSize: 11 },
           markerEnd: { type: MarkerType.ArrowClosed, color },
           animated: false,
+          deletable: !l.contract_id && canWriteGraph(me.data, l.from_product_id),
         }
       }),
     )
-  }, [visible.links, expanded, featureNames, contracts.data, setEdges, theme])
+  }, [visible.links, expanded, expandedIds, featureQueries, featureNames, contracts.data, me.data, setEdges, theme])
 
   const onNodeDragStop = useCallback((_e: unknown, node: Node) => {
     positions.current.set(node.id, node.position)
   }, [])
 
   const onConnect = useCallback((c: Connection) => {
-    if (!c.source || !c.target) return
+    if (!c.source || !c.target || !canWriteGraph(me.data, c.source)) return
     const fromFeature = isFeatureHandle(c.sourceHandle) ? featureIdOf(c.sourceHandle!) : undefined
     const toFeature = isFeatureHandle(c.targetHandle) ? featureIdOf(c.targetHandle!) : undefined
-    // Связь фич требует обе фичи; смешанное соединение считаем продуктовым.
-    const both = !!fromFeature && !!toFeature
-    setPending({ fromProduct: c.source, toProduct: c.target, fromFeature: both ? fromFeature : undefined, toFeature: both ? toFeature : undefined })
+    if (!!fromFeature !== !!toFeature) {
+      setToast({ text: 'Соедините два продукта или две фичи. Смешанная связь не сохраняется.', error: true })
+      return
+    }
+    setFeatureLevel(!!fromFeature)
+    setFormOpen(true)
+    setPending({ fromProduct: c.source, toProduct: c.target, fromFeature, toFeature })
     setToast(null)
-  }, [])
+  }, [me.data])
 
   const submit = async () => {
     if (!pending) return
-    const body: LinkInput = pending.fromFeature
-      ? { type: linkType, criticality: crit, from_feature_id: pending.fromFeature, to_feature_id: pending.toFeature }
-      : { type: linkType, criticality: crit, from_product_id: pending.fromProduct, to_product_id: pending.toProduct }
     try {
-      await createLink.mutateAsync(body)
+      if (!canWriteGraph(me.data, pending.fromProduct)) throw Error("Нет права изменять граф продукта-потребителя")
+      if (featureLevel && (!pending.fromFeature || !pending.toFeature)) throw Error("Выберите обе фичи")
+      await createLink.mutateAsync(linkBody(pending, linkType, crit))
       setPending(null)
+      setFormOpen(false)
       setToast({ text: ru.graph.created })
     } catch (err) {
       if (err instanceof ApiError && err.cycle) {
@@ -360,7 +366,7 @@ function GraphInner() {
 
   const onBeforeDelete = useCallback<OnBeforeDelete<ProductNode, Edge>>(
     async ({ edges: toDelete }) => {
-      if (toDelete.length === 0) return false
+      if (toDelete.length === 0 || toDelete.some(edge => { const link = links.data?.find(link => link.id === edge.id); return !link || !!link.contract_id || !canWriteGraph(me.data, link.from_product_id) })) return false
       if (!window.confirm(ru.graph.deleteConfirm(toDelete.length))) return false
       try {
         for (const e of toDelete) await deleteLink.mutateAsync(e.id)
@@ -370,7 +376,7 @@ function GraphInner() {
       }
       return { nodes: [], edges: [] }
     },
-    [deleteLink],
+    [deleteLink, links.data, me.data],
   )
 
   const toggleType = (t: LinkType) =>
@@ -435,15 +441,21 @@ function GraphInner() {
             setTypes(new Set(LINK_TYPES))
             setProductId('')
             setLifecycle('')
+            setContractStatus('')
           }}
         >
           {ru.app.reset}
         </button>
+        <label className="field"><span>Статус контракта</span><select value={contractStatus} onChange={e => setContractStatus(e.target.value)}><option value="">Все</option>{Object.entries(ru.contract.statuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        {writableProducts.length > 0 && <button type="button" className="btn btn-primary btn-sm" onClick={() => { setPending({ fromProduct: productId && writableProducts.some(product => product.id === productId) ? productId : writableProducts[0].id, toProduct: '' }); setFeatureLevel(false); setFormOpen(true); setToast(null) }}>Создать связь</button>}
         <button type="button" className="btn btn-sm" onClick={() => setLayoutVersion((v) => v + 1)}>
           {ru.graph.relayout}
         </button>
       </div>
-      <p className="muted">{ru.graph.hint}</p>
+      <p className="muted">{writableProducts.length ? ru.graph.hint : 'Просмотр графа. Изменения доступны владельцу продукта, руководителю портфеля и администратору.'}</p>
+      {me.isError && <ErrorBox error={me.error} onRetry={() => void me.refetch()} />}
+      {contracts.isError && <ErrorBox error={contracts.error} onRetry={() => void contracts.refetch()} />}
+      {!visible.products.length && <p className="muted">Нет продуктов по выбранным фильтрам.</p>}
       {hubs.isError && <ErrorBox error={hubs.error} />}
       <div className="graph-canvas">
         <ReactFlow
@@ -466,15 +478,28 @@ function GraphInner() {
           <Background />
           <Controls showInteractive={false} />
         </ReactFlow>
-        {pending && (
+        {formOpen && pending && (
           <form
-            className="graph-dialog"
+            className="graph-dialog stack"
+            aria-label="Создание связи"
+            style={{ maxHeight: 'calc(100% - 24px)', overflowY: 'auto' }}
             onSubmit={(e) => {
               e.preventDefault()
               void submit()
             }}
           >
             <h3>{ru.graph.newLink}</h3>
+            <label className="field"><span>Уровень связи</span><select value={featureLevel ? 'feature' : 'product'} onChange={e => { setFeatureLevel(e.target.value === 'feature'); setPending({ ...pending, fromFeature: undefined, toFeature: undefined }) }}><option value="product">Продукты</option><option value="feature">Фичи</option></select></label>
+            <label className="field"><span>Продукт-потребитель</span><select required value={pending.fromProduct} onChange={e => setPending({ ...pending, fromProduct: e.target.value, fromFeature: undefined })}><option value="">Выберите продукт</option>{writableProducts.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
+            <label className="field"><span>Продукт-поставщик</span><select required value={pending.toProduct} onChange={e => setPending({ ...pending, toProduct: e.target.value, toFeature: undefined })}><option value="">Выберите продукт</option>{products.data.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
+            {featureLevel && (['from', 'to'] as const).map(side => {
+              const product = side === 'from' ? pending.fromProduct : pending.toProduct
+              const query = featureQueryFor(product)
+              return <div key={side} className="stack">
+                <label className="field"><span>{side === 'from' ? 'Фича-потребитель' : 'Фича-поставщик'}</span><select required disabled={!product || query?.isPending || !!query?.error} value={(side === 'from' ? pending.fromFeature : pending.toFeature) ?? ''} onChange={e => setPending({ ...pending, [side === 'from' ? 'fromFeature' : 'toFeature']: e.target.value || undefined })}><option value="">{query?.isPending ? 'Загрузка…' : 'Выберите фичу'}</option>{query?.data?.map(feature => <option key={feature.id} value={feature.id}>{feature.name}</option>)}</select></label>
+                {!!query?.error && <ErrorBox error={query.error} onRetry={() => void query.refetch()} />}
+              </div>
+            })}
             <div className="muted">
               {pending.fromFeature
                 ? ru.graph.fromTo(featureNames.get(pending.fromFeature) ?? pending.fromFeature, featureNames.get(pending.toFeature!) ?? pending.toFeature!)
@@ -502,10 +527,10 @@ function GraphInner() {
               </select>
             </label>
             <div className="row">
-              <button type="submit" className="btn btn-primary btn-sm" disabled={createLink.isPending}>
+              <button type="submit" className="btn btn-primary btn-sm" disabled={createLink.isPending || !canWriteGraph(me.data, pending.fromProduct) || !pending.toProduct || featureLevel && (!pending.fromFeature || !pending.toFeature)}>
                 {ru.graph.create}
               </button>
-              <button type="button" className="btn btn-sm" onClick={() => setPending(null)}>
+              <button type="button" className="btn btn-sm" onClick={() => { setPending(null); setFormOpen(false) }}>
                 {ru.app.cancel}
               </button>
             </div>
@@ -522,6 +547,7 @@ function GraphInner() {
           </div>
         )}
       </div>
+      <ContractsPanel />
     </section>
   )
 }

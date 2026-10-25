@@ -271,7 +271,11 @@ func (s *Server) GetStrategicSlice(ctx context.Context, req gen.GetStrategicSlic
 		out.Features = append(out.Features, gen.StrategicFeature{Id: f.ID, Name: f.Name, Status: string(f.Status), TotalValue: money(f.TotalValue), PlannedDate: datePtr(f.PlannedDate), Affected: f.Affected})
 	}
 	for _, c := range sl.Contracts {
-		out.Contracts = append(out.Contracts, toContract(c, kernel.Date{}))
+		_, ready, err := s.d.Portfolio.Contract(ctx, scope(ctx), c.ID)
+		if err != nil {
+			return nil, err
+		}
+		out.Contracts = append(out.Contracts, toContract(c, ready))
 	}
 	return gen.GetStrategicSlice200JSONResponse(out), nil
 }
@@ -567,4 +571,30 @@ func (s *Server) checkProductLimit(ctx context.Context) error {
 		return err
 	}
 	return s.d.Licensing.CheckLimit(ctx, scope(ctx).Subject(), licensing.ResourceProducts, len(existing))
+}
+
+// ListCapabilities exposes the private product hierarchy (PG-02).
+func (s *Server) ListCapabilities(ctx context.Context, req gen.ListCapabilitiesRequestObject) (gen.ListCapabilitiesResponseObject, error) {
+	cs, err := s.d.Portfolio.Capabilities(ctx, scope(ctx), req.ProductId)
+	if err != nil {
+		return nil, err
+	}
+	out := make(gen.ListCapabilities200JSONResponse, 0, len(cs))
+	for _, c := range cs {
+		out = append(out, gen.Capability{Id: c.ID, ProductId: c.ProductID, Name: c.Name})
+	}
+	return out, nil
+}
+
+// ListRequirements exposes private feature requirements (PG-02).
+func (s *Server) ListRequirements(ctx context.Context, req gen.ListRequirementsRequestObject) (gen.ListRequirementsResponseObject, error) {
+	rs, err := s.d.Portfolio.Requirements(ctx, scope(ctx), req.FeatureId)
+	if err != nil {
+		return nil, err
+	}
+	out := make(gen.ListRequirements200JSONResponse, 0, len(rs))
+	for _, r := range rs {
+		out = append(out, gen.Requirement{Id: r.ID, ProductId: r.ProductID, FeatureId: r.FeatureID, Text: r.Text})
+	}
+	return out, nil
 }

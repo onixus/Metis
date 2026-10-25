@@ -3674,6 +3674,7 @@ type LicenseStatus struct {
 
 // Link defines model for Link.
 type Link struct {
+	// ContractId Только integration в направлении consumer→provider с точными сторонами контракта
 	ContractId    *openapi_types.UUID `json:"contract_id,omitempty"`
 	CreatedAt     time.Time           `json:"created_at"`
 	Criticality   LinkCriticality     `json:"criticality"`
@@ -3693,6 +3694,7 @@ type LinkType string
 
 // LinkInput defines model for LinkInput.
 type LinkInput struct {
+	// ContractId Только integration в направлении consumer→provider с точными сторонами контракта
 	ContractId    *openapi_types.UUID  `json:"contract_id,omitempty"`
 	Criticality   LinkInputCriticality `json:"criticality"`
 	FromFeatureId *openapi_types.UUID  `json:"from_feature_id,omitempty"`
@@ -5548,6 +5550,9 @@ type ServerInterface interface {
 	// RequestDeliveryEpic Поставить создание эпика в outbox (DL-01)
 	// (POST /features/{featureId}/request-epic)
 	RequestDeliveryEpic(w http.ResponseWriter, r *http.Request, featureId FeatureId)
+	// ListRequirements Прочитать иерархию продукта (PG-02)
+	// (GET /features/{featureId}/requirements)
+	ListRequirements(w http.ResponseWriter, r *http.Request, featureId FeatureId)
 	// CreateRequirement Добавить требование (PG-02)
 	// (POST /features/{featureId}/requirements)
 	CreateRequirement(w http.ResponseWriter, r *http.Request, featureId FeatureId)
@@ -5614,6 +5619,9 @@ type ServerInterface interface {
 	// ListBaselines Сертифицированные конфигурации продукта (CM-07)
 	// (GET /products/{productId}/baselines)
 	ListBaselines(w http.ResponseWriter, r *http.Request, productId ProductId)
+	// ListCapabilities Прочитать иерархию продукта (PG-02)
+	// (GET /products/{productId}/capabilities)
+	ListCapabilities(w http.ResponseWriter, r *http.Request, productId ProductId)
 	// CreateCapability Создать возможность (PG-02)
 	// (POST /products/{productId}/capabilities)
 	CreateCapability(w http.ResponseWriter, r *http.Request, productId ProductId)
@@ -6421,6 +6429,12 @@ func (_ Unimplemented) RequestDeliveryEpic(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListRequirements Прочитать иерархию продукта (PG-02)
+// (GET /features/{featureId}/requirements)
+func (_ Unimplemented) ListRequirements(w http.ResponseWriter, r *http.Request, featureId FeatureId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // CreateRequirement Добавить требование (PG-02)
 // (POST /features/{featureId}/requirements)
 func (_ Unimplemented) CreateRequirement(w http.ResponseWriter, r *http.Request, featureId FeatureId) {
@@ -6550,6 +6564,12 @@ func (_ Unimplemented) UpdateProduct(w http.ResponseWriter, r *http.Request, pro
 // ListBaselines Сертифицированные конфигурации продукта (CM-07)
 // (GET /products/{productId}/baselines)
 func (_ Unimplemented) ListBaselines(w http.ResponseWriter, r *http.Request, productId ProductId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListCapabilities Прочитать иерархию продукта (PG-02)
+// (GET /products/{productId}/capabilities)
+func (_ Unimplemented) ListCapabilities(w http.ResponseWriter, r *http.Request, productId ProductId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9374,6 +9394,32 @@ func (siw *ServerInterfaceWrapper) RequestDeliveryEpic(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// ListRequirements operation middleware
+func (siw *ServerInterfaceWrapper) ListRequirements(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "featureId" -------------
+	var featureId FeatureId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "featureId", chi.URLParam(r, "featureId"), &featureId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "featureId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRequirements(w, r, featureId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateRequirement operation middleware
 func (siw *ServerInterfaceWrapper) CreateRequirement(w http.ResponseWriter, r *http.Request) {
 
@@ -9898,6 +9944,32 @@ func (siw *ServerInterfaceWrapper) ListBaselines(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListBaselines(w, r, productId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCapabilities operation middleware
+func (siw *ServerInterfaceWrapper) ListCapabilities(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCapabilities(w, r, productId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12761,6 +12833,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/products/{productId}/strategic", wrapper.GetStrategicSlice)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/products/{productId}/capabilities", wrapper.ListCapabilities)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/products/{productId}/capabilities", wrapper.CreateCapability)
 	})
 	r.Group(func(r chi.Router) {
@@ -12777,6 +12852,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/features/{featureId}", wrapper.UpdateFeature)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/features/{featureId}/requirements", wrapper.ListRequirements)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/features/{featureId}/requirements", wrapper.CreateRequirement)
@@ -16908,6 +16986,45 @@ func (response RequestDeliveryEpicdefaultApplicationProblemPlusJSONResponse) Vis
 	return err
 }
 
+type ListRequirementsRequestObject struct {
+	FeatureId FeatureId `json:"featureId"`
+}
+
+type ListRequirementsResponseObject interface {
+	VisitListRequirementsResponse(w http.ResponseWriter) error
+}
+
+type ListRequirements200JSONResponse []Requirement
+
+func (response ListRequirements200JSONResponse) VisitListRequirementsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRequirementsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListRequirementsdefaultApplicationProblemPlusJSONResponse) VisitListRequirementsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateRequirementRequestObject struct {
 	FeatureId FeatureId `json:"featureId"`
 	Body      *CreateRequirementJSONRequestBody
@@ -17774,6 +17891,45 @@ type ListBaselinesdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ListBaselinesdefaultApplicationProblemPlusJSONResponse) VisitListBaselinesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCapabilitiesRequestObject struct {
+	ProductId ProductId `json:"productId"`
+}
+
+type ListCapabilitiesResponseObject interface {
+	VisitListCapabilitiesResponse(w http.ResponseWriter) error
+}
+
+type ListCapabilities200JSONResponse []Capability
+
+func (response ListCapabilities200JSONResponse) VisitListCapabilitiesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCapabilitiesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListCapabilitiesdefaultApplicationProblemPlusJSONResponse) VisitListCapabilitiesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -21374,6 +21530,9 @@ type StrictServerInterface interface {
 	// RequestDeliveryEpic Поставить создание эпика в outbox (DL-01)
 	// (POST /features/{featureId}/request-epic)
 	RequestDeliveryEpic(ctx context.Context, request RequestDeliveryEpicRequestObject) (RequestDeliveryEpicResponseObject, error)
+	// ListRequirements Прочитать иерархию продукта (PG-02)
+	// (GET /features/{featureId}/requirements)
+	ListRequirements(ctx context.Context, request ListRequirementsRequestObject) (ListRequirementsResponseObject, error)
 	// CreateRequirement Добавить требование (PG-02)
 	// (POST /features/{featureId}/requirements)
 	CreateRequirement(ctx context.Context, request CreateRequirementRequestObject) (CreateRequirementResponseObject, error)
@@ -21440,6 +21599,9 @@ type StrictServerInterface interface {
 	// ListBaselines Сертифицированные конфигурации продукта (CM-07)
 	// (GET /products/{productId}/baselines)
 	ListBaselines(ctx context.Context, request ListBaselinesRequestObject) (ListBaselinesResponseObject, error)
+	// ListCapabilities Прочитать иерархию продукта (PG-02)
+	// (GET /products/{productId}/capabilities)
+	ListCapabilities(ctx context.Context, request ListCapabilitiesRequestObject) (ListCapabilitiesResponseObject, error)
 	// CreateCapability Создать возможность (PG-02)
 	// (POST /products/{productId}/capabilities)
 	CreateCapability(ctx context.Context, request CreateCapabilityRequestObject) (CreateCapabilityResponseObject, error)
@@ -24335,6 +24497,32 @@ func (sh *strictHandler) RequestDeliveryEpic(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// ListRequirements operation middleware
+func (sh *strictHandler) ListRequirements(w http.ResponseWriter, r *http.Request, featureId FeatureId) {
+	var request ListRequirementsRequestObject
+
+	request.FeatureId = featureId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRequirements(ctx, request.(ListRequirementsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRequirements")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRequirementsResponseObject); ok {
+		if err := validResponse.VisitListRequirementsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CreateRequirement operation middleware
 func (sh *strictHandler) CreateRequirement(w http.ResponseWriter, r *http.Request, featureId FeatureId) {
 	var request CreateRequirementRequestObject
@@ -24951,6 +25139,32 @@ func (sh *strictHandler) ListBaselines(w http.ResponseWriter, r *http.Request, p
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListBaselinesResponseObject); ok {
 		if err := validResponse.VisitListBaselinesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCapabilities operation middleware
+func (sh *strictHandler) ListCapabilities(w http.ResponseWriter, r *http.Request, productId ProductId) {
+	var request ListCapabilitiesRequestObject
+
+	request.ProductId = productId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCapabilities(ctx, request.(ListCapabilitiesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCapabilities")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCapabilitiesResponseObject); ok {
+		if err := validResponse.VisitListCapabilitiesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

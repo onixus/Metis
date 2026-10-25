@@ -1,0 +1,43 @@
+{
+  "base_sha": "280d4c6f1682ad70aa2632974e913186047907fa",
+  "date": "2026-10-25",
+  "checks": {
+    "race": {
+      "result": "PASS",
+      "log_sha256": "1d2a3504af490b5539955dbcb304810a1a136de810fa90bdf89c379aa5f13328"
+    },
+    "lint": {
+      "result": "PASS",
+      "log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47"
+    },
+    "licenses": {
+      "result": "PASS",
+      "log_sha256": "197b24b6f9e946ba51b0f483f7262dd5c8bb4986c7199db31f75272b67340c36"
+    },
+    "gitleaks": {
+      "result": "PASS",
+      "log_sha256": "210dd36a707a086583ab5b4df9d0714c78a69ceac727f0d59f6fe44b364c3176"
+    },
+    "regeneration": {
+      "result": "PASS",
+      "log_sha256": "44246dee6544220610a11848091a453427f15dd0bb1a1c541124e10bd68a0179"
+    },
+    "http": {
+      "result": "PASS",
+      "log_sha256": "a36c8c3d634f57d2036f5e1846bf0fd3b5fbad3df300c60cd4e52c9a9b0177dd"
+    },
+    "browser": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "source-browser": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "web_tests": 26,
+  "generated_files": 43,
+  "web_index_sha256": "8d1dc587b1008acda68aad2a4bc39ddd4c670255849b807d92c98b70d90cc565",
+  "api_binary_sha256": "b216d5b823816a378ed75f4ebe8bd81277ccdcb00152d0d3b8953ccde4b07828",
+  "fixture": "PostgreSQL16.14 UTF8 synthetic, loopback API/HMAC, Chromium, no API mocks"
+}

@@ -20,6 +20,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--temp-dir', required=True, help='New path; existing paths are rejected')
     parser.add_argument('--port', type=int, default=18057)
+    parser.add_argument('--database-url-file', help='Private file with an isolated synthetic PostgreSQL URL')
+    parser.add_argument('--crm-dir', help='Synthetic local CRM CSV fixture directory')
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[2]
     temp = create_private_directory(args.temp_dir)
@@ -33,6 +35,13 @@ def main():
                    METIS_HMAC_ISSUER='metis-ds56-visual', METIS_STORAGE='memory', METIS_SEED='true',
                    METIS_HTTP_ADDR=f'127.0.0.1:{args.port}', METIS_OTEL_EXPORTER='none',
                    METIS_WEB_DIR=str(repo / 'web/dist'))
+        if args.database_url_file:
+            database_url = Path(args.database_url_file).read_text().strip()
+            if len(database_url) > 4096 or not database_url.startswith(('postgres://', 'postgresql://')):
+                raise ValueError('Expected a bounded PostgreSQL URL in the private file')
+            env.update(METIS_STORAGE='postgres', METIS_DATABASE_URL=database_url, METIS_MIGRATE='true')
+        if args.crm_dir:
+            env.update(METIS_CRM_PROVIDER='csv', METIS_CRM_DIR=str(Path(args.crm_dir).absolute()))
         profiles = [('admin', 'admin', '', 'full'), ('cpo', 'cpo', '', 'full'),
                     ('pm', 'pm', 'soar', 'none'), ('pm-other', 'pm', 'edr', 'none'),
                     ('dev_lead', 'dev_lead', '', 'none'), ('marketing', 'marketing', '', 'none'),

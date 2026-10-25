@@ -18,6 +18,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/economics"
+	modeling "github.com/onixus/metis/internal/economics/modeling"
 	"github.com/onixus/metis/internal/httpapi/request"
 	"github.com/onixus/metis/internal/ports"
 )
@@ -623,6 +624,7 @@ func (e EvidenceItemStatus) Valid() bool {
 const (
 	ExplanationKindField  ExplanationKind = "field"
 	ExplanationKindMetric ExplanationKind = "metric"
+	ExplanationKindSource ExplanationKind = "source"
 )
 
 // Valid indicates whether the value is a known member of the ExplanationKind enum.
@@ -631,6 +633,8 @@ func (e ExplanationKind) Valid() bool {
 	case ExplanationKindField:
 		return true
 	case ExplanationKindMetric:
+		return true
+	case ExplanationKindSource:
 		return true
 	default:
 		return false
@@ -763,6 +767,27 @@ func (e FinancialFieldInputType) Valid() bool {
 	case FinancialFieldInputTypePercent:
 		return true
 	case FinancialFieldInputTypeReference:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FormulaSourceObservationKind.
+const (
+	FormulaSourceObservationKindCrmRevenue FormulaSourceObservationKind = "crm_revenue"
+	FormulaSourceObservationKindHeadcount  FormulaSourceObservationKind = "headcount"
+	FormulaSourceObservationKindWorklogs   FormulaSourceObservationKind = "worklogs"
+)
+
+// Valid indicates whether the value is a known member of the FormulaSourceObservationKind enum.
+func (e FormulaSourceObservationKind) Valid() bool {
+	switch e {
+	case FormulaSourceObservationKindCrmRevenue:
+		return true
+	case FormulaSourceObservationKindHeadcount:
+		return true
+	case FormulaSourceObservationKindWorklogs:
 		return true
 	default:
 		return false
@@ -1168,6 +1193,27 @@ func (e MeProducts) Valid() bool {
 	case MeProductsPrivate:
 		return true
 	case MeProductsStrategic:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MetricVersionResultType.
+const (
+	MetricVersionResultTypeMoney   MetricVersionResultType = "money"
+	MetricVersionResultTypeNumber  MetricVersionResultType = "number"
+	MetricVersionResultTypePercent MetricVersionResultType = "percent"
+)
+
+// Valid indicates whether the value is a known member of the MetricVersionResultType enum.
+func (e MetricVersionResultType) Valid() bool {
+	switch e {
+	case MetricVersionResultTypeMoney:
+		return true
+	case MetricVersionResultTypeNumber:
+		return true
+	case MetricVersionResultTypePercent:
 		return true
 	default:
 		return false
@@ -1759,6 +1805,27 @@ func (e SalesSafeReleaseStatus) Valid() bool {
 	case SalesSafeReleaseStatusReadyForCertification:
 		return true
 	case SalesSafeReleaseStatusReleased:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScenarioOverrideSource.
+const (
+	ScenarioOverrideSourceCrmRevenue ScenarioOverrideSource = "crm_revenue"
+	ScenarioOverrideSourceHeadcount  ScenarioOverrideSource = "headcount"
+	ScenarioOverrideSourceWorklogs   ScenarioOverrideSource = "worklogs"
+)
+
+// Valid indicates whether the value is a known member of the ScenarioOverrideSource enum.
+func (e ScenarioOverrideSource) Valid() bool {
+	switch e {
+	case ScenarioOverrideSourceCrmRevenue:
+		return true
+	case ScenarioOverrideSourceHeadcount:
+		return true
+	case ScenarioOverrideSourceWorklogs:
 		return true
 	default:
 		return false
@@ -2366,6 +2433,12 @@ type AuditVerifyResult struct {
 	Reason    *string `json:"reason,omitempty"`
 }
 
+// BookMetricResult defines model for BookMetricResult.
+type BookMetricResult struct {
+	Metric   Explanation           `json:"metric"`
+	Snapshot EconomicsSnapshotInfo `json:"snapshot"`
+}
+
 // BranchCost defines model for BranchCost.
 type BranchCost struct {
 	Branch    string             `json:"branch"`
@@ -2518,15 +2591,25 @@ type CommitmentAlertActionInputKind string
 
 // CommitmentImpact defines model for CommitmentImpact.
 type CommitmentImpact struct {
-	Breached   bool `json:"breached"`
-	Commitment struct {
-		DueDate    *openapi_types.Date `json:"due_date,omitempty"`
-		Id         *openapi_types.UUID `json:"id,omitempty"`
-		ProductId  *openapi_types.UUID `json:"product_id,omitempty"`
-		Regulatory *bool               `json:"regulatory,omitempty"`
-		Title      *string             `json:"title,omitempty"`
+	BaselineBreached bool                `json:"baseline_breached"`
+	BaselineDate     *openapi_types.Date `json:"baseline_date,omitempty"`
+	Breached         bool                `json:"breached"`
+	Commitment       struct {
+		DueDate        *openapi_types.Date `json:"due_date,omitempty"`
+		Id             *openapi_types.UUID `json:"id,omitempty"`
+		PlannedDate    *openapi_types.Date `json:"planned_date,omitempty"`
+		PlanningSource *string             `json:"planning_source,omitempty"`
+		PlanningStatus *string             `json:"planning_status,omitempty"`
+		ProductId      *openapi_types.UUID `json:"product_id,omitempty"`
+		Regulatory     *bool               `json:"regulatory,omitempty"`
+		Title          *string             `json:"title,omitempty"`
 	} `json:"commitment"`
-	Reason *string `json:"reason,omitempty"`
+
+	// Known Плановая дата и срок известны
+	Known         bool                `json:"known"`
+	NewlyBreached bool                `json:"newly_breached"`
+	Reason        *string             `json:"reason,omitempty"`
+	ScenarioDate  *openapi_types.Date `json:"scenario_date,omitempty"`
 }
 
 // CommitmentInput defines model for CommitmentInput.
@@ -2931,6 +3014,16 @@ type EconomicsSnapshotInfo = economics.SnapshotInfo
 // EconomicsSource defines model for EconomicsSource.
 type EconomicsSource = economics.Source
 
+// EconomicsSourceSnapshotRef defines model for EconomicsSourceSnapshotRef.
+type EconomicsSourceSnapshotRef struct {
+	AsOf          time.Time `json:"as_of"`
+	CapturedValue string    `json:"captured_value"`
+	Currency      string    `json:"currency"`
+	Kind          string    `json:"kind"`
+	Overridden    bool      `json:"overridden"`
+	SnapshotId    string    `json:"snapshot_id"`
+}
+
 // EconomicsTeamCost defines model for EconomicsTeamCost.
 type EconomicsTeamCost = economics.TeamCost
 
@@ -3027,12 +3120,13 @@ type EvidenceItemInput struct {
 
 // Explanation defines model for Explanation.
 type Explanation struct {
-	Expression *string         `json:"expression,omitempty"`
-	Inputs     *[]Explanation  `json:"inputs,omitempty"`
-	Key        string          `json:"key"`
-	Kind       ExplanationKind `json:"kind"`
-	Rows       *[]FactRow      `json:"rows,omitempty"`
-	Value      string          `json:"value"`
+	Expression *string                     `json:"expression,omitempty"`
+	Inputs     *[]Explanation              `json:"inputs,omitempty"`
+	Key        string                      `json:"key"`
+	Kind       ExplanationKind             `json:"kind"`
+	Rows       *[]FactRow                  `json:"rows,omitempty"`
+	Sources    *[]FormulaSourceObservation `json:"sources,omitempty"`
+	Value      string                      `json:"value"`
 }
 
 // ExplanationKind defines model for Explanation.Kind.
@@ -3040,17 +3134,20 @@ type ExplanationKind string
 
 // FactRow defines model for FactRow.
 type FactRow struct {
-	BatchId     *openapi_types.UUID `json:"batch_id,omitempty"`
-	DataVersion *int                `json:"data_version,omitempty"`
-	FieldKey    string              `json:"field_key"`
-	Id          openapi_types.UUID  `json:"id"`
-	Item        *string             `json:"item,omitempty"`
-	Period      string              `json:"period"`
-	ProductId   *openapi_types.UUID `json:"product_id,omitempty"`
-	Row         *int                `json:"row,omitempty"`
-	Sheet       *string             `json:"sheet,omitempty"`
-	TeamId      *openapi_types.UUID `json:"team_id,omitempty"`
-	Value       string              `json:"value"`
+	BatchId *openapi_types.UUID `json:"batch_id,omitempty"`
+
+	// BookProductId Для факта книги batch_id обозначает snapshot ID, data_version — версию книги; отсутствие поля означает исходную версию modeling
+	BookProductId *openapi_types.UUID `json:"book_product_id,omitempty"`
+	DataVersion   *int                `json:"data_version,omitempty"`
+	FieldKey      string              `json:"field_key"`
+	Id            openapi_types.UUID  `json:"id"`
+	Item          *string             `json:"item,omitempty"`
+	Period        string              `json:"period"`
+	ProductId     *openapi_types.UUID `json:"product_id,omitempty"`
+	Row           *int                `json:"row,omitempty"`
+	Sheet         *string             `json:"sheet,omitempty"`
+	TeamId        *openapi_types.UUID `json:"team_id,omitempty"`
+	Value         string              `json:"value"`
 }
 
 // Feature defines model for Feature.
@@ -3130,11 +3227,14 @@ type FeatureValue struct {
 
 // FinanceFileInput defines model for FinanceFileInput.
 type FinanceFileInput struct {
-	ContentBase64   string          `json:"content_base64"`
-	ExpectedVersion int             `json:"expected_version"`
-	Filename        string          `json:"filename"`
-	Recalculate     *bool           `json:"recalculate,omitempty"`
-	Template        FinanceTemplate `json:"template"`
+	ContentBase64   string `json:"content_base64"`
+	ExpectedVersion int    `json:"expected_version"`
+	Filename        string `json:"filename"`
+
+	// PreserveRules Сохранить правила и ручные значения однозначно сопоставленных строк; неоднозначности отклоняются.
+	PreserveRules *bool           `json:"preserve_rules,omitempty"`
+	Recalculate   *bool           `json:"recalculate,omitempty"`
+	Template      FinanceTemplate `json:"template"`
 }
 
 // FinanceImportResult defines model for FinanceImportResult.
@@ -3218,6 +3318,32 @@ type Forecast struct {
 	Throughput    *[]int              `json:"throughput,omitempty"`
 }
 
+// FormulaSourceObservation defines model for FormulaSourceObservation.
+type FormulaSourceObservation struct {
+	AsOf time.Time `json:"as_of"`
+
+	// CapturedValue Фактическое значение закреплённого снимка
+	CapturedValue string                       `json:"captured_value"`
+	Currency      *string                      `json:"currency,omitempty"`
+	Item          *string                      `json:"item,omitempty"`
+	Kind          FormulaSourceObservationKind `json:"kind"`
+
+	// Overridden Результат источника подменён только внутри сценария
+	Overridden bool                `json:"overridden"`
+	Period     string              `json:"period"`
+	ProductId  *openapi_types.UUID `json:"product_id,omitempty"`
+	Provenance []struct {
+		RecordId string `json:"record_id"`
+		Source   string `json:"source"`
+		Version  string `json:"version"`
+	} `json:"provenance"`
+	SnapshotId string              `json:"snapshot_id"`
+	TeamId     *openapi_types.UUID `json:"team_id,omitempty"`
+}
+
+// FormulaSourceObservationKind defines model for FormulaSourceObservation.Kind.
+type FormulaSourceObservationKind string
+
 // Gate defines model for Gate.
 type Gate struct {
 	Checklist          []ChecklistItem     `json:"checklist"`
@@ -3266,6 +3392,45 @@ type GateUpdate struct {
 type GraphSettings struct {
 	// Coefficients Коэффициенты критичности как десятичные строки
 	Coefficients map[string]string `json:"coefficients"`
+}
+
+// HistoricalFacts defines model for HistoricalFacts.
+type HistoricalFacts struct {
+	Batch ImportBatch `json:"batch"`
+	Facts []FactRow   `json:"facts"`
+}
+
+// HistoricalTeamShare defines model for HistoricalTeamShare.
+type HistoricalTeamShare struct {
+	Period    string             `json:"period"`
+	ProductId openapi_types.UUID `json:"product_id"`
+	Share     string             `json:"share"`
+	Source    string             `json:"source"`
+	TeamId    openapi_types.UUID `json:"team_id"`
+}
+
+// HistoryArchive defines model for HistoryArchive.
+type HistoryArchive = modeling.HistoryArchive
+
+// HistoryUnificationPreview defines model for HistoryUnificationPreview.
+type HistoryUnificationPreview = modeling.HistoryUnificationPreview
+
+// HistoryUnificationRequest defines model for HistoryUnificationRequest.
+type HistoryUnificationRequest struct {
+	// Digest Контрольная сумма подтверждённого предпросмотра; обязательна при применении
+	Digest               *string `json:"digest,omitempty"`
+	ExpectedBookVersion  int     `json:"expected_book_version"`
+	ExpectedModelVersion int     `json:"expected_model_version"`
+}
+
+// HistoryUnificationStatus defines model for HistoryUnificationStatus.
+type HistoryUnificationStatus struct {
+	Active        bool                `json:"active"`
+	BookProductId *openapi_types.UUID `json:"book_product_id,omitempty"`
+	Digest        *string             `json:"digest,omitempty"`
+	FieldKeys     *map[string]string  `json:"field_keys,omitempty"`
+	MetricKeys    *map[string]string  `json:"metric_keys,omitempty"`
+	Period        string              `json:"period"`
 }
 
 // HubInfo defines model for HubInfo.
@@ -3345,12 +3510,29 @@ type ImportBatch struct {
 // ImportBatchStatus defines model for ImportBatch.Status.
 type ImportBatchStatus string
 
+// ImportCategoryTotal defines model for ImportCategoryTotal.
+type ImportCategoryTotal struct {
+	Category string `json:"category"`
+
+	// Current Сумма в минорных единицах
+	Current string `json:"current"`
+
+	// Delta Изменение в минорных единицах
+	Delta string `json:"delta"`
+
+	// Previous Сумма в минорных единицах
+	Previous string `json:"previous"`
+}
+
 // ImportColumn defines model for ImportColumn.
 type ImportColumn struct {
 	Column     string `json:"column"`
 	FieldKey   string `json:"field_key"`
 	MinorUnits *bool  `json:"minor_units,omitempty"`
 }
+
+// ImportReconciliation defines model for ImportReconciliation.
+type ImportReconciliation = economics.ImportReconciliation
 
 // ImportResult defines model for ImportResult.
 type ImportResult struct {
@@ -3526,6 +3708,17 @@ type LinkInputCriticality string
 // LinkInputType defines model for LinkInput.Type.
 type LinkInputType string
 
+// ManualFinancialValue defines model for ManualFinancialValue.
+type ManualFinancialValue struct {
+	Item      *string             `json:"item,omitempty"`
+	Period    string              `json:"period"`
+	ProductId openapi_types.UUID  `json:"product_id"`
+	TeamId    *openapi_types.UUID `json:"team_id,omitempty"`
+
+	// Value Точное число; деньги в минорных единицах
+	Value string `json:"value"`
+}
+
 // Me defines model for Me.
 type Me struct {
 	AllProducts MeAllProducts         `json:"all_products"`
@@ -3595,8 +3788,14 @@ type MetricVersion struct {
 		Key  *string `json:"key,omitempty"`
 		Kind *string `json:"kind,omitempty"`
 	} `json:"refs,omitempty"`
-	Version int `json:"version"`
+
+	// ResultType Сохранённый тип перенесённого показателя книги; последующие версии формулы сохраняют этот тип
+	ResultType *MetricVersionResultType `json:"result_type,omitempty"`
+	Version    int                      `json:"version"`
 }
+
+// MetricVersionResultType Сохранённый тип перенесённого показателя книги; последующие версии формулы сохраняют этот тип
+type MetricVersionResultType string
 
 // Money defines model for Money.
 type Money struct {
@@ -3994,21 +4193,30 @@ type ScenarioInput struct {
 
 // ScenarioOverride defines model for ScenarioOverride.
 type ScenarioOverride struct {
-	FieldKey  string              `json:"field_key"`
+	FieldKey  *string             `json:"field_key,omitempty"`
 	Period    *string             `json:"period,omitempty"`
 	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
-	Value     string              `json:"value"`
+
+	// Source Альтернатива field_key для сценарной подмены прямого источника
+	Source *ScenarioOverrideSource `json:"source,omitempty"`
+	TeamId *openapi_types.UUID     `json:"team_id,omitempty"`
+	Value  string                  `json:"value"`
 }
+
+// ScenarioOverrideSource Альтернатива field_key для сценарной подмены прямого источника
+type ScenarioOverrideSource string
 
 // ScenarioResult defines model for ScenarioResult.
 type ScenarioResult struct {
-	BaseMetrics *map[string]string  `json:"base_metrics,omitempty"`
-	BasePnl     *[]PnL              `json:"base_pnl,omitempty"`
-	Commitments *[]CommitmentImpact `json:"commitments,omitempty"`
-	Metrics     *map[string]string  `json:"metrics,omitempty"`
-	Pnl         *[]PnL              `json:"pnl,omitempty"`
-	Scenario    Scenario            `json:"scenario"`
-	Tracks      *[]TrackImpact      `json:"tracks,omitempty"`
+	BaseExplanations *map[string]Explanation `json:"base_explanations,omitempty"`
+	BaseMetrics      *map[string]string      `json:"base_metrics,omitempty"`
+	BasePnl          *[]PnL                  `json:"base_pnl,omitempty"`
+	Commitments      *[]CommitmentImpact     `json:"commitments,omitempty"`
+	Explanations     *map[string]Explanation `json:"explanations,omitempty"`
+	Metrics          *map[string]string      `json:"metrics,omitempty"`
+	Pnl              *[]PnL                  `json:"pnl,omitempty"`
+	Scenario         Scenario                `json:"scenario"`
+	Tracks           *[]TrackImpact          `json:"tracks,omitempty"`
 }
 
 // ScoreComponent defines model for ScoreComponent.
@@ -4668,6 +4876,13 @@ type ExportEconomicsParams struct {
 	Team            *string             `form:"team,omitempty" json:"team,omitempty"`
 }
 
+// EvaluateBookMetricParams defines parameters for EvaluateBookMetric.
+type EvaluateBookMetricParams struct {
+	Version         int                 `form:"version" json:"version"`
+	FilterProductId *openapi_types.UUID `form:"filter_product_id,omitempty" json:"filter_product_id,omitempty"`
+	Team            *string             `form:"team,omitempty" json:"team,omitempty"`
+}
+
 // GetEconomicsReportParams defines parameters for GetEconomicsReport.
 type GetEconomicsReportParams struct {
 	Version         *int                `form:"version,omitempty" json:"version,omitempty"`
@@ -4866,6 +5081,9 @@ type SaveBundleRuleJSONRequestBody = BundleRuleInput
 // SaveFinancialFieldJSONRequestBody defines body for SaveFinancialField for application/json ContentType.
 type SaveFinancialFieldJSONRequestBody = FinancialFieldInput
 
+// SetManualFinancialValueJSONRequestBody defines body for SetManualFinancialValue for application/json ContentType.
+type SetManualFinancialValueJSONRequestBody = ManualFinancialValue
+
 // SaveMetricJSONRequestBody defines body for SaveMetric for application/json ContentType.
 type SaveMetricJSONRequestBody = MetricInput
 
@@ -4947,8 +5165,17 @@ type ImportFinanceFileJSONRequestBody = FinanceFileInput
 // PreviewFinanceImportJSONRequestBody defines body for PreviewFinanceImport for application/json ContentType.
 type PreviewFinanceImportJSONRequestBody = FinanceFileInput
 
+// PreviewFinanceReconciliationJSONRequestBody defines body for PreviewFinanceReconciliation for application/json ContentType.
+type PreviewFinanceReconciliationJSONRequestBody = FinanceFileInput
+
 // CalculateEconomicsScenarioJSONRequestBody defines body for CalculateEconomicsScenario for application/json ContentType.
 type CalculateEconomicsScenarioJSONRequestBody = EconomicsScenario
+
+// ApplyEconomicsUnificationJSONRequestBody defines body for ApplyEconomicsUnification for application/json ContentType.
+type ApplyEconomicsUnificationJSONRequestBody = HistoryUnificationRequest
+
+// PreviewEconomicsUnificationJSONRequestBody defines body for PreviewEconomicsUnification for application/json ContentType.
+type PreviewEconomicsUnificationJSONRequestBody = HistoryUnificationRequest
 
 // ApplyFinanceWorklogsJSONRequestBody defines body for ApplyFinanceWorklogs for application/json ContentType.
 type ApplyFinanceWorklogsJSONRequestBody = EconomicsWorklogInput
@@ -5213,6 +5440,9 @@ type ServerInterface interface {
 	// SaveFinancialField Создать поле или новую версию его описания (EC-08, EC-11)
 	// (POST /economics/fields)
 	SaveFinancialField(w http.ResponseWriter, r *http.Request)
+	// SetManualFinancialValue Новая версия ручного значения поля модели (EC-08/11)
+	// (POST /economics/fields/{fieldKey}/manual-value)
+	SetManualFinancialValue(w http.ResponseWriter, r *http.Request, fieldKey string)
 	// ListImportBatches История загрузок финансовых данных (EC-07)
 	// (GET /economics/imports)
 	ListImportBatches(w http.ResponseWriter, r *http.Request, params ListImportBatchesParams)
@@ -5414,15 +5644,33 @@ type ServerInterface interface {
 	// ImportFinanceFile Импорт файла в новую версию периода (EC-01/07)
 	// (POST /products/{productId}/economics/{period}/import)
 	ImportFinanceFile(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
+	// EvaluateBookMetric Формула конструктора на закреплённой версии книги (EC-09/10/11)
+	// (GET /products/{productId}/economics/{period}/metrics/{metricKey})
+	EvaluateBookMetric(w http.ResponseWriter, r *http.Request, productId ProductId, period string, metricKey string, params EvaluateBookMetricParams)
 	// PreviewFinanceImport Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
 	// (POST /products/{productId}/economics/{period}/preview)
 	PreviewFinanceImport(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
+	// PreviewFinanceReconciliation Сверка повторного импорта с сохранением правил (EC-07/11)
+	// (POST /products/{productId}/economics/{period}/reconciliation)
+	PreviewFinanceReconciliation(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
 	// GetEconomicsReport P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
 	// (GET /products/{productId}/economics/{period}/report)
 	GetEconomicsReport(w http.ResponseWriter, r *http.Request, productId ProductId, period string, params GetEconomicsReportParams)
 	// CalculateEconomicsScenario Сценарий без изменения фактов (EC-13)
 	// (POST /products/{productId}/economics/{period}/scenario)
 	CalculateEconomicsScenario(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
+
+	// (POST /products/{productId}/economics/{period}/unification/apply)
+	ApplyEconomicsUnification(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
+
+	// (GET /products/{productId}/economics/{period}/unification/archive)
+	GetEconomicsUnificationArchive(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
+
+	// (POST /products/{productId}/economics/{period}/unification/preview)
+	PreviewEconomicsUnification(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
+
+	// (GET /products/{productId}/economics/{period}/unification/status)
+	GetEconomicsUnificationStatus(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
 	// ListEconomicsVersions История финансового периода (EC-11)
 	// (GET /products/{productId}/economics/{period}/versions)
 	ListEconomicsVersions(w http.ResponseWriter, r *http.Request, productId ProductId, period string)
@@ -5957,6 +6205,12 @@ func (_ Unimplemented) SaveFinancialField(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// SetManualFinancialValue Новая версия ручного значения поля модели (EC-08/11)
+// (POST /economics/fields/{fieldKey}/manual-value)
+func (_ Unimplemented) SetManualFinancialValue(w http.ResponseWriter, r *http.Request, fieldKey string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListImportBatches История загрузок финансовых данных (EC-07)
 // (GET /economics/imports)
 func (_ Unimplemented) ListImportBatches(w http.ResponseWriter, r *http.Request, params ListImportBatchesParams) {
@@ -6359,9 +6613,21 @@ func (_ Unimplemented) ImportFinanceFile(w http.ResponseWriter, r *http.Request,
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// EvaluateBookMetric Формула конструктора на закреплённой версии книги (EC-09/10/11)
+// (GET /products/{productId}/economics/{period}/metrics/{metricKey})
+func (_ Unimplemented) EvaluateBookMetric(w http.ResponseWriter, r *http.Request, productId ProductId, period string, metricKey string, params EvaluateBookMetricParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // PreviewFinanceImport Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
 // (POST /products/{productId}/economics/{period}/preview)
 func (_ Unimplemented) PreviewFinanceImport(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PreviewFinanceReconciliation Сверка повторного импорта с сохранением правил (EC-07/11)
+// (POST /products/{productId}/economics/{period}/reconciliation)
+func (_ Unimplemented) PreviewFinanceReconciliation(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6374,6 +6640,26 @@ func (_ Unimplemented) GetEconomicsReport(w http.ResponseWriter, r *http.Request
 // CalculateEconomicsScenario Сценарий без изменения фактов (EC-13)
 // (POST /products/{productId}/economics/{period}/scenario)
 func (_ Unimplemented) CalculateEconomicsScenario(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /products/{productId}/economics/{period}/unification/apply)
+func (_ Unimplemented) ApplyEconomicsUnification(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /products/{productId}/economics/{period}/unification/archive)
+func (_ Unimplemented) GetEconomicsUnificationArchive(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /products/{productId}/economics/{period}/unification/preview)
+func (_ Unimplemented) PreviewEconomicsUnification(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /products/{productId}/economics/{period}/unification/status)
+func (_ Unimplemented) GetEconomicsUnificationStatus(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7920,6 +8206,32 @@ func (siw *ServerInterfaceWrapper) SaveFinancialField(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SaveFinancialField(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetManualFinancialValue operation middleware
+func (siw *ServerInterfaceWrapper) SetManualFinancialValue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "fieldKey" -------------
+	var fieldKey string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldKey", chi.URLParam(r, "fieldKey"), &fieldKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldKey", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetManualFinancialValue(w, r, fieldKey)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10003,6 +10315,92 @@ func (siw *ServerInterfaceWrapper) ImportFinanceFile(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// EvaluateBookMetric operation middleware
+func (siw *ServerInterfaceWrapper) EvaluateBookMetric(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "period" -------------
+	var period string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "period", chi.URLParam(r, "period"), &period, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "metricKey" -------------
+	var metricKey string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "metricKey", chi.URLParam(r, "metricKey"), &metricKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "metricKey", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params EvaluateBookMetricParams
+
+	// ------------- Required query parameter "version" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "version", r.URL.Query(), &params.Version, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "version"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "filter_product_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter_product_id", r.URL.Query(), &params.FilterProductId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter_product_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter_product_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "team" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "team", r.URL.Query(), &params.Team, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "team"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EvaluateBookMetric(w, r, productId, period, metricKey, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PreviewFinanceImport operation middleware
 func (siw *ServerInterfaceWrapper) PreviewFinanceImport(w http.ResponseWriter, r *http.Request) {
 
@@ -10029,6 +10427,41 @@ func (siw *ServerInterfaceWrapper) PreviewFinanceImport(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PreviewFinanceImport(w, r, productId, period)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewFinanceReconciliation operation middleware
+func (siw *ServerInterfaceWrapper) PreviewFinanceReconciliation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "period" -------------
+	var period string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "period", chi.URLParam(r, "period"), &period, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewFinanceReconciliation(w, r, productId, period)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10141,6 +10574,146 @@ func (siw *ServerInterfaceWrapper) CalculateEconomicsScenario(w http.ResponseWri
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CalculateEconomicsScenario(w, r, productId, period)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ApplyEconomicsUnification operation middleware
+func (siw *ServerInterfaceWrapper) ApplyEconomicsUnification(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "period" -------------
+	var period string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "period", chi.URLParam(r, "period"), &period, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ApplyEconomicsUnification(w, r, productId, period)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetEconomicsUnificationArchive operation middleware
+func (siw *ServerInterfaceWrapper) GetEconomicsUnificationArchive(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "period" -------------
+	var period string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "period", chi.URLParam(r, "period"), &period, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetEconomicsUnificationArchive(w, r, productId, period)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewEconomicsUnification operation middleware
+func (siw *ServerInterfaceWrapper) PreviewEconomicsUnification(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "period" -------------
+	var period string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "period", chi.URLParam(r, "period"), &period, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewEconomicsUnification(w, r, productId, period)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetEconomicsUnificationStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetEconomicsUnificationStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "productId" -------------
+	var productId ProductId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", chi.URLParam(r, "productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "period" -------------
+	var period string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "period", chi.URLParam(r, "period"), &period, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "period", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetEconomicsUnificationStatus(w, r, productId, period)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12572,7 +13145,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/products/{productId}/economics/{period}/preview", wrapper.PreviewFinanceImport)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/products/{productId}/economics/{period}/reconciliation", wrapper.PreviewFinanceReconciliation)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/products/{productId}/economics/{period}/import", wrapper.ImportFinanceFile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/products/{productId}/economics/{period}/metrics/{metricKey}", wrapper.EvaluateBookMetric)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/products/{productId}/economics/{period}/versions", wrapper.ListEconomicsVersions)
@@ -12603,6 +13182,21 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/products/{productId}/economics/{period}/worklog-shares", wrapper.ApplyFinanceWorklogs)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/economics/fields/{fieldKey}/manual-value", wrapper.SetManualFinancialValue)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/products/{productId}/economics/{period}/unification/preview", wrapper.PreviewEconomicsUnification)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/products/{productId}/economics/{period}/unification/apply", wrapper.ApplyEconomicsUnification)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/products/{productId}/economics/{period}/unification/status", wrapper.GetEconomicsUnificationStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/products/{productId}/economics/{period}/unification/archive", wrapper.GetEconomicsUnificationArchive)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/economics/fields", wrapper.ListFinancialFields)
@@ -14900,6 +15494,46 @@ type SaveFinancialFielddefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response SaveFinancialFielddefaultApplicationProblemPlusJSONResponse) VisitSaveFinancialFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetManualFinancialValueRequestObject struct {
+	FieldKey string `json:"fieldKey"`
+	Body     *SetManualFinancialValueJSONRequestBody
+}
+
+type SetManualFinancialValueResponseObject interface {
+	VisitSetManualFinancialValueResponse(w http.ResponseWriter) error
+}
+
+type SetManualFinancialValue201JSONResponse FactRow
+
+func (response SetManualFinancialValue201JSONResponse) VisitSetManualFinancialValueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetManualFinancialValuedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetManualFinancialValuedefaultApplicationProblemPlusJSONResponse) VisitSetManualFinancialValueResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -17561,6 +18195,48 @@ func (response ImportFinanceFiledefaultApplicationProblemPlusJSONResponse) Visit
 	return err
 }
 
+type EvaluateBookMetricRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Period    string    `json:"period"`
+	MetricKey string    `json:"metricKey"`
+	Params    EvaluateBookMetricParams
+}
+
+type EvaluateBookMetricResponseObject interface {
+	VisitEvaluateBookMetricResponse(w http.ResponseWriter) error
+}
+
+type EvaluateBookMetric200JSONResponse BookMetricResult
+
+func (response EvaluateBookMetric200JSONResponse) VisitEvaluateBookMetricResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateBookMetricdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response EvaluateBookMetricdefaultApplicationProblemPlusJSONResponse) VisitEvaluateBookMetricResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type PreviewFinanceImportRequestObject struct {
 	ProductId ProductId `json:"productId"`
 	Period    string    `json:"period"`
@@ -17591,6 +18267,47 @@ type PreviewFinanceImportdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response PreviewFinanceImportdefaultApplicationProblemPlusJSONResponse) VisitPreviewFinanceImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PreviewFinanceReconciliationRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Period    string    `json:"period"`
+	Body      *PreviewFinanceReconciliationJSONRequestBody
+}
+
+type PreviewFinanceReconciliationResponseObject interface {
+	VisitPreviewFinanceReconciliationResponse(w http.ResponseWriter) error
+}
+
+type PreviewFinanceReconciliation200JSONResponse ImportReconciliation
+
+func (response PreviewFinanceReconciliation200JSONResponse) VisitPreviewFinanceReconciliationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PreviewFinanceReconciliationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PreviewFinanceReconciliationdefaultApplicationProblemPlusJSONResponse) VisitPreviewFinanceReconciliationResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -17673,6 +18390,168 @@ type CalculateEconomicsScenariodefaultApplicationProblemPlusJSONResponse struct 
 }
 
 func (response CalculateEconomicsScenariodefaultApplicationProblemPlusJSONResponse) VisitCalculateEconomicsScenarioResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyEconomicsUnificationRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Period    string    `json:"period"`
+	Body      *ApplyEconomicsUnificationJSONRequestBody
+}
+
+type ApplyEconomicsUnificationResponseObject interface {
+	VisitApplyEconomicsUnificationResponse(w http.ResponseWriter) error
+}
+
+type ApplyEconomicsUnification200JSONResponse HistoryUnificationPreview
+
+func (response ApplyEconomicsUnification200JSONResponse) VisitApplyEconomicsUnificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyEconomicsUnificationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ApplyEconomicsUnificationdefaultApplicationProblemPlusJSONResponse) VisitApplyEconomicsUnificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetEconomicsUnificationArchiveRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Period    string    `json:"period"`
+}
+
+type GetEconomicsUnificationArchiveResponseObject interface {
+	VisitGetEconomicsUnificationArchiveResponse(w http.ResponseWriter) error
+}
+
+type GetEconomicsUnificationArchive200JSONResponse HistoryArchive
+
+func (response GetEconomicsUnificationArchive200JSONResponse) VisitGetEconomicsUnificationArchiveResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetEconomicsUnificationArchivedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetEconomicsUnificationArchivedefaultApplicationProblemPlusJSONResponse) VisitGetEconomicsUnificationArchiveResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PreviewEconomicsUnificationRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Period    string    `json:"period"`
+	Body      *PreviewEconomicsUnificationJSONRequestBody
+}
+
+type PreviewEconomicsUnificationResponseObject interface {
+	VisitPreviewEconomicsUnificationResponse(w http.ResponseWriter) error
+}
+
+type PreviewEconomicsUnification200JSONResponse HistoryUnificationPreview
+
+func (response PreviewEconomicsUnification200JSONResponse) VisitPreviewEconomicsUnificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PreviewEconomicsUnificationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PreviewEconomicsUnificationdefaultApplicationProblemPlusJSONResponse) VisitPreviewEconomicsUnificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetEconomicsUnificationStatusRequestObject struct {
+	ProductId ProductId `json:"productId"`
+	Period    string    `json:"period"`
+}
+
+type GetEconomicsUnificationStatusResponseObject interface {
+	VisitGetEconomicsUnificationStatusResponse(w http.ResponseWriter) error
+}
+
+type GetEconomicsUnificationStatus200JSONResponse HistoryUnificationStatus
+
+func (response GetEconomicsUnificationStatus200JSONResponse) VisitGetEconomicsUnificationStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetEconomicsUnificationStatusdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetEconomicsUnificationStatusdefaultApplicationProblemPlusJSONResponse) VisitGetEconomicsUnificationStatusResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -20387,6 +21266,9 @@ type StrictServerInterface interface {
 	// SaveFinancialField Создать поле или новую версию его описания (EC-08, EC-11)
 	// (POST /economics/fields)
 	SaveFinancialField(ctx context.Context, request SaveFinancialFieldRequestObject) (SaveFinancialFieldResponseObject, error)
+	// SetManualFinancialValue Новая версия ручного значения поля модели (EC-08/11)
+	// (POST /economics/fields/{fieldKey}/manual-value)
+	SetManualFinancialValue(ctx context.Context, request SetManualFinancialValueRequestObject) (SetManualFinancialValueResponseObject, error)
 	// ListImportBatches История загрузок финансовых данных (EC-07)
 	// (GET /economics/imports)
 	ListImportBatches(ctx context.Context, request ListImportBatchesRequestObject) (ListImportBatchesResponseObject, error)
@@ -20588,15 +21470,33 @@ type StrictServerInterface interface {
 	// ImportFinanceFile Импорт файла в новую версию периода (EC-01/07)
 	// (POST /products/{productId}/economics/{period}/import)
 	ImportFinanceFile(ctx context.Context, request ImportFinanceFileRequestObject) (ImportFinanceFileResponseObject, error)
+	// EvaluateBookMetric Формула конструктора на закреплённой версии книги (EC-09/10/11)
+	// (GET /products/{productId}/economics/{period}/metrics/{metricKey})
+	EvaluateBookMetric(ctx context.Context, request EvaluateBookMetricRequestObject) (EvaluateBookMetricResponseObject, error)
 	// PreviewFinanceImport Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
 	// (POST /products/{productId}/economics/{period}/preview)
 	PreviewFinanceImport(ctx context.Context, request PreviewFinanceImportRequestObject) (PreviewFinanceImportResponseObject, error)
+	// PreviewFinanceReconciliation Сверка повторного импорта с сохранением правил (EC-07/11)
+	// (POST /products/{productId}/economics/{period}/reconciliation)
+	PreviewFinanceReconciliation(ctx context.Context, request PreviewFinanceReconciliationRequestObject) (PreviewFinanceReconciliationResponseObject, error)
 	// GetEconomicsReport P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
 	// (GET /products/{productId}/economics/{period}/report)
 	GetEconomicsReport(ctx context.Context, request GetEconomicsReportRequestObject) (GetEconomicsReportResponseObject, error)
 	// CalculateEconomicsScenario Сценарий без изменения фактов (EC-13)
 	// (POST /products/{productId}/economics/{period}/scenario)
 	CalculateEconomicsScenario(ctx context.Context, request CalculateEconomicsScenarioRequestObject) (CalculateEconomicsScenarioResponseObject, error)
+
+	// (POST /products/{productId}/economics/{period}/unification/apply)
+	ApplyEconomicsUnification(ctx context.Context, request ApplyEconomicsUnificationRequestObject) (ApplyEconomicsUnificationResponseObject, error)
+
+	// (GET /products/{productId}/economics/{period}/unification/archive)
+	GetEconomicsUnificationArchive(ctx context.Context, request GetEconomicsUnificationArchiveRequestObject) (GetEconomicsUnificationArchiveResponseObject, error)
+
+	// (POST /products/{productId}/economics/{period}/unification/preview)
+	PreviewEconomicsUnification(ctx context.Context, request PreviewEconomicsUnificationRequestObject) (PreviewEconomicsUnificationResponseObject, error)
+
+	// (GET /products/{productId}/economics/{period}/unification/status)
+	GetEconomicsUnificationStatus(ctx context.Context, request GetEconomicsUnificationStatusRequestObject) (GetEconomicsUnificationStatusResponseObject, error)
 	// ListEconomicsVersions История финансового периода (EC-11)
 	// (GET /products/{productId}/economics/{period}/versions)
 	ListEconomicsVersions(ctx context.Context, request ListEconomicsVersionsRequestObject) (ListEconomicsVersionsResponseObject, error)
@@ -22402,6 +23302,39 @@ func (sh *strictHandler) SaveFinancialField(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SaveFinancialFieldResponseObject); ok {
 		if err := validResponse.VisitSaveFinancialFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetManualFinancialValue operation middleware
+func (sh *strictHandler) SetManualFinancialValue(w http.ResponseWriter, r *http.Request, fieldKey string) {
+	var request SetManualFinancialValueRequestObject
+
+	request.FieldKey = fieldKey
+
+	var body SetManualFinancialValueJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetManualFinancialValue(ctx, request.(SetManualFinancialValueRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetManualFinancialValue")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetManualFinancialValueResponseObject); ok {
+		if err := validResponse.VisitSetManualFinancialValueResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -24329,6 +25262,35 @@ func (sh *strictHandler) ImportFinanceFile(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// EvaluateBookMetric operation middleware
+func (sh *strictHandler) EvaluateBookMetric(w http.ResponseWriter, r *http.Request, productId ProductId, period string, metricKey string, params EvaluateBookMetricParams) {
+	var request EvaluateBookMetricRequestObject
+
+	request.ProductId = productId
+	request.Period = period
+	request.MetricKey = metricKey
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EvaluateBookMetric(ctx, request.(EvaluateBookMetricRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EvaluateBookMetric")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EvaluateBookMetricResponseObject); ok {
+		if err := validResponse.VisitEvaluateBookMetricResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // PreviewFinanceImport operation middleware
 func (sh *strictHandler) PreviewFinanceImport(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
 	var request PreviewFinanceImportRequestObject
@@ -24356,6 +25318,40 @@ func (sh *strictHandler) PreviewFinanceImport(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PreviewFinanceImportResponseObject); ok {
 		if err := validResponse.VisitPreviewFinanceImportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PreviewFinanceReconciliation operation middleware
+func (sh *strictHandler) PreviewFinanceReconciliation(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	var request PreviewFinanceReconciliationRequestObject
+
+	request.ProductId = productId
+	request.Period = period
+
+	var body PreviewFinanceReconciliationJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PreviewFinanceReconciliation(ctx, request.(PreviewFinanceReconciliationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PreviewFinanceReconciliation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PreviewFinanceReconciliationResponseObject); ok {
+		if err := validResponse.VisitPreviewFinanceReconciliationResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -24418,6 +25414,128 @@ func (sh *strictHandler) CalculateEconomicsScenario(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CalculateEconomicsScenarioResponseObject); ok {
 		if err := validResponse.VisitCalculateEconomicsScenarioResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ApplyEconomicsUnification operation middleware
+func (sh *strictHandler) ApplyEconomicsUnification(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	var request ApplyEconomicsUnificationRequestObject
+
+	request.ProductId = productId
+	request.Period = period
+
+	var body ApplyEconomicsUnificationJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ApplyEconomicsUnification(ctx, request.(ApplyEconomicsUnificationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ApplyEconomicsUnification")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ApplyEconomicsUnificationResponseObject); ok {
+		if err := validResponse.VisitApplyEconomicsUnificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetEconomicsUnificationArchive operation middleware
+func (sh *strictHandler) GetEconomicsUnificationArchive(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	var request GetEconomicsUnificationArchiveRequestObject
+
+	request.ProductId = productId
+	request.Period = period
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetEconomicsUnificationArchive(ctx, request.(GetEconomicsUnificationArchiveRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetEconomicsUnificationArchive")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetEconomicsUnificationArchiveResponseObject); ok {
+		if err := validResponse.VisitGetEconomicsUnificationArchiveResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PreviewEconomicsUnification operation middleware
+func (sh *strictHandler) PreviewEconomicsUnification(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	var request PreviewEconomicsUnificationRequestObject
+
+	request.ProductId = productId
+	request.Period = period
+
+	var body PreviewEconomicsUnificationJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PreviewEconomicsUnification(ctx, request.(PreviewEconomicsUnificationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PreviewEconomicsUnification")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PreviewEconomicsUnificationResponseObject); ok {
+		if err := validResponse.VisitPreviewEconomicsUnificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetEconomicsUnificationStatus operation middleware
+func (sh *strictHandler) GetEconomicsUnificationStatus(w http.ResponseWriter, r *http.Request, productId ProductId, period string) {
+	var request GetEconomicsUnificationStatusRequestObject
+
+	request.ProductId = productId
+	request.Period = period
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetEconomicsUnificationStatus(ctx, request.(GetEconomicsUnificationStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetEconomicsUnificationStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetEconomicsUnificationStatusResponseObject); ok {
+		if err := validResponse.VisitGetEconomicsUnificationStatusResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

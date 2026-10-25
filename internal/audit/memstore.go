@@ -10,12 +10,16 @@ import (
 
 // MemStore — хранилище в памяти для тестов и стендов без БД.
 type MemStore struct {
-	mu   sync.RWMutex
-	recs []Record
+	appendMu sync.Mutex
+	mu       sync.RWMutex
+	recs     []Record
 }
 
 // NewMemStore создаёт пустое хранилище.
 func NewMemStore() *MemStore { return &MemStore{} }
+
+// appendMutex serializes sequence/hash assignment across loggers sharing this store.
+func (m *MemStore) appendMutex() *sync.Mutex { return &m.appendMu }
 
 // Last — последняя запись.
 func (m *MemStore) Last(_ context.Context, sc authz.Scope) (Record, error) {

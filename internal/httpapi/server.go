@@ -43,19 +43,20 @@ type Deps struct {
 	AuditStore audit.Store
 	Audit      *audit.Logger
 	// Модули; nil — соответствующие маршруты отвечают 503.
-	Signals         *signals.Service
-	Prioritization  *prioritization.Service
-	Roadmap         *roadmap.Service
-	CRM             ports.CRM
-	Discovery       *discovery.Service
-	Commitments     *commitments.Service
-	Compliance      *compliance.Service
-	Decisions       *decisions.Service
-	Delivery        *delivery.Service
-	DeliveryEnabled bool
-	Economics       *economics.Service
-	Finance         ports.Finance
-	FinanceWorklogs func(context.Context, authz.Scope, kernel.ID, string, int, bool) (economics.Snapshot, error)
+	Signals            *signals.Service
+	Prioritization     *prioritization.Service
+	Roadmap            *roadmap.Service
+	CRM                ports.CRM
+	Discovery          *discovery.Service
+	Commitments        *commitments.Service
+	Compliance         *compliance.Service
+	Decisions          *decisions.Service
+	Delivery           *delivery.Service
+	DeliveryEnabled    bool
+	Economics          *economics.Service
+	Finance            ports.Finance
+	FinanceWorklogs    func(context.Context, authz.Scope, kernel.ID, string, int, bool) (economics.Snapshot, error)
+	EvaluateBookMetric func(context.Context, authz.Scope, kernel.ID, string, int, string, kernel.ID, string) (economics.SnapshotInfo, modeling.Explanation, error)
 	// KnowledgeSpace — пространство базы знаний по умолчанию для страниц ADR (METIS_CONFLUENCE_SPACE).
 	KnowledgeSpace string
 	// Ready сообщает о готовности зависимостей (БД, миграции) для /readyz.

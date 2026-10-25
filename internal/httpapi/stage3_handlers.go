@@ -23,7 +23,17 @@ func toScenario(sn economics.Scenario) gen.Scenario {
 	overrides := make([]gen.ScenarioOverride, 0, len(sn.Overrides))
 	for _, o := range sn.Overrides {
 		period := o.Period.String()
-		overrides = append(overrides, gen.ScenarioOverride{FieldKey: o.FieldKey, ProductId: idPtr(o.ProductID),
+		var field *string
+		if o.FieldKey != "" {
+			key := o.FieldKey
+			field = &key
+		}
+		var source *gen.ScenarioOverrideSource
+		if o.Source != "" {
+			kind := gen.ScenarioOverrideSource(o.Source)
+			source = &kind
+		}
+		overrides = append(overrides, gen.ScenarioOverride{FieldKey: field, Source: source, ProductId: idPtr(o.ProductID), TeamId: idPtr(o.TeamID),
 			Period: &period, Value: decStr(o.Value)})
 	}
 	products := append([]kernel.ID(nil), sn.Products...)
@@ -55,6 +65,9 @@ func (s *Server) SaveScenario(ctx context.Context, req gen.SaveScenarioRequestOb
 	if err := s.requireEconomics(); err != nil {
 		return nil, err
 	}
+	if req.Body == nil {
+		return nil, kernel.Invalid("body", "обязательно")
+	}
 	b := req.Body
 	period, err := economics.ParsePeriod(b.Period)
 	if err != nil {
@@ -66,7 +79,13 @@ func (s *Server) SaveScenario(ctx context.Context, req gen.SaveScenarioRequestOb
 		sn.Products = append(sn.Products, *b.Products...)
 	}
 	if b.Overrides != nil {
+		if len(*b.Overrides) > 128 {
+			return nil, kernel.Invalid("overrides", "не более 128 входов сценария")
+		}
 		for _, o := range *b.Overrides {
+			if len(o.Value) == 0 || len(o.Value) > 512 {
+				return nil, kernel.Invalid("value", "число должно содержать от 1 до 512 символов")
+			}
 			value, err := parseDec(o.Value)
 			if err != nil {
 				return nil, err
@@ -75,8 +94,12 @@ func (s *Server) SaveScenario(ctx context.Context, req gen.SaveScenarioRequestOb
 			if err != nil {
 				return nil, err
 			}
-			sn.Overrides = append(sn.Overrides, economics.Override{FieldKey: o.FieldKey,
-				ProductID: idOrNil(o.ProductId), Period: op, Value: value})
+			var source economics.PlatformSourceKind
+			if o.Source != nil {
+				source = economics.PlatformSourceKind(*o.Source)
+			}
+			sn.Overrides = append(sn.Overrides, economics.Override{FieldKey: strOrEmpty(o.FieldKey), Source: source,
+				ProductID: idOrNil(o.ProductId), TeamID: idOrNil(o.TeamId), Period: op, Value: value})
 		}
 	}
 	saved, err := s.d.Modeling.SaveScenario(ctx, scope(ctx), sn)
@@ -109,13 +132,17 @@ func (s *Server) RunScenario(ctx context.Context, req gen.RunScenarioRequestObje
 	}
 	impacts := make([]gen.CommitmentImpact, 0, len(res.Commitments))
 	for _, c := range res.Commitments {
-		item := gen.CommitmentImpact{Breached: c.Breached}
+		item := gen.CommitmentImpact{Breached: c.Breached, Known: c.Known, BaselineBreached: c.BaselineBreached, NewlyBreached: c.NewlyBreached,
+			BaselineDate: datePtr(c.BaselineDate), ScenarioDate: datePtr(c.ScenarioDate)}
 		reason := c.Reason
 		item.Reason = &reason
 		id, product, title, regulatory := c.Commitment.ID, c.Commitment.ProductID, c.Commitment.Title, c.Commitment.Regulatory
 		item.Commitment.Id, item.Commitment.ProductId = &id, &product
 		item.Commitment.Title, item.Commitment.Regulatory = &title, &regulatory
 		item.Commitment.DueDate = datePtr(c.Commitment.DueDate)
+		item.Commitment.PlannedDate = datePtr(c.Commitment.PlannedDate)
+		planningSource, planningStatus := c.Commitment.PlanningSource, c.Commitment.PlanningStatus
+		item.Commitment.PlanningSource, item.Commitment.PlanningStatus = &planningSource, &planningStatus
 		impacts = append(impacts, item)
 	}
 	tracks := make([]gen.TrackImpact, 0, len(res.Tracks))
@@ -130,8 +157,15 @@ func (s *Server) RunScenario(ctx context.Context, req gen.RunScenarioRequestObje
 		tracks = append(tracks, item)
 	}
 	metricsOut, baseOut := res.Metrics, res.BaseMetrics
+	explanations, baseExplanations := make(map[string]gen.Explanation, len(res.Explanations)), make(map[string]gen.Explanation, len(res.BaseExplanations))
+	for key, value := range res.Explanations {
+		explanations[key] = toExplanation(value)
+	}
+	for key, value := range res.BaseExplanations {
+		baseExplanations[key] = toExplanation(value)
+	}
 	return gen.RunScenario200JSONResponse{Scenario: toScenario(res.Scenario), Metrics: &metricsOut,
-		BaseMetrics: &baseOut, Pnl: &pnl, BasePnl: &basePnL, Commitments: &impacts, Tracks: &tracks}, nil
+		BaseMetrics: &baseOut, Pnl: &pnl, BasePnl: &basePnL, Commitments: &impacts, Tracks: &tracks, Explanations: &explanations, BaseExplanations: &baseExplanations}, nil
 }
 
 // ---- маркетинг (DA-04) ----

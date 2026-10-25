@@ -18,6 +18,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/onixus/metis/internal/delivery"
 	"github.com/onixus/metis/internal/economics"
+	modeling "github.com/onixus/metis/internal/economics/modeling"
 	"github.com/onixus/metis/internal/httpapi/request"
 	"github.com/onixus/metis/internal/ports"
 )
@@ -623,6 +624,7 @@ func (e EvidenceItemStatus) Valid() bool {
 const (
 	ExplanationKindField  ExplanationKind = "field"
 	ExplanationKindMetric ExplanationKind = "metric"
+	ExplanationKindSource ExplanationKind = "source"
 )
 
 // Valid indicates whether the value is a known member of the ExplanationKind enum.
@@ -631,6 +633,8 @@ func (e ExplanationKind) Valid() bool {
 	case ExplanationKindField:
 		return true
 	case ExplanationKindMetric:
+		return true
+	case ExplanationKindSource:
 		return true
 	default:
 		return false
@@ -763,6 +767,27 @@ func (e FinancialFieldInputType) Valid() bool {
 	case FinancialFieldInputTypePercent:
 		return true
 	case FinancialFieldInputTypeReference:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FormulaSourceObservationKind.
+const (
+	FormulaSourceObservationKindCrmRevenue FormulaSourceObservationKind = "crm_revenue"
+	FormulaSourceObservationKindHeadcount  FormulaSourceObservationKind = "headcount"
+	FormulaSourceObservationKindWorklogs   FormulaSourceObservationKind = "worklogs"
+)
+
+// Valid indicates whether the value is a known member of the FormulaSourceObservationKind enum.
+func (e FormulaSourceObservationKind) Valid() bool {
+	switch e {
+	case FormulaSourceObservationKindCrmRevenue:
+		return true
+	case FormulaSourceObservationKindHeadcount:
+		return true
+	case FormulaSourceObservationKindWorklogs:
 		return true
 	default:
 		return false
@@ -1168,6 +1193,27 @@ func (e MeProducts) Valid() bool {
 	case MeProductsPrivate:
 		return true
 	case MeProductsStrategic:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MetricVersionResultType.
+const (
+	MetricVersionResultTypeMoney   MetricVersionResultType = "money"
+	MetricVersionResultTypeNumber  MetricVersionResultType = "number"
+	MetricVersionResultTypePercent MetricVersionResultType = "percent"
+)
+
+// Valid indicates whether the value is a known member of the MetricVersionResultType enum.
+func (e MetricVersionResultType) Valid() bool {
+	switch e {
+	case MetricVersionResultTypeMoney:
+		return true
+	case MetricVersionResultTypeNumber:
+		return true
+	case MetricVersionResultTypePercent:
 		return true
 	default:
 		return false
@@ -1759,6 +1805,27 @@ func (e SalesSafeReleaseStatus) Valid() bool {
 	case SalesSafeReleaseStatusReadyForCertification:
 		return true
 	case SalesSafeReleaseStatusReleased:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScenarioOverrideSource.
+const (
+	ScenarioOverrideSourceCrmRevenue ScenarioOverrideSource = "crm_revenue"
+	ScenarioOverrideSourceHeadcount  ScenarioOverrideSource = "headcount"
+	ScenarioOverrideSourceWorklogs   ScenarioOverrideSource = "worklogs"
+)
+
+// Valid indicates whether the value is a known member of the ScenarioOverrideSource enum.
+func (e ScenarioOverrideSource) Valid() bool {
+	switch e {
+	case ScenarioOverrideSourceCrmRevenue:
+		return true
+	case ScenarioOverrideSourceHeadcount:
+		return true
+	case ScenarioOverrideSourceWorklogs:
 		return true
 	default:
 		return false
@@ -2366,6 +2433,12 @@ type AuditVerifyResult struct {
 	Reason    *string `json:"reason,omitempty"`
 }
 
+// BookMetricResult defines model for BookMetricResult.
+type BookMetricResult struct {
+	Metric   Explanation           `json:"metric"`
+	Snapshot EconomicsSnapshotInfo `json:"snapshot"`
+}
+
 // BranchCost defines model for BranchCost.
 type BranchCost struct {
 	Branch    string             `json:"branch"`
@@ -2518,15 +2591,25 @@ type CommitmentAlertActionInputKind string
 
 // CommitmentImpact defines model for CommitmentImpact.
 type CommitmentImpact struct {
-	Breached   bool `json:"breached"`
-	Commitment struct {
-		DueDate    *openapi_types.Date `json:"due_date,omitempty"`
-		Id         *openapi_types.UUID `json:"id,omitempty"`
-		ProductId  *openapi_types.UUID `json:"product_id,omitempty"`
-		Regulatory *bool               `json:"regulatory,omitempty"`
-		Title      *string             `json:"title,omitempty"`
+	BaselineBreached bool                `json:"baseline_breached"`
+	BaselineDate     *openapi_types.Date `json:"baseline_date,omitempty"`
+	Breached         bool                `json:"breached"`
+	Commitment       struct {
+		DueDate        *openapi_types.Date `json:"due_date,omitempty"`
+		Id             *openapi_types.UUID `json:"id,omitempty"`
+		PlannedDate    *openapi_types.Date `json:"planned_date,omitempty"`
+		PlanningSource *string             `json:"planning_source,omitempty"`
+		PlanningStatus *string             `json:"planning_status,omitempty"`
+		ProductId      *openapi_types.UUID `json:"product_id,omitempty"`
+		Regulatory     *bool               `json:"regulatory,omitempty"`
+		Title          *string             `json:"title,omitempty"`
 	} `json:"commitment"`
-	Reason *string `json:"reason,omitempty"`
+
+	// Known Плановая дата и срок известны
+	Known         bool                `json:"known"`
+	NewlyBreached bool                `json:"newly_breached"`
+	Reason        *string             `json:"reason,omitempty"`
+	ScenarioDate  *openapi_types.Date `json:"scenario_date,omitempty"`
 }
 
 // CommitmentInput defines model for CommitmentInput.
@@ -2931,6 +3014,16 @@ type EconomicsSnapshotInfo = economics.SnapshotInfo
 // EconomicsSource defines model for EconomicsSource.
 type EconomicsSource = economics.Source
 
+// EconomicsSourceSnapshotRef defines model for EconomicsSourceSnapshotRef.
+type EconomicsSourceSnapshotRef struct {
+	AsOf          time.Time `json:"as_of"`
+	CapturedValue string    `json:"captured_value"`
+	Currency      string    `json:"currency"`
+	Kind          string    `json:"kind"`
+	Overridden    bool      `json:"overridden"`
+	SnapshotId    string    `json:"snapshot_id"`
+}
+
 // EconomicsTeamCost defines model for EconomicsTeamCost.
 type EconomicsTeamCost = economics.TeamCost
 
@@ -3027,12 +3120,13 @@ type EvidenceItemInput struct {
 
 // Explanation defines model for Explanation.
 type Explanation struct {
-	Expression *string         `json:"expression,omitempty"`
-	Inputs     *[]Explanation  `json:"inputs,omitempty"`
-	Key        string          `json:"key"`
-	Kind       ExplanationKind `json:"kind"`
-	Rows       *[]FactRow      `json:"rows,omitempty"`
-	Value      string          `json:"value"`
+	Expression *string                     `json:"expression,omitempty"`
+	Inputs     *[]Explanation              `json:"inputs,omitempty"`
+	Key        string                      `json:"key"`
+	Kind       ExplanationKind             `json:"kind"`
+	Rows       *[]FactRow                  `json:"rows,omitempty"`
+	Sources    *[]FormulaSourceObservation `json:"sources,omitempty"`
+	Value      string                      `json:"value"`
 }
 
 // ExplanationKind defines model for Explanation.Kind.
@@ -3040,17 +3134,20 @@ type ExplanationKind string
 
 // FactRow defines model for FactRow.
 type FactRow struct {
-	BatchId     *openapi_types.UUID `json:"batch_id,omitempty"`
-	DataVersion *int                `json:"data_version,omitempty"`
-	FieldKey    string              `json:"field_key"`
-	Id          openapi_types.UUID  `json:"id"`
-	Item        *string             `json:"item,omitempty"`
-	Period      string              `json:"period"`
-	ProductId   *openapi_types.UUID `json:"product_id,omitempty"`
-	Row         *int                `json:"row,omitempty"`
-	Sheet       *string             `json:"sheet,omitempty"`
-	TeamId      *openapi_types.UUID `json:"team_id,omitempty"`
-	Value       string              `json:"value"`
+	BatchId *openapi_types.UUID `json:"batch_id,omitempty"`
+
+	// BookProductId Для факта книги batch_id обозначает snapshot ID, data_version — версию книги; отсутствие поля означает исходную версию modeling
+	BookProductId *openapi_types.UUID `json:"book_product_id,omitempty"`
+	DataVersion   *int                `json:"data_version,omitempty"`
+	FieldKey      string              `json:"field_key"`
+	Id            openapi_types.UUID  `json:"id"`
+	Item          *string             `json:"item,omitempty"`
+	Period        string              `json:"period"`
+	ProductId     *openapi_types.UUID `json:"product_id,omitempty"`
+	Row           *int                `json:"row,omitempty"`
+	Sheet         *string             `json:"sheet,omitempty"`
+	TeamId        *openapi_types.UUID `json:"team_id,omitempty"`
+	Value         string              `json:"value"`
 }
 
 // Feature defines model for Feature.
@@ -3130,11 +3227,14 @@ type FeatureValue struct {
 
 // FinanceFileInput defines model for FinanceFileInput.
 type FinanceFileInput struct {
-	ContentBase64   string          `json:"content_base64"`
-	ExpectedVersion int             `json:"expected_version"`
-	Filename        string          `json:"filename"`
-	Recalculate     *bool           `json:"recalculate,omitempty"`
-	Template        FinanceTemplate `json:"template"`
+	ContentBase64   string `json:"content_base64"`
+	ExpectedVersion int    `json:"expected_version"`
+	Filename        string `json:"filename"`
+
+	// PreserveRules Сохранить правила и ручные значения однозначно сопоставленных строк; неоднозначности отклоняются.
+	PreserveRules *bool           `json:"preserve_rules,omitempty"`
+	Recalculate   *bool           `json:"recalculate,omitempty"`
+	Template      FinanceTemplate `json:"template"`
 }
 
 // FinanceImportResult defines model for FinanceImportResult.
@@ -3218,6 +3318,32 @@ type Forecast struct {
 	Throughput    *[]int              `json:"throughput,omitempty"`
 }
 
+// FormulaSourceObservation defines model for FormulaSourceObservation.
+type FormulaSourceObservation struct {
+	AsOf time.Time `json:"as_of"`
+
+	// CapturedValue Фактическое значение закреплённого снимка
+	CapturedValue string                       `json:"captured_value"`
+	Currency      *string                      `json:"currency,omitempty"`
+	Item          *string                      `json:"item,omitempty"`
+	Kind          FormulaSourceObservationKind `json:"kind"`
+
+	// Overridden Результат источника подменён только внутри сценария
+	Overridden bool                `json:"overridden"`
+	Period     string              `json:"period"`
+	ProductId  *openapi_types.UUID `json:"product_id,omitempty"`
+	Provenance []struct {
+		RecordId string `json:"record_id"`
+		Source   string `json:"source"`
+		Version  string `json:"version"`
+	} `json:"provenance"`
+	SnapshotId string              `json:"snapshot_id"`
+	TeamId     *openapi_types.UUID `json:"team_id,omitempty"`
+}
+
+// FormulaSourceObservationKind defines model for FormulaSourceObservation.Kind.
+type FormulaSourceObservationKind string
+
 // Gate defines model for Gate.
 type Gate struct {
 	Checklist          []ChecklistItem     `json:"checklist"`
@@ -3266,6 +3392,45 @@ type GateUpdate struct {
 type GraphSettings struct {
 	// Coefficients Коэффициенты критичности как десятичные строки
 	Coefficients map[string]string `json:"coefficients"`
+}
+
+// HistoricalFacts defines model for HistoricalFacts.
+type HistoricalFacts struct {
+	Batch ImportBatch `json:"batch"`
+	Facts []FactRow   `json:"facts"`
+}
+
+// HistoricalTeamShare defines model for HistoricalTeamShare.
+type HistoricalTeamShare struct {
+	Period    string             `json:"period"`
+	ProductId openapi_types.UUID `json:"product_id"`
+	Share     string             `json:"share"`
+	Source    string             `json:"source"`
+	TeamId    openapi_types.UUID `json:"team_id"`
+}
+
+// HistoryArchive defines model for HistoryArchive.
+type HistoryArchive = modeling.HistoryArchive
+
+// HistoryUnificationPreview defines model for HistoryUnificationPreview.
+type HistoryUnificationPreview = modeling.HistoryUnificationPreview
+
+// HistoryUnificationRequest defines model for HistoryUnificationRequest.
+type HistoryUnificationRequest struct {
+	// Digest Контрольная сумма подтверждённого предпросмотра; обязательна при применении
+	Digest               *string `json:"digest,omitempty"`
+	ExpectedBookVersion  int     `json:"expected_book_version"`
+	ExpectedModelVersion int     `json:"expected_model_version"`
+}
+
+// HistoryUnificationStatus defines model for HistoryUnificationStatus.
+type HistoryUnificationStatus struct {
+	Active        bool                `json:"active"`
+	BookProductId *openapi_types.UUID `json:"book_product_id,omitempty"`
+	Digest        *string             `json:"digest,omitempty"`
+	FieldKeys     *map[string]string  `json:"field_keys,omitempty"`
+	MetricKeys    *map[string]string  `json:"metric_keys,omitempty"`
+	Period        string              `json:"period"`
 }
 
 // HubInfo defines model for HubInfo.
@@ -3345,12 +3510,29 @@ type ImportBatch struct {
 // ImportBatchStatus defines model for ImportBatch.Status.
 type ImportBatchStatus string
 
+// ImportCategoryTotal defines model for ImportCategoryTotal.
+type ImportCategoryTotal struct {
+	Category string `json:"category"`
+
+	// Current Сумма в минорных единицах
+	Current string `json:"current"`
+
+	// Delta Изменение в минорных единицах
+	Delta string `json:"delta"`
+
+	// Previous Сумма в минорных единицах
+	Previous string `json:"previous"`
+}
+
 // ImportColumn defines model for ImportColumn.
 type ImportColumn struct {
 	Column     string `json:"column"`
 	FieldKey   string `json:"field_key"`
 	MinorUnits *bool  `json:"minor_units,omitempty"`
 }
+
+// ImportReconciliation defines model for ImportReconciliation.
+type ImportReconciliation = economics.ImportReconciliation
 
 // ImportResult defines model for ImportResult.
 type ImportResult struct {
@@ -3526,6 +3708,17 @@ type LinkInputCriticality string
 // LinkInputType defines model for LinkInput.Type.
 type LinkInputType string
 
+// ManualFinancialValue defines model for ManualFinancialValue.
+type ManualFinancialValue struct {
+	Item      *string             `json:"item,omitempty"`
+	Period    string              `json:"period"`
+	ProductId openapi_types.UUID  `json:"product_id"`
+	TeamId    *openapi_types.UUID `json:"team_id,omitempty"`
+
+	// Value Точное число; деньги в минорных единицах
+	Value string `json:"value"`
+}
+
 // Me defines model for Me.
 type Me struct {
 	AllProducts MeAllProducts         `json:"all_products"`
@@ -3595,8 +3788,14 @@ type MetricVersion struct {
 		Key  *string `json:"key,omitempty"`
 		Kind *string `json:"kind,omitempty"`
 	} `json:"refs,omitempty"`
-	Version int `json:"version"`
+
+	// ResultType Сохранённый тип перенесённого показателя книги; последующие версии формулы сохраняют этот тип
+	ResultType *MetricVersionResultType `json:"result_type,omitempty"`
+	Version    int                      `json:"version"`
 }
+
+// MetricVersionResultType Сохранённый тип перенесённого показателя книги; последующие версии формулы сохраняют этот тип
+type MetricVersionResultType string
 
 // Money defines model for Money.
 type Money struct {
@@ -3994,21 +4193,30 @@ type ScenarioInput struct {
 
 // ScenarioOverride defines model for ScenarioOverride.
 type ScenarioOverride struct {
-	FieldKey  string              `json:"field_key"`
+	FieldKey  *string             `json:"field_key,omitempty"`
 	Period    *string             `json:"period,omitempty"`
 	ProductId *openapi_types.UUID `json:"product_id,omitempty"`
-	Value     string              `json:"value"`
+
+	// Source Альтернатива field_key для сценарной подмены прямого источника
+	Source *ScenarioOverrideSource `json:"source,omitempty"`
+	TeamId *openapi_types.UUID     `json:"team_id,omitempty"`
+	Value  string                  `json:"value"`
 }
+
+// ScenarioOverrideSource Альтернатива field_key для сценарной подмены прямого источника
+type ScenarioOverrideSource string
 
 // ScenarioResult defines model for ScenarioResult.
 type ScenarioResult struct {
-	BaseMetrics *map[string]string  `json:"base_metrics,omitempty"`
-	BasePnl     *[]PnL              `json:"base_pnl,omitempty"`
-	Commitments *[]CommitmentImpact `json:"commitments,omitempty"`
-	Metrics     *map[string]string  `json:"metrics,omitempty"`
-	Pnl         *[]PnL              `json:"pnl,omitempty"`
-	Scenario    Scenario            `json:"scenario"`
-	Tracks      *[]TrackImpact      `json:"tracks,omitempty"`
+	BaseExplanations *map[string]Explanation `json:"base_explanations,omitempty"`
+	BaseMetrics      *map[string]string      `json:"base_metrics,omitempty"`
+	BasePnl          *[]PnL                  `json:"base_pnl,omitempty"`
+	Commitments      *[]CommitmentImpact     `json:"commitments,omitempty"`
+	Explanations     *map[string]Explanation `json:"explanations,omitempty"`
+	Metrics          *map[string]string      `json:"metrics,omitempty"`
+	Pnl              *[]PnL                  `json:"pnl,omitempty"`
+	Scenario         Scenario                `json:"scenario"`
+	Tracks           *[]TrackImpact          `json:"tracks,omitempty"`
 }
 
 // ScoreComponent defines model for ScoreComponent.
@@ -4668,6 +4876,13 @@ type ExportEconomicsParams struct {
 	Team            *string             `form:"team,omitempty" json:"team,omitempty"`
 }
 
+// EvaluateBookMetricParams defines parameters for EvaluateBookMetric.
+type EvaluateBookMetricParams struct {
+	Version         int                 `form:"version" json:"version"`
+	FilterProductId *openapi_types.UUID `form:"filter_product_id,omitempty" json:"filter_product_id,omitempty"`
+	Team            *string             `form:"team,omitempty" json:"team,omitempty"`
+}
+
 // GetEconomicsReportParams defines parameters for GetEconomicsReport.
 type GetEconomicsReportParams struct {
 	Version         *int                `form:"version,omitempty" json:"version,omitempty"`
@@ -4866,6 +5081,9 @@ type SaveBundleRuleJSONRequestBody = BundleRuleInput
 // SaveFinancialFieldJSONRequestBody defines body for SaveFinancialField for application/json ContentType.
 type SaveFinancialFieldJSONRequestBody = FinancialFieldInput
 
+// SetManualFinancialValueJSONRequestBody defines body for SetManualFinancialValue for application/json ContentType.
+type SetManualFinancialValueJSONRequestBody = ManualFinancialValue
+
 // SaveMetricJSONRequestBody defines body for SaveMetric for application/json ContentType.
 type SaveMetricJSONRequestBody = MetricInput
 
@@ -4947,8 +5165,17 @@ type ImportFinanceFileJSONRequestBody = FinanceFileInput
 // PreviewFinanceImportJSONRequestBody defines body for PreviewFinanceImport for application/json ContentType.
 type PreviewFinanceImportJSONRequestBody = FinanceFileInput
 
+// PreviewFinanceReconciliationJSONRequestBody defines body for PreviewFinanceReconciliation for application/json ContentType.
+type PreviewFinanceReconciliationJSONRequestBody = FinanceFileInput
+
 // CalculateEconomicsScenarioJSONRequestBody defines body for CalculateEconomicsScenario for application/json ContentType.
 type CalculateEconomicsScenarioJSONRequestBody = EconomicsScenario
+
+// ApplyEconomicsUnificationJSONRequestBody defines body for ApplyEconomicsUnification for application/json ContentType.
+type ApplyEconomicsUnificationJSONRequestBody = HistoryUnificationRequest
+
+// PreviewEconomicsUnificationJSONRequestBody defines body for PreviewEconomicsUnification for application/json ContentType.
+type PreviewEconomicsUnificationJSONRequestBody = HistoryUnificationRequest
 
 // ApplyFinanceWorklogsJSONRequestBody defines body for ApplyFinanceWorklogs for application/json ContentType.
 type ApplyFinanceWorklogsJSONRequestBody = EconomicsWorklogInput
@@ -5626,6 +5853,20 @@ type ClientInterface interface {
 	// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
 	SaveFinancialField(ctx context.Context, body SaveFinancialFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// SetManualFinancialValueWithBody Новая версия ручного значения поля модели (EC-08/11)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /economics/fields/{fieldKey}/manual-value (the `SetManualFinancialValue` operationId).
+	SetManualFinancialValueWithBody(ctx context.Context, fieldKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetManualFinancialValue Новая версия ручного значения поля модели (EC-08/11)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /economics/fields/{fieldKey}/manual-value (the `SetManualFinancialValue` operationId).
+	SetManualFinancialValue(ctx context.Context, fieldKey string, body SetManualFinancialValueJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListImportBatches История загрузок финансовых данных (EC-07)
 	//
 	// Corresponds with GET /economics/imports (the `ListImportBatches` operationId).
@@ -6197,6 +6438,11 @@ type ClientInterface interface {
 	// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
 	ImportFinanceFile(ctx context.Context, productId ProductId, period string, body ImportFinanceFileJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// EvaluateBookMetric Формула конструктора на закреплённой версии книги (EC-09/10/11)
+	//
+	// Corresponds with GET /products/{productId}/economics/{period}/metrics/{metricKey} (the `EvaluateBookMetric` operationId).
+	EvaluateBookMetric(ctx context.Context, productId ProductId, period string, metricKey string, params *EvaluateBookMetricParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PreviewFinanceImportWithBody Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
 	//
 	// Takes any type of body and a specified content type.
@@ -6210,6 +6456,20 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
 	PreviewFinanceImport(ctx context.Context, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PreviewFinanceReconciliationWithBody Сверка повторного импорта с сохранением правил (EC-07/11)
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/reconciliation (the `PreviewFinanceReconciliation` operationId).
+	PreviewFinanceReconciliationWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PreviewFinanceReconciliation Сверка повторного импорта с сохранением правил (EC-07/11)
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/reconciliation (the `PreviewFinanceReconciliation` operationId).
+	PreviewFinanceReconciliation(ctx context.Context, productId ProductId, period string, body PreviewFinanceReconciliationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetEconomicsReport P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
 	//
@@ -6229,6 +6489,28 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
 	CalculateEconomicsScenario(ctx context.Context, productId ProductId, period string, body CalculateEconomicsScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApplyEconomicsUnificationWithBody performs a POST /products/{productId}/economics/{period}/unification/apply (the `ApplyEconomicsUnification` operationId) request,
+	// with any type of body and a specified content type.
+	ApplyEconomicsUnificationWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApplyEconomicsUnification performs a POST /products/{productId}/economics/{period}/unification/apply (the `ApplyEconomicsUnification` operationId) request.
+	// Takes a body of the `application/json` content type.
+	ApplyEconomicsUnification(ctx context.Context, productId ProductId, period string, body ApplyEconomicsUnificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEconomicsUnificationArchive performs a GET /products/{productId}/economics/{period}/unification/archive (the `GetEconomicsUnificationArchive` operationId) request.
+	GetEconomicsUnificationArchive(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PreviewEconomicsUnificationWithBody performs a POST /products/{productId}/economics/{period}/unification/preview (the `PreviewEconomicsUnification` operationId) request,
+	// with any type of body and a specified content type.
+	PreviewEconomicsUnificationWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PreviewEconomicsUnification performs a POST /products/{productId}/economics/{period}/unification/preview (the `PreviewEconomicsUnification` operationId) request.
+	// Takes a body of the `application/json` content type.
+	PreviewEconomicsUnification(ctx context.Context, productId ProductId, period string, body PreviewEconomicsUnificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEconomicsUnificationStatus performs a GET /products/{productId}/economics/{period}/unification/status (the `GetEconomicsUnificationStatus` operationId) request.
+	GetEconomicsUnificationStatus(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListEconomicsVersions История финансового периода (EC-11)
 	//
@@ -8141,6 +8423,40 @@ func (c *Client) SaveFinancialField(ctx context.Context, body SaveFinancialField
 	return c.Client.Do(req)
 }
 
+// SetManualFinancialValueWithBody Новая версия ручного значения поля модели (EC-08/11)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /economics/fields/{fieldKey}/manual-value (the `SetManualFinancialValue` operationId).
+func (c *Client) SetManualFinancialValueWithBody(ctx context.Context, fieldKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetManualFinancialValueRequestWithBody(c.Server, fieldKey, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SetManualFinancialValue Новая версия ручного значения поля модели (EC-08/11)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /economics/fields/{fieldKey}/manual-value (the `SetManualFinancialValue` operationId).
+func (c *Client) SetManualFinancialValue(ctx context.Context, fieldKey string, body SetManualFinancialValueJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetManualFinancialValueRequest(c.Server, fieldKey, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListImportBatches История загрузок финансовых данных (EC-07)
 //
 // Corresponds with GET /economics/imports (the `ListImportBatches` operationId).
@@ -9642,6 +9958,21 @@ func (c *Client) ImportFinanceFile(ctx context.Context, productId ProductId, per
 	return c.Client.Do(req)
 }
 
+// EvaluateBookMetric Формула конструктора на закреплённой версии книги (EC-09/10/11)
+//
+// Corresponds with GET /products/{productId}/economics/{period}/metrics/{metricKey} (the `EvaluateBookMetric` operationId).
+func (c *Client) EvaluateBookMetric(ctx context.Context, productId ProductId, period string, metricKey string, params *EvaluateBookMetricParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEvaluateBookMetricRequest(c.Server, productId, period, metricKey, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // PreviewFinanceImportWithBody Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
 //
 // Takes any type of body and a specified content type.
@@ -9666,6 +9997,40 @@ func (c *Client) PreviewFinanceImportWithBody(ctx context.Context, productId Pro
 // Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
 func (c *Client) PreviewFinanceImport(ctx context.Context, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPreviewFinanceImportRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PreviewFinanceReconciliationWithBody Сверка повторного импорта с сохранением правил (EC-07/11)
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/reconciliation (the `PreviewFinanceReconciliation` operationId).
+func (c *Client) PreviewFinanceReconciliationWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreviewFinanceReconciliationRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PreviewFinanceReconciliation Сверка повторного импорта с сохранением правил (EC-07/11)
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /products/{productId}/economics/{period}/reconciliation (the `PreviewFinanceReconciliation` operationId).
+func (c *Client) PreviewFinanceReconciliation(ctx context.Context, productId ProductId, period string, body PreviewFinanceReconciliationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreviewFinanceReconciliationRequest(c.Server, productId, period, body)
 	if err != nil {
 		return nil, err
 	}
@@ -9715,6 +10080,88 @@ func (c *Client) CalculateEconomicsScenarioWithBody(ctx context.Context, product
 // Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
 func (c *Client) CalculateEconomicsScenario(ctx context.Context, productId ProductId, period string, body CalculateEconomicsScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCalculateEconomicsScenarioRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ApplyEconomicsUnificationWithBody performs a POST /products/{productId}/economics/{period}/unification/apply (the `ApplyEconomicsUnification` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) ApplyEconomicsUnificationWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApplyEconomicsUnificationRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ApplyEconomicsUnification performs a POST /products/{productId}/economics/{period}/unification/apply (the `ApplyEconomicsUnification` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) ApplyEconomicsUnification(ctx context.Context, productId ProductId, period string, body ApplyEconomicsUnificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApplyEconomicsUnificationRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEconomicsUnificationArchive performs a GET /products/{productId}/economics/{period}/unification/archive (the `GetEconomicsUnificationArchive` operationId) request.
+func (c *Client) GetEconomicsUnificationArchive(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEconomicsUnificationArchiveRequest(c.Server, productId, period)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PreviewEconomicsUnificationWithBody performs a POST /products/{productId}/economics/{period}/unification/preview (the `PreviewEconomicsUnification` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) PreviewEconomicsUnificationWithBody(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreviewEconomicsUnificationRequestWithBody(c.Server, productId, period, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PreviewEconomicsUnification performs a POST /products/{productId}/economics/{period}/unification/preview (the `PreviewEconomicsUnification` operationId) request.
+// Takes a body of the `application/json` content type.
+func (c *Client) PreviewEconomicsUnification(ctx context.Context, productId ProductId, period string, body PreviewEconomicsUnificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreviewEconomicsUnificationRequest(c.Server, productId, period, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEconomicsUnificationStatus performs a GET /products/{productId}/economics/{period}/unification/status (the `GetEconomicsUnificationStatus` operationId) request.
+func (c *Client) GetEconomicsUnificationStatus(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEconomicsUnificationStatusRequest(c.Server, productId, period)
 	if err != nil {
 		return nil, err
 	}
@@ -13421,6 +13868,53 @@ func NewSaveFinancialFieldRequestWithBody(server string, contentType string, bod
 	return req, nil
 }
 
+// NewSetManualFinancialValueRequest calls the generic SetManualFinancialValue builder with application/json body
+func NewSetManualFinancialValueRequest(server string, fieldKey string, body SetManualFinancialValueJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetManualFinancialValueRequestWithBody(server, fieldKey, "application/json", bodyReader)
+}
+
+// NewSetManualFinancialValueRequestWithBody constructs an http.Request for the SetManualFinancialValue method, with any body, and a specified content type
+func NewSetManualFinancialValueRequestWithBody(server string, fieldKey string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "fieldKey", fieldKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/economics/fields/%s/manual-value", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListImportBatchesRequest constructs an http.Request for the ListImportBatches method
 func NewListImportBatchesRequest(server string, params *ListImportBatchesParams) (*http.Request, error) {
 	var err error
@@ -16589,6 +17083,101 @@ func NewImportFinanceFileRequestWithBody(server string, productId ProductId, per
 	return req, nil
 }
 
+// NewEvaluateBookMetricRequest constructs an http.Request for the EvaluateBookMetric method
+func NewEvaluateBookMetricRequest(server string, productId ProductId, period string, metricKey string, params *EvaluateBookMetricParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithOptions("simple", false, "metricKey", metricKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/metrics/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "version", params.Version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if params.FilterProductId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter_product_id", *params.FilterProductId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Team != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "team", *params.Team, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewPreviewFinanceImportRequest calls the generic PreviewFinanceImport builder with application/json body
 func NewPreviewFinanceImportRequest(server string, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -16624,6 +17213,60 @@ func NewPreviewFinanceImportRequestWithBody(server string, productId ProductId, 
 	}
 
 	operationPath := fmt.Sprintf("/products/%s/economics/%s/preview", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPreviewFinanceReconciliationRequest calls the generic PreviewFinanceReconciliation builder with application/json body
+func NewPreviewFinanceReconciliationRequest(server string, productId ProductId, period string, body PreviewFinanceReconciliationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPreviewFinanceReconciliationRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewPreviewFinanceReconciliationRequestWithBody constructs an http.Request for the PreviewFinanceReconciliation method, with any body, and a specified content type
+func NewPreviewFinanceReconciliationRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/reconciliation", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -16785,6 +17428,196 @@ func NewCalculateEconomicsScenarioRequestWithBody(server string, productId Produ
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewApplyEconomicsUnificationRequest calls the generic ApplyEconomicsUnification builder with application/json body
+func NewApplyEconomicsUnificationRequest(server string, productId ProductId, period string, body ApplyEconomicsUnificationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApplyEconomicsUnificationRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewApplyEconomicsUnificationRequestWithBody constructs an http.Request for the ApplyEconomicsUnification method, with any body, and a specified content type
+func NewApplyEconomicsUnificationRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/unification/apply", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetEconomicsUnificationArchiveRequest constructs an http.Request for the GetEconomicsUnificationArchive method
+func NewGetEconomicsUnificationArchiveRequest(server string, productId ProductId, period string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/unification/archive", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPreviewEconomicsUnificationRequest calls the generic PreviewEconomicsUnification builder with application/json body
+func NewPreviewEconomicsUnificationRequest(server string, productId ProductId, period string, body PreviewEconomicsUnificationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPreviewEconomicsUnificationRequestWithBody(server, productId, period, "application/json", bodyReader)
+}
+
+// NewPreviewEconomicsUnificationRequestWithBody constructs an http.Request for the PreviewEconomicsUnification method, with any body, and a specified content type
+func NewPreviewEconomicsUnificationRequestWithBody(server string, productId ProductId, period string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/unification/preview", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetEconomicsUnificationStatusRequest constructs an http.Request for the GetEconomicsUnificationStatus method
+func NewGetEconomicsUnificationStatusRequest(server string, productId ProductId, period string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "productId", productId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "period", period, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/products/%s/economics/%s/unification/status", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -20283,6 +21116,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /economics/fields (the `SaveFinancialField` operationId).
 	SaveFinancialFieldWithResponse(ctx context.Context, body SaveFinancialFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveFinancialFieldResponse, error)
 
+	// SetManualFinancialValueWithBodyWithResponse Новая версия ручного значения поля модели (EC-08/11)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/fields/{fieldKey}/manual-value (the `SetManualFinancialValue` operationId).
+	SetManualFinancialValueWithBodyWithResponse(ctx context.Context, fieldKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetManualFinancialValueResponse, error)
+
+	// SetManualFinancialValueWithResponse Новая версия ручного значения поля модели (EC-08/11)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /economics/fields/{fieldKey}/manual-value (the `SetManualFinancialValue` operationId).
+	SetManualFinancialValueWithResponse(ctx context.Context, fieldKey string, body SetManualFinancialValueJSONRequestBody, reqEditors ...RequestEditorFn) (*SetManualFinancialValueResponse, error)
+
 	// ListImportBatchesWithResponse История загрузок финансовых данных (EC-07)
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -20934,6 +21781,13 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /products/{productId}/economics/{period}/import (the `ImportFinanceFile` operationId).
 	ImportFinanceFileWithResponse(ctx context.Context, productId ProductId, period string, body ImportFinanceFileJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportFinanceFileResponse, error)
 
+	// EvaluateBookMetricWithResponse Формула конструктора на закреплённой версии книги (EC-09/10/11)
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /products/{productId}/economics/{period}/metrics/{metricKey} (the `EvaluateBookMetric` operationId).
+	EvaluateBookMetricWithResponse(ctx context.Context, productId ProductId, period string, metricKey string, params *EvaluateBookMetricParams, reqEditors ...RequestEditorFn) (*EvaluateBookMetricResponse, error)
+
 	// PreviewFinanceImportWithBodyWithResponse Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -20947,6 +21801,20 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /products/{productId}/economics/{period}/preview (the `PreviewFinanceImport` operationId).
 	PreviewFinanceImportWithResponse(ctx context.Context, productId ProductId, period string, body PreviewFinanceImportJSONRequestBody, reqEditors ...RequestEditorFn) (*PreviewFinanceImportResponse, error)
+
+	// PreviewFinanceReconciliationWithBodyWithResponse Сверка повторного импорта с сохранением правил (EC-07/11)
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/reconciliation (the `PreviewFinanceReconciliation` operationId).
+	PreviewFinanceReconciliationWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PreviewFinanceReconciliationResponse, error)
+
+	// PreviewFinanceReconciliationWithResponse Сверка повторного импорта с сохранением правил (EC-07/11)
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /products/{productId}/economics/{period}/reconciliation (the `PreviewFinanceReconciliation` operationId).
+	PreviewFinanceReconciliationWithResponse(ctx context.Context, productId ProductId, period string, body PreviewFinanceReconciliationJSONRequestBody, reqEditors ...RequestEditorFn) (*PreviewFinanceReconciliationResponse, error)
 
 	// GetEconomicsReportWithResponse P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
 	//
@@ -20968,6 +21836,36 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /products/{productId}/economics/{period}/scenario (the `CalculateEconomicsScenario` operationId).
 	CalculateEconomicsScenarioWithResponse(ctx context.Context, productId ProductId, period string, body CalculateEconomicsScenarioJSONRequestBody, reqEditors ...RequestEditorFn) (*CalculateEconomicsScenarioResponse, error)
+
+	// ApplyEconomicsUnificationWithBodyWithResponse performs a POST /products/{productId}/economics/{period}/unification/apply (the `ApplyEconomicsUnification` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ApplyEconomicsUnificationWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApplyEconomicsUnificationResponse, error)
+
+	// ApplyEconomicsUnificationWithResponse performs a POST /products/{productId}/economics/{period}/unification/apply (the `ApplyEconomicsUnification` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	ApplyEconomicsUnificationWithResponse(ctx context.Context, productId ProductId, period string, body ApplyEconomicsUnificationJSONRequestBody, reqEditors ...RequestEditorFn) (*ApplyEconomicsUnificationResponse, error)
+
+	// GetEconomicsUnificationArchiveWithResponse performs a GET /products/{productId}/economics/{period}/unification/archive (the `GetEconomicsUnificationArchive` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetEconomicsUnificationArchiveWithResponse(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*GetEconomicsUnificationArchiveResponse, error)
+
+	// PreviewEconomicsUnificationWithBodyWithResponse performs a POST /products/{productId}/economics/{period}/unification/preview (the `PreviewEconomicsUnification` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	PreviewEconomicsUnificationWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PreviewEconomicsUnificationResponse, error)
+
+	// PreviewEconomicsUnificationWithResponse performs a POST /products/{productId}/economics/{period}/unification/preview (the `PreviewEconomicsUnification` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	PreviewEconomicsUnificationWithResponse(ctx context.Context, productId ProductId, period string, body PreviewEconomicsUnificationJSONRequestBody, reqEditors ...RequestEditorFn) (*PreviewEconomicsUnificationResponse, error)
+
+	// GetEconomicsUnificationStatusWithResponse performs a GET /products/{productId}/economics/{period}/unification/status (the `GetEconomicsUnificationStatus` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetEconomicsUnificationStatusWithResponse(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*GetEconomicsUnificationStatusResponse, error)
 
 	// ListEconomicsVersionsWithResponse История финансового периода (EC-11)
 	//
@@ -24296,6 +25194,54 @@ func (r SaveFinancialFieldResponse) ContentType() string {
 	return ""
 }
 
+type SetManualFinancialValueResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *FactRow
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r SetManualFinancialValueResponse) GetJSON201() *FactRow {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r SetManualFinancialValueResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r SetManualFinancialValueResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SetManualFinancialValueResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetManualFinancialValueResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SetManualFinancialValueResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListImportBatchesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -27484,6 +28430,54 @@ func (r ImportFinanceFileResponse) ContentType() string {
 	return ""
 }
 
+type EvaluateBookMetricResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *BookMetricResult
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r EvaluateBookMetricResponse) GetJSON200() *BookMetricResult {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r EvaluateBookMetricResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r EvaluateBookMetricResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r EvaluateBookMetricResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r EvaluateBookMetricResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r EvaluateBookMetricResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type PreviewFinanceImportResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -27526,6 +28520,54 @@ func (r PreviewFinanceImportResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r PreviewFinanceImportResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type PreviewFinanceReconciliationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ImportReconciliation
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r PreviewFinanceReconciliationResponse) GetJSON200() *ImportReconciliation {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r PreviewFinanceReconciliationResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r PreviewFinanceReconciliationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r PreviewFinanceReconciliationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PreviewFinanceReconciliationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PreviewFinanceReconciliationResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -27622,6 +28664,198 @@ func (r CalculateEconomicsScenarioResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r CalculateEconomicsScenarioResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ApplyEconomicsUnificationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *HistoryUnificationPreview
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ApplyEconomicsUnificationResponse) GetJSON200() *HistoryUnificationPreview {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ApplyEconomicsUnificationResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ApplyEconomicsUnificationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ApplyEconomicsUnificationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApplyEconomicsUnificationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ApplyEconomicsUnificationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetEconomicsUnificationArchiveResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *HistoryArchive
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEconomicsUnificationArchiveResponse) GetJSON200() *HistoryArchive {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetEconomicsUnificationArchiveResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEconomicsUnificationArchiveResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEconomicsUnificationArchiveResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEconomicsUnificationArchiveResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEconomicsUnificationArchiveResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type PreviewEconomicsUnificationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *HistoryUnificationPreview
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r PreviewEconomicsUnificationResponse) GetJSON200() *HistoryUnificationPreview {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r PreviewEconomicsUnificationResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r PreviewEconomicsUnificationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r PreviewEconomicsUnificationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PreviewEconomicsUnificationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PreviewEconomicsUnificationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetEconomicsUnificationStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *HistoryUnificationStatus
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *Problem
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEconomicsUnificationStatusResponse) GetJSON200() *HistoryUnificationStatus {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetEconomicsUnificationStatusResponse) GetApplicationproblemJSONDefault() *Problem {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEconomicsUnificationStatusResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEconomicsUnificationStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEconomicsUnificationStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEconomicsUnificationStatusResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -31750,6 +32984,32 @@ func (c *ClientWithResponses) SaveFinancialFieldWithResponse(ctx context.Context
 	return ParseSaveFinancialFieldResponse(rsp)
 }
 
+// SetManualFinancialValueWithBodyWithResponse Новая версия ручного значения поля модели (EC-08/11)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/fields/{fieldKey}/manual-value (the `SetManualFinancialValue` operationId).
+func (c *ClientWithResponses) SetManualFinancialValueWithBodyWithResponse(ctx context.Context, fieldKey string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetManualFinancialValueResponse, error) {
+	rsp, err := c.SetManualFinancialValueWithBody(ctx, fieldKey, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetManualFinancialValueResponse(rsp)
+}
+
+// SetManualFinancialValueWithResponse Новая версия ручного значения поля модели (EC-08/11)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /economics/fields/{fieldKey}/manual-value (the `SetManualFinancialValue` operationId).
+func (c *ClientWithResponses) SetManualFinancialValueWithResponse(ctx context.Context, fieldKey string, body SetManualFinancialValueJSONRequestBody, reqEditors ...RequestEditorFn) (*SetManualFinancialValueResponse, error) {
+	rsp, err := c.SetManualFinancialValue(ctx, fieldKey, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetManualFinancialValueResponse(rsp)
+}
+
 // ListImportBatchesWithResponse История загрузок финансовых данных (EC-07)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -32959,6 +34219,19 @@ func (c *ClientWithResponses) ImportFinanceFileWithResponse(ctx context.Context,
 	return ParseImportFinanceFileResponse(rsp)
 }
 
+// EvaluateBookMetricWithResponse Формула конструктора на закреплённой версии книги (EC-09/10/11)
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /products/{productId}/economics/{period}/metrics/{metricKey} (the `EvaluateBookMetric` operationId).
+func (c *ClientWithResponses) EvaluateBookMetricWithResponse(ctx context.Context, productId ProductId, period string, metricKey string, params *EvaluateBookMetricParams, reqEditors ...RequestEditorFn) (*EvaluateBookMetricResponse, error) {
+	rsp, err := c.EvaluateBookMetric(ctx, productId, period, metricKey, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEvaluateBookMetricResponse(rsp)
+}
+
 // PreviewFinanceImportWithBodyWithResponse Предпросмотр CSV/XLSX; ошибки строк не допускают частичный импорт (EC-07)
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -32983,6 +34256,32 @@ func (c *ClientWithResponses) PreviewFinanceImportWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParsePreviewFinanceImportResponse(rsp)
+}
+
+// PreviewFinanceReconciliationWithBodyWithResponse Сверка повторного импорта с сохранением правил (EC-07/11)
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/reconciliation (the `PreviewFinanceReconciliation` operationId).
+func (c *ClientWithResponses) PreviewFinanceReconciliationWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PreviewFinanceReconciliationResponse, error) {
+	rsp, err := c.PreviewFinanceReconciliationWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreviewFinanceReconciliationResponse(rsp)
+}
+
+// PreviewFinanceReconciliationWithResponse Сверка повторного импорта с сохранением правил (EC-07/11)
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /products/{productId}/economics/{period}/reconciliation (the `PreviewFinanceReconciliation` operationId).
+func (c *ClientWithResponses) PreviewFinanceReconciliationWithResponse(ctx context.Context, productId ProductId, period string, body PreviewFinanceReconciliationJSONRequestBody, reqEditors ...RequestEditorFn) (*PreviewFinanceReconciliationResponse, error) {
+	rsp, err := c.PreviewFinanceReconciliation(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreviewFinanceReconciliationResponse(rsp)
 }
 
 // GetEconomicsReportWithResponse P&L, команда × продукт, инвестиции и lineage (EC-03/05/06/12)
@@ -33022,6 +34321,72 @@ func (c *ClientWithResponses) CalculateEconomicsScenarioWithResponse(ctx context
 		return nil, err
 	}
 	return ParseCalculateEconomicsScenarioResponse(rsp)
+}
+
+// ApplyEconomicsUnificationWithBodyWithResponse performs a POST /products/{productId}/economics/{period}/unification/apply (the `ApplyEconomicsUnification` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ApplyEconomicsUnificationWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApplyEconomicsUnificationResponse, error) {
+	rsp, err := c.ApplyEconomicsUnificationWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApplyEconomicsUnificationResponse(rsp)
+}
+
+// ApplyEconomicsUnificationWithResponse performs a POST /products/{productId}/economics/{period}/unification/apply (the `ApplyEconomicsUnification` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ApplyEconomicsUnificationWithResponse(ctx context.Context, productId ProductId, period string, body ApplyEconomicsUnificationJSONRequestBody, reqEditors ...RequestEditorFn) (*ApplyEconomicsUnificationResponse, error) {
+	rsp, err := c.ApplyEconomicsUnification(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApplyEconomicsUnificationResponse(rsp)
+}
+
+// GetEconomicsUnificationArchiveWithResponse performs a GET /products/{productId}/economics/{period}/unification/archive (the `GetEconomicsUnificationArchive` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetEconomicsUnificationArchiveWithResponse(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*GetEconomicsUnificationArchiveResponse, error) {
+	rsp, err := c.GetEconomicsUnificationArchive(ctx, productId, period, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEconomicsUnificationArchiveResponse(rsp)
+}
+
+// PreviewEconomicsUnificationWithBodyWithResponse performs a POST /products/{productId}/economics/{period}/unification/preview (the `PreviewEconomicsUnification` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) PreviewEconomicsUnificationWithBodyWithResponse(ctx context.Context, productId ProductId, period string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PreviewEconomicsUnificationResponse, error) {
+	rsp, err := c.PreviewEconomicsUnificationWithBody(ctx, productId, period, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreviewEconomicsUnificationResponse(rsp)
+}
+
+// PreviewEconomicsUnificationWithResponse performs a POST /products/{productId}/economics/{period}/unification/preview (the `PreviewEconomicsUnification` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) PreviewEconomicsUnificationWithResponse(ctx context.Context, productId ProductId, period string, body PreviewEconomicsUnificationJSONRequestBody, reqEditors ...RequestEditorFn) (*PreviewEconomicsUnificationResponse, error) {
+	rsp, err := c.PreviewEconomicsUnification(ctx, productId, period, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreviewEconomicsUnificationResponse(rsp)
+}
+
+// GetEconomicsUnificationStatusWithResponse performs a GET /products/{productId}/economics/{period}/unification/status (the `GetEconomicsUnificationStatus` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetEconomicsUnificationStatusWithResponse(ctx context.Context, productId ProductId, period string, reqEditors ...RequestEditorFn) (*GetEconomicsUnificationStatusResponse, error) {
+	rsp, err := c.GetEconomicsUnificationStatus(ctx, productId, period, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEconomicsUnificationStatusResponse(rsp)
 }
 
 // ListEconomicsVersionsWithResponse История финансового периода (EC-11)
@@ -36092,6 +37457,39 @@ func ParseSaveFinancialFieldResponse(rsp *http.Response) (*SaveFinancialFieldRes
 	return response, nil
 }
 
+// ParseSetManualFinancialValueResponse parses an HTTP response from a SetManualFinancialValueWithResponse call
+func ParseSetManualFinancialValueResponse(rsp *http.Response) (*SetManualFinancialValueResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetManualFinancialValueResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest FactRow
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListImportBatchesResponse parses an HTTP response from a ListImportBatchesWithResponse call
 func ParseListImportBatchesResponse(rsp *http.Response) (*ListImportBatchesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -38290,6 +39688,39 @@ func ParseImportFinanceFileResponse(rsp *http.Response) (*ImportFinanceFileRespo
 	return response, nil
 }
 
+// ParseEvaluateBookMetricResponse parses an HTTP response from a EvaluateBookMetricWithResponse call
+func ParseEvaluateBookMetricResponse(rsp *http.Response) (*EvaluateBookMetricResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &EvaluateBookMetricResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BookMetricResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParsePreviewFinanceImportResponse parses an HTTP response from a PreviewFinanceImportWithResponse call
 func ParsePreviewFinanceImportResponse(rsp *http.Response) (*PreviewFinanceImportResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -38306,6 +39737,39 @@ func ParsePreviewFinanceImportResponse(rsp *http.Response) (*PreviewFinanceImpor
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest FinancePreview
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePreviewFinanceReconciliationResponse parses an HTTP response from a PreviewFinanceReconciliationWithResponse call
+func ParsePreviewFinanceReconciliationResponse(rsp *http.Response) (*PreviewFinanceReconciliationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PreviewFinanceReconciliationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ImportReconciliation
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -38372,6 +39836,138 @@ func ParseCalculateEconomicsScenarioResponse(rsp *http.Response) (*CalculateEcon
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest EconomicsReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApplyEconomicsUnificationResponse parses an HTTP response from a ApplyEconomicsUnificationWithResponse call
+func ParseApplyEconomicsUnificationResponse(rsp *http.Response) (*ApplyEconomicsUnificationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApplyEconomicsUnificationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HistoryUnificationPreview
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetEconomicsUnificationArchiveResponse parses an HTTP response from a GetEconomicsUnificationArchiveWithResponse call
+func ParseGetEconomicsUnificationArchiveResponse(rsp *http.Response) (*GetEconomicsUnificationArchiveResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEconomicsUnificationArchiveResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HistoryArchive
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePreviewEconomicsUnificationResponse parses an HTTP response from a PreviewEconomicsUnificationWithResponse call
+func ParsePreviewEconomicsUnificationResponse(rsp *http.Response) (*PreviewEconomicsUnificationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PreviewEconomicsUnificationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HistoryUnificationPreview
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetEconomicsUnificationStatusResponse parses an HTTP response from a GetEconomicsUnificationStatusWithResponse call
+func ParseGetEconomicsUnificationStatusResponse(rsp *http.Response) (*GetEconomicsUnificationStatusResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEconomicsUnificationStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HistoryUnificationStatus
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

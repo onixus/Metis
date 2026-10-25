@@ -1,0 +1,16 @@
+{
+  "product_id": "01a17394-2997-7ee0-97a9-9122bd998e15",
+  "period": "2026-09",
+  "book_versions_archived": 3,
+  "model_versions_archived": 3,
+  "source_authority": "book",
+  "stale_plan": 409,
+  "scope_denials": 3,
+  "replay": "PASS",
+  "archive": "PASS",
+  "old_report": "PASS",
+  "common_definitions": "PASS",
+  "live_book_inputs": "PASS",
+  "canonical_manual_writes": "PASS",
+  "divergent_definitions_rejected": "PASS"
+}

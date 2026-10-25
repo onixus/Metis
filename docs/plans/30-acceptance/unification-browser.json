@@ -1,0 +1,27 @@
+{
+  "testedAt": "2026-10-25T15:01:34.528Z",
+  "results": [
+    {
+      "theme": "dark",
+      "period": "2026-10",
+      "preview": "PASS",
+      "explicitConfirmation": "PASS",
+      "apply": "PASS",
+      "exactPlanDownload": "PASS",
+      "archiveDownload": "PASS",
+      "legacyPnL": "PASS",
+      "mobile": "PASS"
+    },
+    {
+      "theme": "light",
+      "period": "2026-11",
+      "preview": "PASS",
+      "explicitConfirmation": "PASS",
+      "apply": "PASS",
+      "exactPlanDownload": "PASS",
+      "archiveDownload": "PASS",
+      "legacyPnL": "PASS",
+      "mobile": "PASS"
+    }
+  ]
+}

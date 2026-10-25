@@ -36,6 +36,7 @@ type Allocation struct {
 
 // Row holds a team aggregate, never an individual salary.
 type Row struct {
+	ModelItem            string            `json:"model_item,omitempty"`
 	ID                   kernel.ID         `json:"id"`
 	ProductID            kernel.ID         `json:"product_id"`
 	Category             string            `json:"category"`
@@ -105,22 +106,24 @@ type ReportInput struct {
 }
 
 type Lineage struct {
-	Formula      string      `json:"formula"`
-	Dependencies []string    `json:"dependencies"`
-	RowIDs       []kernel.ID `json:"row_ids"`
-	Sources      []Source    `json:"sources"`
+	Formula         string              `json:"formula"`
+	Dependencies    []string            `json:"dependencies"`
+	RowIDs          []kernel.ID         `json:"row_ids"`
+	Sources         []Source            `json:"sources"`
+	SourceSnapshots []SourceSnapshotRef `json:"source_snapshots,omitempty"`
 }
 
 type ProductReport struct {
-	ProductID    kernel.ID          `json:"product_id"`
-	Amounts      map[string]int64   `json:"amounts"`
-	Revenue      int64              `json:"revenue"`
-	DirectCost   int64              `json:"direct_cost"`
-	HubCost      int64              `json:"hub_cost"`
-	DirectProfit int64              `json:"direct_profit"`
-	LoadedProfit int64              `json:"loaded_profit"`
-	Metrics      map[string]string  `json:"metrics"`
-	Lineage      map[string]Lineage `json:"lineage"`
+	ProductID     kernel.ID          `json:"product_id"`
+	Amounts       map[string]int64   `json:"amounts"`
+	Revenue       int64              `json:"revenue"`
+	BundleRevenue int64              `json:"bundle_revenue"`
+	DirectCost    int64              `json:"direct_cost"`
+	HubCost       int64              `json:"hub_cost"`
+	DirectProfit  int64              `json:"direct_profit"`
+	LoadedProfit  int64              `json:"loaded_profit"`
+	Metrics       map[string]string  `json:"metrics"`
+	Lineage       map[string]Lineage `json:"lineage"`
 }
 
 type TeamCost struct {

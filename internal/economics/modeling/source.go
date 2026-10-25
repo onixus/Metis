@@ -3,6 +3,7 @@ package economics
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/shopspring/decimal"
 
@@ -18,17 +19,51 @@ const maxExplainDepth = 6
 // factSource — источник данных формул поверх хранилища. Сценарии (EC-13, DA-02) подменяют
 // значения через overrides, не изменяя факты.
 type factSource struct {
-	sc        authz.Scope
-	ctx       context.Context
-	svc       *Service
-	overrides []Override
-	visiting  map[string]bool
-	memo      map[string]decimal.Decimal
+	sc            authz.Scope
+	caller        authz.Scope
+	platformMemo  map[platformCacheKey]PlatformValue
+	platformCost  *int
+	platformLock  *sync.Mutex
+	cacheScope    string
+	sourceErr     error
+	currencyStack []string
+	metricStack   []string
+	crmMetrics    map[string]bool
+	fields        map[fieldReadKey]fieldRead
+	fieldRows     int
+	fieldTraces   map[string]map[fieldReadKey]bool
+	explainBudget *explanationBudget
+	ctx           context.Context
+	svc           *Service
+	overrides     []Override
+	visiting      map[string]bool
+	memo          map[string]decimal.Decimal
+	active        string
+	traces        map[string][]evaluatedInput
+}
+
+type evaluatedInput struct {
+	field  *Explanation
+	metric string
+	slice  formula.Slice
 }
 
 func (s *Service) source(ctx context.Context, sc authz.Scope, overrides []Override) *factSource {
-	return &factSource{ctx: ctx, sc: identityaccess.ModelCalculationScope(sc), svc: s, overrides: overrides,
-		visiting: map[string]bool{}, memo: map[string]decimal.Decimal{}}
+	ctx = WithFormulaSnapshot(WithCanonicalReadScope(ctx, sc))
+	cost := 0
+	values := map[platformCacheKey]PlatformValue{}
+	costPointer := &cost
+	lock := &sync.Mutex{}
+	explainBudget := &explanationBudget{}
+	if session, ok := ctx.Value(formulaSnapshotKey{}).(*formulaSnapshot); ok {
+		values = session.values
+		costPointer = &session.cost
+		lock = &session.mu
+		explainBudget = &session.explain
+	}
+	scopeKey, err := formulaScopeKey(sc)
+	return &factSource{ctx: ctx, sc: identityaccess.ModelCalculationScope(sc), caller: sc, platformMemo: values, platformCost: costPointer, platformLock: lock, cacheScope: scopeKey, sourceErr: err, crmMetrics: map[string]bool{}, fields: map[fieldReadKey]fieldRead{}, fieldTraces: map[string]map[fieldReadKey]bool{}, explainBudget: explainBudget, svc: s, overrides: overrides,
+		visiting: map[string]bool{}, memo: map[string]decimal.Decimal{}, traces: map[string][]evaluatedInput{}}
 }
 
 var _ formula.Source = (*factSource)(nil)
@@ -39,31 +74,11 @@ func (f *factSource) Values(key string, flt formula.Filter) ([]decimal.Decimal, 
 	if err != nil {
 		return nil, err
 	}
-	if ov, ok := f.override(key, filter); ok {
-		return []decimal.Decimal{ov}, nil
-	}
-	rows, err := f.svc.store.Facts(f.ctx, f.sc, filter)
+	values, err := f.fieldValues(key, filter)
 	if err != nil {
-		return nil, fmt.Errorf("facts: %w", err)
+		f.sourceErr = err
 	}
-	out := make([]decimal.Decimal, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, r.Value)
-	}
-	return out, nil
-}
-
-// rows возвращает исходные строки поля — для объяснения значения (EC-10).
-func (f *factSource) rows(key string, flt formula.Filter) ([]FactRow, error) {
-	filter, err := factFilter(key, flt)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := f.svc.store.Facts(f.ctx, f.sc, filter)
-	if err != nil {
-		return nil, fmt.Errorf("facts: %w", err)
-	}
-	return rows, nil
+	return values, err
 }
 
 // override возвращает подменённое значение сценария, если оно задано для этого среза.
@@ -146,8 +161,17 @@ func factFilter(key string, flt formula.Filter) (FactFilter, error) {
 
 // Metric вычисляет другой показатель в срезе; цикл во время вычисления — ошибка.
 func (f *factSource) Metric(key string, sl formula.Slice) (decimal.Decimal, error) {
-	cacheKey := key + "|" + sl.Product + "|" + sl.Team + "|" + sl.Period + "|" + sl.Item
+	cacheKey := metricSliceKey(key, sl)
+	if f.active != "" {
+		f.traces[f.active] = append(f.traces[f.active], evaluatedInput{metric: key, slice: sl})
+	}
 	if v, ok := f.memo[cacheKey]; ok {
+		if f.crmMetrics[cacheKey] {
+			if err := f.markCRMRead(); err != nil {
+				f.sourceErr = err
+				return decimal.Zero, err
+			}
+		}
 		return v, nil
 	}
 	if f.visiting[cacheKey] {
@@ -158,8 +182,15 @@ func (f *factSource) Metric(key string, sl formula.Slice) (decimal.Decimal, erro
 		return decimal.Zero, err
 	}
 	f.visiting[cacheKey] = true
-	defer delete(f.visiting, cacheKey)
-	v, err := f.evalExpression(mv.Expression, sl)
+	previous := f.active
+	f.active = cacheKey
+	f.metricStack = append(f.metricStack, cacheKey)
+	defer func() {
+		f.active = previous
+		f.metricStack = f.metricStack[:len(f.metricStack)-1]
+		delete(f.visiting, cacheKey)
+	}()
+	v, err := f.evalVersionExpression(mv, sl)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -188,12 +219,42 @@ func (f *factSource) version(key string, sl formula.Slice) (MetricVersion, error
 	return mv, nil
 }
 
+func (f *factSource) evalVersionExpression(version MetricVersion, sl formula.Slice) (decimal.Decimal, error) {
+	f.currencyStack = append(f.currencyStack, version.Currency)
+	defer func() { f.currencyStack = f.currencyStack[:len(f.currencyStack)-1] }()
+	value, err := f.evalExpression(version.Expression, sl)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	if version.ResultType == FieldMoney && (!value.Equal(value.Truncate(0)) || !value.BigInt().IsInt64()) {
+		err = kernel.Invalid("value", "денежный результат формулы должен быть целым int64 в минорных единицах")
+		f.sourceErr = err
+		return decimal.Zero, err
+	}
+	return value, nil
+}
+
+func (f *factSource) markCRMRead() error {
+	for _, currency := range f.currencyStack {
+		if currency != "" && currency != f.svc.cfg.Currency {
+			return kernel.Invalid("currency", "формула с выручкой CRM должна использовать валюту модели")
+		}
+	}
+	for _, key := range f.metricStack {
+		f.crmMetrics[key] = true
+	}
+	return nil
+}
+
 func (f *factSource) evalExpression(expr string, sl formula.Slice) (decimal.Decimal, error) {
 	prog, err := f.svc.program(expr)
 	if err != nil {
 		return decimal.Zero, fmt.Errorf("%w: %w", kernel.ErrValidation, err)
 	}
 	v, err := prog.Eval(f, sl)
+	if f.sourceErr != nil {
+		return decimal.Zero, f.sourceErr
+	}
 	if err != nil {
 		return decimal.Zero, fmt.Errorf("%w: показатель: %w", kernel.ErrValidation, err)
 	}
@@ -202,6 +263,9 @@ func (f *factSource) evalExpression(expr string, sl formula.Slice) (decimal.Deci
 
 // explainMetric раскрывает значение показателя до формулы, вкладов и строк импорта (EC-10).
 func (f *factSource) explainMetric(key string, sl formula.Slice, depth int) (Explanation, error) {
+	if err := f.reserveExplanation(0, 1, 0); err != nil {
+		return Explanation{}, err
+	}
 	mv, err := f.version(key, sl)
 	if err != nil {
 		return Explanation{}, err
@@ -211,32 +275,30 @@ func (f *factSource) explainMetric(key string, sl formula.Slice, depth int) (Exp
 		return Explanation{}, err
 	}
 	ex := Explanation{Key: key, Kind: formula.RefMetric, Expression: mv.Expression, Value: value}
-	if depth >= maxExplainDepth {
-		return ex, nil
+	if depth >= maxExplainDepth && len(f.traces[metricSliceKey(key, sl)]) > 0 {
+		return Explanation{}, kernel.Invalid("explanation", "глубина объяснения превышает 6; раскройте вложенный показатель отдельно")
 	}
-	prog, err := f.svc.program(mv.Expression)
-	if err != nil {
-		return Explanation{}, fmt.Errorf("%w: %w", kernel.ErrValidation, err)
-	}
-	for _, ref := range prog.Refs() {
-		switch ref.Kind {
-		case formula.RefField:
-			rows, err := f.rows(ref.Key, formula.Filter{Slice: sl})
-			if err != nil {
+	for _, input := range f.traces[metricSliceKey(key, sl)] {
+		if input.field != nil {
+			provenance := 0
+			for _, source := range input.field.Sources {
+				provenance += 1 + len(source.Provenance)
+			}
+			if err := f.reserveExplanation(len(input.field.Rows), 1, provenance); err != nil {
 				return Explanation{}, err
 			}
-			sum := decimal.Zero
-			for _, r := range rows {
-				sum = sum.Add(r.Value)
-			}
-			ex.Inputs = append(ex.Inputs, Explanation{Key: ref.Key, Kind: formula.RefField, Value: sum, Rows: rows})
-		case formula.RefMetric:
-			sub, err := f.explainMetric(ref.Key, sl, depth+1)
-			if err != nil {
-				return Explanation{}, err
-			}
-			ex.Inputs = append(ex.Inputs, sub)
+			ex.Inputs = append(ex.Inputs, *input.field)
+			continue
 		}
+		sub, err := f.explainMetric(input.metric, input.slice, depth+1)
+		if err != nil {
+			return Explanation{}, err
+		}
+		ex.Inputs = append(ex.Inputs, sub)
 	}
 	return ex, nil
+}
+
+func metricSliceKey(key string, sl formula.Slice) string {
+	return key + "|" + sl.Product + "|" + sl.Team + "|" + sl.Period + "|" + sl.Item
 }

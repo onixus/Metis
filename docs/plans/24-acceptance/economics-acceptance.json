@@ -1,0 +1,27 @@
+{
+  "testedAt": "2026-10-25T12:10:56.322Z",
+  "results": [
+    {
+      "theme": "dark",
+      "manualValue": "exact decimal",
+      "formulaVersions": "PASS",
+      "explain": "PASS",
+      "cycleRejected": 409,
+      "reconciliation": "PASS",
+      "sharedBookFormula": "PASS",
+      "savedBudgetCapacityScenario": "PASS",
+      "mobile": "PASS"
+    },
+    {
+      "theme": "light",
+      "manualValue": "exact decimal",
+      "formulaVersions": "PASS",
+      "explain": "PASS",
+      "cycleRejected": 409,
+      "reconciliation": "PASS",
+      "sharedBookFormula": "PASS",
+      "savedBudgetCapacityScenario": "PASS",
+      "mobile": "PASS"
+    }
+  ]
+}

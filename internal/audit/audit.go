@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/onixus/metis/internal/identityaccess"
@@ -67,11 +68,16 @@ type Store interface {
 type Logger struct {
 	store Store
 	clock kernel.Clock
+	mu    *sync.Mutex
 }
 
 // NewLogger создаёт Logger.
 func NewLogger(store Store, clock kernel.Clock) *Logger {
-	return &Logger{store: store, clock: clock}
+	logger := &Logger{store: store, clock: clock}
+	if memory, ok := store.(interface{ appendMutex() *sync.Mutex }); ok {
+		logger.mu = memory.appendMutex()
+	}
+	return logger
 }
 
 // GenesisHash — предыдущий хеш первой записи.
@@ -79,6 +85,13 @@ const GenesisHash = "00000000000000000000000000000000000000000000000000000000000
 
 // Append добавляет запись, сцепляя её с предыдущей.
 func (l *Logger) Append(ctx context.Context, e Entry) (Record, error) {
+	if l.mu != nil {
+		l.mu.Lock()
+		defer l.mu.Unlock()
+	}
+	if err := ctx.Err(); err != nil {
+		return Record{}, err
+	}
 	if e.Actor == "" || e.Action == "" {
 		return Record{}, kernel.Invalid("audit", "actor и action обязательны")
 	}

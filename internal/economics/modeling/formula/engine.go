@@ -69,6 +69,12 @@ type Source interface {
 	Metric(key string, s Slice) (decimal.Decimal, error)
 }
 
+// PlatformSource is an optional typed read-only source for platform functions.
+// The owning domain carries context, Scope and snapshot semantics; this pure engine does no I/O itself.
+type PlatformSource interface {
+	Platform(kind string, filter Filter) (decimal.Decimal, error)
+}
+
 // RefKind — вид ссылки формулы.
 type RefKind string
 
@@ -76,6 +82,7 @@ type RefKind string
 const (
 	RefField  RefKind = "field"
 	RefMetric RefKind = "metric"
+	RefSource RefKind = "source"
 )
 
 // Ref — ссылка формулы на поле или другой показатель; основа графа зависимостей (EC-10).
@@ -95,6 +102,14 @@ const (
 	fnMax    = "max"
 	fnDec    = "d"
 )
+
+func isPlatformFunction(name string) bool {
+	switch name {
+	case "worklogs", "crm_revenue", "headcount":
+		return true
+	}
+	return false
+}
 
 // aggFuncs — агрегаты; каждый имеет форму из одного аргумента (срез)
 // и из трёх (ключ, измерение, значение).
@@ -128,6 +143,15 @@ func New() (*Engine, error) {
 		cel.Function(fnField, cel.Overload("field_string", []*cel.Type{cel.StringType}, dec)),
 		cel.Function(fnMetric, cel.Overload("metric_string", []*cel.Type{cel.StringType}, dec)),
 		cel.Function(fnDec, cel.Overload("d_string", []*cel.Type{cel.StringType}, dec)),
+		cel.Function("div16", cel.Overload("div16_dyn_dyn", []*cel.Type{cel.DynType, cel.DynType}, dec)),
+		cel.Function("round_minor", cel.Overload("round_minor_dyn", []*cel.Type{cel.DynType}, dec)),
+		cel.Function("min_pair", cel.Overload("min_pair_dyn_dyn", []*cel.Type{cel.DynType, cel.DynType}, dec)),
+		cel.Function("max_pair", cel.Overload("max_pair_dyn_dyn", []*cel.Type{cel.DynType, cel.DynType}, dec)),
+	}
+	for _, name := range []string{"worklogs", "crm_revenue", "headcount"} {
+		opts = append(opts, cel.Function(name,
+			cel.Overload(name+"_source", []*cel.Type{}, dec),
+			cel.Overload(name+"_source_filter", []*cel.Type{cel.StringType, cel.StringType}, dec)))
 	}
 	for name := range aggFuncs {
 		opts = append(opts,
@@ -206,6 +230,9 @@ func (p *Program) Refs() []Ref { return append([]Ref(nil), p.refs...) }
 // Compile компилирует формулу и собирает её ссылки. Ключи полей и показателей
 // обязаны быть строковыми константами: иначе граф зависимостей (EC-10) не построить.
 func (e *Engine) Compile(src string) (*Program, error) {
+	if len(src) > 8192 {
+		return nil, fmt.Errorf("%w: выражение превышает 8192 байта", ErrCompile)
+	}
 	if strings.TrimSpace(src) == "" {
 		return nil, fmt.Errorf("%w: пустое выражение", ErrCompile)
 	}
@@ -233,6 +260,19 @@ func collectRefs(ast *cel.Ast) ([]Ref, error) {
 		call := e.AsCall()
 		name := call.FunctionName()
 		kind := RefKind("")
+		if isPlatformFunction(name) {
+			args := call.Args()
+			if len(args) == 2 {
+				dim, ok1 := literalString(args[0])
+				value, ok2 := literalString(args[1])
+				if !ok1 || !ok2 || !Dimension(dim).Valid() || (Dimension(dim) == DimPeriod && value == Any) {
+					bad = fmt.Errorf("%w: %s требует постоянное измерение и значение; месяц не может быть *", ErrCompile, name)
+					return
+				}
+			}
+			seen[Ref{Kind: RefSource, Key: name}] = struct{}{}
+			return
+		}
 		switch name {
 		case fnField:
 			kind = RefField
@@ -335,9 +375,38 @@ func bindings(src Source, s Slice) []*functions.Overload {
 		if err != nil {
 			return types.NewErr("поле %q: %v", key, err), nil
 		}
+		if len(vals) > 500000 {
+			return types.NewErr("превышен предел значений агрегата"), nil
+		}
+		for _, value := range vals {
+			if err := ValidateDecimal(value); err != nil {
+				return types.NewErr("%v", err), nil
+			}
+		}
 		return nil, vals
 	}
 	out := []*functions.Overload{
+		{Operator: "div16_dyn_dyn", Binary: func(left, right ref.Val) ref.Val {
+			a, err := toDecimal(left)
+			if err != nil {
+				return types.NewErr("%v", err)
+			}
+			b, err := toDecimal(right)
+			if err != nil {
+				return types.NewErr("%v", err)
+			}
+			if b.IsZero() {
+				return types.NewErr("деление на ноль")
+			}
+			return Dec(a.DivRound(b, 16))
+		}},
+		{Operator: "round_minor_dyn", Unary: func(value ref.Val) ref.Val {
+			a, err := toDecimal(value)
+			if err != nil {
+				return types.NewErr("%v", err)
+			}
+			return Dec(a.RoundBank(0))
+		}},
 		{
 			Operator: "field_string",
 			Unary: func(v ref.Val) ref.Val {
@@ -376,6 +445,53 @@ func bindings(src Source, s Slice) []*functions.Overload {
 				return Dec(d)
 			},
 		},
+	}
+	for _, name := range []string{"min_pair", "max_pair"} {
+		out = append(out, &functions.Overload{Operator: name + "_dyn_dyn", Binary: func(left, right ref.Val) ref.Val {
+			a, err := toDecimal(left)
+			if err != nil {
+				return types.NewErr("%v", err)
+			}
+			b, err := toDecimal(right)
+			if err != nil {
+				return types.NewErr("%v", err)
+			}
+			if (name == "min_pair" && a.LessThan(b)) || (name == "max_pair" && a.GreaterThan(b)) {
+				return Dec(a)
+			}
+			return Dec(b)
+		}})
+	}
+	for _, name := range []string{"worklogs", "crm_revenue", "headcount"} {
+		read := func(f Filter) ref.Val {
+			port, ok := src.(PlatformSource)
+			if !ok {
+				return types.NewErr("источник %s не подключён", name)
+			}
+			v, err := port.Platform(name, f)
+			if err != nil {
+				return types.NewErr("источник %s: %v", name, err)
+			}
+			return Dec(v)
+		}
+		out = append(out,
+			&functions.Overload{Operator: name + "_source", Function: func(args ...ref.Val) ref.Val {
+				if len(args) != 0 {
+					return types.NewErr("%s: ожидается текущий срез", name)
+				}
+				return read(Filter{Slice: s})
+			}},
+			&functions.Overload{Operator: name + "_source_filter", Function: func(args ...ref.Val) ref.Val {
+				if len(args) != 2 {
+					return types.NewErr("%s: ожидается измерение и значение", name)
+				}
+				dim, ok1 := args[0].(types.String)
+				value, ok2 := args[1].(types.String)
+				if !ok1 || !ok2 {
+					return types.NewErr("%s: аргументы должны быть строками", name)
+				}
+				return read(Filter{Slice: s, Dim: Dimension(dim), Value: string(value)})
+			}})
 	}
 	for name, agg := range aggFuncs {
 		out = append(out,

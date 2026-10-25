@@ -100,7 +100,9 @@ func (a *App) ApplyFinanceWorklogs(ctx context.Context, sc authz.Scope, book ker
 	changed := 0
 	for i := range snapshot.Rows {
 		row := &snapshot.Rows[i]
-		if row.Category == economics.Revenue || row.TeamID == "" {
+		if row.Category == economics.Revenue || row.TeamID == "" || (row.Source.File == canonicalManualSource && row.Amount.Amount == 0) {
+			// Common manual inputs have an explicitly chosen slice, not payroll cost.
+			// This app-owned source marker cannot be supplied by the parsed file API.
 			continue
 		}
 		allocation, ok := shares[row.TeamID]

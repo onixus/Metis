@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -19,6 +20,8 @@ import (
 	"github.com/onixus/metis/internal/identityaccess/authz"
 	"github.com/onixus/metis/internal/kernel"
 	"github.com/onixus/metis/internal/licensing"
+	"github.com/onixus/metis/internal/portfoliograph"
+	"github.com/onixus/metis/internal/roadmap"
 )
 
 // Адаптеры между модулями этапа 3 и модулями этапов 1–2. Модули не знают друг о друге:
@@ -37,21 +40,171 @@ func (d deadlineAdapter) StartVulnerabilityDeadline(ctx context.Context, sc auth
 }
 
 // commitmentsAdapter отдаёт экономике действующие обязательства для расчёта сценариев (DA-02).
-type commitmentsAdapter struct{ svc *commitments.Service }
+type scenarioRoadmap interface {
+	Items(context.Context, authz.Scope, kernel.ID) ([]roadmap.RoadmapItem, error)
+	Release(context.Context, authz.Scope, kernel.ID) (roadmap.Release, error)
+}
+
+type scenarioFeatures interface {
+	Feature(context.Context, authz.Scope, kernel.ID) (portfoliograph.Feature, error)
+}
+
+type commitmentsAdapter struct {
+	svc      *commitments.Service
+	roadmap  scenarioRoadmap
+	features scenarioFeatures
+}
 
 func (a commitmentsAdapter) Due(ctx context.Context, sc authz.Scope, products []kernel.ID) ([]economics.CommitmentRef, error) {
 	out := make([]economics.CommitmentRef, 0)
+	seen := map[kernel.ID]bool{}
 	for _, productID := range products {
+		if seen[productID] {
+			continue
+		}
+		seen[productID] = true
 		list, err := a.svc.List(ctx, sc, commitments.Filter{ProductID: productID, Statuses: []commitments.Status{commitments.StatusActive}})
 		if err != nil {
 			return nil, err
 		}
+		var items []roadmap.RoadmapItem
 		for _, c := range list {
-			out = append(out, economics.CommitmentRef{ID: c.ID, ProductID: c.ProductID, Title: c.Subject,
-				DueDate: c.DueDate, Regulatory: c.Kind == commitments.KindRegulatory})
+			if (c.RenewalItemID != kernel.NilID || (c.ReleaseID == kernel.NilID && c.FeatureID != kernel.NilID)) && a.roadmap != nil {
+				items, err = a.roadmap.Items(ctx, sc, productID)
+				if err != nil {
+					return nil, err
+				}
+				break
+			}
+		}
+		for _, c := range list {
+			ref := economics.CommitmentRef{ID: c.ID, ProductID: c.ProductID, Title: c.Subject, DueDate: c.DueDate, Regulatory: c.Kind == commitments.KindRegulatory, PlanningStatus: "missing", PlanningSource: "none"}
+			if err := a.commitmentPlan(ctx, sc, c, items, &ref); err != nil {
+				return nil, err
+			}
+			out = append(out, ref)
 		}
 	}
 	return out, nil
+}
+
+// TODO(question-52): binding precedence is explicit; absent authoritative plans never fall back to today's date.
+func (a commitmentsAdapter) commitmentPlan(ctx context.Context, sc authz.Scope, c commitments.Commitment, items []roadmap.RoadmapItem, ref *economics.CommitmentRef) error {
+	if c.RenewalItemID != kernel.NilID {
+		ref.PlanningSource = "renewal"
+		for _, item := range items {
+			if item.ID != c.RenewalItemID {
+				continue
+			}
+			if item.ProductID != c.ProductID {
+				return kernel.ErrForbidden
+			}
+			if item.CommitmentID != c.ID {
+				ref.PlanningStatus = "ambiguous"
+				return nil
+			}
+			setScenarioItemPlan(ref, item)
+			return nil
+		}
+		return nil
+	}
+	if c.ReleaseID != kernel.NilID {
+		ref.PlanningSource = "release"
+		if a.roadmap == nil {
+			return nil
+		}
+		release, err := a.roadmap.Release(ctx, sc, c.ReleaseID)
+		if errors.Is(err, kernel.ErrNotFound) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if release.ProductID != c.ProductID {
+			return kernel.ErrForbidden
+		}
+		if release.Status == roadmap.ReleaseReleased || release.Status == roadmap.ReleaseEOL {
+			ref.PlanningStatus = "completed"
+			return nil
+		}
+		if !release.PlannedDate.IsZero() {
+			ref.PlannedDate, ref.PlanningStatus = release.PlannedDate, "known"
+		}
+		return nil
+	}
+	if c.FeatureID == kernel.NilID {
+		return nil
+	}
+	ref.PlanningSource = "feature"
+	if a.features == nil {
+		return nil
+	}
+	feature, err := a.features.Feature(ctx, sc, c.FeatureID)
+	if errors.Is(err, kernel.ErrNotFound) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if feature.ProductID != c.ProductID {
+		return kernel.ErrForbidden
+	}
+	if feature.Status == portfoliograph.FeatureDone {
+		ref.PlanningStatus = "completed"
+		return nil
+	}
+	if feature.Status == portfoliograph.FeatureRejected {
+		return nil
+	}
+	matches, completed := []roadmap.RoadmapItem{}, false
+	for _, item := range items {
+		if item.FeatureID != c.FeatureID || item.Status == roadmap.ItemCancelled {
+			continue
+		}
+		if item.ProductID != c.ProductID {
+			return kernel.ErrForbidden
+		}
+		if item.Status == roadmap.ItemDone {
+			completed = true
+			continue
+		}
+		matches = append(matches, item)
+	}
+	if len(matches) > 0 {
+		ref.PlanningSource = "feature_roadmap"
+		date := matches[0].EndDate
+		for _, item := range matches[1:] {
+			if item.EndDate != date {
+				ref.PlanningStatus = "ambiguous"
+				return nil
+			}
+		}
+		if !date.IsZero() {
+			ref.PlannedDate, ref.PlanningStatus = date, "known"
+		}
+		return nil
+	}
+	if completed {
+		ref.PlanningStatus = "completed"
+		return nil
+	}
+	if !feature.PlannedDate.IsZero() {
+		ref.PlannedDate, ref.PlanningStatus = feature.PlannedDate, "known"
+	}
+	return nil
+}
+
+func setScenarioItemPlan(ref *economics.CommitmentRef, item roadmap.RoadmapItem) {
+	if item.Status == roadmap.ItemDone {
+		ref.PlanningStatus = "completed"
+		return
+	}
+	if item.Status == roadmap.ItemCancelled {
+		return
+	}
+	if !item.EndDate.IsZero() {
+		ref.PlannedDate, ref.PlanningStatus = item.EndDate, "known"
+	}
 }
 
 // tracksAdapter отдаёт экономике идущие треки сертификации с плановыми затратами (DA-02).

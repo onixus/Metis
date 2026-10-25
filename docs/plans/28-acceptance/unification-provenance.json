@@ -1,0 +1,16 @@
+{
+  "environment": "Loopback PostgreSQL16.14, synthetic fixtures/HMAC, real API and Chromium, no mocks",
+  "source_files": {
+    "api/openapi.yaml": "fd657890e99f80fa6d8c47d663e72b5c51c6f1a2d3eff686c4ee8eb89e43815b",
+    "internal/app/economics_sources.go": "2d867774be2cbeb209a933ce640ac69ef62a827e0bcb4b8bf2a752370a50c282",
+    "internal/app/economics_manual.go": "618f152fb2934d6afe9e57d39646e1b1b105e8ef0afe95c0357e8b9e501cfe88",
+    "internal/economics/modeling/history.go": "1b3aba24f36abbbd5bafc06f0894f678ed410835a3663f670df8ef129153df27",
+    "internal/economics/modeling/history_preflight.go": "1dcbc0dcb9358b249bc983637b034a5ec1a0d5193b5780876f1135d7b8ac3025",
+    "internal/economics/modeling/platform_sources.go": "cf68306b0542f860645287064183280c25c6ac398f60ecb1a4d09bede8ef75a8",
+    "web/scripts/acceptance-economics-unification.py": "d685b0e54e16d52eaf9429d8d3e223b27121335c5fcae5aa03e9dfa3ceaf13cd",
+    "web/scripts/acceptance-economics-unification.cjs": "14720efee978d05c7aad8096aebb2babe9a51091730b55ee441a997ead14539a",
+    "web/src/pages/EconomicsUnificationPanel.tsx": "0353000c95ab4eded4a9eb74e2c24c2cab7ef237cb1685dd0857bace67336310"
+  },
+  "api_binary_sha256": "4f30cd086f0a06c06403ab832d38ee139e325c86c013ce09f7efa6a10de15b8e",
+  "web_index_sha256": "5953f1adab2b951aef9175636cceb90d1b25fe031ace1b9b148171410e56a7e5"
+}

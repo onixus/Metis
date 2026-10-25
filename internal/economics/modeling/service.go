@@ -63,18 +63,21 @@ type TrackCosts interface {
 
 // Service — публичный интерфейс модуля экономики.
 type Service struct {
-	store  Store
-	engine *formula.Engine
-	pub    kernel.Publisher
-	clock  kernel.Clock
-	cfg    Config
+	canonicalManualWriter CanonicalManualWriter
+	store                 Store
+	engine                *formula.Engine
+	pub                   kernel.Publisher
+	clock                 kernel.Clock
+	cfg                   Config
 
-	audit       Auditor
-	tracks      TrackCosts
-	commitments CommitmentsPort
-	tracksPort  TracksPort
-	reader      ports.FinanceImport
-	products    ProductDirectory
+	audit            Auditor
+	tracks           TrackCosts
+	commitments      CommitmentsPort
+	tracksPort       TracksPort
+	reader           ports.FinanceImport
+	products         ProductDirectory
+	platformSources  PlatformSources
+	platformIdentity *byte
 
 	mu       sync.Mutex
 	compiled map[string]*formula.Program
@@ -116,10 +119,6 @@ func (s *Service) emit(ctx context.Context, typ string, aggregate, product kerne
 		return fmt.Errorf("publish %s: %w", typ, err)
 	}
 	return nil
-}
-
-func (s *Service) logAccess(ctx context.Context, sc authz.Scope, action, object string, product kernel.ID, details map[string]any) {
-	_ = s.logAccessChecked(ctx, sc, action, object, product, details)
 }
 
 func (s *Service) logAccessChecked(ctx context.Context, sc authz.Scope, action, object string, product kernel.ID, details map[string]any) error {
@@ -214,6 +213,9 @@ func (s *Service) saveField(ctx context.Context, sc authz.Scope, in FieldInput) 
 	}
 	now := s.clock.Now()
 	eff := effectiveFrom(in.EffectiveFrom, len(f.Versions), now)
+	if err := s.protectClosedDefinitions(ctx, sc, eff); err != nil {
+		return Field{}, err
+	}
 	if last := f.Latest(); last.Version > 0 && eff.Before(last.EffectiveFrom) {
 		return Field{}, kernel.Invalid("effective_from", "дата действия раньше предыдущей версии")
 	}
@@ -294,16 +296,27 @@ func (s *Service) saveMetric(ctx context.Context, sc authz.Scope, in MetricInput
 	}
 	now := s.clock.Now()
 	eff := effectiveFrom(in.EffectiveFrom, len(m.Versions), now)
+	if err := s.protectClosedDefinitions(ctx, sc, eff); err != nil {
+		return Metric{}, err
+	}
 	if last := m.Latest(); last.Version > 0 && eff.Before(last.EffectiveFrom) {
 		return Metric{}, kernel.Invalid("effective_from", "дата действия раньше предыдущей версии")
 	}
+	resultType := m.Latest().ResultType
 	currency := in.Currency
-	if currency == "" {
+	if resultType == FieldMoney && currency != "" && currency != m.Latest().Currency {
+		return Metric{}, kernel.Invalid("currency", "imported monetary result currency is fixed by its canonical book")
+	}
+	if resultType != "" && resultType != FieldMoney {
+		if currency != "" {
+			return Metric{}, kernel.Invalid("currency", "non-monetary imported result cannot carry a currency")
+		}
+	} else if currency == "" {
 		currency = s.cfg.Currency
 	}
 	m.Versions = append(m.Versions, MetricVersion{
 		Version: len(m.Versions) + 1, EffectiveFrom: eff, Name: in.Name, Expression: in.Expression,
-		Refs: prog.Refs(), Currency: currency, Actor: sc.Subject(), At: now,
+		Refs: prog.Refs(), Currency: currency, ResultType: resultType, Actor: sc.Subject(), At: now,
 	})
 	if err := s.store.SaveMetric(ctx, sc, m); err != nil {
 		return Metric{}, fmt.Errorf("save metric: %w", err)
@@ -404,7 +417,9 @@ func (s *Service) Value(ctx context.Context, sc authz.Scope, key string, sl Slic
 	if err != nil {
 		return decimal.Zero, err
 	}
-	s.logAccess(ctx, sc, "read", "economics.metric:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()})
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.metric:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()}); err != nil {
+		return decimal.Zero, err
+	}
 	return v, nil
 }
 
@@ -419,7 +434,9 @@ func (s *Service) Explain(ctx context.Context, sc authz.Scope, key string, sl Sl
 	if err != nil {
 		return Explanation{}, err
 	}
-	s.logAccess(ctx, sc, "read", "economics.explain:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()})
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.explain:"+key, sl.ProductID, map[string]any{"period": sl.Period.String()}); err != nil {
+		return Explanation{}, err
+	}
 	return ex, nil
 }
 
@@ -449,15 +466,17 @@ func (s *Service) CompareVersions(ctx context.Context, sc authz.Scope, key strin
 		return decimal.Zero, decimal.Zero, err
 	}
 	src := s.source(ctx, sc, nil)
-	ra, err := src.evalExpression(va.Expression, sl.formulaSlice())
+	ra, err := src.evalVersionExpression(va, sl.formulaSlice())
 	if err != nil {
 		return decimal.Zero, decimal.Zero, err
 	}
-	rb, err := src.evalExpression(vb.Expression, sl.formulaSlice())
+	rb, err := src.evalVersionExpression(vb, sl.formulaSlice())
 	if err != nil {
 		return decimal.Zero, decimal.Zero, err
 	}
-	s.logAccess(ctx, sc, "read", "economics.compare:"+key, sl.ProductID, map[string]any{"a": a, "b": b})
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.compare:"+key, sl.ProductID, map[string]any{"a": a, "b": b}); err != nil {
+		return decimal.Zero, decimal.Zero, err
+	}
 	return ra, rb, nil
 }
 
@@ -465,6 +484,13 @@ func (s *Service) CompareVersions(ctx context.Context, sc authz.Scope, key strin
 
 // ClosePeriod закрывает период: дальнейший пересчёт возможен только явным действием.
 func (s *Service) ClosePeriod(ctx context.Context, sc authz.Scope, p Period) error {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		return tx.Transact(ctx, sc, func(ctx context.Context) error { return s.closePeriod(ctx, sc, p) })
+	}
+	return s.closePeriod(ctx, sc, p)
+}
+
+func (s *Service) closePeriod(ctx context.Context, sc authz.Scope, p Period) error {
 	if err := s.requireWrite(sc, kernel.NilID); err != nil {
 		return err
 	}
@@ -474,7 +500,9 @@ func (s *Service) ClosePeriod(ctx context.Context, sc authz.Scope, p Period) err
 	if err := s.store.ClosePeriod(ctx, sc, p, sc.Subject()); err != nil {
 		return fmt.Errorf("close period: %w", err)
 	}
-	s.logAccess(ctx, sc, "write", "economics.period:"+p.String(), kernel.NilID, map[string]any{"action": "close"})
+	if err := s.logAccessChecked(ctx, sc, "write", "economics.period:"+p.String(), kernel.NilID, map[string]any{"action": "close"}); err != nil {
+		return err
+	}
 	return s.emit(ctx, EventPeriodClosed, kernel.NewID(), kernel.NilID, sc.Subject(), map[string]string{"period": p.String()})
 }
 
@@ -495,6 +523,19 @@ func (s *Service) PeriodClosed(ctx context.Context, sc authz.Scope, p Period) (b
 // Recalculate пересчитывает показатели, затронутые изменением поля или показателя (EC-10).
 // Закрытый период пересчитывается только при force (EC-11).
 func (s *Service) Recalculate(ctx context.Context, sc authz.Scope, changed formula.Ref, sl Slice, force bool) (map[string]decimal.Decimal, error) {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		var result map[string]decimal.Decimal
+		err := tx.Transact(ctx, sc, func(ctx context.Context) error {
+			var err error
+			result, err = s.recalculate(ctx, sc, changed, sl, force)
+			return err
+		})
+		return result, err
+	}
+	return s.recalculate(ctx, sc, changed, sl, force)
+}
+
+func (s *Service) recalculate(ctx context.Context, sc authz.Scope, changed formula.Ref, sl Slice, force bool) (map[string]decimal.Decimal, error) {
 	if err := s.requireWrite(sc, sl.ProductID); err != nil {
 		return nil, err
 	}
@@ -519,8 +560,10 @@ func (s *Service) Recalculate(ctx context.Context, sc authz.Scope, changed formu
 		out[k] = v
 	}
 	if closed {
-		s.logAccess(ctx, sc, "write", "economics.period:"+sl.Period.String(), sl.ProductID,
-			map[string]any{"action": "recalculate_closed", "changed": changed.Key})
+		if err := s.logAccessChecked(ctx, sc, "write", "economics.period:"+sl.Period.String(), sl.ProductID,
+			map[string]any{"action": "recalculate_closed", "changed": changed.Key}); err != nil {
+			return nil, err
+		}
 		if err := s.emit(ctx, EventPeriodRecalced, kernel.NewID(), sl.ProductID, sc.Subject(),
 			map[string]string{"period": sl.Period.String(), "changed": changed.Key}); err != nil {
 			return nil, err
@@ -569,13 +612,20 @@ func (s *Service) Teams(ctx context.Context, sc authz.Scope) ([]Team, error) {
 // SetTeamShares задаёт доли команды по продуктам за период вручную (EC-12).
 // Сумма долей команды в периоде должна равняться единице.
 func (s *Service) SetTeamShares(ctx context.Context, sc authz.Scope, teamID kernel.ID, p Period, shares map[kernel.ID]decimal.Decimal) error {
-	return s.setTeamShares(ctx, sc, teamID, p, shares, "manual")
+	return s.changeTeamShares(ctx, sc, teamID, p, shares, "manual")
 }
 
 // SetWorklogShares задаёт доли команды по продуктам из списаний времени трекера (DL-05, EC-12).
 // Источник помечается как worklogs: видно, откуда взялась база распределения.
 func (s *Service) SetWorklogShares(ctx context.Context, sc authz.Scope, teamID kernel.ID, p Period, shares map[kernel.ID]decimal.Decimal) error {
-	return s.setTeamShares(ctx, sc, teamID, p, shares, "worklogs")
+	return s.changeTeamShares(ctx, sc, teamID, p, shares, "worklogs")
+}
+
+func (s *Service) changeTeamShares(ctx context.Context, sc authz.Scope, teamID kernel.ID, p Period, shares map[kernel.ID]decimal.Decimal, source string) error {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		return tx.Transact(ctx, sc, func(ctx context.Context) error { return s.setTeamShares(ctx, sc, teamID, p, shares, source) })
+	}
+	return s.setTeamShares(ctx, sc, teamID, p, shares, source)
 }
 
 func (s *Service) setTeamShares(ctx context.Context, sc authz.Scope, teamID kernel.ID, p Period, shares map[kernel.ID]decimal.Decimal, source string) error {
@@ -584,6 +634,13 @@ func (s *Service) setTeamShares(ctx context.Context, sc authz.Scope, teamID kern
 	}
 	if p.IsZero() {
 		return kernel.Invalid("period", "период обязателен")
+	}
+	closed, err := s.PeriodClosed(ctx, sc, p)
+	if err != nil {
+		return err
+	}
+	if closed {
+		return fmt.Errorf("%w: период %s закрыт; изменение долей команды изменило бы закрытый результат", kernel.ErrConflict, p)
 	}
 	if err := checkShares(shares); err != nil {
 		return err
@@ -640,6 +697,19 @@ type AllocationInput struct {
 
 // SaveAllocationRule добавляет версию правила аллокации (EC-02). Применённые версии не изменяются.
 func (s *Service) SaveAllocationRule(ctx context.Context, sc authz.Scope, in AllocationInput) (AllocationRule, error) {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		var result AllocationRule
+		err := tx.Transact(ctx, sc, func(ctx context.Context) error {
+			var err error
+			result, err = s.saveAllocationRule(ctx, sc, in)
+			return err
+		})
+		return result, err
+	}
+	return s.saveAllocationRule(ctx, sc, in)
+}
+
+func (s *Service) saveAllocationRule(ctx context.Context, sc authz.Scope, in AllocationInput) (AllocationRule, error) {
 	if err := s.requireWrite(sc, in.HubProductID); err != nil {
 		return AllocationRule{}, err
 	}
@@ -670,6 +740,9 @@ func (s *Service) SaveAllocationRule(ctx context.Context, sc authz.Scope, in All
 	}
 	now := s.clock.Now()
 	eff := effectiveFrom(in.EffectiveFrom, version, now)
+	if err := s.protectClosedDefinitions(ctx, sc, eff); err != nil {
+		return AllocationRule{}, err
+	}
 	if version > 0 && eff.Before(last.EffectiveFrom) {
 		return AllocationRule{}, kernel.Invalid("effective_from", "дата действия раньше предыдущей версии")
 	}
@@ -680,7 +753,9 @@ func (s *Service) SaveAllocationRule(ctx context.Context, sc authz.Scope, in All
 	if err := s.store.SaveAllocationRule(ctx, sc, r); err != nil {
 		return AllocationRule{}, fmt.Errorf("save allocation rule: %w", err)
 	}
-	s.logAccess(ctx, sc, "write", "economics.allocation", in.HubProductID, map[string]any{"version": r.Version, "basis": string(r.Basis)})
+	if err := s.logAccessChecked(ctx, sc, "write", "economics.allocation", in.HubProductID, map[string]any{"version": r.Version, "basis": string(r.Basis)}); err != nil {
+		return AllocationRule{}, err
+	}
 	if err := s.emit(ctx, EventRuleSaved, r.ID, r.HubProductID, sc.Subject(), r); err != nil {
 		return AllocationRule{}, err
 	}
@@ -704,6 +779,19 @@ type BundleInput struct {
 
 // SaveBundleRule добавляет версию правила атрибуции бандла (EC-04).
 func (s *Service) SaveBundleRule(ctx context.Context, sc authz.Scope, in BundleInput) (BundleRule, error) {
+	if tx, ok := s.store.(TransactionalStore); ok {
+		var result BundleRule
+		err := tx.Transact(ctx, sc, func(ctx context.Context) error {
+			var err error
+			result, err = s.saveBundleRule(ctx, sc, in)
+			return err
+		})
+		return result, err
+	}
+	return s.saveBundleRule(ctx, sc, in)
+}
+
+func (s *Service) saveBundleRule(ctx context.Context, sc authz.Scope, in BundleInput) (BundleRule, error) {
 	if err := s.requireWrite(sc, kernel.NilID); err != nil {
 		return BundleRule{}, err
 	}
@@ -725,12 +813,17 @@ func (s *Service) SaveBundleRule(ctx context.Context, sc authz.Scope, in BundleI
 	}
 	now := s.clock.Now()
 	eff := effectiveFrom(in.EffectiveFrom, version, now)
+	if err := s.protectClosedDefinitions(ctx, sc, eff); err != nil {
+		return BundleRule{}, err
+	}
 	r := BundleRule{ID: kernel.NewID(), BundleKey: in.BundleKey, Shares: in.Shares,
 		Version: version + 1, EffectiveFrom: eff, Actor: sc.Subject(), At: now}
 	if err := s.store.SaveBundleRule(ctx, sc, r); err != nil {
 		return BundleRule{}, fmt.Errorf("save bundle rule: %w", err)
 	}
-	s.logAccess(ctx, sc, "write", "economics.bundle:"+r.BundleKey, kernel.NilID, map[string]any{"version": r.Version})
+	if err := s.logAccessChecked(ctx, sc, "write", "economics.bundle:"+r.BundleKey, kernel.NilID, map[string]any{"version": r.Version}); err != nil {
+		return BundleRule{}, err
+	}
 	return r, nil
 }
 
@@ -757,7 +850,9 @@ func (s *Service) Facts(ctx context.Context, sc authz.Scope, f FactFilter) ([]Fa
 	if err != nil {
 		return nil, fmt.Errorf("facts: %w", err)
 	}
-	s.logAccess(ctx, sc, "read", "economics.facts", product, map[string]any{"field": f.FieldKey, "rows": len(rows)})
+	if err := s.logAccessChecked(ctx, sc, "read", "economics.facts", product, map[string]any{"field": f.FieldKey, "rows": len(rows)}); err != nil {
+		return nil, err
+	}
 	return rows, nil
 }
 
@@ -779,16 +874,34 @@ func (s *Service) setManualValue(ctx context.Context, sc authz.Scope, key string
 	if err := s.requireWrite(sc, sl.ProductID); err != nil {
 		return FactRow{}, err
 	}
+	if sl.ProductID == kernel.NilID {
+		return FactRow{}, kernel.Invalid("product_id", "продукт обязателен")
+	}
+	if sl.Period.IsZero() {
+		return FactRow{}, kernel.Invalid("period", "период обязателен")
+	}
+	if err := boundedNumericInput(value); err != nil {
+		return FactRow{}, err
+	}
 	f, err := s.store.Field(ctx, sc, key)
 	if err != nil {
 		return FactRow{}, err
 	}
-	v := f.Latest()
+	v, ok := f.At(sl.Period.Start())
+	if !ok {
+		return FactRow{}, kernel.Invalid("field", "нет действующей версии поля на начало периода")
+	}
 	if v.Source != SourceManual {
 		return FactRow{}, kernel.Invalid("field", "поле не принимает ручной ввод")
 	}
-	if sl.Period.IsZero() {
-		return FactRow{}, kernel.Invalid("period", "период обязателен")
+	switch v.Type {
+	case FieldMoney:
+		if v.Currency != s.cfg.Currency || !value.Equal(value.Truncate(0)) || !value.BigInt().IsInt64() {
+			return FactRow{}, kernel.Invalid("value", "деньги требуют целые минорные единицы int64 в валюте модели")
+		}
+	case FieldNumber, FieldPercent:
+	default:
+		return FactRow{}, kernel.Invalid("field", "числовой ввод доступен только для money, number, percent")
 	}
 	closed, err := s.PeriodClosed(ctx, sc, sl.Period)
 	if err != nil {
@@ -796,6 +909,9 @@ func (s *Service) setManualValue(ctx context.Context, sc authz.Scope, key string
 	}
 	if closed {
 		return FactRow{}, fmt.Errorf("%w: период %s закрыт", kernel.ErrConflict, sl.Period)
+	}
+	if row, bound, err := s.writeCanonicalManual(ctx, sc, key, v, sl, value); bound || err != nil {
+		return row, err
 	}
 	now := s.clock.Now()
 	version, err := s.nextDataVersion(ctx, sc, sl.Period)
@@ -858,4 +974,30 @@ func (s *Service) nextDataVersion(ctx context.Context, sc authz.Scope, p Period)
 // money собирает денежную сумму из decimal минорных единиц.
 func (s *Service) money(v decimal.Decimal) kernel.Money {
 	return kernel.Money{Amount: v.RoundBank(0).IntPart(), Currency: s.cfg.Currency}
+}
+
+func boundedNumericInput(value decimal.Decimal) error {
+	// Bound scientific notation before expanding it to a decimal string.
+	if err := formula.ValidateDecimal(value); err != nil {
+		return kernel.Invalid("value", "число превышает допустимый размер")
+	}
+	return nil
+}
+
+// protectClosedDefinitions prevents ordinary reads of closed periods from silently drifting.
+func (s *Service) protectClosedDefinitions(ctx context.Context, sc authz.Scope, effective kernel.Date) error {
+	periods, err := s.store.ClosedPeriods(ctx, sc)
+	if err != nil {
+		return fmt.Errorf("closed periods: %w", err)
+	}
+	var latest Period
+	for _, period := range periods {
+		if latest.IsZero() || period.End().After(latest.End()) {
+			latest = period
+		}
+	}
+	if !latest.IsZero() && (effective.IsZero() || !effective.After(latest.End())) {
+		return fmt.Errorf("%w: период %s закрыт; дата действия определения или правила должна быть после %s; ретроспективное изменение требует отдельного атомарного пересчёта", kernel.ErrConflict, latest, latest.End())
+	}
+	return nil
 }

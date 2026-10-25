@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-25",
+  "postgres": "16.14 UTF8 loopback synthetic",
+  "checks": {
+    "full-final": {
+      "result": "PASS",
+      "log_sha256": "5afc5e3e5ed2a8a0de93c26be34169868254e69957dce03d0de805d1f1431482"
+    },
+    "full-lint": {
+      "result": "PASS",
+      "log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47"
+    },
+    "vet": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build": {
+      "result": "PASS",
+      "log_sha256": "b39dc471b9b403b69f62595d7bdf3bc5f161f0f38316248b087fcda2d2c6ce0c"
+    },
+    "licenses": {
+      "result": "PASS",
+      "log_sha256": "6223a74466de97a74663ec068b37c3e245694f2ee3cb3c97020cfb6386ef9a58"
+    },
+    "gitleaks": {
+      "result": "PASS",
+      "log_sha256": "7f62c5389c5bb5b0e81361b43a0684923f25b0a1935248bd4370795edf3133fa"
+    },
+    "generation": {
+      "result": "PASS",
+      "log_sha256": "2e44a493fcdcc1a7069ba8b4577de2eeeaffaccef8e34f062fbd25d9d34c6701"
+    }
+  },
+  "generated_files": 43,
+  "source_sha256": {
+    "internal/app/economics_sources.go": "a154d3b4a8452ea28df3d55350c00ec2b9c077728ab8c57bab895fa5e0357eb2",
+    "internal/app/economics_unification.go": "74efd422606c014c42dd5dbf2e7ddb8a59dbe2d3969a72135a19b8e3473135ab",
+    "internal/economics/service.go": "639eeb5e0181e4a680185fc7c748ba7800b51103e2972ff00995f44d592f910b",
+    "internal/economics/calculate.go": "56be5429dd5e6d57dd73d33e81c3787253342b17affd76f4b6e49d98004a6fec",
+    "internal/economics/projection.go": "f848362b339e8a795cf5f2f1ac41045c38b460d50d9603653cac211714e13bb6",
+    "internal/economics/reconcile.go": "30a4fdce46c3f8828af5117062177b61257b3c3f8c6c8881b3250a712172cbf1",
+    "internal/economics/unified.go": "2d594c7ebecbd8016babf1e9757798f89ac2c48b81bf3b4a0dc596fa1191b21b",
+    "internal/economics/modeling/source.go": "77b29c11d13ed41f03fae15362678ed6084c7bf19d6772444821c2b80d3d4100",
+    "internal/economics/modeling/formula_snapshot.go": "adc1b57d3c1467564ee3eea72e18d183f21dd2482848cfca221c898c8c79de34",
+    "internal/economics/modeling/pnl.go": "2df684bdbe01d1f5aea428ac431f273050685a623b90fcfe271d7063dde387d1",
+    "internal/economics/modeling/history.go": "c134f7118edd4c130b2355e890a4b78b7d4b1051f1f9dfc356ff45fde8c41fe9",
+    "internal/economics/modeling/history_mem.go": "ae87e1a2ed39f908cc1e7e5ea39e149b3f954bd1b6f51ac224a9afae59ed9ac6",
+    "internal/economics/modeling/history_preflight.go": "6451a30caf0be0f4b664f43f4d39245b967e8b1184b3678dd943bd210b8969d2",
+    "internal/economics/modeling/pgstore/history.go": "1a839959e62f921716bf0c662f4b17337668aff511f3c6a919897c2df02f7430",
+    "internal/app/economics_source_capture_test.go": "f0c17ce6c577b396fb8728e4397f374440bb4df2b6254b7504c47fb52601e9f6",
+    "internal/app/economics_source_capture_integration_test.go": "05273a53b07676a94970a5bec4e89441ac1371654f68e4a370ed0d7c2076a4ed",
+    "internal/app/economics_current_formulas_test.go": "7f5296c60ab5b7f2779845dc4ba57b32e24ca0e6821eaab5f2cfcfc61917bfc3",
+    "internal/app/economics_current_formulas_integration_test.go": "b7c316bdf283750e88e1f83ff6e9ece390ea5af5f491821885b98c0e9f13840e",
+    "internal/economics/modeling/formula_capture_test.go": "bc272e005d271b9a5ea1522216f5aca0ffee8fe3636e9830292bb9d9267a74b5",
+    "internal/economics/modeling/feature_canonical_scope_test.go": "6bf26deba1e09d58a58d6b95ed82dd026d0f9fbe4a3eac58cca13783bdee4fef"
+  },
+  "remote_CI": "not run",
+  "updated_govulncheck": "not run (AGENTS network registry-only)"
+}

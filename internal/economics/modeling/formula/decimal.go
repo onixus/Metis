@@ -25,7 +25,12 @@ var DecimalType = types.NewObjectType("metis.Decimal",
 type decVal struct{ d decimal.Decimal }
 
 // Dec оборачивает decimal в значение CEL.
-func Dec(d decimal.Decimal) ref.Val { return decVal{d: d} }
+func Dec(d decimal.Decimal) ref.Val {
+	if err := ValidateDecimal(d); err != nil {
+		return types.NewErr("%v", err)
+	}
+	return decVal{d: d}
+}
 
 var (
 	_ ref.Val           = decVal{}
@@ -135,23 +140,41 @@ func (v decVal) Value() any { return v.d }
 func toDecimal(v ref.Val) (decimal.Decimal, error) {
 	switch t := v.(type) {
 	case decVal:
-		return t.d, nil
+		return checkedDecimal(t.d)
 	case types.Int:
-		return decimal.NewFromInt(int64(t)), nil
+		return checkedDecimal(decimal.NewFromInt(int64(t)))
 	case types.Uint:
-		return decimal.NewFromUint64(uint64(t)), nil
+		return checkedDecimal(decimal.NewFromUint64(uint64(t)))
 	case types.Double:
 		f := float64(t)
 		if math.IsNaN(f) || math.IsInf(f, 0) {
 			return decimal.Zero, fmt.Errorf("недопустимое число %v", f)
 		}
-		return decimal.NewFromFloat(f), nil
+		return checkedDecimal(decimal.NewFromFloat(f))
 	case types.String:
+		if len(t) > 512 {
+			return decimal.Zero, fmt.Errorf("числовая строка превышает предел")
+		}
 		d, err := decimal.NewFromString(string(t))
 		if err != nil {
 			return decimal.Zero, fmt.Errorf("строка %q не число: %w", string(t), err)
 		}
-		return d, nil
+		return checkedDecimal(d)
 	}
 	return decimal.Zero, fmt.Errorf("значение типа %v не число", v.Type())
+}
+
+// ValidateDecimal bounds work before rescaling, arithmetic or string expansion.
+func ValidateDecimal(d decimal.Decimal) error {
+	if d.Exponent() < -512 || d.Exponent() > 512 || d.Coefficient().BitLen() > 1700 || len(d.String()) > 512 {
+		return fmt.Errorf("decimal превышает предел размера")
+	}
+	return nil
+}
+
+func checkedDecimal(d decimal.Decimal) (decimal.Decimal, error) {
+	if err := ValidateDecimal(d); err != nil {
+		return decimal.Zero, err
+	}
+	return d, nil
 }

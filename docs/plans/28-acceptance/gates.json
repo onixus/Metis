@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-25",
+  "checks": {
+    "full-final": {
+      "result": "PASS",
+      "log_sha256": "bfa09796d5f9497722ff6789a2aef56abafe94e354ed2f86c9f65e0372641e84"
+    },
+    "final-lint": {
+      "result": "PASS",
+      "log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47"
+    },
+    "build": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "vet": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "generation": {
+      "result": "PASS",
+      "log_sha256": "f0c1d6ba50ec33637327877cff3f0859a7ab7967e057082440c819a07bdf9931"
+    },
+    "licenses": {
+      "result": "PASS",
+      "log_sha256": "f76e4dd6825bbf6a8379f5f5872e566cfa8d0773684de54f2d4ea5d5abdbc417"
+    },
+    "gitleaks": {
+      "result": "PASS",
+      "log_sha256": "1e2e1c715b659ab5b58d0093f6efe6ffec9b6aa9eab5e1aed1f6501364346d4c"
+    },
+    "web-licenses": {
+      "result": "PASS",
+      "log_sha256": "3b4c9721bde73a75f8bd49bfdfbf4cd17d3565f61bd360a6e3fecb40aae3ab69"
+    },
+    "http-final": {
+      "result": "PASS",
+      "log_sha256": "6c5dde68115a7d1f8bbb8429a76f5c25019d6cd56ca4e0d6c8391994ceaa3c9f"
+    },
+    "unification-browser-final2": {
+      "result": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "generated_files": 43,
+  "web_tests": 18,
+  "postgres_version": "16.14",
+  "external_CI": "not run (AGENTS registry-only network)",
+  "updated_govulncheck": "not run (AGENTS registry-only network)"
+}

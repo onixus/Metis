@@ -1,0 +1,35 @@
+{
+  "testedAt": "2026-10-25T13:54:58.257Z",
+  "results": [
+    {
+      "theme": "dark",
+      "source": "headcount",
+      "value": "8",
+      "exactScenarioOverride": "11",
+      "snapshotProvenance": "PASS",
+      "baselineSnapshotId": "01a17354-eb65-7c9a-be67-8712b59b6ad4",
+      "scenarioSnapshotId": "01a17354-eb65-7c9a-be67-8712b59b6ad4",
+      "capturedValue": "8",
+      "overridden": true,
+      "capturedAt": "2026-10-25T13:51:47.556774Z",
+      "stableBaselineSnapshot": "PASS",
+      "mobile": "PASS",
+      "unavailable": "worklogs:503"
+    },
+    {
+      "theme": "light",
+      "source": "headcount",
+      "value": "8",
+      "exactScenarioOverride": "11",
+      "snapshotProvenance": "PASS",
+      "baselineSnapshotId": "01a17354-eb65-7c9a-be67-8712b59b6ad4",
+      "scenarioSnapshotId": "01a17354-eb65-7c9a-be67-8712b59b6ad4",
+      "capturedValue": "8",
+      "overridden": true,
+      "capturedAt": "2026-10-25T13:51:47.556774Z",
+      "stableBaselineSnapshot": "PASS",
+      "mobile": "PASS",
+      "unavailable": "worklogs:503"
+    }
+  ]
+}

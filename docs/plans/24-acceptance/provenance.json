@@ -1,0 +1,26 @@
+{
+  "api_binary": {
+    "sha256": "62709ce890a529d7793015d44c66acbee8d759886fa0222070deb59ca7687921"
+  },
+  "web_index": {
+    "sha256": "a5ee191bf370906164924e63a16431547805059fcea4d93b74492ab49c4f2182"
+  },
+  "runner": {
+    "sha256": "be418f67b0b44ac173732117599ebc133af53d1c7767ba9d6d0e2bcf632e14a4"
+  },
+  "source_manifest": {
+    "sha256": "000de0ff7879944d56c041daad4f82ee6ab2cf1aa6020bb7aa1a77837cf1c393",
+    "files": 100,
+    "scope": [
+      "internal/economics/**/*.go",
+      "internal/httpapi/**/*.go",
+      "internal/app/**/*.go",
+      "internal/audit/**/*.go",
+      "web/src/pages/Economics*.tsx",
+      "web/src/pages/BookMetricsPanel.tsx",
+      "web/src/lib/economicsModel.ts",
+      "api/openapi.yaml"
+    ]
+  },
+  "environment": "Loopback 127.0.0.1, memory storage, HMAC synthetic finance/full, Chromium headless installed browser; no mocked API responses"
+}

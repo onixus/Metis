@@ -146,7 +146,7 @@ func TestAcceptanceStage3(t *testing.T) {
 		t.Fatalf("P&L без финансового доступа: %s", denied.Status())
 	}
 
-	// 5. Трек сертификации с затратами гейта и обязательство со сроком внутри окна сдвига.
+	// 5. Трек сертификации и обязательство с явной датой связанного релиза.
 	release := must(cpo.CreateReleaseWithResponse(ctx, byKey["edr"].Id, client.CreateReleaseJSONRequestBody{
 		Name: "EDR 4.0", Version: "4.0", PlannedDate: date(2027, time.January, 31)}))
 	if release.StatusCode() != 201 {
@@ -163,10 +163,10 @@ func TestAcceptanceStage3(t *testing.T) {
 	if gate.StatusCode() != 200 {
 		t.Fatalf("затраты гейта: %s %s", gate.Status(), gate.Body)
 	}
-	due := kernel.DateFromTime(time.Now().UTC()).AddDays(10)
+	due := kernel.DateOf(2027, time.February, 10)
 	commitment := must(compliance.CreateCommitmentWithResponse(ctx, byKey["edr"].Id, client.CreateCommitmentJSONRequestBody{
 		Kind: "customer", Counterparty: "Банк", Subject: "Поставить ГОСТ-криптографию",
-		Basis: "договор 42", Owner: "pm-edr", DueDate: openapi_types.Date{Time: due.Time()}}))
+		Basis: "договор 42", Owner: "pm-edr", ReleaseId: &release.JSON201.Id, DueDate: openapi_types.Date{Time: due.Time()}}))
 	if commitment.StatusCode() != 201 {
 		t.Fatalf("обязательство: %s %s", commitment.Status(), commitment.Body)
 	}
@@ -188,7 +188,7 @@ func TestAcceptanceStage3(t *testing.T) {
 	}
 	breached := 0
 	for _, c := range *run.JSON200.Commitments {
-		if c.Breached {
+		if c.Breached && c.Known && c.NewlyBreached && !c.BaselineBreached {
 			breached++
 		}
 	}

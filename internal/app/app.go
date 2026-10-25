@@ -34,6 +34,7 @@ import (
 	"github.com/onixus/metis/internal/economics"
 	modeling "github.com/onixus/metis/internal/economics/modeling"
 	modelingpg "github.com/onixus/metis/internal/economics/modeling/pgstore"
+	"github.com/onixus/metis/internal/economics/sources"
 	"github.com/onixus/metis/internal/httpapi"
 	"github.com/onixus/metis/internal/identityaccess"
 	"github.com/onixus/metis/internal/identityaccess/authz"
@@ -58,6 +59,7 @@ import (
 
 // Config — конфигурация приложения.
 type Config struct {
+	FormulaBookProductID string        // METIS_FORMULA_BOOK_PRODUCT_ID: authoritative book for source aggregates
 	WorklogTeamsFile     string        // METIS_WORKLOG_TEAMS_FILE: opaque tracker authors mapped to financial teams
 	FinanceSourcesFile   string        // METIS_FINANCE_SOURCES_FILE: trusted read-only source profiles
 	FinanceSyncInterval  time.Duration // METIS_FINANCE_SYNC_INTERVAL
@@ -106,38 +108,39 @@ type Config struct {
 // FromEnv читает конфигурацию из окружения.
 func FromEnv() (Config, error) {
 	c := Config{
-		WorklogTeamsFile:   os.Getenv("METIS_WORKLOG_TEAMS_FILE"),
-		FinanceSourcesFile: os.Getenv("METIS_FINANCE_SOURCES_FILE"),
-		HTTPAddr:           envOr("METIS_HTTP_ADDR", ":8081"),
-		Storage:            envOr("METIS_STORAGE", "postgres"),
-		DatabaseURL:        os.Getenv("METIS_DATABASE_URL"),
-		AuthMode:           envOr("METIS_AUTH_MODE", "oidc"),
-		OIDCIssuer:         os.Getenv("METIS_OIDC_ISSUER"),
-		OIDCClient:         os.Getenv("METIS_OIDC_CLIENT_ID"),
-		HMACSecret:         os.Getenv("METIS_HMAC_SECRET"),
-		HMACIssuer:         envOr("METIS_HMAC_ISSUER", "metis-stand"),
-		JiraBaseURL:        os.Getenv("METIS_JIRA_BASE_URL"),
-		JiraToken:          os.Getenv("METIS_JIRA_TOKEN"),
-		JiraFieldsFile:     os.Getenv("METIS_JIRA_FIELDS_FILE"),
-		DeliveryProvider:   os.Getenv("METIS_DELIVERY_PROVIDER"),
-		KnowledgeProvider:  os.Getenv("METIS_KNOWLEDGE_PROVIDER"),
-		CRMProvider:        os.Getenv("METIS_CRM_PROVIDER"),
-		BitrixBaseURL:      os.Getenv("METIS_BITRIX_BASE_URL"),
-		BitrixToken:        os.Getenv("METIS_BITRIX_TOKEN"),
-		BitrixFieldsFile:   os.Getenv("METIS_BITRIX_FIELDS_FILE"),
-		WebhookToken:       os.Getenv("METIS_WEBHOOK_TOKEN"),
-		ConfluenceBaseURL:  os.Getenv("METIS_CONFLUENCE_BASE_URL"),
-		ConfluenceToken:    os.Getenv("METIS_CONFLUENCE_TOKEN"),
-		ConfluenceSpace:    envOr("METIS_CONFLUENCE_SPACE", "METIS"),
-		SecurityDir:        os.Getenv("METIS_SECURITY_DIR"),
-		LicenseKey:         os.Getenv("METIS_LICENSE_KEY"),
-		LicensePubKey:      os.Getenv("METIS_LICENSE_PUBKEY"),
-		FinanceDir:         os.Getenv("METIS_FINANCE_DIR"),
-		FinanceTemplate:    os.Getenv("METIS_FINANCE_TEMPLATE"),
-		CRMDir:             os.Getenv("METIS_CRM_DIR"),
-		OTelExport:         envOr("METIS_OTEL_EXPORTER", "none"),
-		LogLevel:           envOr("METIS_LOG_LEVEL", "info"),
-		Version:            envOr("METIS_VERSION", "0.1.0"),
+		FormulaBookProductID: os.Getenv("METIS_FORMULA_BOOK_PRODUCT_ID"),
+		WorklogTeamsFile:     os.Getenv("METIS_WORKLOG_TEAMS_FILE"),
+		FinanceSourcesFile:   os.Getenv("METIS_FINANCE_SOURCES_FILE"),
+		HTTPAddr:             envOr("METIS_HTTP_ADDR", ":8081"),
+		Storage:              envOr("METIS_STORAGE", "postgres"),
+		DatabaseURL:          os.Getenv("METIS_DATABASE_URL"),
+		AuthMode:             envOr("METIS_AUTH_MODE", "oidc"),
+		OIDCIssuer:           os.Getenv("METIS_OIDC_ISSUER"),
+		OIDCClient:           os.Getenv("METIS_OIDC_CLIENT_ID"),
+		HMACSecret:           os.Getenv("METIS_HMAC_SECRET"),
+		HMACIssuer:           envOr("METIS_HMAC_ISSUER", "metis-stand"),
+		JiraBaseURL:          os.Getenv("METIS_JIRA_BASE_URL"),
+		JiraToken:            os.Getenv("METIS_JIRA_TOKEN"),
+		JiraFieldsFile:       os.Getenv("METIS_JIRA_FIELDS_FILE"),
+		DeliveryProvider:     os.Getenv("METIS_DELIVERY_PROVIDER"),
+		KnowledgeProvider:    os.Getenv("METIS_KNOWLEDGE_PROVIDER"),
+		CRMProvider:          os.Getenv("METIS_CRM_PROVIDER"),
+		BitrixBaseURL:        os.Getenv("METIS_BITRIX_BASE_URL"),
+		BitrixToken:          os.Getenv("METIS_BITRIX_TOKEN"),
+		BitrixFieldsFile:     os.Getenv("METIS_BITRIX_FIELDS_FILE"),
+		WebhookToken:         os.Getenv("METIS_WEBHOOK_TOKEN"),
+		ConfluenceBaseURL:    os.Getenv("METIS_CONFLUENCE_BASE_URL"),
+		ConfluenceToken:      os.Getenv("METIS_CONFLUENCE_TOKEN"),
+		ConfluenceSpace:      envOr("METIS_CONFLUENCE_SPACE", "METIS"),
+		SecurityDir:          os.Getenv("METIS_SECURITY_DIR"),
+		LicenseKey:           os.Getenv("METIS_LICENSE_KEY"),
+		LicensePubKey:        os.Getenv("METIS_LICENSE_PUBKEY"),
+		FinanceDir:           os.Getenv("METIS_FINANCE_DIR"),
+		FinanceTemplate:      os.Getenv("METIS_FINANCE_TEMPLATE"),
+		CRMDir:               os.Getenv("METIS_CRM_DIR"),
+		OTelExport:           envOr("METIS_OTEL_EXPORTER", "none"),
+		LogLevel:             envOr("METIS_LOG_LEVEL", "info"),
+		Version:              envOr("METIS_VERSION", "0.1.0"),
 	}
 	var err error
 	if c.FinanceInterval, err = envPositiveDuration("METIS_FINANCE_INTERVAL", time.Hour); err != nil {
@@ -197,6 +200,7 @@ func envBool(k string) (bool, error) {
 
 // App — собранное приложение.
 type App struct {
+	FormulaSources *sources.Service
 	Economics      *economics.Service
 	Finance        ports.Finance
 	financeSources []ports.FinanceSourceReader
@@ -347,8 +351,10 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 		WithImport(financexlsx.New(), a.Portfolio).
 		WithAuditor(financeAuditor{a.Audit}).
 		WithTrackCosts(a.Compliance).
-		WithCommitments(commitmentsAdapter{svc: a.Commitments}).
+		WithCommitments(commitmentsAdapter{svc: a.Commitments, roadmap: a.Roadmap, features: a.Portfolio}).
 		WithTracks(tracksAdapter{svc: a.Compliance})
+	a.configureUnifiedEconomics()
+	a.buildFormulaSources()
 	a.Decisions = a.Decisions.WithMetrics(metricsAdapter{svc: a.Modeling})
 	a.Analytics = analytics.NewService(analytics.NewMemStore(), clock)
 	a.Licensing, err = buildLicensing(cfg, clock, a.Audit, log)
@@ -459,7 +465,7 @@ func build(ctx context.Context, cfg Config, log *slog.Logger, withHTTP bool) (_ 
 		Portfolio: a.Portfolio, AuditStore: auditStore, Audit: a.Audit,
 		Signals: a.Signals, Prioritization: a.Prioritization, Roadmap: a.Roadmap, CRM: a.CRM,
 		Delivery: a.Delivery, DeliveryEnabled: a.Tracker != nil,
-		Economics: a.Economics, Finance: a.Finance, FinanceWorklogs: a.ApplyFinanceWorklogs,
+		Economics: a.Economics, Finance: a.Finance, FinanceWorklogs: a.ApplyFinanceWorklogs, EvaluateBookMetric: a.EvaluateBookMetric,
 		Discovery: a.Discovery, Commitments: a.Commitments, Compliance: a.Compliance, Decisions: a.Decisions,
 		KnowledgeSpace: a.knowledgeSpace(),
 

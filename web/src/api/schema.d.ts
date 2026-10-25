@@ -2942,7 +2942,10 @@ export interface components {
             to_feature_id?: string;
             /** @enum {string} */
             criticality: "blocks" | "accelerates" | "desirable";
-            /** Format: uuid */
+            /**
+             * Format: uuid
+             * @description Только integration в направлении consumer→provider с точными сторонами контракта
+             */
             contract_id?: string;
         };
         Link: components["schemas"]["LinkInput"] & {

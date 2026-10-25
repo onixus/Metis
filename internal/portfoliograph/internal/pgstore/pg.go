@@ -4,8 +4,11 @@ package pgstore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -194,6 +197,11 @@ func (s *PG) SaveFeature(ctx context.Context, sc authz.Scope, f portfoliograph.F
 	if err := portfoliograph.RequireProductWrite(sc, f.ProductID); err != nil {
 		return err
 	}
+	return s.saveFeature(ctx, f)
+}
+
+// saveFeature is used only after endpoint authorization or a computed contract projection.
+func (s *PG) saveFeature(ctx context.Context, f portfoliograph.Feature) error {
 	n, err := s.q(ctx).UpsertFeature(ctx, db.UpsertFeatureParams{
 		ID: f.ID, ProductID: f.ProductID, CapabilityID: nullID(f.CapabilityID), Name: f.Name, Status: string(f.Status),
 		OwnValueAmount: f.OwnValue.Amount, OwnValueCurrency: f.OwnValue.Currency,
@@ -226,6 +234,25 @@ func (s *PG) SaveRequirement(ctx context.Context, sc authz.Scope, r portfoliogra
 func (s *PG) SaveLink(ctx context.Context, sc authz.Scope, l portfoliograph.Link) error {
 	if err := portfoliograph.RequireLinkWrite(sc, l.FromProductID, l.ToProductID); err != nil {
 		return err
+	}
+	if l.ContractID != kernel.NilID {
+		row, err := s.q(ctx).GetContract(ctx, l.ContractID)
+		if err != nil {
+			return wrap("contract", l.ContractID, err)
+		}
+		products := map[kernel.ID]kernel.ID{}
+		if l.IsFeatureLevel() {
+			for _, id := range []kernel.ID{l.FromFeatureID, l.ToFeatureID} {
+				product, err := s.q(ctx).GetFeatureProduct(ctx, id)
+				if err != nil {
+					return wrap("feature", id, err)
+				}
+				products[id] = product
+			}
+		}
+		if !portfoliograph.ContractOwnsLink(contractBinding(row), l, products) {
+			return kernel.Invalid("contract_id", "связь не принадлежит сторонам интеграционного контракта")
+		}
 	}
 	n, err := s.q(ctx).UpsertLink(ctx, db.UpsertLinkParams{
 		ID: l.ID, Type: string(l.Type), FromProductID: l.FromProductID, ToProductID: l.ToProductID,
@@ -380,21 +407,47 @@ func fromDate(d pgtype.Date) kernel.Date {
 	return kernel.DateFromTime(time.Date(d.Time.Year(), d.Time.Month(), d.Time.Day(), 0, 0, 0, 0, time.UTC))
 }
 
-// ReplaceContract commits the contract and its generated dependencies together.
-func (s *PG) ReplaceContract(ctx context.Context, sc authz.Scope, c portfoliograph.IntegrationContract, links []portfoliograph.Link) error {
+// ReplaceContract commits the contract, owned edges and computed date projections together.
+func (s *PG) ReplaceContract(ctx context.Context, sc authz.Scope, c portfoliograph.IntegrationContract, links []portfoliograph.Link) ([]portfoliograph.Feature, error) {
 	if err := portfoliograph.ValidateContractReplacement(sc, c, links); err != nil {
-		return err
+		return nil, err
 	}
-	return s.db.Transact(ctx, func(ctx context.Context) error {
-		if err := s.SaveContract(ctx, sc, c); err != nil {
-			return err
+	var updates []portfoliograph.Feature
+	err := s.db.Transact(ctx, func(ctx context.Context) error {
+		var old portfoliograph.IntegrationContract
+		row, err := s.q(ctx).GetContract(ctx, c.ID)
+		if err == nil {
+			old = contractBinding(row)
+		} else if !errors.Is(err, pgx.ErrNoRows) {
+			return wrap("contract", c.ID, err)
 		}
-		old, err := s.q(ctx).ListLinks(ctx)
+		rows, err := s.q(ctx).ListLinks(ctx)
 		if err != nil {
 			return fmt.Errorf("contract links: %w", err)
 		}
-		for _, l := range old {
-			if l.ContractID.Valid && l.ContractID.UUID == c.ID {
+		existing := make([]portfoliograph.Link, 0, len(rows))
+		for _, l := range rows {
+			existing = append(existing, portfoliograph.Link{ID: l.ID, Type: portfoliograph.LinkType(l.Type), FromProductID: l.FromProductID, ToProductID: l.ToProductID, FromFeatureID: l.FromFeatureID.UUID, ToFeatureID: l.ToFeatureID.UUID, Criticality: portfoliograph.Criticality(l.Criticality), ContractID: l.ContractID.UUID, CreatedAt: l.CreatedAt.UTC()})
+		}
+		featureRows, err := s.q(ctx).ListFeatures(ctx)
+		if err != nil {
+			return fmt.Errorf("contract features: %w", err)
+		}
+		products := make(map[kernel.ID]kernel.ID, len(featureRows))
+		features := make([]portfoliograph.Feature, 0, len(featureRows))
+		for _, f := range featureRows {
+			products[f.ID] = f.ProductID
+			features = append(features, portfoliograph.Feature{ID: f.ID, ProductID: f.ProductID, CapabilityID: f.CapabilityID.UUID, Name: f.Name, Status: portfoliograph.FeatureStatus(f.Status), OwnValue: kernel.Money{Amount: f.OwnValueAmount, Currency: f.OwnValueCurrency}, PlannedDate: fromDate(f.PlannedDate), Affected: f.Affected, AffectedBy: f.AffectedBy.UUID, ImpliedDate: fromDate(f.ImpliedDate), ExternalKey: f.ExternalKey, CreatedAt: f.CreatedAt.UTC(), UpdatedAt: f.UpdatedAt.UTC()})
+		}
+		updates, err = portfoliograph.ContractFeatureUpdates(features, existing, old, links, c.UpdatedAt)
+		if err != nil {
+			return err
+		}
+		if err := s.SaveContract(ctx, sc, c); err != nil {
+			return err
+		}
+		for _, l := range existing {
+			if portfoliograph.ContractOwnsLink(old, l, products) {
 				if err := s.DeleteLink(ctx, sc, l.ID); err != nil {
 					return err
 				}
@@ -405,6 +458,19 @@ func (s *PG) ReplaceContract(ctx context.Context, sc authz.Scope, c portfoliogra
 				return err
 			}
 		}
+		for _, f := range updates {
+			if err := s.saveFeature(ctx, f); err != nil {
+				return err
+			}
+		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return updates, nil
+}
+
+func contractBinding(c db.PortfoliographContract) portfoliograph.IntegrationContract {
+	return portfoliograph.IntegrationContract{ID: c.ID, ProviderProductID: c.ProviderProductID, ConsumerProductID: c.ConsumerProductID}
 }

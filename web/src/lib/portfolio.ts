@@ -11,3 +11,10 @@ export function groupPortfolioFeatures(capabilities: Capability[], features: Fea
     { id: '', name: 'Без возможности', features: features.filter(feature => !feature.capability_id || !byId.has(feature.capability_id)) },
   ].filter(group => group.id || group.features.length)
 }
+
+/** Mirrors portfolio WinLoss: ActionReadMarketing plus SeesAllProducts, independent of finance. */
+export function canReadPortfolioWinLoss(me: components['schemas']['Me'] | undefined): boolean {
+  if (!me || me.all_products === 'none') return false
+  return me.roles.some(role => ['admin', 'cpo', 'marketing', 'service'].includes(role)) ||
+    (me.roles.includes('pm') && me.all_products === 'private')
+}

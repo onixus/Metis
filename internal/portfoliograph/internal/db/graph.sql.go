@@ -88,6 +88,44 @@ func (q *Queries) DeleteRequirementsByProduct(ctx context.Context, productID uui
 	return err
 }
 
+const getContract = `-- name: GetContract :one
+SELECT id, name, provider_product_id, consumer_product_id, provider_feature_ids, consumer_feature_ids, interface_version, owner, status, criticality, compatibility, signal_value_amount, signal_value_currency, created_at, updated_at FROM portfoliograph.contracts WHERE id = $1
+`
+
+func (q *Queries) GetContract(ctx context.Context, id uuid.UUID) (PortfoliographContract, error) {
+	row := q.db.QueryRow(ctx, getContract, id)
+	var i PortfoliographContract
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ProviderProductID,
+		&i.ConsumerProductID,
+		&i.ProviderFeatureIds,
+		&i.ConsumerFeatureIds,
+		&i.InterfaceVersion,
+		&i.Owner,
+		&i.Status,
+		&i.Criticality,
+		&i.Compatibility,
+		&i.SignalValueAmount,
+		&i.SignalValueCurrency,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getFeatureProduct = `-- name: GetFeatureProduct :one
+SELECT product_id FROM portfoliograph.features WHERE id = $1
+`
+
+func (q *Queries) GetFeatureProduct(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getFeatureProduct, id)
+	var product_id uuid.UUID
+	err := row.Scan(&product_id)
+	return product_id, err
+}
+
 const getLink = `-- name: GetLink :one
 SELECT id, type, from_product_id, to_product_id, from_feature_id, to_feature_id, criticality, contract_id, created_at FROM portfoliograph.links WHERE id = $1
 `

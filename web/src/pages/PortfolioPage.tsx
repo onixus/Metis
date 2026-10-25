@@ -6,6 +6,7 @@ import type { PnL } from '../api/types'
 import { Badge, Empty, ErrorBox, Loading } from '../components/Status'
 import { ru } from '../i18n/ru'
 import { fmtMoney, pick } from '../lib/format'
+import { canReadPortfolioWinLoss } from '../lib/portfolio'
 
 /** Текущий месяц в формате YYYY-MM: период по умолчанию для финансовых отчётов. */
 function currentPeriod(): string {
@@ -34,6 +35,7 @@ export function PortfolioPage() {
       })}</tbody></table></div>}</div>
     </>}
     {me.data?.finance && me.data.finance !== 'none' ? <PortfolioFinance /> : <p className="muted">Финансовые отчёты доступны при наличии финансового уровня доступа.</p>}
+    {canReadPortfolioWinLoss(me.data) && <PortfolioWinLoss />}
   </section>
 }
 
@@ -41,7 +43,6 @@ function PortfolioFinance() {
   const [period, setPeriod] = useState(currentPeriod)
   const products = useProducts()
   const pnl = usePortfolioPnL(period)
-  const winLoss = useWinLoss('')
   const nameById = useMemo(
     () => new Map((products.data ?? []).map((p) => [p.id, p.name])),
     [products.data],
@@ -88,45 +89,50 @@ function PortfolioFinance() {
           </div>
         </>
       )}
-
-      <div className="card stack">
-        <h2>{ru.portfolio.winLoss}</h2>
-        {winLoss.isPending && <Loading />}
-        {winLoss.isError && (winLoss.error instanceof ApiError && winLoss.error.status === 403 ? <p className="muted">{ru.portfolio.winLossForbidden}</p> : <ErrorBox error={winLoss.error} onRetry={() => void winLoss.refetch()} />)}
-        {winLoss.data && (
-          <>
-            <div className="stats">
-              <Stat label={ru.portfolio.won} value={String(winLoss.data.won)} tone="ok" />
-              <Stat label={ru.portfolio.lost} value={String(winLoss.data.lost)} tone={winLoss.data.lost > 0 ? 'warn' : 'ok'} />
-            </div>
-            {(winLoss.data.by_reason ?? []).length === 0 ? (
-              <Empty text={ru.portfolio.noWinLoss} />
-            ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{ru.portfolio.reason}</th>
-                    <th>{ru.portfolio.won}</th>
-                    <th>{ru.portfolio.lost}</th>
-                    <th>{ru.portfolio.amount}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(winLoss.data.by_reason ?? []).map((r) => (
-                    <tr key={r.key}>
-                      <td>{r.key}</td>
-                      <td>{r.won}</td>
-                      <td>{r.lost}</td>
-                      <td>{fmtMoney(r.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </>
-        )}
-      </div>
     </section>
+  )
+}
+
+function PortfolioWinLoss() {
+  const winLoss = useWinLoss('')
+  return (
+    <div className="card stack">
+      <h2>{ru.portfolio.winLoss}</h2>
+      {winLoss.isPending && <Loading />}
+      {winLoss.isError && (winLoss.error instanceof ApiError && winLoss.error.status === 403 ? <p className="muted">{ru.portfolio.winLossForbidden}</p> : <ErrorBox error={winLoss.error} onRetry={() => void winLoss.refetch()} />)}
+      {winLoss.data && (
+        <>
+          <div className="stats">
+            <Stat label={ru.portfolio.won} value={String(winLoss.data.won)} tone="ok" />
+            <Stat label={ru.portfolio.lost} value={String(winLoss.data.lost)} tone={winLoss.data.lost > 0 ? 'warn' : 'ok'} />
+          </div>
+          {(winLoss.data.by_reason ?? []).length === 0 ? (
+            <Empty text={ru.portfolio.noWinLoss} />
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>{ru.portfolio.reason}</th>
+                  <th>{ru.portfolio.won}</th>
+                  <th>{ru.portfolio.lost}</th>
+                  <th>{ru.portfolio.amount}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(winLoss.data.by_reason ?? []).map((r) => (
+                  <tr key={r.key}>
+                    <td>{r.key}</td>
+                    <td>{r.won}</td>
+                    <td>{r.lost}</td>
+                    <td>{fmtMoney(r.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
+    </div>
   )
 }
 

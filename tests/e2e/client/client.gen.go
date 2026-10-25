@@ -3674,6 +3674,7 @@ type LicenseStatus struct {
 
 // Link defines model for Link.
 type Link struct {
+	// ContractId Только integration в направлении consumer→provider с точными сторонами контракта
 	ContractId    *openapi_types.UUID `json:"contract_id,omitempty"`
 	CreatedAt     time.Time           `json:"created_at"`
 	Criticality   LinkCriticality     `json:"criticality"`
@@ -3693,6 +3694,7 @@ type LinkType string
 
 // LinkInput defines model for LinkInput.
 type LinkInput struct {
+	// ContractId Только integration в направлении consumer→provider с точными сторонами контракта
 	ContractId    *openapi_types.UUID  `json:"contract_id,omitempty"`
 	Criticality   LinkInputCriticality `json:"criticality"`
 	FromFeatureId *openapi_types.UUID  `json:"from_feature_id,omitempty"`

@@ -3896,7 +3896,7 @@ components:
         from_feature_id: { type: string, format: uuid }
         to_feature_id: { type: string, format: uuid }
         criticality: { type: string, enum: [blocks, accelerates, desirable] }
-        contract_id: { type: string, format: uuid }
+        contract_id: { type: string, format: uuid, description: "Только integration в направлении consumer→provider с точными сторонами контракта" }
     Link:
       allOf:
         - $ref: "#/components/schemas/LinkInput"

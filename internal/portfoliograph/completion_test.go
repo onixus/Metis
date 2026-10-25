@@ -208,8 +208,8 @@ func TestPG08_PropagationUsesIntermediateAndOtherSupplierDates(t *testing.T) {
 
 type failingContractStore struct{ *pg.MemStore }
 
-func (s failingContractStore) ReplaceContract(context.Context, authz.Scope, pg.IntegrationContract, []pg.Link) error {
-	return kernel.ErrConflict
+func (s failingContractStore) ReplaceContract(context.Context, authz.Scope, pg.IntegrationContract, []pg.Link) ([]pg.Feature, error) {
+	return nil, kernel.ErrConflict
 }
 
 func TestPG04_FailedContractPersistenceLeavesMemoryUnchanged(t *testing.T) {
@@ -288,5 +288,71 @@ func TestPG08_EarlierSourceRetainsUpstreamConstraintAndReleasesStaleDates(t *tes
 		if err != nil || ft.Affected || !ft.ImpliedDate.IsZero() || ft.AffectedBy != kernel.NilID {
 			t.Fatalf("persisted stale constraints: %+v %v", ft, err)
 		}
+	}
+}
+
+func TestPG04_PG08_ContractReplacementRecomputesConstraintsAndReloads(t *testing.T) {
+	for _, parallel := range []bool{false, true} {
+		t.Run(map[bool]string{false: "removed", true: "parallel"}[parallel], func(t *testing.T) {
+			f := newFixture(t)
+			original := f.feature(f.edr, "Original", d(2027, 1, 1))
+			replacement := f.feature(f.edr, "Replacement", d(2027, 3, 1))
+			consumer := f.feature(f.soar, "Consumer", d(2027, 1, 1))
+			downstream := f.feature(f.vm, "Downstream", d(2027, 1, 1))
+			if _, err := f.dep(downstream, consumer, pg.CritBlocks); err != nil {
+				t.Fatal(err)
+			}
+			in := pg.ContractInput{Name: "Review", ProviderProductID: f.edr, ConsumerProductID: f.soar, ProviderFeatureIDs: []kernel.ID{original}, ConsumerFeatureIDs: []kernel.ID{consumer}, Criticality: pg.CritBlocks}
+			c, err := f.svc.SaveContract(f.ctx, f.cpo, kernel.NilID, in)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := f.svc.ShiftFeatureDate(f.ctx, f.cpo, original, d(2027, 2, 1), "synthetic review"); err != nil {
+				t.Fatal(err)
+			}
+			in.ProviderFeatureIDs = []kernel.ID{replacement}
+			if _, err := f.svc.SaveContract(f.ctx, f.cpo, c.ID, in); err != nil {
+				t.Fatal(err)
+			}
+			for _, id := range []kernel.ID{consumer, downstream} {
+				got, err := f.svc.Feature(f.ctx, f.cpo, id)
+				if err != nil || !got.Affected || got.ImpliedDate != d(2027, 3, 1) {
+					t.Fatalf("rebound feature=%+v err=%v", got, err)
+				}
+			}
+			want := kernel.Date{}
+			if parallel {
+				other := f.feature(f.deception, "Parallel supplier", d(2027, 4, 1))
+				if _, err := f.dep(consumer, other, pg.CritBlocks); err != nil {
+					t.Fatal(err)
+				}
+				want = d(2027, 4, 1)
+			}
+			in.ProviderFeatureIDs = nil
+			if _, err := f.svc.SaveContract(f.ctx, f.cpo, c.ID, in); err != nil {
+				t.Fatal(err)
+			}
+			for _, reload := range []bool{false, true} {
+				if reload {
+					if err := f.svc.Load(f.ctx); err != nil {
+						t.Fatal(err)
+					}
+				}
+				for _, id := range []kernel.ID{consumer, downstream} {
+					got, err := f.svc.Feature(f.ctx, f.cpo, id)
+					if err != nil || got.Affected != parallel || got.ImpliedDate != want || (!parallel && got.AffectedBy != kernel.NilID) || got.PlannedDate != d(2027, 1, 1) {
+						t.Fatalf("removed/reload=%v feature=%+v err=%v", reload, got, err)
+					}
+				}
+				_, ready, err := f.svc.Contract(f.ctx, f.cpo, c.ID)
+				expected := d(2027, 1, 1)
+				if parallel {
+					expected = want
+				}
+				if err != nil || ready != expected {
+					t.Fatalf("ready=%v expected=%v err=%v", ready, expected, err)
+				}
+			}
+		})
 	}
 }

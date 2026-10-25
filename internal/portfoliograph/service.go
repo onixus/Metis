@@ -685,8 +685,12 @@ func (s *Service) CreateLink(ctx context.Context, sc authz.Scope, in LinkInput) 
 		return Link{}, err
 	}
 	if l.ContractID != kernel.NilID {
-		if _, ok := s.g.contracts[l.ContractID]; !ok {
+		c, ok := s.g.contracts[l.ContractID]
+		if !ok {
 			return Link{}, kernel.NotFound("contract", l.ContractID)
+		}
+		if !s.g.ownsContractLink(*c, l) {
+			return Link{}, kernel.Invalid("contract_id", "связь не принадлежит сторонам интеграционного контракта")
 		}
 	}
 	if l.IsFeatureLevel() {
@@ -864,11 +868,12 @@ func (s *Service) SaveContract(ctx context.Context, sc authz.Scope, id kernel.ID
 		}
 	}
 	newLinks = append(newLinks, Link{ID: kernel.NewID(), Type: LinkIntegration, FromProductID: c.ConsumerProductID, ToProductID: c.ProviderProductID, Criticality: c.Criticality, ContractID: c.ID, CreatedAt: now})
-	if err := s.store.ReplaceContract(ctx, sc, c, newLinks); err != nil {
+	updates, err := s.store.ReplaceContract(ctx, sc, c, newLinks)
+	if err != nil {
 		return IntegrationContract{}, fmt.Errorf("replace contract: %w", err)
 	}
 	for lid, l := range s.g.links {
-		if l.ContractID == c.ID {
+		if old := s.g.contracts[c.ID]; old != nil && s.g.ownsContractLink(*old, *l) {
 			s.g.removeLink(lid)
 		}
 	}
@@ -877,6 +882,9 @@ func (s *Service) SaveContract(ctx context.Context, sc authz.Scope, id kernel.ID
 		s.g.putLink(l)
 	}
 
+	for _, f := range updates {
+		s.g.putFeature(f)
+	}
 	s.dirty = true
 	if err := s.emit(ctx, EventContractSaved, c.ID, c.ConsumerProductID, sc.Subject(), c); err != nil {
 		return IntegrationContract{}, err

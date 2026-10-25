@@ -300,7 +300,7 @@ func TestPG04_PGContractReplacementAtomicRollback(t *testing.T) {
 	}
 	c := portfoliograph.IntegrationContract{ID: kernel.NewID(), Name: "Original", ProviderProductID: a, ConsumerProductID: b, Status: portfoliograph.ContractDraft, Criticality: portfoliograph.CritBlocks}
 	link := portfoliograph.Link{ID: kernel.NewID(), Type: portfoliograph.LinkIntegration, FromProductID: b, ToProductID: a, ContractID: c.ID, Criticality: c.Criticality}
-	if err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{link}); err != nil {
+	if _, err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{link}); err != nil {
 		t.Fatal(err)
 	}
 	c.Name = "Must roll back"
@@ -308,7 +308,7 @@ func TestPG04_PGContractReplacementAtomicRollback(t *testing.T) {
 	bad.ID = kernel.NewID()
 	bad.FromFeatureID = kernel.NewID()
 	bad.ToFeatureID = kernel.NewID()
-	if err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{bad}); err == nil {
+	if _, err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{bad}); err == nil {
 		t.Fatal("invalid feature links accepted")
 	}
 	snap, err := store.Load(ctx, sc)
@@ -318,7 +318,7 @@ func TestPG04_PGContractReplacementAtomicRollback(t *testing.T) {
 	c.Name = "Updated"
 	link.ID = kernel.NewID()
 	link.Criticality = portfoliograph.CritAccelerates
-	if err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{link}); err != nil {
+	if _, err := store.ReplaceContract(ctx, sc, c, []portfoliograph.Link{link}); err != nil {
 		t.Fatal(err)
 	}
 	snap, err = store.Load(ctx, sc)
@@ -326,7 +326,7 @@ func TestPG04_PGContractReplacementAtomicRollback(t *testing.T) {
 		t.Fatalf("replacement: %+v err=%v", snap, err)
 	}
 	hidden := authz.New(authz.Params{Subject: "pm", Roles: []authz.Role{authz.RolePM}, Products: map[kernel.ID]authz.Access{a: authz.AccessPrivate}})
-	if err := store.ReplaceContract(ctx, hidden, c, nil); !errors.Is(err, kernel.ErrForbidden) {
+	if _, err := store.ReplaceContract(ctx, hidden, c, nil); !errors.Is(err, kernel.ErrForbidden) {
 		t.Fatalf("hidden endpoint: %v", err)
 	}
 }

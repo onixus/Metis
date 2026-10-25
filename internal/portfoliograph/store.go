@@ -32,7 +32,7 @@ type Store interface {
 	SaveLink(ctx context.Context, sc authz.Scope, l Link) error
 	DeleteLink(ctx context.Context, sc authz.Scope, id kernel.ID) error
 	SaveContract(ctx context.Context, sc authz.Scope, c IntegrationContract) error
-	ReplaceContract(ctx context.Context, sc authz.Scope, c IntegrationContract, links []Link) error
+	ReplaceContract(ctx context.Context, sc authz.Scope, c IntegrationContract, links []Link) ([]Feature, error)
 	SaveSettings(ctx context.Context, sc authz.Scope, s Settings) error
 	SaveRollup(ctx context.Context, sc authz.Scope, values []FeatureValue) error
 }
@@ -175,6 +175,19 @@ func (m *MemStore) SaveLink(_ context.Context, sc authz.Scope, l Link) error {
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if l.ContractID != kernel.NilID {
+		var contract IntegrationContract
+		for _, c := range m.snap.Contracts {
+			if c.ID == l.ContractID {
+				contract = c
+				break
+			}
+		}
+		if !ContractOwnsLink(contract, l, featureProducts(m.snap.Features)) {
+			return kernel.Invalid("contract_id", "связь не принадлежит сторонам интеграционного контракта")
+		}
+	}
+
 	for _, old := range m.snap.Links {
 		if old.ID == l.ID && (old.FromProductID != l.FromProductID || old.ToProductID != l.ToProductID) {
 			return kernel.ErrForbidden
@@ -254,24 +267,36 @@ func (m *MemStore) Rollup(_ context.Context, sc authz.Scope) ([]FeatureValue, er
 	return kernel.CloneValue(append([]FeatureValue(nil), m.roll...)), nil
 }
 
-// ReplaceContract atomically replaces only edges owned by the contract.
-func (m *MemStore) ReplaceContract(_ context.Context, sc authz.Scope, c IntegrationContract, links []Link) error {
+// ReplaceContract atomically replaces owned edges and their derived date constraints.
+func (m *MemStore) ReplaceContract(_ context.Context, sc authz.Scope, c IntegrationContract, links []Link) ([]Feature, error) {
 	if err := ValidateContractReplacement(sc, c, links); err != nil {
-		return err
+		return nil, err
 	}
 	c = kernel.CloneValue(c)
 	links = kernel.CloneValue(links)
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	for _, old := range m.snap.Contracts {
-		if old.ID == c.ID && (old.ProviderProductID != c.ProviderProductID || old.ConsumerProductID != c.ConsumerProductID) {
-			return kernel.ErrForbidden
+	var old IntegrationContract
+	for _, existing := range m.snap.Contracts {
+		if existing.ID == c.ID {
+			if existing.ProviderProductID != c.ProviderProductID || existing.ConsumerProductID != c.ConsumerProductID {
+				return nil, kernel.ErrForbidden
+			}
+			old = existing
 		}
 	}
+	updates, err := ContractFeatureUpdates(m.snap.Features, m.snap.Links, old, links, c.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
 	m.snap.Contracts = upsert(m.snap.Contracts, c, func(a, b IntegrationContract) bool { return a.ID == b.ID })
-	m.snap.Links = filter(m.snap.Links, func(l Link) bool { return l.ContractID != c.ID })
+	products := featureProducts(m.snap.Features)
+	m.snap.Links = filter(m.snap.Links, func(l Link) bool { return !ContractOwnsLink(old, l, products) })
 	m.snap.Links = append(m.snap.Links, links...)
-	return nil
+	for _, f := range updates {
+		m.snap.Features = upsert(m.snap.Features, f, func(a, b Feature) bool { return a.ID == b.ID })
+	}
+	return kernel.CloneValue(updates), nil
 }
 
 // ValidateContractReplacement preserves ownership and endpoint authorization.
@@ -283,7 +308,7 @@ func ValidateContractReplacement(sc authz.Scope, c IntegrationContract, links []
 		return kernel.Invalid("contract_id", "обязателен")
 	}
 	for _, l := range links {
-		if l.ContractID != c.ID || l.FromProductID != c.ConsumerProductID || l.ToProductID != c.ProviderProductID || l.Type != LinkIntegration {
+		if !contractBindingMatches(c, l) {
 			return kernel.Invalid("links", "рёбра должны принадлежать контракту")
 		}
 	}

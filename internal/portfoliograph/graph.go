@@ -423,7 +423,7 @@ func (g *Graph) cloneWithoutContract(id kernel.ID) *Graph {
 		out.putFeature(*f)
 	}
 	for _, l := range g.links {
-		if l.ContractID != id {
+		if c := g.contracts[id]; c == nil || !g.ownsContractLink(*c, *l) {
 			out.putLink(*l)
 		}
 	}
